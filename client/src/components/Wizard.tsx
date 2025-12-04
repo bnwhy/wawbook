@@ -482,30 +482,16 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
 
            <div className="space-y-8">
               
-              {/* 1. NAME & AGE */}
-              <div className="grid grid-cols-2 gap-6">
-                 <div className="space-y-2">
-                    <label className="font-bold text-cloud-dark/70 text-sm uppercase">Prénom</label>
-                    <input 
-                      type="text" 
-                      value={config.childName}
-                      onChange={(e) => setConfig({...config, childName: e.target.value})}
-                      className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold text-lg focus:border-cloud-blue focus:ring-0 outline-none transition-colors"
-                      placeholder="Ex: Léo"
-                    />
-                 </div>
-                 <div className="space-y-2">
-                    <label className="font-bold text-cloud-dark/70 text-sm uppercase">Âge</label>
-                    <div className="flex items-center gap-4">
-                       <input 
-                         type="range" min="1" max="10" 
-                         value={config.age}
-                         onChange={(e) => setConfig({...config, age: parseInt(e.target.value)})}
-                         className="flex-1 accent-cloud-blue h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                       />
-                       <span className="font-black text-2xl text-cloud-blue min-w-[3ch]">{config.age} ans</span>
-                    </div>
-                 </div>
+              {/* 1. NAME */}
+              <div className="space-y-2">
+                 <label className="font-bold text-cloud-dark/70 text-sm uppercase">Prénom</label>
+                 <input 
+                   type="text" 
+                   value={config.childName}
+                   onChange={(e) => setConfig({...config, childName: e.target.value})}
+                   className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold text-lg focus:border-cloud-blue focus:ring-0 outline-none transition-colors"
+                   placeholder="Ex: Léo"
+                 />
               </div>
 
               {/* 2. GENDER */}

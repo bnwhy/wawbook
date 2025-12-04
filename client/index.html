@@ -1,24 +1,130 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WawBook - Histoires Magiques</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Quicksand', 'sans-serif'],
+              display: ['Nunito', 'sans-serif'],
+              hand: ['Patrick Hand', 'cursive'],
+            },
+            colors: {
+              cloud: {
+                lightest: '#F0F9FF', // Sky 50
+                lighter: '#E0F2FE',  // Sky 100
+                light: '#BAE6FD',    // Sky 200
+                sky: '#38BDF8',      // Sky 400
+                blue: '#0EA5E9',     // Sky 500
+                deep: '#0284C7',     // Sky 600
+                dark: '#0C4A6E',     // Sky 900
+              },
+              accent: {
+                sun: '#FCD34D',      // Amber 300
+                melon: '#FDA4AF',    // Rose 300
+                mint: '#6EE7B7',     // Emerald 300
+                lilac: '#C4B5FD',    // Violet 300
+              }
+            },
+            backgroundImage: {
+              'cloud-pattern': "url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Cg fill=\\'none\\' fill-rule=\\'evenodd\\'%3E%3Cg fill=\\'%23ffffff\\' fill-opacity=\\'0.4\\'%3E%3Cpath d=\\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",
+            },
+            boxShadow: {
+              'cloud': '0 20px 25px -5px rgba(14, 165, 233, 0.15), 0 10px 10px -5px rgba(14, 165, 233, 0.1)',
+              'cloud-hover': '0 25px 50px -12px rgba(14, 165, 233, 0.25)',
+              'inner-light': 'inset 0 2px 4px 0 rgba(255, 255, 255, 0.3)',
+            },
+            animation: {
+              'float': 'float 6s ease-in-out infinite',
+              'float-delayed': 'float 6s ease-in-out 3s infinite',
+              'blink': 'blink 4s infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              },
+              blink: {
+                '0%, 96%, 100%': { transform: 'scaleY(1)' },
+                '98%': { transform: 'scaleY(0.1)' },
+              }
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Quicksand', sans-serif;
+        background-color: #E0F2FE;
+        background-image: linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%);
+        color: #0C4A6E;
+      }
+      
+      .font-display {
+        font-family: 'Nunito', sans-serif;
+      }
 
-    <meta property="og:title" content="WawBook - Livres Magiques" />
-    <meta property="og:description" content="Créez des histoires uniques pour vos enfants." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="WawBook - Livres Magiques" />
-    <meta name="twitter:description" content="Créez des histoires uniques pour vos enfants." />
+      /* Cloud Separator utility */
+      .cloud-separator-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        overflow: hidden;
+        line-height: 0;
+        transform: rotate(180deg);
+      }
+      .cloud-separator-bottom svg {
+        position: relative;
+        display: block;
+        width: calc(100% + 1.3px);
+        height: 80px;
+      }
+      .cloud-separator-bottom .shape-fill {
+        fill: #FFFFFF;
+      }
+      
+      .cloud-separator-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        overflow: hidden;
+        line-height: 0;
+      }
+      .cloud-separator-top svg {
+        position: relative;
+        display: block;
+        width: calc(100% + 1.3px);
+        height: 80px;
+      }
+      .cloud-separator-top .shape-fill {
+        fill: #FFFFFF;
+      }
 
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Importing Chewy (fun display) and Outfit (rounded sans) -->
-    <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  </head>
-  <body>
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+<!-- <link rel="stylesheet" href="/index.css"> -->
+</head>
+  <body class="antialiased overflow-x-hidden selection:bg-accent-sun selection:text-cloud-dark">
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
 </html>

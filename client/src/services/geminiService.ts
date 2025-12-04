@@ -1,17 +1,5 @@
 import { BookConfig, Story, Theme, Activity } from "../types";
 
-// Import generated images
-import imgAdventureMap from "@assets/generated_images/cozy_room_with_glowing_map.png";
-import imgAdventureJungle from "@assets/generated_images/jungle_friends_monkey.png";
-import imgMagicOwl from "@assets/generated_images/cute_purple_owl_with_letter.png";
-import imgMagicCastle from "@assets/generated_images/pastel_castle_in_clouds.png";
-import imgSpaceRocket from "@assets/generated_images/garden_shed_turning_into_rocket.png";
-import imgSpaceFriends from "@assets/generated_images/cute_alien_and_astronaut.png";
-import imgAnimalsMouse from "@assets/generated_images/mouse_in_suit_knocking.png";
-import imgAnimalsConcert from "@assets/generated_images/forest_animals_concert.png";
-import imgHeroBedroom from "@assets/generated_images/bedroom_fading_to_grey.png";
-import imgBedtimeTrain from "@assets/generated_images/cloud_train_in_night_sky.png";
-
 // --- ACTIVITÉ INTROS ---
 const ACTIVITY_INTROS: Record<Activity, string> = {
   Sport: "{name} venait de finir sa séance de sport et débordait d'énergie.",
@@ -25,42 +13,42 @@ const ACTIVITY_INTROS: Record<Activity, string> = {
   Aucune: "{name} rêvassait tranquillement dans sa chambre."
 };
 
-// --- IMAGES STATIQUES PAR THEME (Mix of Generated & Unsplash) ---
+// --- IMAGES STATIQUES PAR THEME (Unsplash IDs) ---
 const THEME_IMAGES: Record<Theme, string[]> = {
   [Theme.Adventure]: [
-    imgAdventureMap, // Generated: Cozy room with glowing map
-    imgAdventureJungle, // Generated: Jungle friends
+    "https://images.unsplash.com/photo-1596395819057-d372232333cc?auto=format&fit=crop&w=1000&q=80", // Map/Room
+    "https://images.unsplash.com/photo-1590001006509-06484675715e?auto=format&fit=crop&w=1000&q=80", // Jungle
     "https://images.unsplash.com/photo-1598556836338-9e585e825d48?auto=format&fit=crop&w=1000&q=80", // Monkey/Nature
     "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80", // Mountain/View
     "https://images.unsplash.com/photo-1589820296156-2454bb8a6d54?auto=format&fit=crop&w=1000&q=80", // Treasure/Chest
     "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?auto=format&fit=crop&w=1000&q=80"  // Happy/Butterfly
   ],
   [Theme.Magic]: [
-    imgMagicOwl, // Generated: Owl
+    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80", // Owl
     "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1000&q=80", // Clouds/Fantasy
-    imgMagicCastle, // Generated: Castle
+    "https://images.unsplash.com/photo-1598335624170-17449a5d346b?auto=format&fit=crop&w=1000&q=80", // Castle
     "https://images.unsplash.com/photo-1535581652167-3d6b98c364c7?auto=format&fit=crop&w=1000&q=80", // Candy/Magic
     "https://images.unsplash.com/photo-1502622796232-e88458466c33?auto=format&fit=crop&w=1000&q=80", // Rainbow
     "https://images.unsplash.com/photo-1516575150278-77136aed6920?auto=format&fit=crop&w=1000&q=80"  // Sparkles
   ],
   [Theme.Space]: [
-    imgSpaceRocket, // Generated: Rocket toy
+    "https://images.unsplash.com/photo-1516339901601-2e1b62dc0c45?auto=format&fit=crop&w=1000&q=80", // Rocket toy
     "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1000&q=80", // Space
-    imgSpaceFriends, // Generated: Planet/Friends
+    "https://images.unsplash.com/photo-1614728853913-1e2221eb8310?auto=format&fit=crop&w=1000&q=80", // Planet
     "https://images.unsplash.com/photo-1532693322450-2cb5c511067d?auto=format&fit=crop&w=1000&q=80", // Moon
     "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1000&q=80", // Galaxy
     "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1000&q=80"  // Astronaut
   ],
   [Theme.Animals]: [
-    imgAnimalsMouse, // Generated: Mouse
+    "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?auto=format&fit=crop&w=1000&q=80", // Mouse
     "https://images.unsplash.com/photo-1579267130635-a773721345d3?auto=format&fit=crop&w=1000&q=80", // Rabbit
-    imgAnimalsConcert, // Generated: Concert
+    "https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&w=1000&q=80", // Fox/Forest
     "https://images.unsplash.com/photo-1501786223405-6d024d7c3b8d?auto=format&fit=crop&w=1000&q=80", // Birds
     "https://images.unsplash.com/photo-1437622645530-1887486fa208?auto=format&fit=crop&w=1000&q=80", // Turtle
     "https://images.unsplash.com/photo-1550948537-130a1ce83314?auto=format&fit=crop&w=1000&q=80"  // Fireflies
   ],
   [Theme.SuperHero]: [
-    imgHeroBedroom, // Generated: Cape/Hero
+    "https://images.unsplash.com/photo-1560132174-a69888258320?auto=format&fit=crop&w=1000&q=80", // Cape/Hero
     "https://images.unsplash.com/photo-1478479405421-ce83c92fb3ba?auto=format&fit=crop&w=1000&q=80", // City
     "https://images.unsplash.com/photo-1535378437323-9555f3e7f6ae?auto=format&fit=crop&w=1000&q=80", // Villain/Concept
     "https://images.unsplash.com/photo-1505909182942-e2f09aee3e89?auto=format&fit=crop&w=1000&q=80", // Paint/Color
@@ -68,7 +56,7 @@ const THEME_IMAGES: Record<Theme, string[]> = {
     "https://images.unsplash.com/photo-1531685250784-75699ddc9f5a?auto=format&fit=crop&w=1000&q=80"  // Celebration
   ],
   [Theme.Bedtime]: [
-    imgBedtimeTrain, // Generated: Train/Toy
+    "https://images.unsplash.com/photo-1532509854226-a2d9d8e01082?auto=format&fit=crop&w=1000&q=80", // Train/Toy
     "https://images.unsplash.com/photo-1570570626315-95c19358f053?auto=format&fit=crop&w=1000&q=80", // Bear
     "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=1000&q=80", // Stars
     "https://images.unsplash.com/photo-1627254593455-8933b91275d8?auto=format&fit=crop&w=1000&q=80", // Plushies

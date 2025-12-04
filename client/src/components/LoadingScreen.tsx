@@ -36,7 +36,7 @@ const LoadingScreen: React.FC = () => {
               </div>
             </div>
 
-            <h3 className="text-3xl font-black text-slate-800 mb-3 font-serif min-h-[80px] transition-all duration-500 flex items-center justify-center">
+            <h3 className="text-3xl font-black text-slate-800 mb-3 font-display min-h-[80px] transition-all duration-500 flex items-center justify-center">
               {currentMsg.text}
             </h3>
             
@@ -46,7 +46,7 @@ const LoadingScreen: React.FC = () => {
               <div className="h-full bg-gradient-to-r from-fun-blue via-fun-pink to-fun-yellow animate-[loading_2s_ease-in-out_infinite] w-[50%] rounded-full shadow-[0_0_10px_rgba(0,0,0,0.2)]"></div>
             </div>
             
-            <p className="text-slate-400 mt-6 font-serif text-xl font-bold">Un instant, la magie opère !</p>
+            <p className="text-slate-400 mt-6 font-hand text-xl font-bold">Un instant, la magie opère !</p>
          </div>
       </div>
       

@@ -512,7 +512,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
               <div className="space-y-2">
                   <label className="font-bold text-cloud-dark/70 text-sm uppercase">Genre</label>
                   <div className="flex gap-3">
-                      {Object.values(Gender).map((g) => (
+                      {Object.values(Gender).filter(g => g !== Gender.Neutral).map((g) => (
                         <button
                           key={g}
                           onClick={() => setConfig({...config, gender: g})}

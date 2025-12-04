@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit } from 'lucide-react';
 import { Theme, Activity } from '../types';
 
+// Import generated images for themes
+import imgAdventureMap from "@assets/generated_images/cozy_room_with_glowing_map.png";
+import imgMagicOwl from "@assets/generated_images/cute_purple_owl_with_letter.png";
+import imgSpaceRocket from "@assets/generated_images/garden_shed_turning_into_rocket.png";
+import imgAnimalsConcert from "@assets/generated_images/forest_animals_concert.png";
+
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity) => void;
 }
@@ -16,6 +22,7 @@ const THEME_CARDS = [
     badgeColor: "bg-emerald-100 text-emerald-800",
     iconColor: "text-emerald-500",
     Icon: Compass,
+    image: imgAdventureMap
   },
   {
     theme: Theme.Magic,
@@ -26,6 +33,7 @@ const THEME_CARDS = [
     badgeColor: "bg-violet-100 text-violet-800",
     iconColor: "text-violet-500",
     Icon: Wand2,
+    image: imgMagicOwl
   },
   {
     theme: Theme.Space,
@@ -36,6 +44,7 @@ const THEME_CARDS = [
     badgeColor: "bg-blue-100 text-blue-800",
     iconColor: "text-blue-500",
     Icon: Rocket,
+    image: imgSpaceRocket
   },
   {
     theme: Theme.Animals,
@@ -46,6 +55,7 @@ const THEME_CARDS = [
     badgeColor: "bg-orange-100 text-orange-800",
     iconColor: "text-orange-500",
     Icon: Rabbit,
+    image: imgAnimalsConcert
   },
 ];
 
@@ -212,23 +222,36 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
               <div 
                 key={idx}
                 onClick={() => onStart(card.theme)}
-                className={`group cursor-pointer rounded-3xl p-3 border-4 ${card.borderColor} ${card.bgColor} transition-all hover:-translate-y-2 hover:shadow-xl`}
+                className={`group cursor-pointer rounded-3xl p-3 border-4 ${card.borderColor} ${card.bgColor} transition-all hover:-translate-y-2 hover:shadow-xl flex flex-col h-full`}
               >
                 {/* Image Container */}
-                <div className="bg-white rounded-2xl aspect-square flex items-center justify-center mb-4 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-3 right-3 bg-gray-100 text-[10px] font-bold text-gray-400 px-2 py-0.5 rounded-full z-10">
+                <div className="bg-white rounded-2xl aspect-[4/3] flex items-center justify-center mb-4 shadow-sm relative overflow-hidden border-2 border-white">
+                    <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-[10px] font-bold text-cloud-dark/50 px-2 py-0.5 rounded-full z-10">
                         WawBook
                     </div>
-                    {/* Icon */}
-                    <div className="transform group-hover:scale-110 transition-transform duration-300">
-                      <card.Icon size={90} strokeWidth={1.5} className={`${card.iconColor} drop-shadow-sm`} />
+                    {/* Image or Icon */}
+                    <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-700">
+                      {card.image ? (
+                        <img 
+                          src={card.image} 
+                          alt={card.title} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <card.Icon size={90} strokeWidth={1.5} className={`${card.iconColor} drop-shadow-sm`} />
+                        </div>
+                      )}
                     </div>
+                    
+                    {/* Overlay Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
 
                 {/* Text Content */}
-                <div className="text-center pb-2">
+                <div className="text-center pb-2 mt-auto">
                    <h4 className="text-xl font-serif font-black text-cloud-dark mb-2">{card.title}</h4>
-                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-white border border-gray-100 text-gray-500`}>
+                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-white border border-gray-100 text-gray-500 group-hover:bg-cloud-blue group-hover:text-white transition-colors`}>
                       {card.badgeText}
                    </span>
                 </div>

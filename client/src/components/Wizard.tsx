@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Wand2, Cloud, Glasses } from 'lucide-react';
+import { ArrowLeft, Wand2, Cloud, Glasses, User, Users } from 'lucide-react';
 import { BookConfig, Gender, Theme, HairStyle, Outfit, Activity } from '../types';
 
 interface WizardProps {
@@ -133,6 +133,8 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
     dedication: ''
   });
 
+  const [activeTab, setActiveTab] = useState<'child' | 'parent'>('child');
+
   const getSkinHex = () => COLORS_SKIN.find(c => c.value === config.appearance.skinTone)?.hex || '#FFE0BD';
   const getHairHex = () => COLORS_HAIR.find(c => c.value === config.appearance.hairColor)?.hex || '#5D4037';
   const getEyeHex = () => COLORS_EYES.find(c => c.value === config.appearance.eyeColor)?.hex || '#6D4C41';
@@ -149,360 +151,110 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F9FF] flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
       
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-64 bg-cloud-blue rounded-b-[50%] scale-150 -z-10"></div>
-      <div className="absolute top-10 right-10 text-white/30 animate-float"><Cloud size={80} fill="currentColor" /></div>
-      <div className="absolute top-20 left-10 text-white/20 animate-float-delayed"><Cloud size={60} fill="currentColor" /></div>
+      {/* --- HEADER TITLE --- */}
+      <div className="mb-8 w-full max-w-6xl">
+          <h2 className="text-3xl font-display font-black text-cloud-dark">Créez vos personnages principaux</h2>
+      </div>
 
-      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl flex flex-col lg:flex-row overflow-hidden min-h-[700px]">
+      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-xl border border-gray-100 flex flex-col lg:flex-row overflow-hidden min-h-[700px]">
         
-        {/* --- LEFT COLUMN: AVATAR PREVIEW --- */}
-        <div className="lg:w-5/12 bg-[#E0F2FE] relative flex flex-col items-center justify-center p-8 border-r border-cloud-light">
-           <div className="absolute top-6 left-6 z-20">
-              <button onClick={onCancel} className="text-cloud-dark/50 hover:text-cloud-blue transition-colors flex items-center gap-2 font-bold text-sm bg-white/50 px-3 py-1 rounded-full">
-                <ArrowLeft size={16} /> Retour
+        {/* --- LEFT COLUMN: CONFIGURATION (Swapped from previous) --- */}
+        <div className="lg:w-5/12 p-8 lg:p-10 overflow-y-auto max-h-[800px] border-r border-gray-100">
+           
+           {/* TABS */}
+           <div className="flex mb-8 bg-gray-50 rounded-xl p-1">
+              <button 
+                 onClick={() => setActiveTab('parent')}
+                 className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'parent' ? 'bg-white shadow-sm text-cloud-dark' : 'text-gray-400 hover:text-gray-600'}`}
+                 disabled={true}
+                 title="Bientôt disponible"
+              >
+                 <User size={16} /> Père
+              </button>
+              <button 
+                 onClick={() => setActiveTab('child')}
+                 className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'child' ? 'bg-white shadow-sm text-cloud-dark' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                 <Users size={16} /> Enfant
               </button>
            </div>
-           
-           {/* Huge Circular Avatar Background */}
-           <div className="relative w-80 h-80 lg:w-96 lg:h-96 bg-white rounded-full shadow-[0_0_40px_rgba(255,255,255,0.8)] flex items-center justify-center border-8 border-white group overflow-hidden">
-               
-               {/* Paper texture overlay (Multiplied) */}
-               <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] pointer-events-none z-20 mix-blend-multiply"></div>
-               
-               {/* --- ENHANCED SVG AVATAR (Pure Vector) --- */}
-               <svg viewBox="0 0 200 240" className="w-full h-full drop-shadow-xl transform translate-y-6">
-                  <defs>
-                    {/* Filter for rough pencil edges */}
-                    <filter id="pencil" x="-20%" y="-20%" width="140%" height="140%">
-                      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise" />
-                      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" />
-                    </filter>
-                    
-                    {/* Filter for watercolor texture fill */}
-                    <filter id="watercolor">
-                      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
-                      <feComposite operator="in" in="noise" in2="SourceGraphic" result="textured" />
-                      <feBlend mode="multiply" in="textured" in2="SourceGraphic" />
-                    </filter>
 
-                     {/* Soft Shadow Gradient */}
-                    <radialGradient id="softShadow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                        <stop offset="0%" stopColor="#000" stopOpacity="0.1" />
-                        <stop offset="100%" stopColor="#000" stopOpacity="0" />
-                    </radialGradient>
-                  </defs>
-
-                  {/* Apply Pencil Filter to Everything */}
-                  <g filter="url(#pencil)">
-                      
-                      {/* === SHADOW UNDER HEAD (Neck area) === */}
-                       <ellipse cx="50" cy="140" rx="25" ry="10" fill="url(#softShadow)" transform="translate(50, 0)" />
-
-                      {/* === BACK HAIR LAYER (Behind Head) === */}
-                      <g transform="translate(50, 40)">
-                        {config.appearance.hairStyle === 'Long' && (
-                            <path d="M0 50 Q-10 120 10 140 L90 140 Q110 120 100 50 Z" fill={getHairHex()} stroke="#4A342E" strokeWidth="1" />
-                        )}
-                        {config.appearance.hairStyle === 'Carré' && (
-                            <path d="M-5 50 L-5 110 Q5 115 20 110 L20 50 M105 50 L105 110 Q95 115 80 110 L80 50" stroke={getHairHex()} strokeWidth="25" fill="none" strokeLinecap="round" />
-                        )}
-                        {(config.appearance.hairStyle as any) === 'Nattes' && (
-                            <g>
-                              <path d="M5 60 Q-15 100 10 120" stroke={getHairHex()} strokeWidth="18" fill="none" strokeLinecap="round" />
-                              <path d="M95 60 Q115 100 90 120" stroke={getHairHex()} strokeWidth="18" fill="none" strokeLinecap="round" />
-                              <circle cx="10" cy="115" r="6" fill="#F472B6" />
-                              <circle cx="90" cy="115" r="6" fill="#F472B6" />
-                            </g>
-                        )}
-                        {(config.appearance.hairStyle as any) === 'Bouclé' && (
-                            <g>
-                              <circle cx="-5" cy="70" r="16" fill={getHairHex()} />
-                              <circle cx="5" cy="90" r="16" fill={getHairHex()} />
-                              <circle cx="105" cy="70" r="16" fill={getHairHex()} />
-                              <circle cx="95" cy="90" r="16" fill={getHairHex()} />
-                            </g>
-                        )}
-                        {(config.appearance.hairStyle as any) === 'QueueCheval' && (
-                            <g>
-                              <path d="M90 40 Q130 60 115 130" stroke={getHairHex()} strokeWidth="20" fill="none" strokeLinecap="round" />
-                            </g>
-                        )}
-                      </g>
-
-                      {/* === BODY & OUTFIT === */}
-                      <g transform="translate(50, 130)">
-                        {/* Neck */}
-                        <rect x="38" y="-30" width="24" height="40" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="0.5" rx="5" />
-                        
-                        {/* Arms (Slightly curved for natural pose) */}
-                        <path d="M22 5 Q5 50 15 70" stroke={getSkinHex()} strokeWidth="18" fill="none" strokeLinecap="round" />
-                        <circle cx="15" cy="70" r="10" fill={getSkinHex()} />
-
-                        <path d="M78 5 Q95 50 85 70" stroke={getSkinHex()} strokeWidth="18" fill="none" strokeLinecap="round" />
-                        <circle cx="85" cy="70" r="10" fill={getSkinHex()} />
-
-                        {/* -- OUTFIT RENDERING with DETAILS -- */}
-                        <g stroke="#4A342E" strokeWidth="0.8" strokeLinejoin="round">
-                            {config.appearance.outfit === 'Salopette' && (
-                              <g>
-                                <path d="M10 0 L90 0 L90 85 L10 85 Z" fill="#93C5FD" /> {/* Light blue base */}
-                                <path d="M18 20 L82 20 L88 110 L12 110 Z" fill="#3B82F6" /> {/* Dark blue overalls */}
-                                {/* Stitching details */}
-                                <path d="M20 25 L80 25" stroke="#E0F2FE" strokeWidth="1" strokeDasharray="3,3" /> 
-                                <path d="M25 0 L25 25" stroke="#2563EB" strokeWidth="8" strokeLinecap="round" />
-                                <path d="M75 0 L75 25" stroke="#2563EB" strokeWidth="8" strokeLinecap="round" />
-                                {/* Buttons */}
-                                <circle cx="25" cy="25" r="4" fill="#FCD34D" stroke="#D97706" />
-                                <circle cx="75" cy="25" r="4" fill="#FCD34D" stroke="#D97706" />
-                                {/* Pocket */}
-                                <path d="M40 40 L60 40 L58 55 L42 55 Z" fill="#2563EB" stroke="#E0F2FE" strokeDasharray="2,2" />
-                              </g>
-                            )}
-                            {config.appearance.outfit === 'TShirt' && (
-                              <g>
-                                <path d="M15 0 L85 0 L92 100 L8 100 Z" fill="#FDE68A" />
-                                <path d="M15 0 L-5 25 L15 35" fill="#FDE68A" />
-                                <path d="M85 0 L105 25 L85 35" fill="#FDE68A" />
-                                {/* Graphic on Shirt */}
-                                <circle cx="50" cy="40" r="12" fill="none" stroke="#F59E0B" strokeWidth="3" />
-                                <path d="M40 40 L60 40" stroke="#F59E0B" strokeWidth="3" />
-                                <path d="M50 30 L50 50" stroke="#F59E0B" strokeWidth="3" />
-                              </g>
-                            )}
-                            {config.appearance.outfit === 'Robe' && (
-                              <g>
-                                <path d="M25 0 L75 0 L105 110 L-5 110 Z" fill="#A5B4FC" />
-                                <path d="M25 0 L10 20 L25 30" fill="#A5B4FC" />
-                                <path d="M75 0 L90 20 L75 30" fill="#A5B4FC" />
-                                {/* Polka dots */}
-                                <circle cx="40" cy="50" r="3" fill="white" opacity="0.6" />
-                                <circle cx="60" cy="60" r="3" fill="white" opacity="0.6" />
-                                <circle cx="30" cy="80" r="3" fill="white" opacity="0.6" />
-                                <circle cx="70" cy="90" r="3" fill="white" opacity="0.6" />
-                                <circle cx="50" cy="20" r="3" fill="white" opacity="0.6" />
-                              </g>
-                            )}
-                            {config.appearance.outfit === 'Chemise' && (
-                                <g>
-                                  <path d="M15 0 L85 0 L88 100 L12 100 Z" fill="#FDA4AF" />
-                                  <path d="M50 0 L50 100" stroke="white" strokeWidth="2" strokeDasharray="4,2" />
-                                  <path d="M15 0 L5 25 L20 30" fill="#FDA4AF" />
-                                  <path d="M85 0 L95 25 L80 30" fill="#FDA4AF" />
-                                  {/* Collar */}
-                                  <path d="M50 0 L35 15 L50 25 L65 15 Z" fill="white" />
-                                  {/* Buttons */}
-                                  <circle cx="50" cy="40" r="1.5" fill="#881337" stroke="none" />
-                                  <circle cx="50" cy="60" r="1.5" fill="#881337" stroke="none" />
-                                  <circle cx="50" cy="80" r="1.5" fill="#881337" stroke="none" />
-                                </g>
-                            )}
-                            {(config.appearance.outfit as any) === 'Sweat' && (
-                                <g>
-                                  <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#C4B5FD" />
-                                  <path d="M15 0 L-5 35 L15 45" fill="#C4B5FD" />
-                                  <path d="M85 0 L105 35 L85 45" fill="#C4B5FD" />
-                                  {/* Pocket */}
-                                  <path d="M30 50 L70 50 L75 75 L25 75 Z" fill="#A78BFA" opacity="0.8" />
-                                  {/* Strings */}
-                                  <path d="M42 0 L42 25" stroke="white" strokeWidth="2" />
-                                  <path d="M58 0 L58 25" stroke="white" strokeWidth="2" />
-                                </g>
-                            )}
-                            {(config.appearance.outfit as any) === 'Sport' && (
-                                <g>
-                                  <path d="M20 0 L80 0 L85 100 L15 100 Z" fill="#6EE7B7" />
-                                  <path d="M20 0 L0 25 L20 35" fill="#6EE7B7" />
-                                  <path d="M80 0 L100 25 L80 35" fill="#6EE7B7" />
-                                  {/* Number */}
-                                  <path d="M45 30 L50 30 L50 60" stroke="white" strokeWidth="5" strokeLinecap="round" />
-                                  <circle cx="50" cy="45" r="18" stroke="white" strokeWidth="2" fill="none" />
-                                </g>
-                            )}
-                            {(config.appearance.outfit as any) === 'Pyjama' && (
-                                <g>
-                                  <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#BAE6FD" />
-                                  <path d="M15 0 L-2 25 L15 35" fill="#BAE6FD" />
-                                  <path d="M85 0 L102 25 L85 35" fill="#BAE6FD" />
-                                  {/* Stars pattern */}
-                                  <path d="M30 40 L32 45 L37 45 L33 48 L35 53 L30 50 L25 53 L27 48 L23 45 L28 45 Z" fill="white" opacity="0.7" />
-                                  <path d="M70 60 L72 65 L77 65 L73 68 L75 73 L70 70 L65 73 L67 68 L63 65 L68 65 Z" fill="white" opacity="0.7" />
-                                </g>
-                            )}
-                        </g>
-
-                        {/* -- PROPS (Props held in hands) -- */}
-                        <g filter="url(#pencil)">
-                            {config.appearance.activity === 'Sport' && (
-                              <circle cx="85" cy="70" r="16" fill="#FB923C" stroke="#C2410C" strokeWidth="2" />
-                            )}
-                            {config.appearance.activity === 'Peinture' && (
-                              <g transform="translate(80, 50) rotate(-15)">
-                                  <rect x="0" y="0" width="8" height="35" fill="#C084FC" stroke="#581C87" strokeWidth="0.5" />
-                                  <path d="M0 0 L8 0 L8 -12 Q4 -18 0 -12 Z" fill="#FDE047" stroke="#B45309" strokeWidth="0.5" />
-                              </g>
-                            )}
-                            {config.appearance.activity === 'Musique' && (
-                              <g transform="translate(75, 50) scale(0.9)">
-                                  <path d="M10 30 Q10 40 20 40 Q30 40 30 30 V10 L10 0 V30" fill="#DDD6FE" stroke="#7C3AED" strokeWidth="2" />
-                              </g>
-                            )}
-                            {config.appearance.activity === 'Theatre' && (
-                              <g transform="translate(80, 55)">
-                                  <circle cx="0" cy="0" r="12" fill="#FDE047" stroke="#B45309" strokeWidth="1" />
-                                  <path d="M-6 -2 Q0 4 6 -2" stroke="#B45309" fill="none" strokeWidth="1.5" />
-                                  <circle cx="-4" cy="-5" r="1.5" fill="#B45309" />
-                                  <circle cx="4" cy="-5" r="1.5" fill="#B45309" />
-                              </g>
-                            )}
-                            {config.appearance.activity === 'Lecture' && (
-                              <rect x="70" y="60" width="24" height="30" fill="#60A5FA" rx="2" stroke="#1E3A8A" strokeWidth="1" transform="rotate(10)" />
-                            )}
-                            {config.appearance.activity === 'Jardinage' && (
-                              <path d="M85 80 L85 55 M75 55 Q85 65 95 55" stroke="#16A34A" strokeWidth="4" fill="none" strokeLinecap="round" />
-                            )}
-                            {config.appearance.activity === 'Danse' && (
-                              <g transform="translate(85, 40)">
-                                  <path d="M0 0 Q 15 25 -10 50" stroke="#F472B6" strokeWidth="5" fill="none" strokeLinecap="round" opacity="0.6" />
-                              </g>
-                            )}
-                            {(config.appearance.activity as any) === 'Cuisine' && (
-                              <g transform="translate(85, 60) rotate(10)">
-                                  <path d="M-6 0 L6 0 L3 18 L-3 18 Z" fill="#D1D5DB" stroke="#4B5563" strokeWidth="1" />
-                                  <path d="M0 18 Q 12 30 0 42 Q -12 30 0 18" stroke="#9CA3AF" strokeWidth="3" fill="none" />
-                              </g>
-                            )}
-                        </g>
-                      </g>
-
-                      {/* === HEAD GROUP === */}
-                      <g transform="translate(50, 40)">
-                        {/* Face Shape - Softer chin */}
-                        <path d="M10 40 Q 10 95 50 95 Q 90 95 90 40 Q 90 10 50 10 Q 10 10 10 40 Z" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
-                        
-                        {/* Ears */}
-                        <path d="M8 45 Q -2 50 8 58" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
-                        <path d="M92 45 Q 102 50 92 58" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
-
-                        {/* Face Features */}
-                        <g>
-                          {/* Eyes - Larger, darker, with shine */}
-                          <ellipse cx="32" cy="50" rx="4" ry="6" fill="#3E2723" />
-                          <circle cx="33" cy="48" r="1.5" fill="white" /> {/* Eye shine */}
-                          
-                          <ellipse cx="68" cy="50" rx="4" ry="6" fill="#3E2723" />
-                          <circle cx="69" cy="48" r="1.5" fill="white" /> {/* Eye shine */}
-                          
-                          {/* Eyebrows */}
-                          <path d="M28 40 Q32 38 36 40" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
-                          <path d="M64 40 Q68 38 72 40" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
-
-                          {/* Nose - Cute button nose */}
-                          <path d="M46 60 Q50 64 54 60" stroke="#A1887F" strokeWidth="2" strokeLinecap="round" fill="none" />
-                          
-                          {/* Mouth - Smiling */}
-                          <path d="M40 70 Q50 76 60 70" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
-                          
-                          {/* Cheeks - Rosy */}
-                          <circle cx="25" cy="65" r="5" fill="#FFCDD2" opacity="0.6" />
-                          <circle cx="75" cy="65" r="5" fill="#FFCDD2" opacity="0.6" />
-
-                          {/* Freckles */}
-                          {config.appearance.distinctiveFeatures?.includes('freckles') && (
-                            <g fill="#8D6E63" opacity="0.6">
-                              <circle cx="25" cy="60" r="0.8" />
-                              <circle cx="28" cy="62" r="0.8" />
-                              <circle cx="22" cy="63" r="0.8" />
-                              <circle cx="75" cy="60" r="0.8" />
-                              <circle cx="78" cy="62" r="0.8" />
-                              <circle cx="72" cy="63" r="0.8" />
-                            </g>
-                          )}
-                        </g>
-
-                        {/* Front Hair / Fringe */}
-                        <g>
-                           {config.appearance.hairStyle === 'Court' && (
-                              <path d="M10 40 Q50 20 90 40" fill="none" stroke={getHairHex()} strokeWidth="1" />
-                           )}
-                           {config.appearance.hairStyle === 'Hérissé' && (
-                              <path d="M10 35 L20 20 L30 35 L40 15 L50 35 L60 15 L70 35 L80 20 L90 35" fill={getHairHex()} stroke={getHairHex()} strokeWidth="1" />
-                           )}
-                           {/* Generic bangs for most styles */}
-                           {['Carré', 'Long', 'Chignon', 'Nattes', 'Bouclé', 'QueueCheval'].includes(config.appearance.hairStyle) && (
-                              <path d="M10 40 Q30 50 50 35 Q70 50 90 40 Q90 10 50 10 Q10 10 10 40" fill={getHairHex()} />
-                           )}
-                        </g>
-
-                        {/* Glasses */}
-                        {config.appearance.glasses && (
-                          <g stroke="#333" strokeWidth="1.5" fill="none" opacity="0.8">
-                            <circle cx="32" cy="50" r="10" />
-                            <circle cx="68" cy="50" r="10" />
-                            <line x1="42" y1="50" x2="58" y2="50" />
-                          </g>
-                        )}
-
-                      </g>
-                  </g>
-               </svg>
-               
-               {/* Interactive Toggle Buttons on Avatar */}
-               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                 <button 
-                    onClick={() => setConfig({...config, appearance: {...config.appearance, glasses: !config.appearance.glasses}})}
-                    className={`p-2 rounded-full shadow-sm transition-all ${config.appearance.glasses ? 'bg-blue-500 text-white' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
-                    title="Lunettes"
-                 >
-                    <Glasses size={16} />
-                 </button>
-                 <button 
-                    onClick={toggleFreckles}
-                    className={`p-2 rounded-full shadow-sm transition-all ${config.appearance.distinctiveFeatures?.includes('freckles') ? 'bg-orange-400 text-white' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
-                    title="Tâches de rousseur"
-                 >
-                    <span className="font-bold text-xs">:::</span>
-                 </button>
-               </div>
-
-           </div>
-
-           <div className="mt-6 text-center">
-              <h3 className="font-display text-3xl font-black text-cloud-dark">{config.childName || "Le Héros"}</h3>
-              <p className="text-cloud-dark/50 font-bold uppercase tracking-wider text-sm mt-1">Prêt pour l'aventure !</p>
-           </div>
-        </div>
-
-        {/* --- RIGHT COLUMN: CONTROLS --- */}
-        <div className="lg:w-7/12 p-8 lg:p-12 overflow-y-auto max-h-[800px]">
-           
-           <h2 className="text-3xl font-display font-black text-cloud-dark mb-8">Créons ton personnage</h2>
-
+           {/* FORM CONTENT */}
            <div className="space-y-8">
               
               {/* 1. NAME */}
               <div className="space-y-2">
-                 <label className="font-bold text-cloud-dark/70 text-sm uppercase">Prénom</label>
+                 <label className="font-bold text-cloud-dark/70 text-sm">Comment s'appelle l'enfant ? *</label>
                  <input 
                    type="text" 
                    value={config.childName}
                    onChange={(e) => setConfig({...config, childName: e.target.value})}
-                   className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold text-lg focus:border-cloud-blue focus:ring-0 outline-none transition-colors"
-                   placeholder="Ex: Léo"
+                   className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-cloud-dark focus:border-cloud-blue focus:ring-2 focus:ring-cloud-blue/20 outline-none transition-colors placeholder:text-gray-300"
+                   placeholder="Par exemple : Léo"
                  />
               </div>
 
-              {/* 2. GENDER */}
+              {/* 2. SKIN COLOR */}
               <div className="space-y-2">
-                  <label className="font-bold text-cloud-dark/70 text-sm uppercase">Genre</label>
+                 <label className="font-bold text-cloud-dark/70 text-sm">Couleur de la peau</label>
+                 <div className="flex gap-3 flex-wrap">
+                      {COLORS_SKIN.map((c) => (
+                        <button
+                          key={c.value}
+                          onClick={() => setConfig({...config, appearance: {...config.appearance, skinTone: c.value}})}
+                          className={`w-8 h-8 rounded-full border-2 transition-all ${config.appearance.skinTone === c.value ? 'border-cloud-blue ring-2 ring-cloud-blue/30 scale-110' : 'border-transparent hover:scale-105'}`}
+                          style={{ backgroundColor: c.hex }}
+                          title={c.label}
+                        />
+                      ))}
+                  </div>
+              </div>
+
+              {/* 3. HAIR COLOR */}
+              <div className="space-y-2">
+                  <label className="font-bold text-cloud-dark/70 text-sm">Couleur des cheveux</label>
+                  <div className="flex gap-3 flex-wrap">
+                      {COLORS_HAIR.map((c) => (
+                        <button
+                          key={c.value}
+                          onClick={() => setConfig({...config, appearance: {...config.appearance, hairColor: c.value}})}
+                          className={`w-8 h-8 rounded-full border-2 transition-all ${config.appearance.hairColor === c.value ? 'border-cloud-blue ring-2 ring-cloud-blue/30 scale-110' : 'border-transparent hover:scale-105'}`}
+                          style={{ backgroundColor: c.hex }}
+                          title={c.label}
+                        />
+                      ))}
+                  </div>
+              </div>
+
+              {/* 4. HAIRSTYLE (Grid) */}
+              <div className="space-y-2">
+                  <label className="font-bold text-cloud-dark/70 text-sm">Coiffure</label>
+                  <div className="grid grid-cols-4 gap-3">
+                      {HAIR_STYLES.map((style) => (
+                        <button
+                          key={style.id}
+                          onClick={() => setConfig({...config, appearance: {...config.appearance, hairStyle: style.id}})}
+                          className={`aspect-square rounded-full p-1 border-2 transition-all flex items-center justify-center overflow-hidden ${config.appearance.hairStyle === style.id ? 'border-cloud-blue bg-blue-50' : 'border-gray-100 hover:border-blue-100'}`}
+                        >
+                           <div className="w-full h-full transform scale-125 translate-y-1">
+                              <HairstyleIcon style={style.id} color={getHairHex()} />
+                           </div>
+                        </button>
+                      ))}
+                  </div>
+              </div>
+
+              {/* 5. GENDER (Visual) */}
+              <div className="space-y-2">
+                  <label className="font-bold text-cloud-dark/70 text-sm">Genre</label>
                   <div className="flex gap-3">
                       {Object.values(Gender).filter(g => g !== Gender.Neutral).map((g) => (
                         <button
                           key={g}
                           onClick={() => setConfig({...config, gender: g})}
-                          className={`flex-1 py-3 rounded-xl font-bold transition-all ${config.gender === g ? 'bg-cloud-blue text-white shadow-md transform scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                          className={`flex-1 py-2 rounded-lg border-2 font-bold text-sm transition-all ${config.gender === g ? 'border-cloud-blue bg-blue-50 text-cloud-blue' : 'border-gray-100 text-gray-400 hover:border-gray-200'}`}
                         >
                           {g}
                         </button>
@@ -510,103 +262,175 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                   </div>
               </div>
 
-              {/* 3. HAIR STYLE & COLOR */}
-              <div className="space-y-4">
-                  <label className="font-bold text-cloud-dark/70 text-sm uppercase">Cheveux</label>
-                  
-                  {/* Colors */}
+              {/* 6. OUTFIT (Simplified Visuals) */}
+              <div className="space-y-2">
+                  <label className="font-bold text-cloud-dark/70 text-sm">Vêtements</label>
                   <div className="flex gap-3 flex-wrap">
-                      {COLORS_HAIR.map((c) => (
-                        <button
-                          key={c.value}
-                          onClick={() => setConfig({...config, appearance: {...config.appearance, hairColor: c.value}})}
-                          className={`w-10 h-10 rounded-full border-4 transition-all ${config.appearance.hairColor === c.value ? 'border-cloud-blue scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
-                          style={{ backgroundColor: c.hex }}
-                          title={c.label}
-                        />
-                      ))}
-                  </div>
-
-                  {/* Styles Grid */}
-                  <div className="grid grid-cols-4 gap-3">
-                      {HAIR_STYLES.map((style) => (
-                        <button
-                          key={style.id}
-                          onClick={() => setConfig({...config, appearance: {...config.appearance, hairStyle: style.id}})}
-                          className={`aspect-square rounded-xl p-2 border-2 transition-all flex flex-col items-center justify-center gap-1 ${config.appearance.hairStyle === style.id ? 'border-cloud-blue bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}
-                        >
-                           <div className="w-10 h-10">
-                              <HairstyleIcon style={style.id} color={getHairHex()} />
-                           </div>
-                           <span className="text-[10px] font-bold text-gray-500 uppercase">{style.label}</span>
-                        </button>
-                      ))}
-                  </div>
-              </div>
-
-              {/* 4. OUTFIT */}
-              <div className="space-y-4">
-                  <label className="font-bold text-cloud-dark/70 text-sm uppercase">Tenue</label>
-                  <div className="grid grid-cols-4 gap-3">
                       {OUTFITS.map((outfit) => (
                         <button
                           key={outfit.id}
                           onClick={() => setConfig({...config, appearance: {...config.appearance, outfit: outfit.id}})}
-                          className={`aspect-square rounded-xl p-2 border-2 transition-all flex flex-col items-center justify-center gap-1 ${config.appearance.outfit === outfit.id ? 'border-cloud-blue bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}
+                          className={`w-10 h-10 rounded-full border-2 p-1 transition-all flex items-center justify-center ${config.appearance.outfit === outfit.id ? 'border-cloud-blue bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}
+                          title={outfit.label}
                         >
-                           <div className="w-10 h-10">
+                           <div className="w-full h-full">
                               <OutfitIcon outfit={outfit.id} />
                            </div>
-                           <span className="text-[10px] font-bold text-gray-500 uppercase">{outfit.label}</span>
                         </button>
                       ))}
                   </div>
               </div>
 
-              {/* 5. ACTIVITY (Passion) */}
-              <div className="space-y-4">
-                  <label className="font-bold text-cloud-dark/70 text-sm uppercase">Passion (pour l'histoire)</label>
-                  <div className="grid grid-cols-4 gap-3">
-                      {ACTIVITIES.map((act) => (
-                        <button
-                          key={act.id}
-                          onClick={() => setConfig({...config, appearance: {...config.appearance, activity: act.id}})}
-                          className={`aspect-square rounded-xl p-2 border-2 transition-all flex flex-col items-center justify-center gap-1 ${config.appearance.activity === act.id ? 'border-accent-sun bg-yellow-50' : 'border-gray-200 hover:border-yellow-100'}`}
-                        >
-                           <div className="w-10 h-10">
-                              <ActivityIcon activity={act.id} />
-                           </div>
-                           <span className="text-[10px] font-bold text-gray-500 uppercase">{act.label}</span>
-                        </button>
-                      ))}
-                  </div>
+              {/* 7. GLASSES */}
+              <div className="flex items-center justify-between pt-2">
+                  <label className="font-bold text-cloud-dark/70 text-sm">Lunettes</label>
+                  <button 
+                    onClick={() => setConfig({...config, appearance: {...config.appearance, glasses: !config.appearance.glasses}})}
+                    className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${config.appearance.glasses ? 'bg-cloud-blue border-cloud-blue text-white' : 'border-gray-300 text-transparent hover:border-cloud-blue'}`}
+                  >
+                    <Glasses size={14} />
+                  </button>
               </div>
 
-              {/* 6. DEDICATION */}
-              <div className="space-y-2">
-                 <label className="font-bold text-cloud-dark/70 text-sm uppercase">Petite Dédicace (Optionnel)</label>
-                 <textarea 
-                   value={config.dedication}
-                   onChange={(e) => setConfig({...config, dedication: e.target.value})}
-                   className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl px-4 py-3 font-medium text-sm focus:border-cloud-blue focus:ring-0 outline-none transition-colors resize-none h-24"
-                   placeholder="Pour mon petit trésor..."
-                 />
+              {/* 8. LANGUAGE */}
+              <div className="pt-4 mt-4 border-t border-gray-100">
+                 <label className="font-bold text-cloud-dark/70 text-sm block mb-2">Langue du livre *</label>
+                 <select className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-cloud-dark font-medium outline-none focus:border-cloud-blue">
+                    <option>Français</option>
+                    <option>English</option>
+                    <option>Español</option>
+                    <option>Deutsch</option>
+                 </select>
               </div>
-
-           </div>
-
-           {/* ACTION BAR */}
-           <div className="sticky bottom-0 bg-white pt-6 pb-2 mt-8 border-t border-gray-100 flex justify-end">
+              
               <button 
                 onClick={() => config.childName ? onComplete(config) : alert("N'oublie pas le prénom !")}
-                className={`px-8 py-4 rounded-2xl font-display font-black text-xl flex items-center gap-3 shadow-xl transition-all ${config.childName ? 'bg-accent-sun text-yellow-900 hover:scale-105 hover:shadow-2xl' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                className={`w-full py-4 rounded-lg font-bold text-white text-lg mt-6 shadow-lg transition-all ${config.childName ? 'bg-cloud-dark hover:bg-slate-800' : 'bg-gray-300 cursor-not-allowed'}`}
               >
-                 <Wand2 size={24} />
-                 Fabriquer mon livre !
+                 Prévisualisez votre livre
               </button>
+              
+              <button onClick={onCancel} className="w-full text-center text-gray-400 text-sm font-medium hover:text-gray-600 mt-2">
+                Annuler
+              </button>
+
+           </div>
+        </div>
+
+        {/* --- RIGHT COLUMN: PREVIEW (Swapped) --- */}
+        <div className="lg:w-7/12 bg-[url('https://images.unsplash.com/photo-1615800001461-5766c263691c?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center relative flex flex-col items-center justify-center p-8">
+           {/* Overlay to make text readable if needed, though we have a white card now */}
+           <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]"></div>
+           
+           {/* CIRCULAR PREVIEW */}
+           <div className="relative z-10 mb-8">
+               <div className="w-[350px] h-[350px] lg:w-[450px] lg:h-[450px] bg-white rounded-full shadow-2xl border-8 border-white overflow-hidden flex items-center justify-center relative">
+                  
+                  {/* Paper texture overlay (Multiplied) */}
+                  <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] pointer-events-none z-20 mix-blend-multiply"></div>
+                  
+                  {/* --- ENHANCED SVG AVATAR (Pure Vector) --- */}
+                  <svg viewBox="0 0 200 240" className="w-full h-full transform translate-y-8 scale-110">
+                      <defs>
+                        <filter id="pencil" x="-20%" y="-20%" width="140%" height="140%">
+                          <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise" />
+                          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" />
+                        </filter>
+                        <radialGradient id="softShadow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                            <stop offset="0%" stopColor="#000" stopOpacity="0.1" />
+                            <stop offset="100%" stopColor="#000" stopOpacity="0" />
+                        </radialGradient>
+                      </defs>
+
+                      <g filter="url(#pencil)">
+                          {/* SHADOW */}
+                          <ellipse cx="50" cy="140" rx="25" ry="10" fill="url(#softShadow)" transform="translate(50, 0)" />
+
+                          {/* BACK HAIR */}
+                          <g transform="translate(50, 40)">
+                            {config.appearance.hairStyle === 'Long' && <path d="M0 50 Q-10 120 10 140 L90 140 Q110 120 100 50 Z" fill={getHairHex()} stroke="#4A342E" strokeWidth="1" />}
+                            {config.appearance.hairStyle === 'Carré' && <path d="M-5 50 L-5 110 Q5 115 20 110 L20 50 M105 50 L105 110 Q95 115 80 110 L80 50" stroke={getHairHex()} strokeWidth="25" fill="none" strokeLinecap="round" />}
+                            {(config.appearance.hairStyle as any) === 'Nattes' && <g><path d="M5 60 Q-15 100 10 120" stroke={getHairHex()} strokeWidth="18" fill="none" strokeLinecap="round" /><path d="M95 60 Q115 100 90 120" stroke={getHairHex()} strokeWidth="18" fill="none" strokeLinecap="round" /></g>}
+                            {(config.appearance.hairStyle as any) === 'Bouclé' && <g><circle cx="-5" cy="70" r="16" fill={getHairHex()} /><circle cx="5" cy="90" r="16" fill={getHairHex()} /><circle cx="105" cy="70" r="16" fill={getHairHex()} /><circle cx="95" cy="90" r="16" fill={getHairHex()} /></g>}
+                            {(config.appearance.hairStyle as any) === 'QueueCheval' && <g><path d="M90 40 Q130 60 115 130" stroke={getHairHex()} strokeWidth="20" fill="none" strokeLinecap="round" /></g>}
+                          </g>
+
+                          {/* BODY */}
+                          <g transform="translate(50, 130)">
+                            <rect x="38" y="-30" width="24" height="40" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="0.5" rx="5" />
+                            <path d="M22 5 Q5 50 15 70" stroke={getSkinHex()} strokeWidth="18" fill="none" strokeLinecap="round" />
+                            <path d="M78 5 Q95 50 85 70" stroke={getSkinHex()} strokeWidth="18" fill="none" strokeLinecap="round" />
+                            
+                            {/* OUTFIT */}
+                            <g stroke="#4A342E" strokeWidth="0.8" strokeLinejoin="round">
+                                {config.appearance.outfit === 'Salopette' && <g><path d="M10 0 L90 0 L90 85 L10 85 Z" fill="#93C5FD" /><path d="M18 20 L82 20 L88 110 L12 110 Z" fill="#3B82F6" /></g>}
+                                {config.appearance.outfit === 'TShirt' && <path d="M15 0 L85 0 L92 100 L8 100 Z" fill="#FDE68A" />}
+                                {config.appearance.outfit === 'Robe' && <path d="M25 0 L75 0 L105 110 L-5 110 Z" fill="#A5B4FC" />}
+                                {config.appearance.outfit === 'Chemise' && <path d="M15 0 L85 0 L88 100 L12 100 Z" fill="#FDA4AF" />}
+                                {(config.appearance.outfit as any) === 'Sweat' && <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#C4B5FD" />}
+                                {(config.appearance.outfit as any) === 'Sport' && <path d="M20 0 L80 0 L85 100 L15 100 Z" fill="#6EE7B7" />}
+                                {(config.appearance.outfit as any) === 'Pyjama' && <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#BAE6FD" />}
+                            </g>
+                          </g>
+
+                          {/* HEAD */}
+                          <g transform="translate(50, 40)">
+                            <path d="M10 40 Q 10 95 50 95 Q 90 95 90 40 Q 90 10 50 10 Q 10 10 10 40 Z" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
+                            <path d="M8 45 Q -2 50 8 58" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
+                            <path d="M92 45 Q 102 50 92 58" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
+                            
+                            {/* Face */}
+                            <g>
+                              <ellipse cx="32" cy="50" rx="4" ry="6" fill="#3E2723" />
+                              <circle cx="33" cy="48" r="1.5" fill="white" />
+                              <ellipse cx="68" cy="50" rx="4" ry="6" fill="#3E2723" />
+                              <circle cx="69" cy="48" r="1.5" fill="white" />
+                              <path d="M28 40 Q32 38 36 40" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
+                              <path d="M64 40 Q68 38 72 40" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
+                              <path d="M46 60 Q50 64 54 60" stroke="#A1887F" strokeWidth="2" strokeLinecap="round" fill="none" />
+                              <path d="M40 70 Q50 76 60 70" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
+                              <circle cx="25" cy="65" r="5" fill="#FFCDD2" opacity="0.6" />
+                              <circle cx="75" cy="65" r="5" fill="#FFCDD2" opacity="0.6" />
+                            </g>
+
+                            {/* FRONT HAIR */}
+                            <g>
+                               {config.appearance.hairStyle === 'Court' && <path d="M10 40 Q50 20 90 40" fill="none" stroke={getHairHex()} strokeWidth="1" />}
+                               {config.appearance.hairStyle === 'Hérissé' && <path d="M10 35 L20 20 L30 35 L40 15 L50 35 L60 15 L70 35 L80 20 L90 35" fill={getHairHex()} stroke={getHairHex()} strokeWidth="1" />}
+                               {['Carré', 'Long', 'Chignon', 'Nattes', 'Bouclé', 'QueueCheval'].includes(config.appearance.hairStyle) && <path d="M10 40 Q30 50 50 35 Q70 50 90 40 Q90 10 50 10 Q10 10 10 40" fill={getHairHex()} />}
+                            </g>
+
+                            {/* GLASSES */}
+                            {config.appearance.glasses && (
+                              <g stroke="#333" strokeWidth="1.5" fill="none" opacity="0.8">
+                                <circle cx="32" cy="50" r="10" />
+                                <circle cx="68" cy="50" r="10" />
+                                <line x1="42" y1="50" x2="58" y2="50" />
+                              </g>
+                            )}
+                          </g>
+                      </g>
+                  </svg>
+               </div>
+           </div>
+
+           {/* PRODUCT INFO CARD */}
+           <div className="relative z-10 bg-white p-6 rounded-2xl shadow-lg max-w-sm w-full border-l-4 border-cloud-blue">
+               <h3 className="text-2xl font-display font-black text-cloud-dark mb-2">Nos mots à nous</h3>
+               <div className="text-2xl font-bold text-accent-melon mb-2">€34.99</div>
+               <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                  Un livre chaleureux qui met en avant le lien spécial entre un enfant et sa famille. Une réflexion sincère et drôle sur la vie de famille telle qu'elle est.
+               </p>
+               <button 
+                 onClick={() => config.childName ? onComplete(config) : alert("N'oublie pas le prénom !")}
+                 className={`w-full py-3 rounded-lg font-bold text-white shadow-md transition-all ${config.childName ? 'bg-cloud-dark hover:bg-slate-800' : 'bg-gray-300'}`}
+               >
+                 Prévisualisez votre livre
+               </button>
            </div>
 
         </div>
+
       </div>
     </div>
   );

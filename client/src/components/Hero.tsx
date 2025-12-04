@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit } from 'lucide-react';
 import { Theme, Activity } from '../types';
+import Navigation from './Navigation';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity) => void;
@@ -125,29 +126,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
     <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
       
       {/* --- NAVBAR --- */}
-      <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-cloud-light shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo(0, 0)}>
-            <CloudLogo />
-            <span className="text-3xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors">
-              WawBook
-            </span>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-8">
-            <button onClick={() => scrollToSection('how-it-works')} className="font-bold text-cloud-dark/60 hover:text-cloud-blue transition-colors rounded-full hover:bg-cloud-light/50 px-4 py-2">Comment ça marche ?</button>
-            <button onClick={() => scrollToSection('themes')} className="font-bold text-cloud-dark/60 hover:text-cloud-blue transition-colors rounded-full hover:bg-cloud-light/50 px-4 py-2">Histoires</button>
-          </div>
-
-          <button 
-            onClick={() => onStart()}
-            className="px-6 py-3 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-lg hover:scale-105 hover:shadow-lg transition-all shadow-md flex items-center gap-2"
-          >
-            <Sparkles size={20} />
-            Créer
-          </button>
-        </div>
-      </nav>
+      <Navigation onStart={() => onStart()} />
 
       {/* --- HERO SECTION --- */}
       <header className="pt-40 pb-32 px-6 max-w-7xl mx-auto w-full relative">

@@ -67,7 +67,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset }) => 
                         <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center mb-8 text-7xl shadow-xl animate-bounce">
                             ✨
                         </div>
-                        <h1 className="font-serif font-black text-5xl md:text-7xl mb-6 drop-shadow-md">{story.title}</h1>
+                        <h1 className="font-display font-black text-5xl md:text-7xl mb-6 drop-shadow-md">{story.title}</h1>
                         <div className="bg-white/20 px-8 py-2 rounded-full text-xl font-bold backdrop-blur-sm">
                             Une aventure de {config.childName}
                         </div>
@@ -85,8 +85,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset }) => 
                     <div className="w-full h-full flex items-center justify-center p-12 bg-cloud-lightest relative">
                         <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-b from-black/5 to-transparent"></div>
                         <div className="bg-white p-12 rounded-[3rem] shadow-sm max-w-2xl text-center border-4 border-cloud-light/30">
-                            <h3 className="font-serif text-4xl text-accent-melon mb-6 font-bold">Pour toi...</h3>
-                            <p className="font-serif text-3xl text-cloud-dark leading-relaxed">
+                            <h3 className="font-hand text-4xl text-accent-melon mb-6 font-bold">Pour toi...</h3>
+                            <p className="font-display text-3xl text-cloud-dark leading-relaxed">
                                 "{config.dedication || `Voici une histoire magique créée spécialement pour ${config.childName}.`}"
                             </p>
                             <div className="mt-8 text-cloud-dark/40 font-bold uppercase tracking-widest text-sm">Bonne lecture</div>
@@ -118,7 +118,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset }) => 
 
                         {/* RIGHT: TEXT */}
                         <div className="w-full md:w-1/2 h-full bg-white p-8 md:p-16 flex flex-col justify-center relative">
-                             <p className="font-serif font-medium text-2xl md:text-3xl leading-loose text-cloud-dark text-balance">
+                             <p className="font-display font-medium text-2xl md:text-3xl leading-loose text-cloud-dark text-balance">
                                 {story.pages[pageIndex - 2].text}
                              </p>
                              <div className="absolute bottom-4 right-8 text-cloud-dark/20 font-bold text-sm">Page {pageIndex}</div>

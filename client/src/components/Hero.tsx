@@ -2,12 +2,6 @@ import React, { useState } from 'react';
 import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit } from 'lucide-react';
 import { Theme, Activity } from '../types';
 
-// Import generated images for themes
-import imgAdventureMap from "@assets/generated_images/cozy_room_with_glowing_map.png";
-import imgMagicOwl from "@assets/generated_images/cute_purple_owl_with_letter.png";
-import imgSpaceRocket from "@assets/generated_images/garden_shed_turning_into_rocket.png";
-import imgAnimalsConcert from "@assets/generated_images/forest_animals_concert.png";
-
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity) => void;
 }
@@ -22,7 +16,6 @@ const THEME_CARDS = [
     badgeColor: "bg-emerald-100 text-emerald-800",
     iconColor: "text-emerald-500",
     Icon: Compass,
-    image: imgAdventureMap
   },
   {
     theme: Theme.Magic,
@@ -33,7 +26,6 @@ const THEME_CARDS = [
     badgeColor: "bg-violet-100 text-violet-800",
     iconColor: "text-violet-500",
     Icon: Wand2,
-    image: imgMagicOwl
   },
   {
     theme: Theme.Space,
@@ -44,7 +36,6 @@ const THEME_CARDS = [
     badgeColor: "bg-blue-100 text-blue-800",
     iconColor: "text-blue-500",
     Icon: Rocket,
-    image: imgSpaceRocket
   },
   {
     theme: Theme.Animals,
@@ -55,7 +46,6 @@ const THEME_CARDS = [
     badgeColor: "bg-orange-100 text-orange-800",
     iconColor: "text-orange-500",
     Icon: Rabbit,
-    image: imgAnimalsConcert
   },
 ];
 
@@ -111,7 +101,7 @@ const CloudLogo = () => (
      <div className="absolute inset-0 text-cloud-blue drop-shadow-lg">
         <Cloud fill="currentColor" size={48} strokeWidth={0} />
      </div>
-     <div className="relative z-10 text-white font-serif font-black text-xl mb-1">
+     <div className="relative z-10 text-white font-display font-black text-xl mb-1">
         W
      </div>
      <div className="absolute -top-1 -right-1 text-accent-sun animate-pulse">
@@ -139,7 +129,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo(0, 0)}>
             <CloudLogo />
-            <span className="text-3xl font-serif font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors">
+            <span className="text-3xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors">
               WawBook
             </span>
           </div>
@@ -151,7 +141,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
 
           <button 
             onClick={() => onStart()}
-            className="px-6 py-3 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-serif font-black text-lg hover:scale-105 hover:shadow-lg transition-all shadow-md flex items-center gap-2"
+            className="px-6 py-3 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-lg hover:scale-105 hover:shadow-lg transition-all shadow-md flex items-center gap-2"
           >
             <Sparkles size={20} />
             Créer
@@ -171,7 +161,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
               <Star size={16} className="text-accent-sun" fill="currentColor" /> La magie de la lecture
            </div>
            
-           <h1 className="text-5xl md:text-8xl font-serif font-black text-cloud-dark mb-8 leading-[0.9] text-balance tracking-tight drop-shadow-sm">
+           <h1 className="text-5xl md:text-8xl font-display font-black text-cloud-dark mb-8 leading-[0.9] text-balance tracking-tight drop-shadow-sm">
              Un livre de conte dont <span className="text-cloud-blue relative inline-block">
                votre enfant
                <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun opacity-100" viewBox="0 0 100 10" preserveAspectRatio="none">
@@ -186,7 +176,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
            
            <button 
              onClick={() => onStart()}
-             className="inline-flex items-center gap-3 px-10 py-6 bg-cloud-blue text-white rounded-full text-2xl font-serif font-black hover:bg-cloud-deep hover:scale-105 transition-all shadow-cloud-hover group"
+             className="inline-flex items-center gap-3 px-10 py-6 bg-cloud-blue text-white rounded-full text-2xl font-display font-black hover:bg-cloud-deep hover:scale-105 transition-all shadow-cloud-hover group"
            >
              Commencer l'aventure <ArrowRight size={28} className="group-hover:translate-x-2 transition-transform" />
            </button>
@@ -213,7 +203,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
         <div className="max-w-7xl mx-auto">
           {/* THEMES */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-black text-cloud-dark mb-4">Nos Univers Magiques</h2>
+            <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4">Nos Univers Magiques</h2>
             <p className="text-xl text-cloud-dark/60 font-medium">Choisissez le monde préféré de votre enfant</p>
           </div>
 
@@ -222,36 +212,23 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
               <div 
                 key={idx}
                 onClick={() => onStart(card.theme)}
-                className={`group cursor-pointer rounded-3xl p-3 border-4 ${card.borderColor} ${card.bgColor} transition-all hover:-translate-y-2 hover:shadow-xl flex flex-col h-full`}
+                className={`group cursor-pointer rounded-3xl p-3 border-4 ${card.borderColor} ${card.bgColor} transition-all hover:-translate-y-2 hover:shadow-xl`}
               >
                 {/* Image Container */}
-                <div className="bg-white rounded-2xl aspect-[4/3] flex items-center justify-center mb-4 shadow-sm relative overflow-hidden border-2 border-white">
-                    <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-[10px] font-bold text-cloud-dark/50 px-2 py-0.5 rounded-full z-10">
+                <div className="bg-white rounded-2xl aspect-square flex items-center justify-center mb-4 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-3 right-3 bg-gray-100 text-[10px] font-bold text-gray-400 px-2 py-0.5 rounded-full z-10">
                         WawBook
                     </div>
-                    {/* Image or Icon */}
-                    <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-700">
-                      {card.image ? (
-                        <img 
-                          src={card.image} 
-                          alt={card.title} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <card.Icon size={90} strokeWidth={1.5} className={`${card.iconColor} drop-shadow-sm`} />
-                        </div>
-                      )}
+                    {/* Icon */}
+                    <div className="transform group-hover:scale-110 transition-transform duration-300">
+                      <card.Icon size={90} strokeWidth={1.5} className={`${card.iconColor} drop-shadow-sm`} />
                     </div>
-                    
-                    {/* Overlay Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
 
                 {/* Text Content */}
-                <div className="text-center pb-2 mt-auto">
-                   <h4 className="text-xl font-serif font-black text-cloud-dark mb-2">{card.title}</h4>
-                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-white border border-gray-100 text-gray-500 group-hover:bg-cloud-blue group-hover:text-white transition-colors`}>
+                <div className="text-center pb-2">
+                   <h4 className="text-xl font-display font-black text-cloud-dark mb-2">{card.title}</h4>
+                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-white border border-gray-100 text-gray-500`}>
                       {card.badgeText}
                    </span>
                 </div>
@@ -261,7 +238,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
 
           {/* ACTIVITIES */}
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-serif font-black text-cloud-dark mb-4">Ou choisissez par Passion</h2>
+            <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-4">Ou choisissez par Passion</h2>
             <p className="text-xl text-cloud-dark/60 font-medium">Une histoire qui commence avec ce qu'ils aiment</p>
           </div>
           
@@ -294,7 +271,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
 
         <div className="max-w-7xl mx-auto relative z-10 pt-10">
            <div className="text-center mb-20">
-             <h2 className="text-4xl md:text-5xl font-serif font-black text-cloud-dark mb-4">C'est facile comme tout !</h2>
+             <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4">C'est facile comme tout !</h2>
              <p className="text-xl text-cloud-dark/60 font-medium">Trois petites étapes et l'histoire commence.</p>
            </div>
 
@@ -307,7 +284,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
                    <div className={`w-24 h-24 ${step.color} rounded-full flex items-center justify-center shadow-cloud mb-8 transform hover:scale-110 transition-transform`}>
                       {step.icon}
                    </div>
-                   <h3 className="text-2xl font-serif font-black text-cloud-dark mb-3">{step.title}</h3>
+                   <h3 className="text-2xl font-display font-black text-cloud-dark mb-3">{step.title}</h3>
                    <p className="text-lg text-cloud-dark/60 font-bold leading-relaxed max-w-xs">{step.desc}</p>
                 </div>
               ))}
@@ -325,7 +302,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
 
              <div className="grid md:grid-cols-2 gap-12 items-center relative z-10">
                 <div>
-                   <h2 className="text-3xl md:text-4xl font-serif font-black text-cloud-dark mb-6">Pourquoi les parents et les enfants nous adorent ?</h2>
+                   <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-6">Pourquoi les parents et les enfants nous adorent ?</h2>
                    <div className="space-y-6">
                       <div className="flex gap-4">
                          <div className="bg-white p-3 rounded-xl shadow-sm h-fit"><ShieldCheck className="text-cloud-blue" /></div>
@@ -371,7 +348,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
       <section className="py-24 px-6 bg-white relative">
         <div className="max-w-3xl mx-auto">
            <div className="text-center mb-16">
-              <h2 className="text-4xl font-serif font-black text-cloud-dark mb-4">Petites Curiosités</h2>
+              <h2 className="text-4xl font-display font-black text-cloud-dark mb-4">Petites Curiosités</h2>
               <p className="text-xl text-cloud-dark/60 font-medium">On répond à vos questions</p>
            </div>
            
@@ -401,7 +378,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
          <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
             <div className="col-span-1 md:col-span-2">
                <div className="flex items-center gap-2 mb-6 text-white">
-                  <Cloud fill="currentColor" /> <span className="font-serif font-black text-2xl">WawBook</span>
+                  <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">WawBook</span>
                </div>
                <p className="text-cloud-light/60 font-medium text-lg max-w-sm mb-8">
                   Nous créons des moments magiques de lecture pour les enfants du monde entier.

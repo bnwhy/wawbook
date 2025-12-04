@@ -470,7 +470,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
            </div>
 
            <div className="mt-6 text-center">
-              <h3 className="font-serif text-3xl font-black text-cloud-dark">{config.childName || "Le Héros"}</h3>
+              <h3 className="font-display text-3xl font-black text-cloud-dark">{config.childName || "Le Héros"}</h3>
               <p className="text-cloud-dark/50 font-bold uppercase tracking-wider text-sm mt-1">Prêt pour l'aventure !</p>
            </div>
         </div>
@@ -478,7 +478,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
         {/* --- RIGHT COLUMN: CONTROLS --- */}
         <div className="lg:w-7/12 p-8 lg:p-12 overflow-y-auto max-h-[800px]">
            
-           <h2 className="text-3xl font-serif font-black text-cloud-dark mb-8">Créons ton personnage</h2>
+           <h2 className="text-3xl font-display font-black text-cloud-dark mb-8">Créons ton personnage</h2>
 
            <div className="space-y-8">
               
@@ -613,7 +613,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
            <div className="sticky bottom-0 bg-white pt-6 pb-2 mt-8 border-t border-gray-100 flex justify-end">
               <button 
                 onClick={() => config.childName ? onComplete(config) : alert("N'oublie pas le prénom !")}
-                className={`px-8 py-4 rounded-2xl font-serif font-black text-xl flex items-center gap-3 shadow-xl transition-all ${config.childName ? 'bg-accent-sun text-yellow-900 hover:scale-105 hover:shadow-2xl' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                className={`px-8 py-4 rounded-2xl font-display font-black text-xl flex items-center gap-3 shadow-xl transition-all ${config.childName ? 'bg-accent-sun text-yellow-900 hover:scale-105 hover:shadow-2xl' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
               >
                  <Wand2 size={24} />
                  Fabriquer mon livre !

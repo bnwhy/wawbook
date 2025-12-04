@@ -24,9 +24,10 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   
-  /* New Typography for "Childish/Playful" feel */
+  /* Typography matching the uploaded design expectations */
   --font-sans: "Outfit", sans-serif; 
-  --font-serif: "Chewy", cursive; 
+  --font-display: "Chewy", cursive;  /* Mapped to match uploaded components */
+  --font-hand: "Chewy", cursive;     /* Mapped to match uploaded components */
   
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -91,37 +92,6 @@
   --radius: 1.5rem; 
 }
 
-.dark {
-  /* Not really used for this brand, but good to have fallbacks */
-  --background: 260 20% 20%;
-  --foreground: 60 30% 98%;
-
-  --card: 260 20% 25%;
-  --card-foreground: 60 30% 98%;
-
-  --popover: 260 20% 25%;
-  --popover-foreground: 60 30% 98%;
-
-  --primary: 340 70% 70%;
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 160 50% 70%;
-  --secondary-foreground: 160 40% 20%;
-
-  --muted: 260 20% 30%;
-  --muted-foreground: 260 10% 70%;
-
-  --accent: 200 50% 70%;
-  --accent-foreground: 200 40% 20%;
-
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-
-  --border: 260 20% 35%;
-  --input: 260 20% 35%;
-  --ring: 340 50% 70%;
-}
-
 @layer base {
   * {
     @apply border-border;
@@ -129,9 +99,7 @@
   body {
     @apply font-sans antialiased bg-background text-foreground selection:bg-primary/30;
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-serif tracking-wide text-foreground;
-  }
+  /* Apply fonts to global elements if needed, but utility classes handle most */
 }
 
 @layer utilities {

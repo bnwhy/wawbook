@@ -1,70 +1,82 @@
-import { Facebook, Instagram, Twitter } from "lucide-react";
+import { Facebook, Instagram, Twitter, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function Footer() {
   return (
-    <footer className="bg-blue-50/50 pt-16 pb-8 border-t border-primary/5">
+    <footer className="bg-white pt-16 pb-8 relative">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-          <div className="space-y-4">
-            <h3 className="font-serif text-xl font-bold text-primary">WawaBook</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Nous créons des livres personnalisés qui font des enfants les héros de leurs propres histoires. Imprimés sur du papier 100% recyclé.
+        
+        {/* Newsletter Box */}
+        <div className="bg-secondary/30 rounded-[2.5rem] p-8 md:p-12 mb-16 flex flex-col md:flex-row items-center justify-between gap-8 border-4 border-white shadow-lg">
+           <div className="text-center md:text-left">
+              <h3 className="font-serif text-3xl text-secondary-foreground mb-2">Rejoins le Club Waw ! 🎈</h3>
+              <p className="text-gray-600 font-medium">Des coloriages gratuits et des promos magiques.</p>
+           </div>
+           <div className="flex w-full md:w-auto gap-3">
+              <Input placeholder="Ton email..." className="bg-white border-none h-14 rounded-2xl text-lg px-6 shadow-sm w-full md:w-80" />
+              <Button className="h-14 rounded-2xl px-8 bg-secondary text-secondary-foreground font-bold hover:bg-secondary/80 text-lg shadow-sm">
+                Hop !
+              </Button>
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 text-center md:text-left">
+          <div className="space-y-4 flex flex-col items-center md:items-start">
+            <h3 className="font-serif text-3xl font-bold text-primary rotate-[-3deg]">WawBook</h3>
+            <p className="text-gray-500 font-medium leading-relaxed max-w-xs">
+              L'atelier de livres magiques pour les enfants extraordinaires (comme le vôtre !).
             </p>
-            <div className="flex gap-4">
-              <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/5">
-                <Instagram className="h-5 w-5" />
+            <div className="flex gap-3 mt-4">
+              <Button variant="outline" size="icon" className="rounded-full border-2 border-gray-100 hover:bg-primary/10 hover:text-primary hover:border-primary/20 w-12 h-12">
+                <Instagram className="h-6 w-6" />
               </Button>
-              <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/5">
-                <Facebook className="h-5 w-5" />
+              <Button variant="outline" size="icon" className="rounded-full border-2 border-gray-100 hover:bg-blue-50 hover:text-blue-500 hover:border-blue-100 w-12 h-12">
+                <Facebook className="h-6 w-6" />
               </Button>
-              <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/5">
-                <Twitter className="h-5 w-5" />
+              <Button variant="outline" size="icon" className="rounded-full border-2 border-gray-100 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-100 w-12 h-12">
+                <Mail className="h-6 w-6" />
               </Button>
             </div>
           </div>
 
           <div>
-            <h4 className="font-bold mb-4 text-primary">Boutique</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <h4 className="font-black text-lg mb-6 text-gray-800 uppercase tracking-wider">La Boutique</h4>
+            <ul className="space-y-3 text-gray-500 font-medium text-lg">
               <li><a href="#" className="hover:text-primary transition-colors">Tous les livres</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Nouveaux-nés</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Frères et sœurs</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Cherche et trouve</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Cartes cadeaux</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Bébés (0-3 ans)</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Grands (4-8 ans)</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Cartes Cadeaux</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-bold mb-4 text-primary">À propos</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Notre histoire</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Durabilité</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Impact social</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Carrières</a></li>
+            <h4 className="font-black text-lg mb-6 text-gray-800 uppercase tracking-wider">WawBook & Co</h4>
+            <ul className="space-y-3 text-gray-500 font-medium text-lg">
+              <li><a href="#" className="hover:text-primary transition-colors">Notre Mission</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Écologie 🌱</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Avis Parents</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Presse</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-bold mb-4 text-primary">Restez informé</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Inscrivez-vous pour recevoir des offres spéciales et des nouvelles magiques.
+            <h4 className="font-black text-lg mb-6 text-gray-800 uppercase tracking-wider">Besoin d'aide ?</h4>
+            <p className="text-gray-500 font-medium mb-4">
+              Nos lutins sont là pour vous répondre !
             </p>
-            <div className="flex gap-2">
-              <Input placeholder="Votre email" className="bg-white border-transparent shadow-sm focus-visible:ring-primary" />
-              <Button className="bg-primary hover:bg-primary/90">Rejoindre</Button>
-            </div>
+            <a href="mailto:hello@wawabook.com" className="inline-block text-primary font-bold text-lg hover:underline decoration-wavy underline-offset-4">
+              hello@wawabook.com
+            </a>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-primary/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} WawaBook. Tous droits réservés.</p>
+        <div className="pt-8 border-t-2 border-dashed border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400 font-medium">
+          <p>&copy; {new Date().getFullYear()} WawBook. Fait avec ❤️ et de la poussière d'étoiles.</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-primary">Politique de confidentialité</a>
-            <a href="#" className="hover:text-primary">Conditions d'utilisation</a>
-            <a href="#" className="hover:text-primary">Mentions légales</a>
+            <a href="#" className="hover:text-primary">Confidentialité</a>
+            <a href="#" className="hover:text-primary">CGV</a>
+            <a href="#" className="hover:text-primary">Mentions Légales</a>
           </div>
         </div>
       </div>

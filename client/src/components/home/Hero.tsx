@@ -1,100 +1,100 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import heroImage from "@assets/generated_images/wawabook_hero_image_blue_theme.png";
-import { ArrowRight, Star } from "lucide-react";
+import heroBg from "@assets/generated_images/pastel_hero_background_wawbook.png";
+import { Sparkles, ArrowRight } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-background pt-12 pb-24 md:pt-20 md:pb-32">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
+    <section className="relative overflow-hidden bg-[#fffdf5] pt-10 pb-20 md:pt-16 md:pb-28">
+      
+      {/* Pastel Background Blobs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute -bottom-[10%] left-[20%] w-[60%] h-[60%] bg-accent/20 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
+
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
           
           {/* Text Content */}
-          <div className="flex-1 text-center md:text-left z-10">
+          <div className="flex-1 text-center md:text-left order-2 md:order-1">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-primary text-xs font-bold uppercase tracking-wider mb-6">
-                <Star className="w-3 h-3 fill-current" />
-                Plus d'un million de livres vendus
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border-2 border-secondary/30 text-secondary-foreground text-sm font-bold uppercase tracking-wider mb-6 shadow-sm transform -rotate-2">
+                <Sparkles className="w-4 h-4 text-secondary" />
+                Magie Garantie 100%
               </div>
               
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-primary leading-[1.1] mb-6">
-                Les livres pour enfants <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">les plus personnels</span>
-                <br/> au monde.
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-primary drop-shadow-sm leading-[0.9] mb-6">
+                Des histoires <br/>
+                <span className="text-secondary-foreground relative">
+                  extraordinaires
+                  <svg className="absolute w-full h-3 -bottom-1 left-0 text-secondary/50 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                    <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                  </svg>
+                </span>
               </h1>
               
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto md:mx-0 leading-relaxed">
-                Créez une histoire unique dont votre enfant est le héros. 
-                Apparence personnalisée, prénom et une aventure magique qu'il chérira pour toujours.
+              <p className="text-xl text-gray-500 mb-8 max-w-lg mx-auto md:mx-0 font-medium leading-relaxed">
+                Transformez votre enfant en héros de son propre conte de fées ! 
+                <br className="hidden md:block"/> 
+                Un cadeau doux, coloré et inoubliable.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Button size="lg" className="rounded-full text-lg h-14 px-8 bg-primary hover:bg-primary/90 text-white font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1">
-                  Créer votre livre
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button size="lg" variant="outline" className="rounded-full text-lg h-14 px-8 border-2 hover:bg-blue-50 text-primary border-primary/20">
-                  Voir toutes les histoires
+                <Button size="lg" className="rounded-3xl text-xl h-16 px-10 bg-primary hover:bg-primary/90 text-white font-serif shadow-[0_8px_0_rgb(219,112,147)] hover:shadow-[0_4px_0_rgb(219,112,147)] hover:translate-y-[4px] transition-all active:shadow-none active:translate-y-[8px]">
+                  Je crée mon livre !
                 </Button>
               </div>
               
-              <div className="mt-8 flex items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-bold overflow-hidden">
-                      <img src={`https://ui-avatars.com/api/?name=User+${i}&background=random`} alt="User" />
+              <div className="mt-10 flex items-center justify-center md:justify-start gap-3">
+                 <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 rotate-1">
+                    <div className="flex -space-x-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="w-10 h-10 rounded-full border-4 border-white overflow-hidden bg-gray-100">
+                          <img src={`https://ui-avatars.com/api/?name=Kid+${i}&background=random&color=fff`} alt="Kid" />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex text-yellow-400">
-                    <Star className="w-4 h-4 fill-current" />
-                    <Star className="w-4 h-4 fill-current" />
-                    <Star className="w-4 h-4 fill-current" />
-                    <Star className="w-4 h-4 fill-current" />
-                    <Star className="w-4 h-4 fill-current" />
-                  </div>
-                  <span>4.9/5 par des parents heureux</span>
-                </div>
+                    <p className="text-sm font-bold text-gray-400">Déjà 50,000+ <br/>enfants heureux</p>
+                 </div>
               </div>
             </motion.div>
           </div>
 
           {/* Hero Image */}
-          <div className="flex-1 relative w-full max-w-lg md:max-w-none">
+          <div className="flex-1 relative w-full max-w-lg md:max-w-none order-1 md:order-2">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
+              initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
               className="relative z-10"
             >
-              {/* Blob Background Shape */}
-              <div className="absolute -inset-4 bg-gradient-to-tr from-blue-200 to-blue-100 rounded-[40%_60%_70%_30%/40%_50%_60%_50%] blur-3xl opacity-60 -z-10 animate-pulse" />
-              
+              <div className="absolute top-0 right-0 w-full h-full bg-accent rounded-[3rem] rotate-6 -z-10 transform translate-x-4 translate-y-4"></div>
               <img 
-                src={heroImage} 
-                alt="Enfant lisant un livre magique" 
-                className="w-full h-auto rounded-3xl shadow-2xl transform md:rotate-2 hover:rotate-0 transition-transform duration-500"
+                src={heroBg} 
+                alt="WawBook World" 
+                className="w-full h-auto rounded-[3rem] border-8 border-white shadow-xl object-cover aspect-square"
               />
               
-              {/* Floating Badge */}
-              <div className="absolute -bottom-6 -left-6 md:bottom-10 md:-left-10 bg-white p-4 rounded-2xl shadow-xl max-w-[200px] rotate-[-6deg]">
-                <p className="font-serif text-primary font-bold text-lg leading-tight">"Le meilleur cadeau !"</p>
-                <p className="text-xs text-muted-foreground mt-1">- Sarah, Maman de 2</p>
+              {/* Sticker Badge */}
+              <div className="absolute -bottom-4 -left-4 bg-yellow-200 text-yellow-800 p-4 rounded-full w-28 h-28 flex flex-col items-center justify-center text-center shadow-lg rotate-[-12deg] border-4 border-white font-serif leading-tight z-20 animate-bounce-slow">
+                <span className="text-3xl font-bold">top</span>
+                <span className="text-sm font-bold">CADEAU</span>
               </div>
             </motion.div>
           </div>
         </div>
       </div>
-
-      {/* Bottom Wave Divider */}
+      
+      {/* Cloud Divider */}
       <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
-        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-[calc(100%+1.3px)] h-[60px]">
-          <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="#ffffff"></path>
+         <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-[calc(100%+1.3px)] h-[50px] fill-white">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
         </svg>
       </div>
     </section>

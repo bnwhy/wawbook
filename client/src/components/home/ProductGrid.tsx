@@ -9,30 +9,30 @@ import coverSearch from "@assets/generated_images/search_and_find_book_cover.png
 const books = [
   {
     id: 1,
-    title: "The Great Adventure",
-    description: "A journey through the magical forest where your child meets woodland friends.",
+    title: "La Grande Aventure",
+    description: "Un voyage à travers la forêt magique où votre enfant rencontre des amis des bois.",
     image: coverAdventure,
-    price: "$29.99",
-    badge: "Bestseller",
-    age: "3-7 years"
+    price: "29,99 €",
+    badge: "Best-seller",
+    age: "3-7 ans"
   },
   {
     id: 2,
-    title: "Goodnight, Little One",
-    description: "The perfect bedtime story to lull your little hero into a peaceful sleep.",
+    title: "Bonne Nuit, Petit Trésor",
+    description: "L'histoire du soir parfaite pour bercer votre petit héros vers un sommeil paisible.",
     image: coverBedtime,
-    price: "$24.99",
-    badge: "New",
-    age: "0-4 years"
+    price: "24,99 €",
+    badge: "Nouveau",
+    age: "0-4 ans"
   },
   {
     id: 3,
-    title: "World Search & Find",
-    description: "Can you find yourself? A global adventure across 10 different countries.",
+    title: "Tour du Monde Cherche et Trouve",
+    description: "Peux-tu te retrouver ? Une aventure mondiale à travers 10 pays différents.",
     image: coverSearch,
-    price: "$34.99",
-    badge: "Top Rated",
-    age: "4-8 years"
+    price: "34,99 €",
+    badge: "Top",
+    age: "4-8 ans"
   }
 ];
 
@@ -41,9 +41,9 @@ export function ProductGrid() {
     <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-serif font-bold text-primary mb-4">Favorite Stories</h2>
+          <h2 className="text-3xl md:text-5xl font-serif font-bold text-primary mb-4">Histoires Favorites</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Our most loved personalized books, ready for your child to star in.
+            Nos livres personnalisés les plus aimés, prêts pour que votre enfant en soit la star.
           </p>
         </div>
 
@@ -56,8 +56,8 @@ export function ProductGrid() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
             >
-              <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group bg-[#fcfaf6]">
-                <div className="relative aspect-[4/3] overflow-hidden bg-muted/20 p-8 flex items-center justify-center">
+              <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group bg-blue-50/30">
+                <div className="relative aspect-[4/3] overflow-hidden bg-blue-100/50 p-8 flex items-center justify-center">
                   <div className="absolute top-4 right-4 z-10">
                     <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary font-bold shadow-sm">
                       {book.badge}
@@ -83,7 +83,7 @@ export function ProductGrid() {
                 </CardContent>
                 <CardFooter className="p-6 pt-0">
                   <Button className="w-full rounded-full font-bold h-12 text-base bg-primary hover:bg-primary/90">
-                    Personalize Now
+                    Personnaliser maintenant
                   </Button>
                 </CardFooter>
               </Card>
@@ -93,7 +93,7 @@ export function ProductGrid() {
 
         <div className="text-center mt-16">
           <Button variant="outline" size="lg" className="rounded-full px-8 h-12 border-2 text-primary border-primary/20 hover:border-primary hover:bg-transparent">
-            See all books
+            Voir tous les livres
           </Button>
         </div>
       </div>

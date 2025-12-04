@@ -32,21 +32,21 @@
   --radius-lg: var(--radius);
 }
 
-/* LIGHT MODE - Librio Inspired */
+/* LIGHT MODE - WawaBook Blue Universe */
 :root {
-  /* Warm, Paper-like background */
-  --background: 40 33% 98%; /* #fcfaf6 - off white paper */
-  --foreground: 222 47% 11%; /* #0f172a - deep ink blue */
+  /* Soft Blue-tinted White Background */
+  --background: 210 33% 98%; /* Very pale blue-white */
+  --foreground: 222 47% 11%; /* Deep ink blue */
 
-  /* Primary Brand Color - Deep Magical Teal/Blue */
-  --primary: 185 50% 30%; /* Deep Teal */
+  /* Primary Brand Color - WawaBook Blue */
+  --primary: 215 90% 45%; /* Vibrant Royal Blue */
   --primary-foreground: 210 40% 98%;
 
-  /* Secondary - Warm Gold/Yellow */
-  --secondary: 45 90% 60%; /* Golden Yellow */
+  /* Secondary - Soft Sky Blue */
+  --secondary: 200 80% 85%; /* Light Sky Blue */
   --secondary-foreground: 222 47% 11%;
 
-  /* Cards - crisp white on paper bg */
+  /* Cards */
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
 
@@ -56,7 +56,7 @@
   --muted: 210 40% 96.1%;
   --muted-foreground: 215.4 16.3% 46.9%;
 
-  --accent: 170 60% 95%; /* Soft mint/teal tint */
+  --accent: 210 60% 95%; /* Pale Blue Accent */
   --accent-foreground: 222.2 47.4% 11.2%;
 
   --destructive: 0 84.2% 60.2%;
@@ -64,13 +64,12 @@
 
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 185 50% 30%;
+  --ring: 215 90% 45%;
 
   --radius: 0.75rem;
 }
 
 .dark {
-  /* Keeping it light-themed essentially for a book site, but providing dark mode values just in case user toggles system prefs */
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
 
@@ -80,7 +79,7 @@
   --popover: 222.2 84% 4.9%;
   --popover-foreground: 210 40% 98%;
 
-  --primary: 210 40% 98%;
+  --primary: 215 90% 60%;
   --primary-foreground: 222.2 47.4% 11.2%;
 
   --secondary: 217.2 32.6% 17.5%;
@@ -105,7 +104,7 @@
     @apply border-border;
   }
   body {
-    @apply font-sans antialiased bg-background text-foreground selection:bg-secondary/30;
+    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/20;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif font-bold tracking-tight text-primary;

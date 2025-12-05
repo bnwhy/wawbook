@@ -1,0 +1,49 @@
+import { Theme } from './types';
+
+export interface BookProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  promoCode?: string;
+  coverImage: string;
+  theme: Theme;
+  wizardConfig: WizardConfiguration;
+  contentConfig: ContentConfiguration;
+}
+
+export interface WizardConfiguration {
+  avatarStyle: 'watercolor' | 'cartoon' | 'realistic';
+  tabs: WizardTab[];
+}
+
+export interface WizardTab {
+  id: string;
+  label: string; // e.g., "Héros", "Compagnon"
+  type: 'character' | 'element';
+  options: string[]; // e.g., ['hairColor', 'skinTone']
+}
+
+export interface ContentConfiguration {
+  texts: TextElement[];
+  images: ImageVariant[];
+}
+
+export interface TextElement {
+  id: string;
+  label: string; // Internal label
+  type: 'fixed' | 'variable';
+  content: string; // Default content or variable key
+  position: {
+    pageIndex: number;
+    zoneId: string; // e.g., "header", "body", "footer"
+    layer?: number;
+  };
+}
+
+export interface ImageVariant {
+  id: string;
+  pageIndex: number;
+  combinationKey: string; // e.g., "gender:boy|style:A"
+  imageUrl: string;
+}

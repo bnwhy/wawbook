@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit } from 'lucide-react';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
-import generatedBookImage from '@assets/generated_images/a_magical_open_book_with_elements_flying_out.png';
-import stockBookImage from '@assets/stock_images/open_children\'s_book_e42f7fcf.jpg';
+import explorerImage from '@assets/generated_images/children\'s_book_cover_for_explorer_theme.png';
+import magicianImage from '@assets/generated_images/children\'s_book_cover_for_magician_theme.png';
+import astronautImage from '@assets/generated_images/children\'s_book_cover_for_astronaut_theme.png';
+import animalsImage from '@assets/generated_images/children\'s_book_cover_for_animal_friend_theme.png';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity) => void;
@@ -14,41 +16,37 @@ const THEME_CARDS = [
     theme: Theme.Adventure,
     title: "L'Explorateur",
     badgeText: "Aventure & Jungle",
-    borderColor: "border-emerald-400",
-    bgColor: "bg-emerald-50",
-    badgeColor: "bg-emerald-100 text-emerald-800",
-    iconColor: "text-emerald-500",
-    Icon: Compass,
+    image: explorerImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Une expédition incroyable au cœur de la jungle pour découvrir des animaux fascinants."
   },
   {
     theme: Theme.Magic,
     title: "Le Magicien",
     badgeText: "Sortilèges & Rêves",
-    borderColor: "border-violet-400",
-    bgColor: "bg-violet-50",
-    badgeColor: "bg-violet-100 text-violet-800",
-    iconColor: "text-violet-500",
-    Icon: Wand2,
+    image: magicianImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Un voyage féerique où la magie et les rêves deviennent réalité grâce à votre enfant."
   },
   {
     theme: Theme.Space,
     title: "L'Astronaute",
     badgeText: "Fusées & Étoiles",
-    borderColor: "border-blue-400",
-    bgColor: "bg-blue-50",
-    badgeColor: "bg-blue-100 text-blue-800",
-    iconColor: "text-blue-500",
-    Icon: Rocket,
+    image: astronautImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Décollage immédiat pour une aventure spatiale à la rencontre des étoiles et des planètes."
   },
   {
     theme: Theme.Animals,
     title: "L'Ami des Bêtes",
     badgeText: "Forêt & Câlins",
-    borderColor: "border-orange-400",
-    bgColor: "bg-orange-50",
-    badgeColor: "bg-orange-100 text-orange-800",
-    iconColor: "text-orange-500",
-    Icon: Rabbit,
+    image: animalsImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Une promenade douce et poétique en forêt pour se faire plein de nouveaux amis."
   },
 ];
 
@@ -183,32 +181,44 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
               <p className="text-xl text-cloud-dark/60 font-medium">Choisissez le monde préféré de votre enfant</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-7xl mx-auto">
               {THEME_CARDS.map((card, idx) => (
                 <div 
                   key={idx}
                   onClick={() => onStart(card.theme)}
-                  className={`group cursor-pointer rounded-3xl p-3 border-4 ${card.borderColor} ${card.bgColor} transition-all hover:-translate-y-2 hover:shadow-xl`}
+                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
-                  <div className="bg-white rounded-2xl aspect-square flex items-center justify-center mb-4 shadow-sm relative overflow-hidden">
-                      <div className="absolute top-3 right-3 bg-gray-100 text-[10px] font-bold text-gray-400 px-2 py-0.5 rounded-full z-10">
-                          WawBook
-                      </div>
-                      {/* Book Cover Image */}
+                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
                       <img 
-                        src={generatedBookImage} 
+                        src={card.image} 
                         alt={card.title}
-                        className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-110 transition-transform duration-500"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
+                          <Star size={12} className="text-accent-sun fill-current" />
+                          Best-seller
+                      </div>
                   </div>
 
-                  {/* Text Content */}
-                  <div className="text-center pb-2">
-                     <h4 className="text-xl font-display font-black text-cloud-dark mb-2">{card.title}</h4>
-                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-white border border-gray-100 text-gray-500`}>
-                        {card.badgeText}
-                     </span>
+                  {/* Content */}
+                  <div className="p-5 flex flex-col flex-grow">
+                     <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
+                     <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.title}</h3>
+                     <p className="text-cloud-dark/60 text-sm font-medium line-clamp-2 mb-6 leading-relaxed">
+                        {card.description}
+                     </p>
+                     
+                     <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice}</span>
+                            <span className="text-xl font-black text-accent-melon">{card.price}</span>
+                        </div>
+                        <button className="bg-cloud-dark text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
+                            <PenTool size={14} />
+                            Créer
+                        </button>
+                     </div>
                   </div>
                 </div>
               ))}

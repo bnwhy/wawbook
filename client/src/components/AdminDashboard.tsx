@@ -16,8 +16,8 @@ const INITIAL_BOOKS: BookProduct[] = [
     wizardConfig: {
       avatarStyle: 'watercolor',
       tabs: [
-        { id: 't1', label: 'Enfant', type: 'character', options: ['hair', 'skin', 'clothes'] },
-        { id: 't2', label: 'Parent', type: 'character', options: ['hair', 'skin', 'beard'] }
+        { id: 't1', label: 'Enfant', type: 'character', options: ['hair', 'skin', 'clothes'], variants: ['Garçon', 'Fille'] },
+        { id: 't2', label: 'Parent', type: 'character', options: ['hair', 'skin', 'beard'], variants: ['Papa', 'Maman'] }
       ]
     },
     contentConfig: {
@@ -52,30 +52,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Helper to generate combinations
   const generateCombinations = (book: BookProduct) => {
     const tabs = book.wizardConfig.tabs;
-    if (tabs.length === 0) return ['default'];
+    if (tabs.length === 0) return ['Défaut'];
 
-    // This is a simplified generator. For a real app, we'd do a full Cartesian product.
-    // For now, let's generate some sample combinations based on the first tab options + second tab options
-    // e.g. "Boy + Blonde", "Boy + Brown", "Girl + Blonde"
+    // Cartesian product of all tab variants
+    const cartesian = (a: string[], b: string[]) => [].concat(...a.map(d => b.map(e => [].concat(d, e))));
     
-    const combinations: string[] = ['default'];
+    // Get variants for each tab, fallback to ['Standard'] if empty
+    const allVariants = tabs.map(t => t.variants.length > 0 ? t.variants : [t.label]);
     
-    // Just flat map for prototype visualization if complex cartesian is too much for now
-    // Or implement a basic one:
+    if (allVariants.length === 0) return ['Défaut'];
     
-    // Let's try a simple cartesian product of the first option of each tab to show structure
-    // Actually, let's just create a mix for the demo based on the "options" array of the tabs
-    
-    if (tabs.length > 0) {
-        // Mock generation logic for visualization
-        const characterTab = tabs.find(t => t.type === 'character');
-        if (characterTab) {
-             combinations.push('Garçon', 'Fille');
-             combinations.push('Garçon + Blond', 'Garçon + Brun', 'Fille + Blonde', 'Fille + Brune');
-        }
+    // Calculate product
+    let combinations = allVariants[0];
+    for (let i = 1; i < allVariants.length; i++) {
+        combinations = combinations.flatMap(d => allVariants[i].map(e => `${d} + ${e}`));
     }
     
-    return combinations.length > 1 ? combinations.filter(c => c !== 'default') : combinations;
+    return combinations;
   };
 
   const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
@@ -298,7 +291,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <h2 className="text-xl font-bold text-slate-800">Onglets de Personnalisation</h2>
                         <button 
                           onClick={() => {
-                             const newTab: WizardTab = { id: Date.now().toString(), label: 'Nouveau Perso', type: 'character', options: [] };
+                             const newTab: WizardTab = { id: Date.now().toString(), label: 'Nouveau Perso', type: 'character', options: [], variants: [] };
                              handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: [...selectedBook.wizardConfig.tabs, newTab]}});
                           }}
                           className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold transition-colors"
@@ -351,7 +344,44 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               </div>
                               
                               <div>
-                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Options disponibles</label>
+                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Variantes Principales (ex: Garçon, Fille)</label>
+                                 <div className="flex gap-2 mb-2">
+                                    <input 
+                                      type="text" 
+                                      placeholder="Ajouter variante..." 
+                                      className="border border-gray-300 rounded px-2 py-1 text-xs flex-1"
+                                      onKeyDown={(e) => {
+                                         if (e.key === 'Enter') {
+                                            const val = (e.target as HTMLInputElement).value;
+                                            if (val) {
+                                               const newTabs = [...selectedBook.wizardConfig.tabs];
+                                               newTabs[idx].variants = [...(newTabs[idx].variants || []), val];
+                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                               (e.target as HTMLInputElement).value = '';
+                                            }
+                                         }
+                                      }}
+                                    />
+                                 </div>
+                                 <div className="flex gap-2 flex-wrap mb-4">
+                                    {(tab.variants || []).map(v => (
+                                       <span key={v} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold border border-purple-200 flex items-center gap-1">
+                                          {v}
+                                          <button 
+                                            onClick={() => {
+                                               const newTabs = [...selectedBook.wizardConfig.tabs];
+                                               newTabs[idx].variants = newTabs[idx].variants.filter(x => x !== v);
+                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                            }}
+                                            className="hover:text-purple-900"
+                                          >
+                                             <Trash2 size={10} />
+                                          </button>
+                                       </span>
+                                    ))}
+                                 </div>
+
+                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Options de détail</label>
                                  <div className="flex gap-2 flex-wrap">
                                     {['hair', 'skin', 'eyes', 'glasses', 'beard', 'clothes', 'accessory'].map(opt => (
                                        <button 

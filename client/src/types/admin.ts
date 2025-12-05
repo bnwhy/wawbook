@@ -22,6 +22,7 @@ export interface WizardTab {
   label: string; // e.g., "Héros", "Compagnon"
   type: 'character' | 'element';
   options: string[]; // e.g., ['hairColor', 'skinTone']
+  variants: string[]; // e.g., ['Garçon', 'Fille'] or ['Chat', 'Chien']
 }
 
 export interface ContentConfiguration {

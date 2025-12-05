@@ -291,22 +291,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {activeTab === 'wizard' && selectedBookId && selectedBook && (
                <div className="max-w-4xl mx-auto space-y-6">
                   
-                  {/* Style Config */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                     <h2 className="text-xl font-bold mb-4 text-slate-800">Style Artistique</h2>
-                     <div className="grid grid-cols-3 gap-4">
-                        {['watercolor', 'cartoon', 'realistic'].map(style => (
-                           <button 
-                             key={style}
-                             onClick={() => handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, avatarStyle: style as any}})}
-                             className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${selectedBook.wizardConfig.avatarStyle === style ? 'border-brand-coral bg-red-50 text-brand-coral' : 'border-gray-100 hover:border-gray-200'}`}
-                           >
-                              <div className="w-12 h-12 rounded-full bg-gray-200"></div>
-                              <span className="font-bold capitalize">{style}</span>
-                           </button>
-                        ))}
-                     </div>
-                  </div>
 
                   {/* Tabs Config */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">

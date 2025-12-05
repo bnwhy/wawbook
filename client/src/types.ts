@@ -22,6 +22,7 @@ export interface CharacterAppearance {
   eyeColor: string;
   skinTone: string;
   hairStyle: HairStyle;
+  beard?: string; // Added beard optional field
   outfit: Outfit;
   activity: Activity;
   glasses: boolean;

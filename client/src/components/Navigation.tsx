@@ -10,11 +10,11 @@ const MENU_STRUCTURE = [
     label: "Produits",
     type: "simple",
     items: [
-      "Tous les produits",
-      "Catégories de produits",
-      "Sous-catégories",
-      "Fiches produits",
-      "Autres (Cartes, Affiches...)"
+      "Nouveau",
+      "Bestsellers",
+      "Livres d'enfants personnalisés",
+      "Livres à chercher et à trouver",
+      "Histoires à dormir debout"
     ]
   },
   {

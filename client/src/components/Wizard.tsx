@@ -196,12 +196,12 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
       <Navigation onStart={() => {}} />
 
       {/* WIZARD CONTENT */}
-      <div className="flex-1 flex items-start justify-center p-4 md:p-8 pt-28 md:pt-32 relative" style={{ backgroundImage: bgPattern }}>
+      <div className="flex-1 flex items-start justify-center p-4 md:p-8 pt-28 md:pt-32 relative h-screen overflow-hidden" style={{ backgroundImage: bgPattern }}>
         
-        <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start">
+        <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start h-full">
           
           {/* --- LEFT COLUMN: CONFIGURATION --- */}
-          <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col">
+          <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col lg:h-[calc(100vh-160px)]">
              
              <div className="p-6 border-b border-gray-100">
                 <h2 className="text-xl font-display font-black text-cloud-dark">Créez vos personnages principaux</h2>
@@ -224,7 +224,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
              </div>
 
              {/* FORM CONTENT */}
-             <div className="p-6 space-y-6 overflow-y-auto max-h-[600px]">
+             <div className="p-6 space-y-6 overflow-y-auto flex-1">
                 
                 {/* 1. NAME */}
                 <div className="space-y-2">

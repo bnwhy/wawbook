@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit } from 'lucide-react';
+import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit, Settings } from 'lucide-react';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
 import explorerImage from '@assets/generated_images/children\'s_book_cover_for_explorer_theme.png';
@@ -405,6 +405,11 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 cursor-pointer"><span className="font-black">I</span></div>
                     <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 cursor-pointer"><span className="font-black">F</span></div>
                  </div>
+
+                 {/* ADMIN LINK */}
+                 <button onClick={onAdminClick} className="mt-8 text-cloud-light/30 text-sm hover:text-white transition-colors flex items-center gap-2">
+                    <Settings size={14} /> Administration
+                 </button>
               </div>
               
               <div>

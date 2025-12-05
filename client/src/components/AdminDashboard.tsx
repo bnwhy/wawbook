@@ -435,6 +435,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  onComplete={() => {}} 
                                  onCancel={() => {}} 
                                  wizardConfig={selectedBook.wizardConfig}
+                                 showNavigation={false}
                               />
                            </div>
                         </div>

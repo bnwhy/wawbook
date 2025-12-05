@@ -11,6 +11,7 @@ interface WizardProps {
   initialTheme?: Theme;
   initialActivity?: Activity;
   wizardConfig?: { tabs: WizardTab[] }; // New prop for dynamic config
+  showNavigation?: boolean;
 }
 
 // --- CONSTANTS ---
@@ -160,7 +161,7 @@ const OutfitThumbnail = ({ style }: { style: Outfit }) => (
   </svg>
 );
 
-const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, initialActivity, wizardConfig }) => {
+const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, initialActivity, wizardConfig, showNavigation = true }) => {
   const [config, setConfig] = useState<BookConfig>({
     childName: '',
     age: 5,
@@ -216,7 +217,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
       </svg>
 
       {/* NAVIGATION (Integrated) */}
-      <Navigation onStart={() => {}} />
+      {showNavigation && <Navigation onStart={() => {}} />}
 
       {/* WIZARD CONTENT */}
       <div className="flex-1 flex items-start justify-center p-4 pt-20 md:p-8 md:pt-24 relative overflow-hidden w-full" style={{ backgroundImage: bgPattern }}>

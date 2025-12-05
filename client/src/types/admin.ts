@@ -25,8 +25,16 @@ export interface WizardTab {
 }
 
 export interface ContentConfiguration {
+  pages: PageDefinition[];
   texts: TextElement[];
   images: ImageVariant[];
+}
+
+export interface PageDefinition {
+  id: string;
+  pageNumber: number;
+  label: string; // e.g. "Page 1", "Cover"
+  description?: string; // e.g. "Introduction in the bedroom"
 }
 
 export interface TextElement {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout } from 'lucide-react';
+import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter } from 'lucide-react';
 import { Theme } from '../types';
-import { BookProduct, WizardTab, TextElement } from '../types/admin';
+import { BookProduct, WizardTab, TextElement, PageDefinition } from '../types/admin';
 
 // --- MOCK INITIAL DATA ---
 const INITIAL_BOOKS: BookProduct[] = [
@@ -21,6 +21,12 @@ const INITIAL_BOOKS: BookProduct[] = [
       ]
     },
     contentConfig: {
+      pages: [
+        { id: 'p0', pageNumber: 0, label: 'Couverture', description: 'Couverture rigide personnalisée' },
+        { id: 'p1', pageNumber: 1, label: 'Page 1', description: 'Introduction dans la chambre' },
+        { id: 'p2', pageNumber: 2, label: 'Page 2', description: 'Départ à l\'aventure' },
+        { id: 'p3', pageNumber: 3, label: 'Page 3', description: 'Rencontre magique' },
+      ],
       texts: [
         { id: 'txt1', label: 'Titre Couverture', type: 'variable', content: '{{CHILD_NAME}} et {{PARENT_NAME}}', position: { pageIndex: 0, zoneId: 'title' } },
         { id: 'txt2', label: 'Dédicace', type: 'fixed', content: 'Pour mon petit trésor.', position: { pageIndex: 1, zoneId: 'body' } }
@@ -35,6 +41,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [books, setBooks] = useState<BookProduct[]>(INITIAL_BOOKS);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Content Editor State
+  const [selectedVariant, setSelectedVariant] = useState<string>('default');
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
 
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
@@ -53,7 +63,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       theme: Theme.Adventure,
       coverImage: '',
       wizardConfig: { avatarStyle: 'watercolor', tabs: [] },
-      contentConfig: { texts: [], images: [] }
+      contentConfig: { pages: [], texts: [], images: [] }
     };
     setBooks([...books, newBook]);
     setSelectedBookId(newBook.id);
@@ -64,7 +74,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       
       {/* SIDEBAR */}
-      <div className="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-2xl z-20">
+      <div className="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-2xl z-20 shrink-0">
         <div className="p-6 border-b border-slate-800 flex items-center gap-3">
            <div className="w-8 h-8 rounded bg-gradient-to-br from-brand-coral to-red-500 flex items-center justify-center text-white font-bold">W</div>
            <span className="font-bold text-white text-lg tracking-tight">WawBook Admin</span>
@@ -111,7 +121,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800'}`}
                >
                   <Layers size={20} />
-                  <span className="font-medium">Contenu</span>
+                  <span className="font-medium">Contenu & Storyboard</span>
                </button>
              </>
            )}
@@ -128,7 +138,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
          {/* Header */}
-         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm">
+         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm shrink-0">
             <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                {selectedBookId ? (
                  <>
@@ -360,139 +370,197 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                </div>
             )}
 
-            {/* --- VIEW: EDIT CONTENT --- */}
+            {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
             {activeTab === 'content' && selectedBookId && selectedBook && (
-               <div className="space-y-6">
+               <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
                   
-                  {/* Text Management */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                           <Type size={20} className="text-brand-coral" />
-                           Textes du Livre
-                        </h2>
-                        <button 
-                          onClick={() => {
-                             const newText: TextElement = { id: Date.now().toString(), label: 'Nouveau Texte', type: 'fixed', content: '', position: { pageIndex: 0, zoneId: 'body' } };
-                             handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: [...selectedBook.contentConfig.texts, newText]}});
-                          }}
-                          className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold transition-colors"
+                  {/* Toolbar */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex justify-between items-center shrink-0">
+                     <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-slate-600 font-bold">
+                           <Filter size={18} />
+                           <span>Combinaison :</span>
+                        </div>
+                        <select 
+                           value={selectedVariant}
+                           onChange={(e) => setSelectedVariant(e.target.value)}
+                           className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-coral outline-none min-w-[200px]"
                         >
-                           + Ajouter un texte
-                        </button>
+                           <option value="default">Défaut</option>
+                           <option value="boy">Garçon</option>
+                           <option value="girl">Fille</option>
+                           <option value="boy_blonde">Garçon + Blond</option>
+                           {/* Dynamic options could be added here */}
+                        </select>
+                        <button className="text-xs text-brand-coral font-bold hover:underline">+ Ajouter variante</button>
                      </div>
-
-                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                           <thead>
-                              <tr className="border-b border-gray-100 text-xs font-bold text-gray-500 uppercase">
-                                 <th className="py-3 px-2 w-16">Page</th>
-                                 <th className="py-3 px-2 w-32">Zone</th>
-                                 <th className="py-3 px-2 w-48">Label</th>
-                                 <th className="py-3 px-2 w-32">Type</th>
-                                 <th className="py-3 px-2">Contenu (Supporte les variables)</th>
-                                 <th className="py-3 px-2 w-10"></th>
-                              </tr>
-                           </thead>
-                           <tbody className="divide-y divide-gray-50">
-                              {selectedBook.contentConfig.texts.map((text, idx) => (
-                                 <tr key={text.id} className="hover:bg-blue-50/30 transition-colors">
-                                    <td className="p-2">
-                                       <input 
-                                         type="number" 
-                                         className="w-12 border border-gray-200 rounded px-2 py-1 text-sm text-center"
-                                         value={text.position.pageIndex}
-                                         onChange={(e) => {
-                                            const newTexts = [...selectedBook.contentConfig.texts];
-                                            newTexts[idx].position.pageIndex = parseInt(e.target.value);
-                                            handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                         }}
-                                       />
-                                    </td>
-                                    <td className="p-2">
-                                       <select 
-                                          className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
-                                          value={text.position.zoneId}
-                                          onChange={(e) => {
-                                             const newTexts = [...selectedBook.contentConfig.texts];
-                                             newTexts[idx].position.zoneId = e.target.value;
-                                             handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                          }}
-                                       >
-                                          <option value="header">En-tête</option>
-                                          <option value="body">Corps</option>
-                                          <option value="footer">Pied</option>
-                                          <option value="title">Titre</option>
-                                       </select>
-                                    </td>
-                                    <td className="p-2">
-                                       <input 
-                                         type="text" 
-                                         className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
-                                         value={text.label}
-                                         onChange={(e) => {
-                                            const newTexts = [...selectedBook.contentConfig.texts];
-                                            newTexts[idx].label = e.target.value;
-                                            handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                         }}
-                                       />
-                                    </td>
-                                    <td className="p-2">
-                                       <span className={`text-xs font-bold px-2 py-1 rounded ${text.type === 'variable' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
-                                          {text.type === 'variable' ? 'Variable' : 'Fixe'}
-                                       </span>
-                                    </td>
-                                    <td className="p-2">
-                                       <input 
-                                         type="text" 
-                                         className="w-full border border-gray-200 rounded px-2 py-1 text-sm font-mono text-slate-600"
-                                         value={text.content}
-                                         onChange={(e) => {
-                                            const newTexts = [...selectedBook.contentConfig.texts];
-                                            newTexts[idx].content = e.target.value;
-                                            newTexts[idx].type = e.target.value.includes('{{') ? 'variable' : 'fixed';
-                                            handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                         }}
-                                       />
-                                    </td>
-                                    <td className="p-2 text-right">
-                                       <button 
-                                          onClick={() => {
-                                             const newTexts = selectedBook.contentConfig.texts.filter((_, i) => i !== idx);
-                                             handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                          }}
-                                          className="text-red-400 hover:text-red-600"
-                                       >
-                                          <Trash2 size={16} />
-                                       </button>
-                                    </td>
-                                 </tr>
-                              ))}
-                           </tbody>
-                        </table>
+                     
+                     <div className="flex gap-2">
+                        <button 
+                           onClick={() => {
+                              const newPage: PageDefinition = { 
+                                 id: Date.now().toString(), 
+                                 pageNumber: selectedBook.contentConfig.pages.length + 1, 
+                                 label: `Page ${selectedBook.contentConfig.pages.length + 1}` 
+                              };
+                              handleSaveBook({
+                                 ...selectedBook, 
+                                 contentConfig: {
+                                    ...selectedBook.contentConfig, 
+                                    pages: [...selectedBook.contentConfig.pages, newPage]
+                                 }
+                              });
+                           }}
+                           className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+                        >
+                           <Plus size={16} /> Nouvelle Page
+                        </button>
                      </div>
                   </div>
 
-                  {/* Image Management */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                           <Image size={20} className="text-brand-coral" />
-                           Illustrations Variables
-                        </h2>
-                        <button className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold transition-colors">
-                           + Uploader des variantes
-                        </button>
-                     </div>
+                  <div className="flex gap-6 flex-1 overflow-hidden">
                      
-                     <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center">
-                        <Upload size={48} className="text-gray-300 mb-4" />
-                        <h3 className="font-bold text-gray-700 mb-1">Glissez-déposez vos illustrations ici</h3>
-                        <p className="text-sm text-gray-500 mb-4">Supporte l'organisation automatique par nom de fichier (ex: page1_boy_watercolor.png)</p>
-                        <button className="px-6 py-2 bg-white border border-gray-300 rounded-lg font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">
-                           Parcourir les fichiers
-                        </button>
+                     {/* Pages Grid (Storyboard) */}
+                     <div className="flex-1 overflow-y-auto bg-gray-50 rounded-xl border border-gray-200 p-6">
+                        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                           {selectedBook.contentConfig.pages.map((page) => (
+                              <div 
+                                 key={page.id} 
+                                 onClick={() => setSelectedPageId(page.id)}
+                                 className={`bg-white rounded-lg shadow-sm border-2 cursor-pointer transition-all group relative flex flex-col ${selectedPageId === page.id ? 'border-brand-coral ring-2 ring-brand-coral/20' : 'border-transparent hover:border-gray-300'}`}
+                              >
+                                 {/* Page Header */}
+                                 <div className="px-3 py-2 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 rounded-t-lg">
+                                    <span className="text-xs font-bold text-gray-500 uppercase">{page.label}</span>
+                                    <span className="text-[10px] bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded">{page.pageNumber}</span>
+                                 </div>
+
+                                 {/* Image Preview Slot */}
+                                 <div className="aspect-[3/2] bg-gray-100 relative flex items-center justify-center overflow-hidden">
+                                    {/* Placeholder for Image */}
+                                    <div className="text-center p-4">
+                                       <Image size={24} className="mx-auto text-gray-300 mb-2" />
+                                       <span className="text-xs text-gray-400 font-medium block">Aucune image pour "{selectedVariant}"</span>
+                                    </div>
+
+                                    {/* Hover Action */}
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                       <button className="bg-white text-slate-900 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 hover:scale-105 transition-transform">
+                                          <Upload size={12} /> Choisir
+                                       </button>
+                                    </div>
+                                 </div>
+
+                                 {/* Text Preview Slot (Mini) */}
+                                 <div className="p-3 min-h-[60px]">
+                                    <p className="text-[10px] text-gray-400 italic line-clamp-2">
+                                       {page.description || "Description de la scène..."}
+                                    </p>
+                                 </div>
+                              </div>
+                           ))}
+                           
+                           {/* Add Page Button at End */}
+                           <button 
+                              onClick={() => {
+                                 const newPage: PageDefinition = { 
+                                    id: Date.now().toString(), 
+                                    pageNumber: selectedBook.contentConfig.pages.length + 1, 
+                                    label: `Page ${selectedBook.contentConfig.pages.length + 1}` 
+                                 };
+                                 handleSaveBook({
+                                    ...selectedBook, 
+                                    contentConfig: {
+                                       ...selectedBook.contentConfig, 
+                                       pages: [...selectedBook.contentConfig.pages, newPage]
+                                    }
+                                 });
+                              }}
+                              className="aspect-[3/4] border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-brand-coral hover:text-brand-coral hover:bg-brand-coral/5 transition-all"
+                           >
+                              <Plus size={32} className="mb-2 opacity-50" />
+                              <span className="font-bold text-sm">Ajouter Page</span>
+                           </button>
+                        </div>
                      </div>
+
+                     {/* Right Panel: Page Details */}
+                     {selectedPageId && (
+                        <div className="w-80 bg-white rounded-xl shadow-lg border border-gray-200 p-6 overflow-y-auto animate-fade-in-left">
+                           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                              <h3 className="font-bold text-lg text-slate-800">
+                                 Détails {selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.label}
+                              </h3>
+                              <button onClick={() => setSelectedPageId(null)} className="text-gray-400 hover:text-gray-600">
+                                 <Trash2 size={16} />
+                              </button>
+                           </div>
+
+                           {/* Page Info */}
+                           <div className="space-y-4 mb-8">
+                              <div>
+                                 <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Label</label>
+                                 <input 
+                                    type="text" 
+                                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm"
+                                    value={selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.label}
+                                    onChange={(e) => {
+                                       const newPages = selectedBook.contentConfig.pages.map(p => p.id === selectedPageId ? {...p, label: e.target.value} : p);
+                                       handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, pages: newPages}});
+                                    }}
+                                 />
+                              </div>
+                              <div>
+                                 <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Description Scène</label>
+                                 <textarea 
+                                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm h-20 resize-none"
+                                    value={selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.description || ''}
+                                    onChange={(e) => {
+                                       const newPages = selectedBook.contentConfig.pages.map(p => p.id === selectedPageId ? {...p, description: e.target.value} : p);
+                                       handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, pages: newPages}});
+                                    }}
+                                 />
+                              </div>
+                           </div>
+
+                           {/* Image Variant Section */}
+                           <div className="mb-8">
+                              <h4 className="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
+                                 <Image size={16} className="text-brand-coral" />
+                                 Illustration ({selectedVariant})
+                              </h4>
+                              <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                                 <div className="mb-3">
+                                    <Upload size={24} className="mx-auto text-gray-300" />
+                                 </div>
+                                 <button className="w-full bg-white border border-gray-300 text-slate-600 text-xs font-bold py-2 rounded hover:bg-gray-50">
+                                    Uploader Fichier
+                                 </button>
+                                 <p className="text-[10px] text-gray-400 mt-2">PNG, JPG max 5MB</p>
+                              </div>
+                           </div>
+
+                           {/* Text Zones Section */}
+                           <div>
+                              <h4 className="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
+                                 <Type size={16} className="text-brand-coral" />
+                                 Textes Associés
+                              </h4>
+                              <div className="space-y-2">
+                                 {selectedBook.contentConfig.texts.filter(t => t.position.pageIndex === selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.pageNumber).map(text => (
+                                    <div key={text.id} className="p-3 bg-blue-50 rounded border border-blue-100 text-sm">
+                                       <div className="font-bold text-blue-800 text-xs mb-1">{text.label}</div>
+                                       <div className="text-slate-600 truncate">{text.content}</div>
+                                    </div>
+                                 ))}
+                                 <button className="w-full py-2 border border-dashed border-gray-300 text-gray-500 text-xs font-bold rounded hover:border-brand-coral hover:text-brand-coral transition-colors">
+                                    + Ajouter Zone Texte
+                                 </button>
+                              </div>
+                           </div>
+
+                        </div>
+                     )}
                   </div>
 
                </div>

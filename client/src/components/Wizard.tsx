@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Wand2, Cloud, Glasses, User, Users, Check } from 'lucide-react';
 import { BookConfig, Gender, Theme, HairStyle, Outfit, Activity } from '../types';
 import Navigation from './Navigation';
+import previewBackground from '@assets/generated_images/watercolor_paper_background_with_soft_pastel_splash.png';
 
 interface WizardProps {
   onComplete: (config: BookConfig) => void;
@@ -291,44 +292,66 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
              <div className="relative z-10 mb-8 self-center">
                  <div className="w-[300px] h-[300px] md:w-[400px] md:h-[400px] bg-white rounded-full shadow-2xl border-8 border-white overflow-hidden flex items-center justify-center relative">
                     
-                    {/* Paper texture overlay (Multiplied) */}
-                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] pointer-events-none z-20 mix-blend-multiply"></div>
+                    {/* Watercolor Background Image */}
+                    <img 
+                      src={previewBackground} 
+                      alt="Background" 
+                      className="absolute inset-0 w-full h-full object-cover opacity-80"
+                    />
                     
-                    {/* --- ENHANCED SVG AVATAR (Pure Vector) --- */}
-                    <svg viewBox="0 0 200 240" className="w-full h-full transform translate-y-8 scale-110">
+                    {/* Paper texture overlay (Multiplied) */}
+                    <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] pointer-events-none z-20 mix-blend-multiply"></div>
+                    
+                    {/* --- ENHANCED SVG AVATAR (Watercolor Style) --- */}
+                    <svg viewBox="0 0 200 240" className="w-full h-full transform translate-y-8 scale-110 relative z-10">
                         <defs>
-                          <filter id="pencil" x="-20%" y="-20%" width="140%" height="140%">
-                            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise" />
-                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G" />
+                          {/* Watercolor Filter */}
+                          <filter id="watercolor">
+                            <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise" />
+                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+                            <feGaussianBlur in="displaced" stdDeviation="0.5" result="blurred" />
+                            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" in="blurred" result="goo" />
+                            <feComposite operator="in" in="SourceGraphic" in2="goo" result="composite" />
+                            <feBlend mode="multiply" in="composite" in2="SourceGraphic" />
                           </filter>
-                          <radialGradient id="softShadow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                              <stop offset="0%" stopColor="#000" stopOpacity="0.1" />
-                              <stop offset="100%" stopColor="#000" stopOpacity="0" />
-                          </radialGradient>
+
+                          {/* Gradients for more depth */}
+                          <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                             <stop offset="0%" stopColor={getSkinHex()} stopOpacity="1" />
+                             <stop offset="100%" stopColor={getSkinHex()} stopOpacity="0.9" />
+                          </linearGradient>
+                          
+                          <linearGradient id="hairGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                             <stop offset="0%" stopColor={getHairHex()} stopOpacity="0.9" />
+                             <stop offset="100%" stopColor={getHairHex()} stopOpacity="1" />
+                          </linearGradient>
                         </defs>
 
-                        <g filter="url(#pencil)">
+                        <g filter="url(#watercolor)">
                             {/* SHADOW */}
-                            <ellipse cx="50" cy="140" rx="25" ry="10" fill="url(#softShadow)" transform="translate(50, 0)" />
+                            <ellipse cx="50" cy="140" rx="35" ry="12" fill="#000" fillOpacity="0.1" transform="translate(50, 0)" filter="url(#blur)" />
 
-                            {/* BACK HAIR */}
+                            {/* BACK HAIR (Behind head) */}
                             <g transform="translate(50, 40)">
-                              {config.appearance.hairStyle === 'Long' && <path d="M0 50 Q-10 120 10 140 L90 140 Q110 120 100 50 Z" fill={getHairHex()} stroke="#4A342E" strokeWidth="1" />}
-                              {config.appearance.hairStyle === 'Carré' && <path d="M-5 50 L-5 110 Q5 115 20 110 L20 50 M105 50 L105 110 Q95 115 80 110 L80 50" stroke={getHairHex()} strokeWidth="25" fill="none" strokeLinecap="round" />}
-                              {(config.appearance.hairStyle as any) === 'Nattes' && <g><path d="M5 60 Q-15 100 10 120" stroke={getHairHex()} strokeWidth="18" fill="none" strokeLinecap="round" /><path d="M95 60 Q115 100 90 120" stroke={getHairHex()} strokeWidth="18" fill="none" strokeLinecap="round" /></g>}
-                              {(config.appearance.hairStyle as any) === 'Bouclé' && <g><circle cx="-5" cy="70" r="16" fill={getHairHex()} /><circle cx="5" cy="90" r="16" fill={getHairHex()} /><circle cx="105" cy="70" r="16" fill={getHairHex()} /><circle cx="95" cy="90" r="16" fill={getHairHex()} /></g>}
-                              {(config.appearance.hairStyle as any) === 'QueueCheval' && <g><path d="M90 40 Q130 60 115 130" stroke={getHairHex()} strokeWidth="20" fill="none" strokeLinecap="round" /></g>}
+                              {config.appearance.hairStyle === 'Long' && <path d="M0 50 Q-15 130 10 150 L90 150 Q115 130 100 50 Z" fill="url(#hairGradient)" />}
+                              {config.appearance.hairStyle === 'Carré' && <path d="M-5 50 L-5 110 Q5 115 20 110 L20 50 M105 50 L105 110 Q95 115 80 110 L80 50" stroke="url(#hairGradient)" strokeWidth="28" fill="none" strokeLinecap="round" />}
+                              {(config.appearance.hairStyle as any) === 'Nattes' && <g><path d="M5 60 Q-15 100 10 120" stroke="url(#hairGradient)" strokeWidth="20" fill="none" strokeLinecap="round" /><path d="M95 60 Q115 100 90 120" stroke="url(#hairGradient)" strokeWidth="20" fill="none" strokeLinecap="round" /></g>}
+                              {(config.appearance.hairStyle as any) === 'Bouclé' && <g><circle cx="-5" cy="70" r="18" fill="url(#hairGradient)" /><circle cx="5" cy="90" r="18" fill="url(#hairGradient)" /><circle cx="105" cy="70" r="18" fill="url(#hairGradient)" /><circle cx="95" cy="90" r="18" fill="url(#hairGradient)" /></g>}
+                              {(config.appearance.hairStyle as any) === 'QueueCheval' && <g><path d="M90 40 Q135 60 120 140" stroke="url(#hairGradient)" strokeWidth="24" fill="none" strokeLinecap="round" /></g>}
                             </g>
 
                             {/* BODY */}
                             <g transform="translate(50, 130)">
-                              <rect x="38" y="-30" width="24" height="40" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="0.5" rx="5" />
-                              <path d="M22 5 Q5 50 15 70" stroke={getSkinHex()} strokeWidth="18" fill="none" strokeLinecap="round" />
-                              <path d="M78 5 Q95 50 85 70" stroke={getSkinHex()} strokeWidth="18" fill="none" strokeLinecap="round" />
+                              {/* Neck */}
+                              <rect x="38" y="-30" width="24" height="40" fill="url(#skinGradient)" />
                               
-                              {/* OUTFIT */}
-                              <g stroke="#4A342E" strokeWidth="0.8" strokeLinejoin="round">
-                                  {config.appearance.outfit === 'Salopette' && <g><path d="M10 0 L90 0 L90 85 L10 85 Z" fill="#93C5FD" /><path d="M18 20 L82 20 L88 110 L12 110 Z" fill="#3B82F6" /></g>}
+                              {/* Arms */}
+                              <path d="M22 5 Q5 50 15 70" stroke="url(#skinGradient)" strokeWidth="20" fill="none" strokeLinecap="round" />
+                              <path d="M78 5 Q95 50 85 70" stroke="url(#skinGradient)" strokeWidth="20" fill="none" strokeLinecap="round" />
+                              
+                              {/* Outfit Base */}
+                              <g>
+                                  {config.appearance.outfit === 'Salopette' && <g><path d="M10 0 L90 0 L92 90 L8 90 Z" fill="#93C5FD" /><path d="M18 20 L82 20 L88 110 L12 110 Z" fill="#3B82F6" opacity="0.9" /></g>}
                                   {config.appearance.outfit === 'TShirt' && <path d="M15 0 L85 0 L92 100 L8 100 Z" fill="#FDE68A" />}
                                   {config.appearance.outfit === 'Robe' && <path d="M25 0 L75 0 L105 110 L-5 110 Z" fill="#A5B4FC" />}
                                   {config.appearance.outfit === 'Chemise' && <path d="M15 0 L85 0 L88 100 L12 100 Z" fill="#FDA4AF" />}
@@ -336,51 +359,67 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                                   {(config.appearance.outfit as any) === 'Sport' && <path d="M20 0 L80 0 L85 100 L15 100 Z" fill="#6EE7B7" />}
                                   {(config.appearance.outfit as any) === 'Pyjama' && <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#BAE6FD" />}
                               </g>
+                              
+                              {/* Texture/Pattern Overlay for Clothes */}
+                              <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#fff" fillOpacity="0.1" style={{ mixBlendMode: 'overlay' }} pointerEvents="none" />
                             </g>
 
                             {/* HEAD */}
                             <g transform="translate(50, 40)">
-                              <path d="M10 40 Q 10 95 50 95 Q 90 95 90 40 Q 90 10 50 10 Q 10 10 10 40 Z" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
-                              <path d="M8 45 Q -2 50 8 58" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
-                              <path d="M92 45 Q 102 50 92 58" fill={getSkinHex()} stroke="#8D6E63" strokeWidth="1" />
+                              {/* Face Shape */}
+                              <path d="M10 40 Q 10 95 50 95 Q 90 95 90 40 Q 90 10 50 10 Q 10 10 10 40 Z" fill="url(#skinGradient)" />
                               
-                              {/* Face */}
+                              {/* Ears */}
+                              <path d="M8 45 Q -4 50 8 60" fill="url(#skinGradient)" />
+                              <path d="M92 45 Q 104 50 92 60" fill="url(#skinGradient)" />
+                              
+                              {/* Face Features */}
                               <g>
-                                <ellipse cx="32" cy="50" rx="4" ry="6" fill="#3E2723" />
-                                <circle cx="33" cy="48" r="1.5" fill="white" />
-                                <ellipse cx="68" cy="50" rx="4" ry="6" fill="#3E2723" />
-                                <circle cx="69" cy="48" r="1.5" fill="white" />
-                                <path d="M28 40 Q32 38 36 40" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
-                                <path d="M64 40 Q68 38 72 40" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
-                                <path d="M46 60 Q50 64 54 60" stroke="#A1887F" strokeWidth="2" strokeLinecap="round" fill="none" />
-                                <path d="M40 70 Q50 76 60 70" stroke="#5D4037" strokeWidth="2" strokeLinecap="round" fill="none" />
-                                <circle cx="25" cy="65" r="5" fill="#FFCDD2" opacity="0.6" />
-                                <circle cx="75" cy="65" r="5" fill="#FFCDD2" opacity="0.6" />
+                                {/* Eyes */}
+                                <ellipse cx="32" cy="50" rx="5" ry="7" fill="#3E2723" />
+                                <circle cx="34" cy="48" r="2" fill="white" opacity="0.9" />
+                                
+                                <ellipse cx="68" cy="50" rx="5" ry="7" fill="#3E2723" />
+                                <circle cx="70" cy="48" r="2" fill="white" opacity="0.9" />
+                                
+                                {/* Eyebrows (Watercolor stroke style) */}
+                                <path d="M26 38 Q34 34 40 38" stroke={getHairHex()} strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.8" />
+                                <path d="M60 38 Q66 34 74 38" stroke={getHairHex()} strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.8" />
+                                
+                                {/* Nose */}
+                                <path d="M46 60 Q50 65 54 60" stroke="#D7CCC8" strokeWidth="3" strokeLinecap="round" fill="none" />
+                                
+                                {/* Mouth */}
+                                <path d="M40 72 Q50 78 60 72" stroke="#A1887F" strokeWidth="3" strokeLinecap="round" fill="none" />
+                                
+                                {/* Cheeks (Soft blush) */}
+                                <circle cx="22" cy="65" r="8" fill="#FF8A80" fillOpacity="0.2" />
+                                <circle cx="78" cy="65" r="8" fill="#FF8A80" fillOpacity="0.2" />
                               </g>
 
                               {/* FRONT HAIR */}
                               <g>
-                                 {config.appearance.hairStyle === 'Court' && <path d="M10 40 Q50 20 90 40" fill="none" stroke={getHairHex()} strokeWidth="1" />}
-                                 {config.appearance.hairStyle === 'Hérissé' && <path d="M10 35 L20 20 L30 35 L40 15 L50 35 L60 15 L70 35 L80 20 L90 35" fill={getHairHex()} stroke={getHairHex()} strokeWidth="1" />}
-                                 {['Carré', 'Long', 'Chignon', 'Nattes', 'Bouclé', 'QueueCheval'].includes(config.appearance.hairStyle) && <path d="M10 40 Q30 50 50 35 Q70 50 90 40 Q90 10 50 10 Q10 10 10 40" fill={getHairHex()} />}
+                                 {config.appearance.hairStyle === 'Court' && <path d="M10 40 Q50 15 90 40" fill="none" stroke="url(#hairGradient)" strokeWidth="12" strokeLinecap="round" />}
+                                 {config.appearance.hairStyle === 'Hérissé' && <path d="M10 35 L20 15 L35 30 L50 10 L65 30 L80 15 L90 35" fill="url(#hairGradient)" stroke="url(#hairGradient)" strokeWidth="2" strokeLinejoin="round" />}
+                                 {['Carré', 'Long', 'Chignon', 'Nattes', 'Bouclé', 'QueueCheval'].includes(config.appearance.hairStyle) && <path d="M8 40 Q30 55 50 35 Q70 55 92 40 Q90 5 50 5 Q10 5 8 40" fill="url(#hairGradient)" />}
                               </g>
 
                               {/* BEARD RENDERING */}
                               {config.appearance.beard && config.appearance.beard !== 'None' && activeTab === 'parent' && (
-                                <g>
-                                   {config.appearance.beard === 'Moustache' && <path d="M35 65 Q50 55 65 65" stroke={getHairHex()} strokeWidth="3" fill="none" />}
-                                   {config.appearance.beard === 'Goatee' && <path d="M45 75 Q50 80 55 75 L55 70 H45 Z" fill={getHairHex()} />}
-                                   {config.appearance.beard === 'Short' && <path d="M20 60 Q50 100 80 60" fill={getHairHex()} opacity="0.8" />}
-                                   {config.appearance.beard === 'Full' && <path d="M15 50 Q50 110 85 50 L85 60 Q50 120 15 60 Z" fill={getHairHex()} />}
+                                <g opacity="0.9">
+                                   {config.appearance.beard === 'Moustache' && <path d="M35 68 Q50 58 65 68" stroke="url(#hairGradient)" strokeWidth="6" fill="none" strokeLinecap="round" />}
+                                   {config.appearance.beard === 'Goatee' && <path d="M45 78 Q50 83 55 78 L55 72 H45 Z" fill="url(#hairGradient)" />}
+                                   {config.appearance.beard === 'Short' && <path d="M20 60 Q50 100 80 60 L80 70 Q50 110 20 70 Z" fill="url(#hairGradient)" opacity="0.6" />}
+                                   {config.appearance.beard === 'Full' && <path d="M12 50 Q50 115 88 50 L88 65 Q50 130 12 65 Z" fill="url(#hairGradient)" />}
                                 </g>
                               )}
 
                               {/* GLASSES */}
                               {config.appearance.glasses && (
-                                <g stroke="#333" strokeWidth="1.5" fill="none" opacity="0.8">
-                                  <circle cx="32" cy="50" r="10" />
-                                  <circle cx="68" cy="50" r="10" />
-                                  <line x1="42" y1="50" x2="58" y2="50" />
+                                <g stroke="#333" strokeWidth="2" fill="none" opacity="0.8">
+                                  <circle cx="32" cy="50" r="12" fill="#fff" fillOpacity="0.1" />
+                                  <circle cx="68" cy="50" r="12" fill="#fff" fillOpacity="0.1" />
+                                  <line x1="44" y1="50" x2="56" y2="50" />
                                 </g>
                               )}
                             </g>
@@ -388,7 +427,6 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                     </svg>
                  </div>
              </div>
-
              {/* PRODUCT INFO CARD */}
              <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full border-t-4 border-cloud-dark self-center">
                  <h3 className="text-2xl font-display font-black text-cloud-dark mb-1">Nos mots à nous</h3>

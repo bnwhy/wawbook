@@ -6,6 +6,14 @@ import explorerImage from '@assets/generated_images/children\'s_book_cover_for_e
 import magicianImage from '@assets/generated_images/children\'s_book_cover_for_magician_theme.png';
 import astronautImage from '@assets/generated_images/children\'s_book_cover_for_astronaut_theme.png';
 import animalsImage from '@assets/generated_images/children\'s_book_cover_for_animal_friend_theme.png';
+import sportImage from '@assets/generated_images/children\'s_book_cover_for_sport_theme.png';
+import danceImage from '@assets/generated_images/children\'s_book_cover_for_dance_theme.png';
+import theaterImage from '@assets/generated_images/children\'s_book_cover_for_theater_theme.png';
+import musicImage from '@assets/generated_images/children\'s_book_cover_for_music_theme.png';
+import paintingImage from '@assets/generated_images/children\'s_book_cover_for_painting_theme.png';
+import readingImage from '@assets/generated_images/children\'s_book_cover_for_reading_theme.png';
+import natureImage from '@assets/generated_images/children\'s_book_cover_for_nature_theme.png';
+import cookingImage from '@assets/generated_images/children\'s_book_cover_for_cooking_theme.png';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity) => void;
@@ -50,15 +58,15 @@ const THEME_CARDS = [
   },
 ];
 
-const ACTIVITY_CARDS: { id: Activity; title: string; icon: string; color: string; textColor: string }[] = [
-  { id: 'Sport', title: 'Sport', icon: '⚽', color: 'bg-orange-200', textColor: 'text-orange-900' },
-  { id: 'Danse', title: 'Danse', icon: '🩰', color: 'bg-pink-200', textColor: 'text-pink-900' },
-  { id: 'Theatre', title: 'Théâtre', icon: '🎭', color: 'bg-yellow-200', textColor: 'text-yellow-900' },
-  { id: 'Musique', title: 'Musique', icon: '🎵', color: 'bg-violet-200', textColor: 'text-violet-900' },
-  { id: 'Peinture', title: 'Peinture', icon: '🎨', color: 'bg-rose-200', textColor: 'text-rose-900' },
-  { id: 'Lecture', title: 'Lecture', icon: '📚', color: 'bg-blue-200', textColor: 'text-blue-900' },
-  { id: 'Jardinage', title: 'Nature', icon: '🌱', color: 'bg-green-200', textColor: 'text-green-900' },
-  { id: 'Cuisine', title: 'Cuisine', icon: '🧁', color: 'bg-red-200', textColor: 'text-red-900' },
+const ACTIVITY_CARDS = [
+  { id: 'Sport', title: 'Le Petit Sportif', badgeText: 'Passion Sport', image: sportImage, price: "29,90 €", oldPrice: "34,90 €", description: "Pour les champions en herbe qui aiment bouger et marquer des buts !" },
+  { id: 'Danse', title: 'Danseuse Étoile', badgeText: 'Passion Danse', image: danceImage, price: "29,90 €", oldPrice: "34,90 €", description: "Une histoire pleine de grâce et de pirouettes sur scène." },
+  { id: 'Theatre', title: 'En Scène !', badgeText: 'Passion Théâtre', image: theaterImage, price: "29,90 €", oldPrice: "34,90 €", description: "Les projecteurs s'allument pour la plus belle pièce de théâtre." },
+  { id: 'Musique', title: 'Le Petit Musicien', badgeText: 'Passion Musique', image: musicImage, price: "29,90 €", oldPrice: "34,90 €", description: "Des notes magiques et une mélodie inoubliable." },
+  { id: 'Peinture', title: 'L\'Artiste en Herbe', badgeText: 'Passion Peinture', image: paintingImage, price: "29,90 €", oldPrice: "34,90 €", description: "Un monde de couleurs et de créativité s'ouvre à l'enfant." },
+  { id: 'Lecture', title: 'Rat de Bibliothèque', badgeText: 'Passion Lecture', image: readingImage, price: "29,90 €", oldPrice: "34,90 €", description: "L'aventure commence dès qu'on ouvre un bon livre." },
+  { id: 'Jardinage', title: 'Le Petit Jardinier', badgeText: 'Passion Nature', image: natureImage, price: "29,90 €", oldPrice: "34,90 €", description: "Découvrir les secrets des plantes et des petites bêtes du jardin." },
+  { id: 'Cuisine', title: 'Le Petit Chef', badgeText: 'Passion Cuisine', image: cookingImage, price: "29,90 €", oldPrice: "34,90 €", description: "Miam ! Une histoire gourmande à dévorer sans modération." },
 ];
 
 const FAQS = [
@@ -230,17 +238,41 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
               <p className="text-xl text-cloud-dark/60 font-medium">Une histoire qui commence avec ce qu'ils aiment</p>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
                {ACTIVITY_CARDS.map((activity, idx) => (
                   <div 
                     key={idx} 
-                    onClick={() => onStart(undefined, activity.id)}
-                    className="cursor-pointer group flex flex-col items-center"
+                    onClick={() => onStart(undefined, activity.id as any)}
+                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                   >
-                     <div className={`w-24 h-24 rounded-full ${activity.color} flex items-center justify-center text-4xl shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-300 mb-3`}>
-                        {activity.icon}
-                     </div>
-                     <span className={`font-bold ${activity.textColor} group-hover:text-cloud-blue transition-colors`}>{activity.title}</span>
+                    {/* Image Container */}
+                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                        <img 
+                          src={activity.image} 
+                          alt={activity.title}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5 flex flex-col flex-grow">
+                       <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{activity.badgeText}</div>
+                       <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{activity.title}</h3>
+                       <p className="text-cloud-dark/60 text-sm font-medium line-clamp-2 mb-6 leading-relaxed">
+                          {activity.description}
+                       </p>
+                       
+                       <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                          <div className="flex flex-col">
+                              <span className="text-xs text-gray-400 font-bold line-through">{activity.oldPrice}</span>
+                              <span className="text-xl font-black text-accent-melon">{activity.price}</span>
+                          </div>
+                          <button className="bg-cloud-dark text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
+                              <PenTool size={14} />
+                              Créer
+                          </button>
+                       </div>
+                    </div>
                   </div>
                ))}
             </div>

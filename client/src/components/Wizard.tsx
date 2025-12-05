@@ -165,9 +165,8 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
 
                 {/* 2. SKIN COLOR */}
                 <div className="space-y-2">
-                   <label className="font-bold text-gray-600 text-sm flex items-center justify-between">
+                   <label className="font-bold text-gray-600 text-sm">
                       Couleur de la peau
-                      <div className="w-6 h-6 rounded-full border border-gray-200" style={{ backgroundColor: getSkinHex() }}></div>
                    </label>
                    <div className="flex gap-3 flex-wrap">
                         {COLORS_SKIN.map((c) => (
@@ -184,9 +183,8 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
 
                 {/* 3. HAIR COLOR */}
                 <div className="space-y-2">
-                    <label className="font-bold text-gray-600 text-sm flex items-center justify-between">
+                    <label className="font-bold text-gray-600 text-sm">
                        Couleur des cheveux
-                       <div className="w-6 h-6 rounded-full border border-gray-200" style={{ backgroundColor: getHairHex() }}></div>
                     </label>
                     <div className="flex gap-3 flex-wrap">
                         {COLORS_HAIR.map((c) => (

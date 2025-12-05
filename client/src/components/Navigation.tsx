@@ -58,13 +58,28 @@ const MENU_STRUCTURE = [
 ];
 
 const CloudLogo = () => (
-  <div className="relative w-10 h-10 flex items-center justify-center">
-     <div className="absolute inset-0 text-cloud-blue drop-shadow-md">
-        <Cloud fill="currentColor" size={40} strokeWidth={0} />
-     </div>
-     <div className="relative z-10 text-white font-display font-black text-lg mb-1">
-        W
-     </div>
+  <div className="relative w-12 h-12 flex items-center justify-center hover:scale-110 transition-transform duration-300">
+     <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm">
+        {/* Sun rays */}
+        <g className="animate-[spin_10s_linear_infinite] origin-[75px_35px]">
+           <path d="M75 10 L75 20 M75 50 L75 60 M55 35 L45 35 M105 35 L95 35 M61 21 L68 28 M82 42 L89 49 M89 21 L82 28 M61 49 L68 42" stroke="#FCD34D" strokeWidth="4" strokeLinecap="round" />
+        </g>
+        {/* Sun body */}
+        <circle cx="75" cy="35" r="18" fill="#FCD34D" />
+        
+        {/* Fluffy Cloud */}
+        <path d="M20 70 C 10 70, 10 50, 30 50 C 30 30, 60 30, 60 50 C 70 40, 90 40, 90 60 C 90 80, 70 80, 60 80 L 30 80 C 10 80, 10 70, 20 70" fill="#60A5FA" stroke="#3B82F6" strokeWidth="2" />
+        
+        {/* Cute Face */}
+        <g transform="translate(0, 2)">
+           <circle cx="45" cy="65" r="3" fill="white" />
+           <circle cx="65" cy="65" r="3" fill="white" />
+           <path d="M50 72 Q 55 78, 60 72" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+           {/* Cheeks */}
+           <circle cx="42" cy="70" r="3" fill="#FF9999" opacity="0.6" />
+           <circle cx="68" cy="70" r="3" fill="#FF9999" opacity="0.6" />
+        </g>
+     </svg>
   </div>
 );
 
@@ -85,10 +100,10 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         
         {/* Logo */}
-        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => window.scrollTo(0, 0)}>
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo(0, 0)}>
           <CloudLogo />
-          <span className="text-2xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors">
-            WawBook
+          <span className="text-3xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
+            wawbook
           </span>
         </div>
 

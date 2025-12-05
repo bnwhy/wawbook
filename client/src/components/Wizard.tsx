@@ -115,12 +115,10 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
     <div className="min-h-screen bg-stone-50 flex flex-col font-sans relative overflow-x-hidden">
       
       {/* NAVIGATION (Integrated) */}
-      <div className="bg-white shadow-sm z-50 relative">
-         <Navigation onStart={() => {}} />
-      </div>
+      <Navigation onStart={() => {}} />
 
       {/* WIZARD CONTENT */}
-      <div className="flex-1 flex items-center justify-center p-4 md:p-8 relative" style={{ backgroundImage: bgPattern }}>
+      <div className="flex-1 flex items-center justify-center p-4 md:p-8 pt-28 relative" style={{ backgroundImage: bgPattern }}>
         
         <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start">
           

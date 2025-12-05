@@ -114,7 +114,8 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                   {menu.type === 'simple' && menu.items && (
                     <div className="flex flex-col gap-1 p-2">
                       {menu.items.map((item, i) => (
-                        <a key={i} href="#" className="px-4 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors block whitespace-nowrap">
+                        <a key={i} href="#" className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
                           {item as string}
                         </a>
                       ))}
@@ -129,7 +130,8 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                           <h4 className="font-display font-black text-cloud-blue mb-3 px-2 text-lg">{col.title}</h4>
                           <div className="flex flex-col gap-1">
                             {col.items.map((item, j) => (
-                              <a key={j} href="#" className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors">
+                              <a key={j} href="#" className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
                                 {item}
                               </a>
                             ))}

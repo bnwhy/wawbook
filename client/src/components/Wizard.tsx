@@ -13,19 +13,22 @@ interface WizardProps {
 
 // --- CONSTANTS ---
 const COLORS_HAIR = [
-  { label: 'Blond', value: 'Blond', hex: '#F0E68C' },
-  { label: 'Roux', value: 'Roux', hex: '#C2571A' },
-  { label: 'Châtain', value: 'Châtain', hex: '#8D6E63' },
-  { label: 'Brun', value: 'Brun', hex: '#5D4037' },
-  { label: 'Noir', value: 'Noir', hex: '#212121' },
+  { label: 'Blond', value: 'Blond', hex: '#f7e48c' },
+  { label: 'Blond foncé', value: 'BlondFonce', hex: '#ba9a0d' },
+  { label: 'Châtain', value: 'Chatain', hex: '#a76635' },
+  { label: 'Noir', value: 'Noir', hex: '#302e34' },
+  { label: 'Roux', value: 'Roux', hex: '#ef6c2a' },
+  { label: 'Gris', value: 'Gris', hex: '#b9b9bd' },
+  { label: 'Blanc', value: 'Blanc', hex: '#fefefe' },
 ];
 
 const COLORS_SKIN = [
-  { label: 'Claire', value: 'Claire', hex: '#FFE0BD' },
-  { label: 'Beige', value: 'Beige', hex: '#EAC086' },
-  { label: 'Matte', value: 'Matte', hex: '#D1A376' },
-  { label: 'Foncée', value: 'Foncée', hex: '#8D5524' },
-  { label: 'Noire', value: 'Noire', hex: '#523422' },
+  { label: 'Claire', value: 'Claire', hex: '#f6d6c8' },
+  { label: 'Beige', value: 'Beige', hex: '#f9cca4' },
+  { label: 'Muscade', value: 'Muscade', hex: '#edb17f' },
+  { label: 'Marron', value: 'Marron', hex: '#d19f79' },
+  { label: 'Marron foncé', value: 'MarronFonce', hex: '#ae836c' },
+  { label: 'Noir', value: 'Noir', hex: '#6a4730' },
 ];
 
 const HAIR_STYLES: { id: HairStyle; label: string }[] = [
@@ -181,7 +184,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
   const [activeTab, setActiveTab] = useState<'child' | 'parent'>('parent'); // Default to Parent to match screenshot
 
   const getSkinHex = () => COLORS_SKIN.find(c => c.value === config.appearance.skinTone)?.hex || '#FFE0BD';
-  const getHairHex = () => config.appearance.grayHair ? '#9E9E9E' : (COLORS_HAIR.find(c => c.value === config.appearance.hairColor)?.hex || '#5D4037');
+  const getHairHex = () => config.appearance.grayHair ? '#b9b9bd' : (COLORS_HAIR.find(c => c.value === config.appearance.hairColor)?.hex || '#302e34');
   
   // --- BACKGROUND PATTERN ---
   // A CSS pattern approximating the leaves/geometric shapes
@@ -277,16 +280,16 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 2. SKIN COLOR */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between py-2 border-b border-gray-100">
                    <label className="font-bold text-gray-600 text-sm min-w-[140px]">
                       Couleur de la peau
                    </label>
-                   <div className="flex gap-2 flex-wrap justify-end">
+                   <div className="flex gap-3 flex-wrap justify-end">
                         {COLORS_SKIN.map((c) => (
                           <button
                             key={c.value}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, skinTone: c.value}})}
-                            className={`w-6 h-6 rounded-full transition-all ${config.appearance.skinTone === c.value ? 'ring-2 ring-green-200 scale-110 ring-offset-2' : 'hover:scale-105'}`}
+                            className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${config.appearance.skinTone === c.value ? 'ring-2 ring-green-200 scale-110 ring-offset-2' : 'hover:scale-105'}`}
                             style={{ backgroundColor: c.hex }}
                             title={c.label}
                           />
@@ -295,16 +298,16 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 3. HAIR COLOR */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between py-2">
                     <label className="font-bold text-gray-600 text-sm min-w-[140px]">
                        Couleur des cheveux
                     </label>
-                    <div className="flex gap-2 flex-wrap justify-end">
+                    <div className="flex gap-3 flex-wrap justify-end">
                         {COLORS_HAIR.map((c) => (
                           <button
                             key={c.value}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, hairColor: c.value}})}
-                            className={`w-6 h-6 rounded-full transition-all ${config.appearance.hairColor === c.value ? 'ring-2 ring-green-200 scale-110 ring-offset-2' : 'hover:scale-105'}`}
+                            className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${config.appearance.hairColor === c.value ? 'ring-2 ring-green-200 scale-110 ring-offset-2' : 'hover:scale-105'}`}
                             style={{ backgroundColor: c.hex }}
                             title={c.label}
                           />

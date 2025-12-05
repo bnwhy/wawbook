@@ -381,27 +381,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     ))}
                                  </div>
 
-                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Options de détail</label>
-                                 <div className="flex gap-2 flex-wrap">
-                                    {['hair', 'skin', 'eyes', 'glasses', 'beard', 'clothes', 'accessory'].map(opt => (
-                                       <button 
-                                          key={opt}
-                                          onClick={() => {
-                                             const newTabs = [...selectedBook.wizardConfig.tabs];
-                                             const currentOptions = newTabs[idx].options;
-                                             if (currentOptions.includes(opt)) {
-                                                newTabs[idx].options = currentOptions.filter(o => o !== opt);
-                                             } else {
-                                                newTabs[idx].options = [...currentOptions, opt];
-                                             }
-                                             handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                          }}
-                                          className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${tab.options.includes(opt) ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}
-                                       >
-                                          {opt}
-                                       </button>
-                                    ))}
-                                 </div>
                               </div>
                            </div>
                         ))}

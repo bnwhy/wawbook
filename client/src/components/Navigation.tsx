@@ -126,7 +126,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                     <div className="flex gap-6 p-4">
                       {menu.columns.map((col, i) => (
                         <div key={i} className="w-48">
-                          <h4 className="font-display font-black text-accent-melon mb-3 px-2 text-lg">{col.title}</h4>
+                          <h4 className="font-display font-black text-cloud-blue mb-3 px-2 text-lg">{col.title}</h4>
                           <div className="flex flex-col gap-1">
                             {col.items.map((item, j) => (
                               <a key={j} href="#" className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors">
@@ -212,7 +212,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
 
                     {menu.type === 'columns' && menu.columns && menu.columns.map((col, i) => (
                       <div key={i} className="mb-2">
-                        <h5 className="text-xs font-black text-accent-melon uppercase tracking-wider mb-1 px-2">{col.title}</h5>
+                        <h5 className="text-xs font-black text-cloud-blue uppercase tracking-wider mb-1 px-2">{col.title}</h5>
                         {col.items.map((item, j) => (
                           <a key={j} href="#" className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block text-sm">{item}</a>
                         ))}

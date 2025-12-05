@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter } from 'lucide-react';
+import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition } from '../types/admin';
 
@@ -16,8 +16,8 @@ const INITIAL_BOOKS: BookProduct[] = [
     wizardConfig: {
       avatarStyle: 'watercolor',
       tabs: [
-        { id: 't1', label: 'Enfant', type: 'character', options: ['hair', 'skin', 'clothes'], variants: ['Garçon', 'Fille'] },
-        { id: 't2', label: 'Parent', type: 'character', options: ['hair', 'skin', 'beard'], variants: ['Papa', 'Maman'] }
+        { id: 't1', label: 'Enfant', type: 'character', options: ['hair', 'skin', 'clothes'], variants: [{id: 'v1', label: 'Garçon'}, {id: 'v2', label: 'Fille'}] },
+        { id: 't2', label: 'Parent', type: 'character', options: ['hair', 'skin', 'beard'], variants: [{id: 'v3', label: 'Papa'}, {id: 'v4', label: 'Maman'}] }
       ]
     },
     contentConfig: {
@@ -58,7 +58,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const cartesian = (a: string[], b: string[]) => [].concat(...a.map(d => b.map(e => [].concat(d, e))));
     
     // Get variants for each tab, fallback to ['Standard'] if empty
-    const allVariants = tabs.map(t => t.variants.length > 0 ? t.variants : [t.label]);
+    const allVariants = tabs.map(t => t.variants.length > 0 ? t.variants.map(v => v.label) : [t.label]);
     
     if (allVariants.length === 0) return ['Défaut'];
     
@@ -341,6 +341,71 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  >
                                     <Trash2 size={18} />
                                  </button>
+                              </div>
+
+                              {/* Variants Config */}
+                              <div className="mt-4 border-t border-gray-100 pt-4">
+                                 <label className="text-xs font-bold text-gray-500 uppercase mb-3 block">Variantes ({tab.variants.length})</label>
+                                 
+                                 <div className="space-y-3">
+                                    {tab.variants.map((variant, vIdx) => (
+                                       <div key={variant.id} className="flex items-center gap-3 bg-white p-2 rounded border border-gray-200">
+                                          {/* Name */}
+                                          <div className="flex-1">
+                                             <input 
+                                                type="text" 
+                                                value={variant.label}
+                                                onChange={(e) => {
+                                                   const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                   newTabs[idx].variants[vIdx].label = e.target.value;
+                                                   handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                }}
+                                                className="w-full text-sm font-bold text-slate-700 border-none p-0 focus:ring-0 outline-none"
+                                                placeholder="Nom de la variante"
+                                             />
+                                          </div>
+
+                                          {/* Uploads */}
+                                          <div className="flex gap-2">
+                                             <button className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors ${variant.thumbnail ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
+                                                <ImageIcon size={12} />
+                                                {variant.thumbnail ? 'Modifiée' : 'Miniature'}
+                                             </button>
+                                             <button className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors ${variant.resource ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
+                                                <Box size={12} />
+                                                {variant.resource ? 'Modifiée' : 'Ressource'}
+                                             </button>
+                                          </div>
+
+                                          {/* Delete */}
+                                          <button 
+                                             onClick={() => {
+                                                const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                newTabs[idx].variants = newTabs[idx].variants.filter(v => v.id !== variant.id);
+                                                handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                             }}
+                                             className="text-gray-300 hover:text-red-400"
+                                          >
+                                             <X size={14} />
+                                          </button>
+                                       </div>
+                                    ))}
+
+                                    {/* Add Button */}
+                                    <button 
+                                       onClick={() => {
+                                          const newTabs = [...selectedBook.wizardConfig.tabs];
+                                          newTabs[idx].variants.push({
+                                             id: Date.now().toString(),
+                                             label: 'Nouvelle Variante'
+                                          });
+                                          handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                       }}
+                                       className="w-full py-2 border-2 border-dashed border-gray-200 rounded-lg text-xs font-bold text-gray-400 hover:border-brand-coral hover:text-brand-coral hover:bg-brand-coral/5 transition-all flex items-center justify-center gap-2"
+                                    >
+                                       <Plus size={14} /> Ajouter une variante
+                                    </button>
+                                 </div>
                               </div>
                               
                            </div>

@@ -343,45 +343,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </button>
                               </div>
                               
-                              <div>
-                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Variantes Principales (ex: Garçon, Fille)</label>
-                                 <div className="flex gap-2 mb-2">
-                                    <input 
-                                      type="text" 
-                                      placeholder="Ajouter variante..." 
-                                      className="border border-gray-300 rounded px-2 py-1 text-xs flex-1"
-                                      onKeyDown={(e) => {
-                                         if (e.key === 'Enter') {
-                                            const val = (e.target as HTMLInputElement).value;
-                                            if (val) {
-                                               const newTabs = [...selectedBook.wizardConfig.tabs];
-                                               newTabs[idx].variants = [...(newTabs[idx].variants || []), val];
-                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                               (e.target as HTMLInputElement).value = '';
-                                            }
-                                         }
-                                      }}
-                                    />
-                                 </div>
-                                 <div className="flex gap-2 flex-wrap mb-4">
-                                    {(tab.variants || []).map(v => (
-                                       <span key={v} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold border border-purple-200 flex items-center gap-1">
-                                          {v}
-                                          <button 
-                                            onClick={() => {
-                                               const newTabs = [...selectedBook.wizardConfig.tabs];
-                                               newTabs[idx].variants = newTabs[idx].variants.filter(x => x !== v);
-                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                            }}
-                                            className="hover:text-purple-900"
-                                          >
-                                             <Trash2 size={10} />
-                                          </button>
-                                       </span>
-                                    ))}
-                                 </div>
-
-                              </div>
                            </div>
                         ))}
                         {selectedBook.wizardConfig.tabs.length === 0 && (

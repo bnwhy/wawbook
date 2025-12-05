@@ -169,7 +169,10 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
       outfit: 'Salopette',
       activity: initialActivity || 'Aucune',
       glasses: false,
+      glassesStyle: 'None',
       beard: 'None',
+      grayHair: false,
+      hearingAid: 'None',
       distinctiveFeatures: '',
     },
     dedication: ''
@@ -178,7 +181,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
   const [activeTab, setActiveTab] = useState<'child' | 'parent'>('parent'); // Default to Parent to match screenshot
 
   const getSkinHex = () => COLORS_SKIN.find(c => c.value === config.appearance.skinTone)?.hex || '#FFE0BD';
-  const getHairHex = () => COLORS_HAIR.find(c => c.value === config.appearance.hairColor)?.hex || '#5D4037';
+  const getHairHex = () => config.appearance.grayHair ? '#9E9E9E' : (COLORS_HAIR.find(c => c.value === config.appearance.hairColor)?.hex || '#5D4037');
   
   // --- BACKGROUND PATTERN ---
   // A CSS pattern approximating the leaves/geometric shapes
@@ -211,15 +214,15 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
              <div className="flex border-b border-gray-200">
                 <button 
                    onClick={() => setActiveTab('parent')}
-                   className={`flex-1 py-3 font-bold text-sm uppercase tracking-wider transition-colors ${activeTab === 'parent' ? 'bg-white text-cloud-dark border-b-2 border-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                   className={`flex-1 py-3 font-bold text-sm tracking-wider transition-colors relative ${activeTab === 'parent' ? 'bg-white text-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                 >
-                   Père
+                   <span className={activeTab === 'parent' ? "border-b-2 border-cloud-dark pb-3 block w-full" : "pb-3 block w-full"}>Papi/Mamie</span>
                 </button>
                 <button 
                    onClick={() => setActiveTab('child')}
-                   className={`flex-1 py-3 font-bold text-sm uppercase tracking-wider transition-colors ${activeTab === 'child' ? 'bg-white text-cloud-dark border-b-2 border-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                   className={`flex-1 py-3 font-bold text-sm tracking-wider transition-colors relative ${activeTab === 'child' ? 'bg-white text-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                 >
-                   Enfant
+                   <span className={activeTab === 'child' ? "border-b-2 border-cloud-dark pb-3 block w-full" : "pb-3 block w-full"}>Enfant</span>
                 </button>
              </div>
 
@@ -229,28 +232,61 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 {/* 1. NAME */}
                 <div className="space-y-1">
                    <label className="font-bold text-gray-600 text-sm">
-                      {activeTab === 'parent' ? "Comment votre enfant appelle-t-il son père ? *" : "Comment s'appelle l'enfant ? *"}
+                      {activeTab === 'parent' ? "Comment votre enfant appelle-t-il son grand-parent ? *" : "Comment s'appelle l'enfant ? *"}
                    </label>
                    <input 
                      type="text" 
                      value={config.childName}
                      onChange={(e) => setConfig({...config, childName: e.target.value})}
-                     className="w-full bg-gray-50 border border-gray-200 rounded-md px-4 py-2 text-cloud-dark focus:border-cloud-dark focus:ring-0 outline-none transition-colors placeholder:text-gray-300 text-sm"
-                     placeholder={activeTab === 'parent' ? "Par exemple : papa, papa" : "Par exemple : Léo"}
+                     className="w-full bg-[#FFFBEB] border border-gray-200 rounded-md px-4 py-2 text-cloud-dark focus:border-cloud-dark focus:ring-0 outline-none transition-colors placeholder:text-gray-300 text-sm font-medium"
+                     placeholder={activeTab === 'parent' ? "Par exemple : Grand-père, Grand-mère" : "Par exemple : Léo"}
                    />
                 </div>
 
+                {/* 1.5 GENDER */}
+                <div className="flex gap-4 py-2">
+                    <button 
+                      onClick={() => setConfig({...config, gender: Gender.Boy})}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${config.gender === Gender.Boy ? 'border-green-200 bg-green-50' : 'border-transparent hover:bg-gray-50'}`}
+                    >
+                       <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
+                          {/* Mini Avatar Male */}
+                          <svg viewBox="0 0 100 100" className="w-full h-full">
+                             <circle cx="50" cy="50" r="45" fill="#f3f4f6" />
+                             <path d="M20 40 Q50 10 80 40" stroke="#374151" strokeWidth="3" fill="none" />
+                             <path d="M30 60 Q50 70 70 60" stroke="#374151" strokeWidth="2" fill="none" />
+                          </svg>
+                       </div>
+                       <span className="font-bold text-gray-600 text-sm">Homme</span>
+                    </button>
+                    
+                    <button 
+                      onClick={() => setConfig({...config, gender: Gender.Girl})}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${config.gender === Gender.Girl ? 'border-green-200 bg-green-50' : 'border-transparent hover:bg-gray-50'}`}
+                    >
+                       <div className="w-8 h-8 rounded-full bg-green-100 border border-green-200 flex items-center justify-center overflow-hidden">
+                          {/* Mini Avatar Female */}
+                          <svg viewBox="0 0 100 100" className="w-full h-full">
+                             <circle cx="50" cy="50" r="45" fill="#d1fae5" />
+                             <path d="M20 40 Q50 80 80 40" stroke="#065f46" strokeWidth="3" fill="#065f46" />
+                             <path d="M30 60 Q50 70 70 60" stroke="#065f46" strokeWidth="2" fill="none" />
+                          </svg>
+                       </div>
+                       <span className="font-bold text-gray-600 text-sm">Femme</span>
+                    </button>
+                </div>
+
                 {/* 2. SKIN COLOR */}
-                <div className="space-y-1">
-                   <label className="font-bold text-gray-600 text-sm">
+                <div className="flex items-center justify-between">
+                   <label className="font-bold text-gray-600 text-sm min-w-[140px]">
                       Couleur de la peau
                    </label>
-                   <div className="flex gap-3 flex-wrap">
+                   <div className="flex gap-2 flex-wrap justify-end">
                         {COLORS_SKIN.map((c) => (
                           <button
                             key={c.value}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, skinTone: c.value}})}
-                            className={`w-8 h-8 rounded-full border-2 transition-all ${config.appearance.skinTone === c.value ? 'border-cloud-dark scale-110 ring-1 ring-white' : 'border-transparent hover:scale-105'}`}
+                            className={`w-6 h-6 rounded-full transition-all ${config.appearance.skinTone === c.value ? 'ring-2 ring-green-200 scale-110 ring-offset-2' : 'hover:scale-105'}`}
                             style={{ backgroundColor: c.hex }}
                             title={c.label}
                           />
@@ -259,16 +295,16 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 3. HAIR COLOR */}
-                <div className="space-y-1">
-                    <label className="font-bold text-gray-600 text-sm">
+                <div className="flex items-center justify-between">
+                    <label className="font-bold text-gray-600 text-sm min-w-[140px]">
                        Couleur des cheveux
                     </label>
-                    <div className="flex gap-3 flex-wrap">
+                    <div className="flex gap-2 flex-wrap justify-end">
                         {COLORS_HAIR.map((c) => (
                           <button
                             key={c.value}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, hairColor: c.value}})}
-                            className={`w-8 h-8 rounded-full border-2 transition-all ${config.appearance.hairColor === c.value ? 'border-cloud-dark scale-110 ring-1 ring-white' : 'border-transparent hover:scale-105'}`}
+                            className={`w-6 h-6 rounded-full transition-all ${config.appearance.hairColor === c.value ? 'ring-2 ring-green-200 scale-110 ring-offset-2' : 'hover:scale-105'}`}
                             style={{ backgroundColor: c.hex }}
                             title={c.label}
                           />
@@ -276,17 +312,31 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                     </div>
                 </div>
 
+                {/* 3.5 GRAY HAIR TOGGLE */}
+                <div className="flex items-center justify-between border-t border-gray-100 pt-2 mt-2">
+                    <div className="flex items-center gap-2">
+                       <label className="font-bold text-gray-600 text-sm">Teinte grise des cheveux</label>
+                       <div className="w-4 h-4 rounded-full border border-gray-300 text-gray-400 text-[10px] flex items-center justify-center cursor-help" title="Ajoute une teinte grise aux cheveux">i</div>
+                    </div>
+                    <button 
+                      onClick={() => setConfig({...config, appearance: {...config.appearance, grayHair: !config.appearance.grayHair}})}
+                      className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${config.appearance.grayHair ? 'bg-green-100 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-transparent'}`}
+                    >
+                      <Check size={14} />
+                    </button>
+                </div>
+
                 {/* 4. HAIRSTYLE (Watercolor Grid) */}
-                <div className="space-y-1">
+                <div className="space-y-2 pt-2 border-t border-gray-100">
                     <label className="font-bold text-gray-600 text-sm">Coiffure</label>
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-5 gap-2">
                         {HAIR_STYLES.map((style) => (
                           <button
                             key={style.id}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, hairStyle: style.id}})}
-                            className={`aspect-square rounded-xl border-2 transition-all overflow-hidden ${config.appearance.hairStyle === style.id ? 'border-cloud-dark ring-2 ring-cloud-dark ring-offset-2' : 'border-gray-100 hover:border-gray-200'}`}
+                            className={`aspect-square rounded-full border-2 transition-all overflow-hidden ${config.appearance.hairStyle === style.id ? 'border-green-200 bg-green-50 ring-2 ring-green-100 ring-offset-1' : 'border-transparent hover:border-gray-200'}`}
                           >
-                             <div className="w-full h-full bg-stone-100">
+                             <div className="w-full h-full p-1">
                                 <HairstyleThumbnail style={style.id} />
                              </div>
                           </button>
@@ -296,16 +346,16 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
 
                 {/* 5. BEARD (Parent Only) */}
                 {activeTab === 'parent' && (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                       <label className="font-bold text-gray-600 text-sm">Barbe</label>
                       <div className="grid grid-cols-5 gap-2">
                           {BEARDS.map((beard) => (
                             <button
                               key={beard.id}
                               onClick={() => setConfig({...config, appearance: {...config.appearance, beard: beard.id}})}
-                              className={`aspect-square rounded-xl border-2 transition-all overflow-hidden ${config.appearance.beard === beard.id ? 'border-cloud-dark ring-2 ring-cloud-dark ring-offset-2' : 'border-gray-100 hover:border-gray-200'}`}
+                              className={`aspect-square rounded-full border-2 transition-all overflow-hidden ${config.appearance.beard === beard.id ? 'border-green-200 bg-green-50 ring-2 ring-green-100 ring-offset-1' : 'border-transparent hover:border-gray-200'}`}
                             >
-                               <div className="w-full h-full bg-stone-100">
+                               <div className="w-full h-full p-1">
                                   <BeardThumbnail style={beard.id} />
                                </div>
                             </button>
@@ -315,37 +365,57 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 )}
 
                 {/* 6. OUTFIT (Watercolor Circles) */}
-                <div className="space-y-1">
+                <div className="space-y-2 border-t border-gray-100 pt-2">
                     <label className="font-bold text-gray-600 text-sm">Vêtements</label>
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="flex gap-3 overflow-x-auto pb-2">
                         {OUTFITS.map((outfit) => (
                           <button
                             key={outfit.id}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, outfit: outfit.id}})}
-                            className={`aspect-square rounded-xl border-2 transition-all overflow-hidden relative group ${config.appearance.outfit === outfit.id ? 'border-cloud-dark ring-2 ring-cloud-dark ring-offset-2' : 'border-gray-100 hover:border-gray-200'}`}
+                            className={`w-12 h-12 flex-shrink-0 rounded-full border-2 transition-all overflow-hidden relative group ${config.appearance.outfit === outfit.id ? 'border-green-200 bg-green-50 ring-2 ring-green-100 ring-offset-1' : 'border-transparent hover:border-gray-200'}`}
                             title={outfit.label}
                           >
-                             <div className="w-full h-full bg-stone-100">
+                             <div className="w-full h-full">
                                 <OutfitThumbnail style={outfit.id} />
-                             </div>
-                             {/* Label overlay */}
-                             <div className="absolute bottom-0 left-0 right-0 bg-white/80 text-[9px] font-bold text-center py-1 text-gray-600 truncate px-1">
-                                {outfit.label}
                              </div>
                           </button>
                         ))}
                     </div>
                 </div>
 
+                {/* 6.5 HEARING AID */}
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <label className="font-bold text-gray-600 text-sm">Aide auditive</label>
+                    <div className="flex gap-2">
+                       {['None', 'Beige', 'Black', 'Blue', 'Green'].map((color) => (
+                          <button 
+                            key={color}
+                            onClick={() => setConfig({...config, appearance: {...config.appearance, hearingAid: color as any}})}
+                            className={`w-6 h-6 rounded-full border transition-all flex items-center justify-center ${config.appearance.hearingAid === color ? 'border-green-200 scale-110 ring-1 ring-green-100' : 'border-transparent hover:scale-105'}`}
+                            style={{ backgroundColor: color === 'None' ? '#fff' : color === 'Beige' ? '#e5e7eb' : color.toLowerCase() }}
+                          >
+                             {color === 'None' && <div className="w-4 h-4 rounded-full border border-gray-300 text-gray-300 flex items-center justify-center text-[8px]">/</div>}
+                          </button>
+                       ))}
+                    </div>
+                </div>
+
                 {/* 7. GLASSES */}
                 <div className="flex items-center justify-between pt-2">
                     <label className="font-bold text-gray-600 text-sm">Lunettes</label>
-                    <button 
-                      onClick={() => setConfig({...config, appearance: {...config.appearance, glasses: !config.appearance.glasses}})}
-                      className={`w-8 h-8 rounded border flex items-center justify-center transition-colors ${config.appearance.glasses ? 'bg-cloud-dark border-cloud-dark text-white' : 'border-gray-300 text-gray-300 hover:border-gray-400'}`}
-                    >
-                      {config.appearance.glasses && <Check size={16} />}
-                    </button>
+                    <div className="flex gap-3">
+                       {['None', 'Round', 'Square'].map((style) => (
+                          <button 
+                            key={style}
+                            onClick={() => setConfig({...config, appearance: {...config.appearance, glasses: style !== 'None', glassesStyle: style as any}})}
+                            className={`w-10 h-10 rounded-full border transition-all flex items-center justify-center ${config.appearance.glassesStyle === style ? 'bg-green-100 border-green-200' : 'bg-gray-50 border-transparent hover:bg-gray-100'}`}
+                          >
+                             {style === 'None' && <div className="w-6 h-6 rounded-full border border-gray-400 opacity-30" />}
+                             {style === 'Round' && <div className="flex gap-0.5"><div className="w-3 h-3 rounded-full border-2 border-gray-600"></div><div className="w-3 h-3 rounded-full border-2 border-gray-600"></div></div>}
+                             {style === 'Square' && <div className="flex gap-0.5"><div className="w-3 h-3 border-2 border-gray-600 rounded-sm"></div><div className="w-3 h-3 border-2 border-gray-600 rounded-sm"></div></div>}
+                          </button>
+                       ))}
+                    </div>
                 </div>
 
                 <div className="text-xs text-center text-gray-400 pt-4">
@@ -475,9 +545,28 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                               {/* GLASSES */}
                               {config.appearance.glasses && (
                                 <g stroke="#333" strokeWidth="2" fill="none" opacity="0.8">
-                                  <circle cx="32" cy="50" r="12" fill="#fff" fillOpacity="0.1" />
-                                  <circle cx="68" cy="50" r="12" fill="#fff" fillOpacity="0.1" />
-                                  <line x1="44" y1="50" x2="56" y2="50" />
+                                  {config.appearance.glassesStyle === 'Round' ? (
+                                    <>
+                                      <circle cx="32" cy="50" r="12" fill="#fff" fillOpacity="0.1" />
+                                      <circle cx="68" cy="50" r="12" fill="#fff" fillOpacity="0.1" />
+                                      <line x1="44" y1="50" x2="56" y2="50" />
+                                    </>
+                                  ) : (
+                                    <>
+                                      {/* Square glasses */}
+                                      <rect x="20" y="40" width="24" height="20" rx="4" fill="#fff" fillOpacity="0.1" />
+                                      <rect x="56" y="40" width="24" height="20" rx="4" fill="#fff" fillOpacity="0.1" />
+                                      <line x1="44" y1="50" x2="56" y2="50" />
+                                    </>
+                                  )}
+                                </g>
+                              )}
+                              
+                              {/* HEARING AID */}
+                              {config.appearance.hearingAid && config.appearance.hearingAid !== 'None' && (
+                                <g>
+                                   {/* Simple hearing aid shape behind ear */}
+                                   <path d="M95 45 Q 108 45 108 65 Q 108 75 100 80" stroke={config.appearance.hearingAid === 'Beige' ? '#e5e7eb' : config.appearance.hearingAid?.toLowerCase()} strokeWidth="4" fill="none" />
                                 </g>
                               )}
                             </g>

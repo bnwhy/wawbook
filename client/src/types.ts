@@ -26,6 +26,9 @@ export interface CharacterAppearance {
   outfit: Outfit;
   activity: Activity;
   glasses: boolean;
+  glassesStyle?: 'Round' | 'Square' | 'None';
+  hearingAid?: 'None' | 'Beige' | 'Black' | 'Blue' | 'Green' | 'Gray';
+  grayHair?: boolean;
   distinctiveFeatures?: string; // Kept for backward compatibility or extra details
 }
 

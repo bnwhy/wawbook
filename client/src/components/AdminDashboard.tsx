@@ -502,11 +502,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </h3>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                       {currentCombinations.map((variant) => (
-                                          <div key={variant} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden group">
-                                             <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                                <span className="font-bold text-sm text-slate-700">{variant}</span>
-                                                <span className="w-2 h-2 rounded-full bg-red-400" title="Image manquante"></span>
+                                       {currentCombinations.map((variant) => {
+                                          const parts = variant.split(' + ');
+                                          return (
+                                          <div key={variant} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden group hover:shadow-md transition-all">
+                                             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                                                <div className="flex justify-between items-start mb-2">
+                                                   <span className="font-bold text-xs text-slate-500 uppercase tracking-wider">Variante</span>
+                                                   <span className="w-2 h-2 rounded-full bg-red-400" title="Image manquante"></span>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1">
+                                                   {parts.map((p, i) => (
+                                                      <span key={i} className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-white border border-gray-200 text-slate-700 shadow-sm">
+                                                         {p}
+                                                      </span>
+                                                   ))}
+                                                </div>
                                              </div>
                                              
                                              <div className="aspect-[3/2] bg-gray-100 relative flex items-center justify-center group-hover:bg-gray-200 transition-colors cursor-pointer overflow-hidden">
@@ -522,7 +533,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   .map(text => (
                                                      <div 
                                                         key={text.id}
-                                                        className="absolute border border-dashed border-blue-400 bg-blue-50/50 text-[10px] text-blue-800 p-1 cursor-move hover:bg-blue-100/80 transition-colors"
+                                                        className="absolute border border-dashed border-blue-400 bg-blue-50/50 text-[10px] text-blue-800 p-1 cursor-move hover:bg-blue-100/80 transition-colors z-20"
                                                         style={{
                                                            left: `${text.position.x || 10}%`,
                                                            top: `${text.position.y || 10}%`,
@@ -534,13 +545,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   ))}
                                              </div>
                                           </div>
-                                       ))}
+                                       )})}
                                        
-                                       {/* Add Variant */}
-                                       <button className="border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-brand-coral hover:text-brand-coral hover:bg-brand-coral/5 transition-all aspect-[4/3]">
-                                          <Plus size={24} className="mb-2" />
-                                          <span className="text-xs font-bold">+ Nouvelle Combinaison</span>
-                                       </button>
+                                       {/* Add Variant Hint */}
+                                       <div className="border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 p-4 text-center bg-gray-50/30">
+                                          <span className="text-xs font-medium max-w-[200px]">
+                                             Les variantes sont générées automatiquement depuis l'onglet Wizard.
+                                          </span>
+                                       </div>
                                     </div>
                                  </div>
 

@@ -53,4 +53,4 @@ export interface Story {
   pages: StoryPage[];
 }
 
-export type AppState = 'HOME' | 'CREATE' | 'GENERATING' | 'READING';
+export type AppState = 'HOME' | 'CREATE' | 'GENERATING' | 'READING' | 'ADMIN';

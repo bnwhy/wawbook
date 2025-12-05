@@ -3,6 +3,7 @@ import Hero from './components/Hero';
 import Wizard from './components/Wizard';
 import BookPreview from './components/BookPreview';
 import LoadingScreen from './components/LoadingScreen';
+import AdminDashboard from './components/AdminDashboard';
 import { AppState, BookConfig, Story, Theme, Activity } from './types';
 import { generateStoryText } from './services/geminiService';
 
@@ -57,7 +58,7 @@ const App: React.FC = () => {
 
   return (
     <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
-      {appState === 'HOME' && <Hero onStart={startCreation} />}
+      {appState === 'HOME' && <Hero onStart={startCreation} onAdminClick={() => setAppState('ADMIN')} />}
       
       {appState === 'CREATE' && (
         <Wizard 
@@ -78,6 +79,10 @@ const App: React.FC = () => {
         />
       )}
       
+      {appState === 'ADMIN' && (
+        <AdminDashboard onBack={() => setAppState('HOME')} />
+      )}
+
       {error && (
         <div className="fixed bottom-4 right-4 bg-white border-l-4 border-brand-coral text-slate-700 px-6 py-4 rounded shadow-card z-50">
             <strong className="font-bold text-brand-coral block mb-1">Oups !</strong>

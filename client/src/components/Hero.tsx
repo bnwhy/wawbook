@@ -17,6 +17,7 @@ import cookingImage from '@assets/generated_images/children\'s_book_cover_for_co
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity) => void;
+  onAdminClick?: () => void;
 }
 
 const THEME_CARDS = [
@@ -119,7 +120,7 @@ const CloudLogo = () => (
   </div>
 );
 
-const Hero: React.FC<HeroProps> = ({ onStart }) => {
+const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const toggleFaq = (index: number) => {
@@ -133,7 +134,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
   return (
      <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
         {/* --- NAVBAR --- */}
-        <Navigation onStart={() => onStart()} />
+        <Navigation onStart={() => onStart()} onAdminClick={onAdminClick} />
         {/* --- HERO SECTION --- */}
         <header className="pt-40 pb-32 px-6 max-w-7xl mx-auto w-full relative">
           {/* Floating Clouds Decoration */}

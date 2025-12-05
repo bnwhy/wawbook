@@ -3,6 +3,7 @@ import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight } from 'lucide-reac
 
 interface NavigationProps {
   onStart: () => void;
+  onAdminClick?: () => void;
 }
 
 const MENU_STRUCTURE = [
@@ -83,7 +84,7 @@ const CloudLogo = () => (
   </div>
 );
 
-const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
+const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItem, setExpandedMobileItem] = useState<number | null>(null);
@@ -191,6 +192,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           >
             <Menu size={28} />
           </button>
+          
+          {/* Secret Admin Button (Double click logo or distinct button) */}
+          <button onClick={onAdminClick} className="hidden opacity-0 w-4 h-4 bg-red-500 absolute top-0 left-0 hover:opacity-100 z-[9999]" title="Admin Panel"></button>
         </div>
       </div>
 

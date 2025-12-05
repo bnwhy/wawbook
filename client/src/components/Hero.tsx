@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit } from 'lucide-react';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
+import generatedBookImage from '@assets/generated_images/a_magical_open_book_with_elements_flying_out.png';
+import stockBookImage from '@assets/stock_images/open_children\'s_book_e42f7fcf.jpg';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity) => void;
@@ -193,9 +195,15 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
                       <div className="absolute top-3 right-3 bg-gray-100 text-[10px] font-bold text-gray-400 px-2 py-0.5 rounded-full z-10">
                           WawBook
                       </div>
-                      {/* Icon */}
-                      <div className="transform group-hover:scale-110 transition-transform duration-300">
-                        <card.Icon size={90} strokeWidth={1.5} className={`${card.iconColor} drop-shadow-sm`} />
+                      {/* Book Cover Image */}
+                      <img 
+                        src={generatedBookImage} 
+                        alt={card.title}
+                        className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-110 transition-transform duration-500"
+                      />
+                      {/* Overlay Icon */}
+                      <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300 bg-white/80 p-4 rounded-full backdrop-blur-sm">
+                        <card.Icon size={48} strokeWidth={2} className={`${card.iconColor} drop-shadow-sm`} />
                       </div>
                   </div>
 

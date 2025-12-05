@@ -57,29 +57,101 @@ const OUTFITS: { id: Outfit; label: string }[] = [
   { id: 'Pyjama', label: 'Pyjama' } as any,
 ];
 
-// --- LINE DRAWING ICONS ---
-const HairstyleLineIcon = ({ style }: { style: HairStyle }) => (
-  <svg viewBox="0 0 100 100" className="w-full h-full fill-none stroke-current stroke-[3] stroke-linecap-round stroke-linejoin-round">
-    <circle cx="50" cy="50" r="35" strokeWidth="2" className="text-gray-300" /> {/* Face outline placeholder */}
-    {style === 'Court' && <path d="M25 40 Q50 10 75 40" />}
-    {style === 'Hérissé' && <path d="M25 40 L35 20 L45 35 L50 15 L55 35 L65 20 L75 40" />}
-    {style === 'Carré' && <path d="M20 40 Q20 20 50 20 Q80 20 80 40 L80 70 L20 70 Z" />}
-    {style === 'Long' && <path d="M20 40 Q20 10 50 10 Q80 10 80 40 L85 80 L15 80 L20 40 Z" />}
-    {style === 'Chignon' && <g><circle cx="50" cy="20" r="12" /><path d="M25 40 Q50 20 75 40" /></g>}
-    {(style as any) === 'Nattes' && <g><path d="M20 40 L10 70 M80 40 L90 70" /><path d="M25 40 Q50 15 75 40" /></g>}
-    {(style as any) === 'Bouclé' && <g><circle cx="30" cy="30" r="8" /><circle cx="50" cy="25" r="10" /><circle cx="70" cy="30" r="8" /></g>}
-    {(style as any) === 'QueueCheval' && <g><circle cx="80" cy="30" r="8" /><path d="M25 40 Q50 15 75 40" /></g>}
+// --- WATERCOLOR SVG COMPONENTS ---
+
+// Reusable defs for filter and gradients (to be placed once)
+const WatercolorDefs = ({ skinHex, hairHex }: { skinHex: string, hairHex: string }) => (
+  <defs>
+    {/* Watercolor Filter */}
+    <filter id="watercolor">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced" />
+      <feGaussianBlur in="displaced" stdDeviation="0.5" result="blurred" />
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" in="blurred" result="goo" />
+      <feComposite operator="in" in="SourceGraphic" in2="goo" result="composite" />
+      <feBlend mode="multiply" in="composite" in2="SourceGraphic" />
+    </filter>
+
+    {/* Gradients for more depth */}
+    <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor={skinHex} stopOpacity="1" />
+        <stop offset="100%" stopColor={skinHex} stopOpacity="0.9" />
+    </linearGradient>
+    
+    <linearGradient id="hairGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor={hairHex} stopOpacity="0.9" />
+        <stop offset="100%" stopColor={hairHex} stopOpacity="1" />
+    </linearGradient>
+  </defs>
+);
+
+const HairstyleThumbnail = ({ style }: { style: HairStyle }) => (
+  <svg viewBox="10 10 180 180" className="w-full h-full">
+    <g filter="url(#watercolor)">
+       {/* Head Base for context */}
+       <g transform="translate(50, 40)">
+          <path d="M10 40 Q 10 95 50 95 Q 90 95 90 40 Q 90 10 50 10 Q 10 10 10 40 Z" fill="url(#skinGradient)" opacity="0.5" />
+       </g>
+
+       {/* BACK HAIR */}
+       <g transform="translate(50, 40)">
+          {style === 'Long' && <path d="M0 50 Q-15 130 10 150 L90 150 Q115 130 100 50 Z" fill="url(#hairGradient)" />}
+          {style === 'Carré' && <path d="M-5 50 L-5 110 Q5 115 20 110 L20 50 M105 50 L105 110 Q95 115 80 110 L80 50" stroke="url(#hairGradient)" strokeWidth="28" fill="none" strokeLinecap="round" />}
+          {(style as any) === 'Nattes' && <g><path d="M5 60 Q-15 100 10 120" stroke="url(#hairGradient)" strokeWidth="20" fill="none" strokeLinecap="round" /><path d="M95 60 Q115 100 90 120" stroke="url(#hairGradient)" strokeWidth="20" fill="none" strokeLinecap="round" /></g>}
+          {(style as any) === 'Bouclé' && <g><circle cx="-5" cy="70" r="18" fill="url(#hairGradient)" /><circle cx="5" cy="90" r="18" fill="url(#hairGradient)" /><circle cx="105" cy="70" r="18" fill="url(#hairGradient)" /><circle cx="95" cy="90" r="18" fill="url(#hairGradient)" /></g>}
+          {(style as any) === 'QueueCheval' && <g><path d="M90 40 Q135 60 120 140" stroke="url(#hairGradient)" strokeWidth="24" fill="none" strokeLinecap="round" /></g>}
+       </g>
+
+       {/* FRONT HAIR */}
+       <g transform="translate(50, 40)">
+          {style === 'Court' && <path d="M10 40 Q50 15 90 40" fill="none" stroke="url(#hairGradient)" strokeWidth="12" strokeLinecap="round" />}
+          {style === 'Hérissé' && <path d="M10 35 L20 15 L35 30 L50 10 L65 30 L80 15 L90 35" fill="url(#hairGradient)" stroke="url(#hairGradient)" strokeWidth="2" strokeLinejoin="round" />}
+          {['Carré', 'Long', 'Chignon', 'Nattes', 'Bouclé', 'QueueCheval'].includes(style) && <path d="M8 40 Q30 55 50 35 Q70 55 92 40 Q90 5 50 5 Q10 5 8 40" fill="url(#hairGradient)" />}
+       </g>
+    </g>
   </svg>
 );
 
-const BeardLineIcon = ({ style }: { style: string }) => (
-  <svg viewBox="0 0 100 100" className="w-full h-full fill-none stroke-current stroke-[3] stroke-linecap-round stroke-linejoin-round">
-    <circle cx="50" cy="50" r="35" strokeWidth="2" className="text-gray-300" /> {/* Face outline */}
-    {style === 'Moustache' && <path d="M35 60 Q50 50 65 60" />}
-    {style === 'Goatee' && <path d="M45 75 Q50 80 55 75 L55 70 H45 Z" />}
-    {style === 'Short' && <path d="M30 55 Q50 90 70 55" />}
-    {style === 'Full' && <path d="M25 50 Q50 100 75 50" strokeWidth="5" />}
-    {style === 'None' && <line x1="30" y1="70" x2="70" y2="70" stroke="transparent" />} {/* Invisible spacer */}
+const BeardThumbnail = ({ style }: { style: string }) => (
+  <svg viewBox="20 40 160 160" className="w-full h-full">
+     <g filter="url(#watercolor)">
+        {/* Head Base for context */}
+        <g transform="translate(50, 40)">
+           <path d="M10 40 Q 10 95 50 95 Q 90 95 90 40 Q 90 10 50 10 Q 10 10 10 40 Z" fill="url(#skinGradient)" opacity="0.5" />
+           
+           {/* Mouth for context */}
+           <path d="M40 72 Q50 78 60 72" stroke="#A1887F" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5" />
+
+           {/* BEARD */}
+           <g opacity="0.9">
+              {style === 'Moustache' && <path d="M35 68 Q50 58 65 68" stroke="url(#hairGradient)" strokeWidth="6" fill="none" strokeLinecap="round" />}
+              {style === 'Goatee' && <path d="M45 78 Q50 83 55 78 L55 72 H45 Z" fill="url(#hairGradient)" />}
+              {style === 'Short' && <path d="M20 60 Q50 100 80 60 L80 70 Q50 110 20 70 Z" fill="url(#hairGradient)" opacity="0.6" />}
+              {style === 'Full' && <path d="M12 50 Q50 115 88 50 L88 65 Q50 130 12 65 Z" fill="url(#hairGradient)" />}
+           </g>
+        </g>
+     </g>
+  </svg>
+);
+
+const OutfitThumbnail = ({ style }: { style: Outfit }) => (
+  <svg viewBox="0 100 200 140" className="w-full h-full">
+     <g filter="url(#watercolor)">
+        <g transform="translate(50, 130)">
+            {/* Outfit Base */}
+            <g>
+                {style === 'Salopette' && <g><path d="M10 0 L90 0 L92 90 L8 90 Z" fill="#93C5FD" /><path d="M18 20 L82 20 L88 110 L12 110 Z" fill="#3B82F6" opacity="0.9" /></g>}
+                {style === 'TShirt' && <path d="M15 0 L85 0 L92 100 L8 100 Z" fill="#FDE68A" />}
+                {style === 'Robe' && <path d="M25 0 L75 0 L105 110 L-5 110 Z" fill="#A5B4FC" />}
+                {style === 'Chemise' && <path d="M15 0 L85 0 L88 100 L12 100 Z" fill="#FDA4AF" />}
+                {(style as any) === 'Sweat' && <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#C4B5FD" />}
+                {(style as any) === 'Sport' && <path d="M20 0 L80 0 L85 100 L15 100 Z" fill="#6EE7B7" />}
+                {(style as any) === 'Pyjama' && <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#BAE6FD" />}
+            </g>
+            {/* Texture Overlay */}
+            <path d="M15 0 L85 0 L90 100 L10 100 Z" fill="#fff" fillOpacity="0.1" style={{ mixBlendMode: 'overlay' }} pointerEvents="none" />
+        </g>
+     </g>
   </svg>
 );
 
@@ -115,6 +187,11 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col font-sans relative overflow-x-hidden">
       
+      {/* GLOBAL DEFS for Watercolor Style */}
+      <svg width="0" height="0" className="absolute">
+         <WatercolorDefs skinHex={getSkinHex()} hairHex={getHairHex()} />
+      </svg>
+
       {/* NAVIGATION (Integrated) */}
       <Navigation onStart={() => {}} />
 
@@ -199,18 +276,18 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                     </div>
                 </div>
 
-                {/* 4. HAIRSTYLE (Grid of Line Icons) */}
+                {/* 4. HAIRSTYLE (Watercolor Grid) */}
                 <div className="space-y-2">
                     <label className="font-bold text-gray-600 text-sm">Coiffure</label>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-4 gap-3">
                         {HAIR_STYLES.map((style) => (
                           <button
                             key={style.id}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, hairStyle: style.id}})}
-                            className={`aspect-square rounded-full border transition-all flex items-center justify-center p-1 ${config.appearance.hairStyle === style.id ? 'border-cloud-dark bg-[#D4E157] text-cloud-dark' : 'border-gray-300 text-gray-400 hover:border-gray-400'}`}
+                            className={`aspect-square rounded-xl border-2 transition-all overflow-hidden ${config.appearance.hairStyle === style.id ? 'border-cloud-dark ring-2 ring-cloud-dark ring-offset-2' : 'border-gray-100 hover:border-gray-200'}`}
                           >
-                             <div className="w-full h-full">
-                                <HairstyleLineIcon style={style.id} />
+                             <div className="w-full h-full bg-stone-100">
+                                <HairstyleThumbnail style={style.id} />
                              </div>
                           </button>
                         ))}
@@ -226,10 +303,10 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                             <button
                               key={beard.id}
                               onClick={() => setConfig({...config, appearance: {...config.appearance, beard: beard.id}})}
-                              className={`aspect-square rounded-full border transition-all flex items-center justify-center p-1 ${config.appearance.beard === beard.id ? 'border-cloud-dark bg-[#D4E157] text-cloud-dark' : 'border-gray-300 text-gray-400 hover:border-gray-400'}`}
+                              className={`aspect-square rounded-xl border-2 transition-all overflow-hidden ${config.appearance.beard === beard.id ? 'border-cloud-dark ring-2 ring-cloud-dark ring-offset-2' : 'border-gray-100 hover:border-gray-200'}`}
                             >
-                               <div className="w-full h-full">
-                                  <BeardLineIcon style={beard.id} />
+                               <div className="w-full h-full bg-stone-100">
+                                  <BeardThumbnail style={beard.id} />
                                </div>
                             </button>
                           ))}
@@ -237,19 +314,25 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                   </div>
                 )}
 
-                {/* 6. OUTFIT (Simplified Circles) */}
+                {/* 6. OUTFIT (Watercolor Circles) */}
                 <div className="space-y-2">
                     <label className="font-bold text-gray-600 text-sm">Vêtements</label>
-                    <div className="flex gap-3 flex-wrap">
+                    <div className="grid grid-cols-4 gap-3">
                         {OUTFITS.map((outfit) => (
                           <button
                             key={outfit.id}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, outfit: outfit.id}})}
-                            className={`w-8 h-8 rounded-full border-2 transition-all ${config.appearance.outfit === outfit.id ? 'border-cloud-dark scale-110 ring-1 ring-white' : 'border-gray-200 hover:border-gray-300'}`}
+                            className={`aspect-square rounded-xl border-2 transition-all overflow-hidden relative group ${config.appearance.outfit === outfit.id ? 'border-cloud-dark ring-2 ring-cloud-dark ring-offset-2' : 'border-gray-100 hover:border-gray-200'}`}
                             title={outfit.label}
-                            // Use pseudo-colors for outfit circles to match screenshot style
-                            style={{ backgroundColor: outfit.id === 'Salopette' ? '#93C5FD' : outfit.id === 'TShirt' ? '#FDE68A' : outfit.id === 'Robe' ? '#A5B4FC' : '#E5E7EB' }}
-                          />
+                          >
+                             <div className="w-full h-full bg-stone-100">
+                                <OutfitThumbnail style={outfit.id} />
+                             </div>
+                             {/* Label overlay */}
+                             <div className="absolute bottom-0 left-0 right-0 bg-white/80 text-[9px] font-bold text-center py-1 text-gray-600 truncate px-1">
+                                {outfit.label}
+                             </div>
+                          </button>
                         ))}
                     </div>
                 </div>
@@ -302,29 +385,6 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                     
                     {/* --- ENHANCED SVG AVATAR (Watercolor Style) --- */}
                     <svg viewBox="0 0 200 240" className="w-full h-full transform translate-y-8 scale-110 relative z-10">
-                        <defs>
-                          {/* Watercolor Filter */}
-                          <filter id="watercolor">
-                            <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise" />
-                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced" />
-                            <feGaussianBlur in="displaced" stdDeviation="0.5" result="blurred" />
-                            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" in="blurred" result="goo" />
-                            <feComposite operator="in" in="SourceGraphic" in2="goo" result="composite" />
-                            <feBlend mode="multiply" in="composite" in2="SourceGraphic" />
-                          </filter>
-
-                          {/* Gradients for more depth */}
-                          <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                             <stop offset="0%" stopColor={getSkinHex()} stopOpacity="1" />
-                             <stop offset="100%" stopColor={getSkinHex()} stopOpacity="0.9" />
-                          </linearGradient>
-                          
-                          <linearGradient id="hairGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                             <stop offset="0%" stopColor={getHairHex()} stopOpacity="0.9" />
-                             <stop offset="100%" stopColor={getHairHex()} stopOpacity="1" />
-                          </linearGradient>
-                        </defs>
-
                         <g filter="url(#watercolor)">
                             {/* SHADOW */}
                             <ellipse cx="50" cy="140" rx="35" ry="12" fill="#000" fillOpacity="0.1" transform="translate(50, 0)" filter="url(#blur)" />
@@ -424,20 +484,6 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                         </g>
                     </svg>
                  </div>
-             </div>
-             {/* PRODUCT INFO CARD */}
-             <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full border-t-4 border-cloud-dark self-center">
-                 <h3 className="text-2xl font-display font-black text-cloud-dark mb-1">Nos mots à nous</h3>
-                 <div className="text-xl font-bold text-accent-melon mb-3">€34.99</div>
-                 <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                    Un livre chaleureux qui met en avant le lien spécial entre un père et ses enfants. Une réflexion sincère et drôle sur la vie de famille telle qu'elle est.
-                 </p>
-                 <button 
-                   onClick={() => config.childName ? onComplete(config) : alert("N'oublie pas le prénom !")}
-                   className={`w-full py-3 rounded-lg font-bold text-white shadow-md transition-all ${config.childName ? 'bg-cloud-dark hover:bg-slate-800' : 'bg-gray-300'}`}
-                 >
-                   Prévisualisez votre livre
-                 </button>
              </div>
 
           </div>

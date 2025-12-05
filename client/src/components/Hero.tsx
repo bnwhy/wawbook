@@ -201,10 +201,6 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
                         alt={card.title}
                         className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-110 transition-transform duration-500"
                       />
-                      {/* Overlay Icon */}
-                      <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300 bg-white/80 p-4 rounded-full backdrop-blur-sm">
-                        <card.Icon size={48} strokeWidth={2} className={`${card.iconColor} drop-shadow-sm`} />
-                      </div>
                   </div>
 
                   {/* Text Content */}

@@ -17,19 +17,27 @@ export interface WizardConfiguration {
   tabs: WizardTab[];
 }
 
-export interface WizardVariant {
+export interface WizardOption {
   id: string;
   label: string;
   thumbnail?: string;
   resource?: string;
 }
 
+export interface WizardVariant {
+  id: string;
+  label: string;
+  thumbnail?: string;
+  resource?: string;
+  options: WizardOption[];
+}
+
 export interface WizardTab {
   id: string;
   label: string; // e.g., "Héros", "Compagnon"
   type: 'character' | 'element';
-  options: string[]; // e.g., ['hairColor', 'skinTone']
-  variants: WizardVariant[]; // e.g., [{id: 'v1', label: 'Garçon'}, {id: 'v2', label: 'Fille'}]
+  options: string[]; // Legacy/Metadata options
+  variants: WizardVariant[]; // e.g., [{id: 'v1', label: 'Garçon', options: [...]}, {id: 'v2', label: 'Fille', options: [...]}]
 }
 
 export interface ContentConfiguration {

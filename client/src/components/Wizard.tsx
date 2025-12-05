@@ -247,35 +247,39 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 1.5 GENDER */}
-                <div className="flex gap-4 py-2">
+                <div className="flex gap-8 py-2 px-1">
                     <button 
                       onClick={() => setConfig({...config, gender: Gender.Boy})}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${config.gender === Gender.Boy ? 'border-green-200 bg-green-50' : 'border-transparent hover:bg-gray-50'}`}
+                      className="flex items-center gap-3 group"
                     >
-                       <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
-                          {/* Mini Avatar Male */}
-                          <svg viewBox="0 0 100 100" className="w-full h-full">
-                             <circle cx="50" cy="50" r="45" fill="#f3f4f6" />
-                             <path d="M20 40 Q50 10 80 40" stroke="#374151" strokeWidth="3" fill="none" />
-                             <path d="M30 60 Q50 70 70 60" stroke="#374151" strokeWidth="2" fill="none" />
+                       <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${config.gender === Gender.Boy ? 'border-[#8DD0C3] bg-[#E8F5F2]' : 'border-gray-200 bg-white group-hover:border-gray-300'}`}>
+                          <svg viewBox="0 0 100 100" className="w-8 h-8">
+                             {/* Male Head Outline */}
+                             <path d="M20 40 Q50 10 80 40" stroke="#1F2937" strokeWidth="3" fill="none" strokeLinecap="round" />
+                             <path d="M20 40 Q20 75 50 85 Q80 75 80 40" stroke="#1F2937" strokeWidth="3" fill="none" strokeLinecap="round" />
+                             {/* Ears */}
+                             <path d="M18 45 Q12 50 18 55" stroke="#1F2937" strokeWidth="3" fill="none" strokeLinecap="round" />
+                             <path d="M82 45 Q88 50 82 55" stroke="#1F2937" strokeWidth="3" fill="none" strokeLinecap="round" />
                           </svg>
                        </div>
-                       <span className="font-bold text-gray-600 text-sm">Homme</span>
+                       <span className={`font-bold text-sm ${config.gender === Gender.Boy ? 'text-gray-800' : 'text-gray-500'}`}>Homme</span>
                     </button>
                     
                     <button 
                       onClick={() => setConfig({...config, gender: Gender.Girl})}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all ${config.gender === Gender.Girl ? 'border-green-200 bg-green-50' : 'border-transparent hover:bg-gray-50'}`}
+                      className="flex items-center gap-3 group"
                     >
-                       <div className="w-8 h-8 rounded-full bg-green-100 border border-green-200 flex items-center justify-center overflow-hidden">
-                          {/* Mini Avatar Female */}
-                          <svg viewBox="0 0 100 100" className="w-full h-full">
-                             <circle cx="50" cy="50" r="45" fill="#d1fae5" />
-                             <path d="M20 40 Q50 80 80 40" stroke="#065f46" strokeWidth="3" fill="#065f46" />
-                             <path d="M30 60 Q50 70 70 60" stroke="#065f46" strokeWidth="2" fill="none" />
+                       <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${config.gender === Gender.Girl ? 'border-[#8DD0C3] bg-[#E8F5F2]' : 'border-gray-200 bg-white group-hover:border-gray-300'}`}>
+                          <svg viewBox="0 0 100 100" className="w-8 h-8">
+                             {/* Female Head Outline */}
+                             <path d="M20 35 Q50 5 80 35" stroke="#1F2937" strokeWidth="3" fill="none" strokeLinecap="round" />
+                             <path d="M20 35 Q20 75 50 85 Q80 75 80 35" stroke="#1F2937" strokeWidth="3" fill="none" strokeLinecap="round" />
+                             {/* Hair Long */}
+                             <path d="M20 35 Q10 50 15 80" stroke="#1F2937" strokeWidth="3" fill="none" strokeLinecap="round" />
+                             <path d="M80 35 Q90 50 85 80" stroke="#1F2937" strokeWidth="3" fill="none" strokeLinecap="round" />
                           </svg>
                        </div>
-                       <span className="font-bold text-gray-600 text-sm">Femme</span>
+                       <span className={`font-bold text-sm ${config.gender === Gender.Girl ? 'text-gray-800' : 'text-gray-500'}`}>Femme</span>
                     </button>
                 </div>
 
@@ -289,7 +293,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                           <button
                             key={c.value}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, skinTone: c.value}})}
-                            className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${config.appearance.skinTone === c.value ? 'ring-2 ring-green-200 scale-110 ring-offset-2' : 'hover:scale-105'}`}
+                            className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${config.appearance.skinTone === c.value ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] scale-110 ring-offset-2' : 'hover:scale-105'}`}
                             style={{ backgroundColor: c.hex }}
                             title={c.label}
                           />
@@ -307,7 +311,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                           <button
                             key={c.value}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, hairColor: c.value}})}
-                            className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${config.appearance.hairColor === c.value ? 'ring-2 ring-green-200 scale-110 ring-offset-2' : 'hover:scale-105'}`}
+                            className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${config.appearance.hairColor === c.value ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] scale-110 ring-offset-2' : 'hover:scale-105'}`}
                             style={{ backgroundColor: c.hex }}
                             title={c.label}
                           />
@@ -316,28 +320,28 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 3.5 GRAY HAIR TOGGLE */}
-                <div className="flex items-center justify-between border-t border-gray-100 pt-2 mt-2">
+                <div className="flex items-center justify-between border-b border-gray-100 py-3">
                     <div className="flex items-center gap-2">
-                       <label className="font-bold text-gray-600 text-sm">Teinte grise des cheveux</label>
-                       <div className="w-4 h-4 rounded-full border border-gray-300 text-gray-400 text-[10px] flex items-center justify-center cursor-help" title="Ajoute une teinte grise aux cheveux">i</div>
+                       <label className="font-bold text-gray-600 text-sm cursor-pointer" onClick={() => setConfig({...config, appearance: {...config.appearance, grayHair: !config.appearance.grayHair}})}>Teinte grise des cheveux</label>
+                       <div className="w-4 h-4 rounded-full border border-gray-300 text-gray-400 text-[10px] flex items-center justify-center cursor-help font-serif italic" title="Ajoute une teinte grise aux cheveux">i</div>
                     </div>
                     <button 
                       onClick={() => setConfig({...config, appearance: {...config.appearance, grayHair: !config.appearance.grayHair}})}
-                      className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${config.appearance.grayHair ? 'bg-green-100 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-transparent'}`}
+                      className={`w-6 h-6 rounded border transition-colors flex items-center justify-center ${config.appearance.grayHair ? 'bg-[#8DD0C3] border-[#8DD0C3] text-white' : 'bg-white border-gray-300 text-transparent hover:border-gray-400'}`}
                     >
-                      <Check size={14} />
+                      <Check size={16} strokeWidth={3} />
                     </button>
                 </div>
 
                 {/* 4. HAIRSTYLE (Watercolor Grid) */}
-                <div className="space-y-2 pt-2 border-t border-gray-100">
+                <div className="space-y-2 pt-2">
                     <label className="font-bold text-gray-600 text-sm">Coiffure</label>
                     <div className="grid grid-cols-5 gap-2">
                         {HAIR_STYLES.map((style) => (
                           <button
                             key={style.id}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, hairStyle: style.id}})}
-                            className={`aspect-square rounded-full border-2 transition-all overflow-hidden ${config.appearance.hairStyle === style.id ? 'border-green-200 bg-green-50 ring-2 ring-green-100 ring-offset-1' : 'border-transparent hover:border-gray-200'}`}
+                            className={`aspect-square rounded-full border-2 transition-all overflow-hidden ${config.appearance.hairStyle === style.id ? 'border-[#8DD0C3] bg-[#E8F5F2] ring-2 ring-[#E8F5F2] ring-offset-1' : 'border-transparent hover:border-gray-200'}`}
                           >
                              <div className="w-full h-full p-1">
                                 <HairstyleThumbnail style={style.id} />
@@ -347,35 +351,15 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                     </div>
                 </div>
 
-                {/* 5. BEARD (Parent Only) */}
-                {activeTab === 'parent' && (
-                  <div className="space-y-2">
-                      <label className="font-bold text-gray-600 text-sm">Barbe</label>
-                      <div className="grid grid-cols-5 gap-2">
-                          {BEARDS.map((beard) => (
-                            <button
-                              key={beard.id}
-                              onClick={() => setConfig({...config, appearance: {...config.appearance, beard: beard.id}})}
-                              className={`aspect-square rounded-full border-2 transition-all overflow-hidden ${config.appearance.beard === beard.id ? 'border-green-200 bg-green-50 ring-2 ring-green-100 ring-offset-1' : 'border-transparent hover:border-gray-200'}`}
-                            >
-                               <div className="w-full h-full p-1">
-                                  <BeardThumbnail style={beard.id} />
-                               </div>
-                            </button>
-                          ))}
-                      </div>
-                  </div>
-                )}
-
                 {/* 6. OUTFIT (Watercolor Circles) */}
-                <div className="space-y-2 border-t border-gray-100 pt-2">
+                <div className="space-y-2 border-t border-gray-100 pt-2 mt-2">
                     <label className="font-bold text-gray-600 text-sm">Vêtements</label>
                     <div className="flex gap-3 overflow-x-auto pb-2">
                         {OUTFITS.map((outfit) => (
                           <button
                             key={outfit.id}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, outfit: outfit.id}})}
-                            className={`w-12 h-12 flex-shrink-0 rounded-full border-2 transition-all overflow-hidden relative group ${config.appearance.outfit === outfit.id ? 'border-green-200 bg-green-50 ring-2 ring-green-100 ring-offset-1' : 'border-transparent hover:border-gray-200'}`}
+                            className={`w-12 h-12 flex-shrink-0 rounded-full border-2 transition-all overflow-hidden relative group ${config.appearance.outfit === outfit.id ? 'border-[#8DD0C3] bg-[#E8F5F2] ring-2 ring-[#E8F5F2] ring-offset-1' : 'border-transparent hover:border-gray-200'}`}
                             title={outfit.label}
                           >
                              <div className="w-full h-full">
@@ -387,33 +371,41 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 6.5 HEARING AID */}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-2">
                     <label className="font-bold text-gray-600 text-sm">Aide auditive</label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                        {['None', 'Beige', 'Black', 'Blue', 'Green'].map((color) => (
                           <button 
                             key={color}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, hearingAid: color as any}})}
-                            className={`w-6 h-6 rounded-full border transition-all flex items-center justify-center ${config.appearance.hearingAid === color ? 'border-green-200 scale-110 ring-1 ring-green-100' : 'border-transparent hover:scale-105'}`}
+                            className={`w-8 h-8 rounded-full border transition-all flex items-center justify-center ${config.appearance.hearingAid === color ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] ring-offset-1' : 'border-transparent hover:scale-105'}`}
                             style={{ backgroundColor: color === 'None' ? '#fff' : color === 'Beige' ? '#e5e7eb' : color.toLowerCase() }}
                           >
-                             {color === 'None' && <div className="w-4 h-4 rounded-full border border-gray-300 text-gray-300 flex items-center justify-center text-[8px]">/</div>}
+                             {color === 'None' && (
+                               <div className="w-full h-full rounded-full border border-gray-300 flex items-center justify-center relative opacity-50">
+                                 <div className="absolute w-full h-0.5 bg-gray-300 rotate-45"></div>
+                               </div>
+                             )}
                           </button>
                        ))}
                     </div>
                 </div>
 
                 {/* 7. GLASSES */}
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center justify-between pt-4">
                     <label className="font-bold text-gray-600 text-sm">Lunettes</label>
                     <div className="flex gap-3">
                        {['None', 'Round', 'Square'].map((style) => (
                           <button 
                             key={style}
                             onClick={() => setConfig({...config, appearance: {...config.appearance, glasses: style !== 'None', glassesStyle: style as any}})}
-                            className={`w-10 h-10 rounded-full border transition-all flex items-center justify-center ${config.appearance.glassesStyle === style ? 'bg-green-100 border-green-200' : 'bg-gray-50 border-transparent hover:bg-gray-100'}`}
+                            className={`w-10 h-10 rounded-full border transition-all flex items-center justify-center ${config.appearance.glassesStyle === style ? 'bg-[#E8F5F2] border-[#8DD0C3]' : 'bg-gray-50 border-transparent hover:bg-gray-100'}`}
                           >
-                             {style === 'None' && <div className="w-6 h-6 rounded-full border border-gray-400 opacity-30" />}
+                             {style === 'None' && (
+                               <div className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center relative opacity-50">
+                                  <div className="absolute w-full h-0.5 bg-gray-300 rotate-45"></div>
+                               </div>
+                             )}
                              {style === 'Round' && <div className="flex gap-0.5"><div className="w-3 h-3 rounded-full border-2 border-gray-600"></div><div className="w-3 h-3 rounded-full border-2 border-gray-600"></div></div>}
                              {style === 'Square' && <div className="flex gap-0.5"><div className="w-3 h-3 border-2 border-gray-600 rounded-sm"></div><div className="w-3 h-3 border-2 border-gray-600 rounded-sm"></div></div>}
                           </button>

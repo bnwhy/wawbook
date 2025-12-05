@@ -46,6 +46,10 @@ export interface TextElement {
     pageIndex: number;
     zoneId: string; // e.g., "header", "body", "footer"
     layer?: number;
+    x?: number; // Percentage 0-100
+    y?: number; // Percentage 0-100
+    width?: number; // Percentage
+    style?: React.CSSProperties;
   };
 }
 

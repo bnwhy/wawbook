@@ -49,6 +49,37 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
 
+  // Helper to generate combinations
+  const generateCombinations = (book: BookProduct) => {
+    const tabs = book.wizardConfig.tabs;
+    if (tabs.length === 0) return ['default'];
+
+    // This is a simplified generator. For a real app, we'd do a full Cartesian product.
+    // For now, let's generate some sample combinations based on the first tab options + second tab options
+    // e.g. "Boy + Blonde", "Boy + Brown", "Girl + Blonde"
+    
+    const combinations: string[] = ['default'];
+    
+    // Just flat map for prototype visualization if complex cartesian is too much for now
+    // Or implement a basic one:
+    
+    // Let's try a simple cartesian product of the first option of each tab to show structure
+    // Actually, let's just create a mix for the demo based on the "options" array of the tabs
+    
+    if (tabs.length > 0) {
+        // Mock generation logic for visualization
+        const characterTab = tabs.find(t => t.type === 'character');
+        if (characterTab) {
+             combinations.push('Garçon', 'Fille');
+             combinations.push('Garçon + Blond', 'Garçon + Brun', 'Fille + Blonde', 'Fille + Brune');
+        }
+    }
+    
+    return combinations.length > 1 ? combinations.filter(c => c !== 'default') : combinations;
+  };
+
+  const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
+
   const handleSaveBook = (updatedBook: BookProduct) => {
     setBooks(books.map(b => b.id === updatedBook.id ? updatedBook : b));
     setIsEditing(false);
@@ -457,18 +488,36 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </h3>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                       {['Défaut', 'Garçon', 'Fille', 'Garçon + Blond', 'Fille + Brune', 'Garçon + Lunettes'].map((variant) => (
+                                       {currentCombinations.map((variant) => (
                                           <div key={variant} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden group">
                                              <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                                                 <span className="font-bold text-sm text-slate-700">{variant}</span>
                                                 <span className="w-2 h-2 rounded-full bg-red-400" title="Image manquante"></span>
                                              </div>
                                              
-                                             <div className="aspect-[3/2] bg-gray-100 relative flex items-center justify-center group-hover:bg-gray-200 transition-colors cursor-pointer">
-                                                <div className="text-center">
+                                             <div className="aspect-[3/2] bg-gray-100 relative flex items-center justify-center group-hover:bg-gray-200 transition-colors cursor-pointer overflow-hidden">
+                                                {/* Mock Image Preview */}
+                                                <div className="text-center z-10">
                                                    <Upload size={24} className="mx-auto text-gray-400 mb-2" />
                                                    <span className="text-xs font-bold text-gray-500">Uploader Image</span>
                                                 </div>
+                                                
+                                                {/* Text Overlay Preview */}
+                                                 {selectedBook.contentConfig.texts
+                                                  .filter(t => t.position.pageIndex === selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.pageNumber)
+                                                  .map(text => (
+                                                     <div 
+                                                        key={text.id}
+                                                        className="absolute border border-dashed border-blue-400 bg-blue-50/50 text-[10px] text-blue-800 p-1 cursor-move hover:bg-blue-100/80 transition-colors"
+                                                        style={{
+                                                           left: `${text.position.x || 10}%`,
+                                                           top: `${text.position.y || 10}%`,
+                                                        }}
+                                                        title={`Position: ${text.position.x}%, ${text.position.y}%`}
+                                                     >
+                                                        {text.label}
+                                                     </div>
+                                                  ))}
                                              </div>
                                           </div>
                                        ))}
@@ -504,13 +553,44 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 <div className="flex-1">
                                                    <div className="flex justify-between mb-1">
                                                       <span className="font-bold text-sm text-slate-700">{text.label}</span>
-                                                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${text.type === 'variable' ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'}`}>
-                                                         {text.type}
-                                                      </span>
+                                                      <div className="flex items-center gap-2">
+                                                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${text.type === 'variable' ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'}`}>
+                                                            {text.type}
+                                                         </span>
+                                                      </div>
                                                    </div>
-                                                   <p className="text-sm text-slate-600 font-mono bg-white p-2 rounded border border-gray-200">
+                                                   <p className="text-sm text-slate-600 font-mono bg-white p-2 rounded border border-gray-200 mb-2">
                                                       {text.content}
                                                    </p>
+                                                   
+                                                   {/* Position Controls */}
+                                                   <div className="flex gap-4 text-xs text-gray-500 items-center">
+                                                      <span>Position (0-100%):</span>
+                                                      <div className="flex items-center gap-1">
+                                                         X: <input 
+                                                            type="number" 
+                                                            className="w-12 border rounded px-1 py-0.5 bg-white" 
+                                                            placeholder="10"
+                                                            value={text.position.x || ''}
+                                                            onChange={(e) => {
+                                                               const newTexts = selectedBook.contentConfig.texts.map(t => t.id === text.id ? {...t, position: {...t.position, x: parseInt(e.target.value)}} : t);
+                                                               handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                            }}
+                                                         />
+                                                      </div>
+                                                      <div className="flex items-center gap-1">
+                                                         Y: <input 
+                                                            type="number" 
+                                                            className="w-12 border rounded px-1 py-0.5 bg-white" 
+                                                            placeholder="10"
+                                                            value={text.position.y || ''}
+                                                            onChange={(e) => {
+                                                               const newTexts = selectedBook.contentConfig.texts.map(t => t.id === text.id ? {...t, position: {...t.position, y: parseInt(e.target.value)}} : t);
+                                                               handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                            }}
+                                                         />
+                                                      </div>
+                                                   </div>
                                                 </div>
                                                 <button className="text-gray-400 hover:text-red-500 p-1">
                                                    <Trash2 size={16} />

@@ -3,6 +3,8 @@ import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition } from '../types/admin';
 
+import Wizard from './Wizard';
+
 // --- MOCK INITIAL DATA ---
 const INITIAL_BOOKS: BookProduct[] = [
   {
@@ -282,168 +284,166 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {/* --- VIEW: EDIT WIZARD --- */}
             {activeTab === 'wizard' && selectedBookId && selectedBook && (
-               <div className="max-w-4xl mx-auto space-y-6">
+               <div className="max-w-[1600px] mx-auto h-[calc(100vh-160px)] flex gap-6">
                   
-
-                  {/* Tabs Config */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-slate-800">Onglets de Personnalisation</h2>
-                        <button 
-                          onClick={() => {
-                             const newTab: WizardTab = { id: Date.now().toString(), label: 'Nouveau Perso', type: 'character', options: [], variants: [] };
-                             handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: [...selectedBook.wizardConfig.tabs, newTab]}});
-                          }}
-                          className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold transition-colors"
-                        >
-                           + Ajouter un onglet
-                        </button>
+                  {/* LEFT: Config */}
+                  <div className="w-[500px] shrink-0 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+                     <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                        <div className="flex justify-between items-center">
+                           <h2 className="text-lg font-bold text-slate-800">Configuration du Wizard</h2>
+                           <button 
+                              onClick={() => {
+                                 const newTab: WizardTab = { id: Date.now().toString(), label: 'Nouvel Onglet', type: 'character', options: ['name'], variants: [] };
+                                 handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: [...selectedBook.wizardConfig.tabs, newTab]}});
+                              }}
+                              className="text-xs bg-slate-900 text-white hover:bg-slate-800 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1"
+                           >
+                              <Plus size={14} /> Onglet
+                           </button>
+                        </div>
                      </div>
 
-                     <div className="space-y-4">
-                        {selectedBook.wizardConfig.tabs.map((tab, idx) => (
-                           <div key={tab.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
-                              <div className="flex gap-4 items-start mb-4">
-                                 <div className="flex-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Nom de l'onglet</label>
-                                    <input 
-                                      type="text" 
-                                      value={tab.label}
-                                      onChange={(e) => {
-                                         const newTabs = [...selectedBook.wizardConfig.tabs];
-                                         newTabs[idx].label = e.target.value;
-                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                      }}
-                                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm"
-                                    />
-                                 </div>
-                                 <div className="w-40">
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Type</label>
-                                    <select 
-                                      value={tab.type}
-                                      onChange={(e) => {
-                                         const newTabs = [...selectedBook.wizardConfig.tabs];
-                                         newTabs[idx].type = e.target.value as any;
-                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                      }}
-                                      className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm"
-                                    >
-                                       <option value="character">Personnage</option>
-                                       <option value="element">Élément (Objet)</option>
-                                    </select>
-                                 </div>
-                                 <button 
-                                   onClick={() => {
-                                      const newTabs = selectedBook.wizardConfig.tabs.filter((_, i) => i !== idx);
-                                      handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                   }}
-                                   className="mt-6 text-red-400 hover:text-red-600 p-1"
-                                 >
-                                    <Trash2 size={18} />
-                                 </button>
-                              </div>
-                              
-                              <div>
-                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Variantes Principales (ex: Garçon, Fille)</label>
-                                 <div className="flex gap-2 mb-2">
-                                    <input 
-                                      type="text" 
-                                      placeholder="Ajouter variante..." 
-                                      className="border border-gray-300 rounded px-2 py-1 text-xs flex-1"
-                                      onKeyDown={(e) => {
-                                         if (e.key === 'Enter') {
-                                            const val = (e.target as HTMLInputElement).value;
-                                            if (val) {
-                                               const newTabs = [...selectedBook.wizardConfig.tabs];
-                                               newTabs[idx].variants = [...(newTabs[idx].variants || []), val];
-                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                               (e.target as HTMLInputElement).value = '';
-                                            }
-                                         }
-                                      }}
-                                    />
-                                 </div>
-                                 <div className="flex gap-2 flex-wrap mb-4">
-                                    {(tab.variants || []).map(v => (
-                                       <span key={v} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold border border-purple-200 flex items-center gap-1">
-                                          {v}
-                                          <button 
-                                            onClick={() => {
-                                               const newTabs = [...selectedBook.wizardConfig.tabs];
-                                               newTabs[idx].variants = newTabs[idx].variants.filter(x => x !== v);
-                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                            }}
-                                            className="hover:text-purple-900"
-                                          >
-                                             <Trash2 size={10} />
-                                          </button>
-                                       </span>
-                                    ))}
-                                 </div>
-
-                                 <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Options de détail</label>
-                                 <div className="flex gap-2 flex-wrap mb-4">
-                                    {['hair', 'skin', 'eyes', 'glasses', 'beard', 'clothes', 'accessory'].map(opt => (
-                                       <button 
-                                          key={opt}
-                                          onClick={() => {
+                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        {selectedBook.wizardConfig.tabs.length === 0 ? (
+                           <div className="text-center py-12 text-gray-400 italic border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                              <Layers size={32} className="mx-auto mb-2 opacity-50" />
+                              <p>Aucun onglet configuré.</p>
+                           </div>
+                        ) : (
+                           selectedBook.wizardConfig.tabs.map((tab, idx) => (
+                              <div key={tab.id} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white group">
+                                 {/* Tab Header */}
+                                 <div className="bg-slate-50 p-3 border-b border-gray-200 flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                       <div className="w-6 h-6 rounded bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-slate-500">
+                                          {idx + 1}
+                                       </div>
+                                       <input 
+                                          type="text" 
+                                          value={tab.label}
+                                          onChange={(e) => {
                                              const newTabs = [...selectedBook.wizardConfig.tabs];
-                                             const currentOptions = newTabs[idx].options;
-                                             if (currentOptions.includes(opt)) {
-                                                newTabs[idx].options = currentOptions.filter(o => o !== opt);
-                                             } else {
-                                                newTabs[idx].options = [...currentOptions, opt];
-                                             }
+                                             newTabs[idx].label = e.target.value;
                                              handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                           }}
-                                          className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${tab.options.includes(opt) ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}
-                                       >
-                                          {opt}
-                                       </button>
-                                    ))}
+                                          className="bg-transparent font-bold text-slate-700 border-none focus:ring-0 p-0 text-sm w-32"
+                                       />
+                                    </div>
+                                    <button 
+                                       onClick={() => {
+                                          const newTabs = selectedBook.wizardConfig.tabs.filter((_, i) => i !== idx);
+                                          handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                       }}
+                                       className="text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                       <Trash2 size={16} />
+                                    </button>
                                  </div>
 
-                                 {/* Asset Configuration for Selected Options */}
-                                 {tab.options.length > 0 && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200 border-dashed">
-                                       <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
-                                          <Image size={14} />
-                                          Assets des Options
-                                       </h4>
-                                       <div className="grid grid-cols-1 gap-3">
-                                          {tab.options.map(opt => (
-                                             <div key={opt} className="flex items-center gap-4 p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
-                                                <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
-                                                   <Image size={18} />
-                                                </div>
-                                                <div className="flex-1">
-                                                   <div className="flex justify-between items-center mb-1">
-                                                      <span className="font-bold text-sm text-slate-700 capitalize">{opt}</span>
-                                                      <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full border border-green-100 font-medium">Active</span>
-                                                   </div>
-                                                   <div className="flex gap-2 text-[10px] text-gray-400">
-                                                      <span>Gérer les variations de {opt}</span>
-                                                   </div>
-                                                </div>
-                                                <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-brand-coral hover:text-white rounded-lg text-xs font-bold transition-colors border border-gray-200 hover:border-brand-coral">
-                                                   <Upload size={14} />
-                                                   Importer
+                                 <div className="p-4 space-y-4">
+                                    {/* Variants */}
+                                    <div>
+                                       <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-wider">Variantes (ex: Garçon, Fille)</label>
+                                       <div className="flex gap-2 flex-wrap mb-2">
+                                          {(tab.variants || []).map(v => (
+                                             <span key={v} className="px-2 py-1 bg-purple-50 text-purple-700 rounded-md text-xs font-bold border border-purple-100 flex items-center gap-1">
+                                                {v}
+                                                <button 
+                                                   onClick={() => {
+                                                      const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                      newTabs[idx].variants = newTabs[idx].variants.filter(x => x !== v);
+                                                      handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                   }}
+                                                   className="hover:text-purple-900"
+                                                >
+                                                   <Trash2 size={10} />
                                                 </button>
-                                             </div>
+                                             </span>
+                                          ))}
+                                          <input 
+                                             type="text" 
+                                             placeholder="+ variante..." 
+                                             className="px-2 py-1 text-xs border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:border-brand-coral outline-none w-24"
+                                             onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                   const val = (e.target as HTMLInputElement).value;
+                                                   if (val) {
+                                                      const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                      newTabs[idx].variants = [...(newTabs[idx].variants || []), val];
+                                                      handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                      (e.target as HTMLInputElement).value = '';
+                                                   }
+                                                }
+                                             }}
+                                          />
+                                       </div>
+                                    </div>
+
+                                    {/* Options */}
+                                    <div>
+                                       <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-wider">Options Visibles</label>
+                                       <div className="flex gap-1.5 flex-wrap">
+                                          {['hair', 'skin', 'eyes', 'glasses', 'beard', 'clothes', 'accessory'].map(opt => (
+                                             <button 
+                                                key={opt}
+                                                onClick={() => {
+                                                   const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                   const currentOptions = newTabs[idx].options;
+                                                   if (currentOptions.includes(opt)) {
+                                                      newTabs[idx].options = currentOptions.filter(o => o !== opt);
+                                                   } else {
+                                                      newTabs[idx].options = [...currentOptions, opt];
+                                                   }
+                                                   handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                }}
+                                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold border transition-all ${tab.options.includes(opt) ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}
+                                             >
+                                                {opt}
+                                             </button>
                                           ))}
                                        </div>
                                     </div>
-                                 )}
+
+                                    {/* Assets Link */}
+                                    {tab.options.length > 0 && (
+                                       <div className="pt-3 border-t border-gray-100">
+                                          <button className="w-full py-2 text-xs font-bold text-slate-600 bg-gray-50 hover:bg-gray-100 rounded border border-gray-200 flex items-center justify-center gap-2 transition-colors">
+                                             <Image size={14} /> Gérer les assets ({tab.options.length})
+                                          </button>
+                                       </div>
+                                    )}
+                                 </div>
                               </div>
-                           </div>
-                        ))}
-                        {selectedBook.wizardConfig.tabs.length === 0 && (
-                           <div className="text-center py-8 text-gray-400 italic bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                              Aucun onglet configuré. Ajoutez-en un pour commencer.
-                           </div>
+                           ))
                         )}
                      </div>
                   </div>
+
+                  {/* RIGHT: LIVE PREVIEW */}
+                  <div className="flex-1 bg-gray-900 rounded-xl border border-gray-800 overflow-hidden flex flex-col shadow-2xl">
+                     <div className="px-4 py-3 bg-gray-950 border-b border-gray-800 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                           <Eye size={16} className="text-brand-coral" />
+                           <span className="text-sm font-bold text-gray-200">Aperçu en direct</span>
+                        </div>
+                        <span className="text-xs text-gray-500 bg-gray-900 px-2 py-1 rounded border border-gray-800">
+                           Interactif
+                        </span>
+                     </div>
+                     <div className="flex-1 bg-stone-100 relative overflow-hidden isolate">
+                        {/* Scaled Wizard Wrapper */}
+                        <div className="absolute inset-0 overflow-hidden">
+                           <div className="w-full h-full origin-top-left transform scale-[0.85] translate-x-[7.5%] translate-y-[7.5%] shadow-2xl border border-black/10 rounded-xl overflow-hidden bg-white">
+                              <Wizard 
+                                 onComplete={() => {}} 
+                                 onCancel={() => {}} 
+                                 wizardConfig={selectedBook.wizardConfig}
+                              />
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+
                </div>
             )}
 

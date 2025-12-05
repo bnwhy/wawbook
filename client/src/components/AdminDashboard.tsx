@@ -382,7 +382,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </div>
 
                                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Options de détail</label>
-                                 <div className="flex gap-2 flex-wrap">
+                                 <div className="flex gap-2 flex-wrap mb-4">
                                     {['hair', 'skin', 'eyes', 'glasses', 'beard', 'clothes', 'accessory'].map(opt => (
                                        <button 
                                           key={opt}
@@ -402,6 +402,38 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        </button>
                                     ))}
                                  </div>
+
+                                 {/* Asset Configuration for Selected Options */}
+                                 {tab.options.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-gray-200 border-dashed">
+                                       <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                                          <Image size={14} />
+                                          Assets des Options
+                                       </h4>
+                                       <div className="grid grid-cols-1 gap-3">
+                                          {tab.options.map(opt => (
+                                             <div key={opt} className="flex items-center gap-4 p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                                <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
+                                                   <Image size={18} />
+                                                </div>
+                                                <div className="flex-1">
+                                                   <div className="flex justify-between items-center mb-1">
+                                                      <span className="font-bold text-sm text-slate-700 capitalize">{opt}</span>
+                                                      <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full border border-green-100 font-medium">Active</span>
+                                                   </div>
+                                                   <div className="flex gap-2 text-[10px] text-gray-400">
+                                                      <span>Gérer les variations de {opt}</span>
+                                                   </div>
+                                                </div>
+                                                <button className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-brand-coral hover:text-white rounded-lg text-xs font-bold transition-colors border border-gray-200 hover:border-brand-coral">
+                                                   <Upload size={14} />
+                                                   Importer
+                                                </button>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                 )}
                               </div>
                            </div>
                         ))}

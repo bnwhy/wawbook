@@ -17,7 +17,10 @@ const INITIAL_BOOKS: BookProduct[] = [
     coverImage: 'adventure_cover.jpg',
     wizardConfig: {
       avatarStyle: 'watercolor',
-      tabs: []
+      tabs: [
+        { id: 't1', label: 'Enfant', type: 'character', options: ['hair', 'skin', 'clothes'], variants: ['Garçon', 'Fille'] },
+        { id: 't2', label: 'Parent', type: 'character', options: ['hair', 'skin', 'beard'], variants: ['Papa', 'Maman'] }
+      ]
     },
     contentConfig: {
       pages: [
@@ -435,7 +438,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  onComplete={() => {}} 
                                  onCancel={() => {}} 
                                  wizardConfig={selectedBook.wizardConfig}
-                                 showNavigation={false}
                               />
                            </div>
                         </div>

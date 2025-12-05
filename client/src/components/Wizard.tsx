@@ -196,14 +196,14 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
       <Navigation onStart={() => {}} />
 
       {/* WIZARD CONTENT */}
-      <div className="flex-1 flex items-start justify-center p-4 md:p-8 pt-28 md:pt-32 relative overflow-hidden w-full" style={{ backgroundImage: bgPattern }}>
+      <div className="flex-1 flex items-start justify-center p-4 pt-20 md:p-8 md:pt-24 relative overflow-hidden w-full" style={{ backgroundImage: bgPattern }}>
         
         <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start h-full">
           
           {/* --- LEFT COLUMN: CONFIGURATION --- */}
           <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col lg:h-[calc(100%-2rem)]">
              
-             <div className="p-6 border-b border-gray-100">
+             <div className="p-4 border-b border-gray-100">
                 <h2 className="text-xl font-display font-black text-cloud-dark">Créez vos personnages principaux</h2>
              </div>
 
@@ -211,23 +211,23 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
              <div className="flex border-b border-gray-200">
                 <button 
                    onClick={() => setActiveTab('parent')}
-                   className={`flex-1 py-4 font-bold text-sm uppercase tracking-wider transition-colors ${activeTab === 'parent' ? 'bg-white text-cloud-dark border-b-2 border-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                   className={`flex-1 py-3 font-bold text-sm uppercase tracking-wider transition-colors ${activeTab === 'parent' ? 'bg-white text-cloud-dark border-b-2 border-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                 >
                    Père
                 </button>
                 <button 
                    onClick={() => setActiveTab('child')}
-                   className={`flex-1 py-4 font-bold text-sm uppercase tracking-wider transition-colors ${activeTab === 'child' ? 'bg-white text-cloud-dark border-b-2 border-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                   className={`flex-1 py-3 font-bold text-sm uppercase tracking-wider transition-colors ${activeTab === 'child' ? 'bg-white text-cloud-dark border-b-2 border-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                 >
                    Enfant
                 </button>
              </div>
 
              {/* FORM CONTENT */}
-             <div className="p-6 space-y-6 overflow-y-auto flex-1">
+             <div className="p-4 space-y-4 overflow-y-auto flex-1">
                 
                 {/* 1. NAME */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                    <label className="font-bold text-gray-600 text-sm">
                       {activeTab === 'parent' ? "Comment votre enfant appelle-t-il son père ? *" : "Comment s'appelle l'enfant ? *"}
                    </label>
@@ -241,7 +241,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 2. SKIN COLOR */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                    <label className="font-bold text-gray-600 text-sm">
                       Couleur de la peau
                    </label>
@@ -259,7 +259,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 3. HAIR COLOR */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                     <label className="font-bold text-gray-600 text-sm">
                        Couleur des cheveux
                     </label>
@@ -277,7 +277,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 </div>
 
                 {/* 4. HAIRSTYLE (Watercolor Grid) */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                     <label className="font-bold text-gray-600 text-sm">Coiffure</label>
                     <div className="grid grid-cols-4 gap-3">
                         {HAIR_STYLES.map((style) => (
@@ -296,7 +296,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
 
                 {/* 5. BEARD (Parent Only) */}
                 {activeTab === 'parent' && (
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                       <label className="font-bold text-gray-600 text-sm">Barbe</label>
                       <div className="grid grid-cols-5 gap-2">
                           {BEARDS.map((beard) => (
@@ -315,7 +315,7 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
                 )}
 
                 {/* 6. OUTFIT (Watercolor Circles) */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                     <label className="font-bold text-gray-600 text-sm">Vêtements</label>
                     <div className="grid grid-cols-4 gap-3">
                         {OUTFITS.map((outfit) => (

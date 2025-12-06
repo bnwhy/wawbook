@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown } from 'lucide-react';
+import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -121,13 +121,34 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </div>
         
         <nav className="flex-1 p-4 space-y-2">
-           <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-2">Catalogue</div>
+           <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-2">Gestion</div>
            <button 
              onClick={() => { setActiveTab('books'); setSelectedBookId(null); setIsEditing(false); }}
              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'books' && !selectedBookId ? 'bg-brand-coral text-white shadow-lg' : 'hover:bg-slate-800'}`}
            >
               <Book size={20} />
-              <span className="font-medium">Tous les Livres</span>
+              <span className="font-medium">Produits</span>
+           </button>
+
+           <button 
+             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-slate-800 text-slate-400 hover:text-white"
+           >
+              <Menu size={20} />
+              <span className="font-medium">Menus</span>
+           </button>
+
+           <button 
+             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-slate-800 text-slate-400 hover:text-white"
+           >
+              <Users size={20} />
+              <span className="font-medium">Clients</span>
+           </button>
+
+           <button 
+             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-slate-800 text-slate-400 hover:text-white"
+           >
+              <ShoppingBag size={20} />
+              <span className="font-medium">Commandes</span>
            </button>
 
            {selectedBookId && (

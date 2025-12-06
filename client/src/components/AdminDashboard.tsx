@@ -151,6 +151,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <span className="font-medium">Commandes</span>
            </button>
 
+           <button 
+             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-slate-800 text-slate-400 hover:text-white"
+           >
+              <Settings size={20} />
+              <span className="font-medium">Paramétrages</span>
+           </button>
+
            {selectedBookId && (
              <>
                <div className="text-xs font-bold text-slate-500 uppercase px-4 mt-6 mb-2">Édition en cours</div>

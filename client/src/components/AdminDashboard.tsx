@@ -511,10 +511,62 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                 <div className="flex flex-col gap-2">
                                                    {(variant.options || []).map((option, oIdx) => (
-                                                      <div key={option.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-start gap-3 group/option">
-                                                         <div className="w-12 h-12 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-gray-300 shrink-0">
-                                                            <ImageIcon size={20} />
+                                                      <div key={option.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center gap-4 group/option">
+                                                         
+                                                         {/* Uploads */}
+                                                         <div className="flex gap-3">
+                                                            <div className="text-center group/upload cursor-pointer relative">
+                                                               <div className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-colors mb-1 overflow-hidden ${option.thumbnail ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50 group-hover/upload:border-brand-coral group-hover/upload:text-brand-coral text-gray-300'}`}>
+                                                                  {option.thumbnail ? (
+                                                                     <img src={option.thumbnail} alt="Thumb" className="w-full h-full object-cover" />
+                                                                  ) : (
+                                                                     <ImageIcon size={16} />
+                                                                  )}
+                                                               </div>
+                                                               <div className={`text-[9px] font-bold ${option.thumbnail ? 'text-green-600' : 'text-gray-400 group-hover/upload:text-brand-coral'}`}>Miniature</div>
+                                                               
+                                                               {/* Hidden File Input for Mock Upload */}
+                                                               <input 
+                                                                  type="file" 
+                                                                  className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                  onChange={(e) => {
+                                                                     const file = e.target.files?.[0];
+                                                                     if (file) {
+                                                                        // Mock upload - create object URL
+                                                                        const url = URL.createObjectURL(file);
+                                                                        const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                        newTabs[idx].variants[vIdx].options[oIdx].thumbnail = url;
+                                                                        handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                                     }
+                                                                  }}
+                                                               />
+                                                            </div>
+
+                                                            <div className="text-center group/upload cursor-pointer relative">
+                                                               <div className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-colors mb-1 ${option.resource ? 'border-blue-200 bg-blue-50 text-blue-500' : 'border-gray-200 bg-gray-50 group-hover/upload:border-blue-500 group-hover/upload:text-blue-500 text-gray-300'}`}>
+                                                                  <Box size={16} />
+                                                               </div>
+                                                               <div className={`text-[9px] font-bold ${option.resource ? 'text-blue-600' : 'text-gray-400 group-hover/upload:text-blue-500'}`}>Ressource</div>
+
+                                                               {/* Hidden File Input for Mock Upload */}
+                                                               <input 
+                                                                  type="file" 
+                                                                  className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                  onChange={(e) => {
+                                                                     const file = e.target.files?.[0];
+                                                                     if (file) {
+                                                                        // Mock upload - create object URL
+                                                                        const url = URL.createObjectURL(file);
+                                                                        const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                        newTabs[idx].variants[vIdx].options[oIdx].resource = url;
+                                                                        handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                                     }
+                                                                  }}
+                                                               />
+                                                            </div>
                                                          </div>
+
+                                                         <div className="w-px h-8 bg-gray-100"></div>
                                                          
                                                          <div className="flex-1 min-w-0">
                                                             <input 
@@ -529,7 +581,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                placeholder="Nom de l'option"
                                                             />
                                                             <div className="text-[10px] text-gray-400 font-mono flex items-center gap-2">
-                                                               ID: {option.id}
+                                                               <span className="bg-gray-100 px-1.5 py-0.5 rounded">ID: {option.id}</span>
                                                             </div>
                                                          </div>
 
@@ -541,7 +593,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             }}
                                                             className="text-gray-300 hover:text-red-400 p-1 opacity-0 group-hover/option:opacity-100 transition-opacity"
                                                          >
-                                                            <Trash2 size={14} />
+                                                            <Trash2 size={16} />
                                                          </button>
                                                       </div>
                                                    ))}

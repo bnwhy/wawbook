@@ -25,6 +25,7 @@ const INITIAL_BOOKS: BookProduct[] = [
             {
               id: 'v1', 
               label: 'Garçon', 
+              type: 'options',
               options: [
                 { id: 'o1', label: 'Blond' },
                 { id: 'o2', label: 'Brun' }
@@ -33,6 +34,7 @@ const INITIAL_BOOKS: BookProduct[] = [
             {
               id: 'v2', 
               label: 'Fille',
+              type: 'options',
               options: [
                 { id: 'o3', label: 'Blonde' },
                 { id: 'o4', label: 'Brune' }
@@ -49,11 +51,13 @@ const INITIAL_BOOKS: BookProduct[] = [
             {
               id: 'v3', 
               label: 'Papa',
+              type: 'options',
               options: []
             }, 
             {
               id: 'v4', 
               label: 'Maman',
+              type: 'options',
               options: []
             }
           ] 
@@ -404,7 +408,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        <div key={variant.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                                           {/* Variant Header */}
                                           <div className="flex items-center gap-3 mb-3">
-                                             <div className="flex-1">
+                                             <div className="flex-1 flex gap-2">
                                                 <input 
                                                    type="text" 
                                                    value={variant.label}
@@ -413,9 +417,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       newTabs[idx].variants[vIdx].label = e.target.value;
                                                       handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                    }}
-                                                   className="w-full text-sm font-bold text-slate-700 border-none p-0 focus:ring-0 outline-none bg-transparent placeholder-gray-400"
+                                                   className="flex-1 text-sm font-bold text-slate-700 border-none p-0 focus:ring-0 outline-none bg-transparent placeholder-gray-400"
                                                    placeholder="Nom de la variante"
                                                 />
+                                                <select
+                                                   value={variant.type || 'options'}
+                                                   onChange={(e) => {
+                                                      const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                      newTabs[idx].variants[vIdx].type = e.target.value as 'options' | 'text';
+                                                      handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                   }}
+                                                   className="text-xs border-gray-200 rounded py-0.5 pl-2 pr-6 bg-gray-50 text-slate-600 font-medium focus:ring-0"
+                                                >
+                                                   <option value="options">Options</option>
+                                                   <option value="text">Texte</option>
+                                                </select>
                                              </div>
 
                                              <div className="flex gap-2">
@@ -441,6 +457,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           </div>
 
                                           {/* Options List */}
+                                          {(variant.type === 'options' || !variant.type) && (
                                           <div className="pl-3 border-l-2 border-gray-100 ml-1">
                                              <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 flex items-center justify-between">
                                                 <span>Options ({variant.options?.length || 0})</span>
@@ -497,6 +514,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 </button>
                                              </div>
                                           </div>
+                                          )}
                                        </div>
                                     ))}
 
@@ -507,6 +525,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           newTabs[idx].variants.push({
                                              id: Date.now().toString(),
                                              label: 'Nouvelle Variante',
+                                             type: 'options',
                                              options: []
                                           });
                                           handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});

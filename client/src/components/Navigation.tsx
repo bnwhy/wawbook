@@ -27,11 +27,11 @@ const MENU_STRUCTURE = [
     columns: [
       {
         title: "Enfants",
-        items: ["Nouveau-nés", "0–3 ans", "3–6 ans", "Enfants scolarisés", "Frères & sœurs"]
+        items: ["Nouveau-nés", "0–3 ans", "3–6 ans", "Enfants scolarisés"]
       },
       {
         title: "Adultes / Famille",
-        items: ["Papa", "Maman", "Grands-parents", "Famille"]
+        items: ["Papa", "Maman", "Grands-parents", "Famille", "Frères & sœurs"]
       }
     ]
   },

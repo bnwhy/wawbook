@@ -26,7 +26,8 @@ export interface WizardOption {
 
 export interface WizardVariant {
   id: string;
-  label: string;
+  label: string; // Internal name
+  title?: string; // Public display title
   type: 'options' | 'text';
   thumbnail?: string;
   resource?: string;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X } from 'lucide-react';
+import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition } from '../types/admin';
 
@@ -25,6 +25,7 @@ const INITIAL_BOOKS: BookProduct[] = [
             {
               id: 'v1', 
               label: 'Garçon', 
+              title: 'Un garçon',
               type: 'options',
               options: [
                 { id: 'o1', label: 'Blond' },
@@ -34,6 +35,7 @@ const INITIAL_BOOKS: BookProduct[] = [
             {
               id: 'v2', 
               label: 'Fille',
+              title: 'Une fille',
               type: 'options',
               options: [
                 { id: 'o3', label: 'Blonde' },
@@ -407,52 +409,103 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     {tab.variants.map((variant, vIdx) => (
                                        <div key={variant.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
                                           {/* Variant Header */}
-                                          <div className="flex items-center gap-3 mb-3">
-                                             <div className="flex-1 flex gap-2">
+                                          <div className="flex flex-col gap-3 mb-3">
+                                             <div className="flex items-center gap-3">
+                                                <div className="flex-1 flex gap-2">
+                                                   <input 
+                                                      type="text" 
+                                                      value={variant.label}
+                                                      onChange={(e) => {
+                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                         newTabs[idx].variants[vIdx].label = e.target.value;
+                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                      }}
+                                                      className="flex-1 text-sm font-bold text-slate-700 border-none p-0 focus:ring-0 outline-none bg-transparent placeholder-gray-400"
+                                                      placeholder="Nom interne (ex: Garçon)"
+                                                   />
+                                                   <select
+                                                      value={variant.type || 'options'}
+                                                      onChange={(e) => {
+                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                         newTabs[idx].variants[vIdx].type = e.target.value as 'options' | 'text';
+                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                      }}
+                                                      className="text-xs border-gray-200 rounded py-0.5 pl-2 pr-6 bg-gray-50 text-slate-600 font-medium focus:ring-0"
+                                                   >
+                                                      <option value="options">Options</option>
+                                                      <option value="text">Texte</option>
+                                                   </select>
+                                                </div>
+
+                                                <div className="flex gap-1">
+                                                   <button 
+                                                      onClick={() => {
+                                                         if (vIdx > 0) {
+                                                            const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                            const temp = newTabs[idx].variants[vIdx];
+                                                            newTabs[idx].variants[vIdx] = newTabs[idx].variants[vIdx - 1];
+                                                            newTabs[idx].variants[vIdx - 1] = temp;
+                                                            handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                         }
+                                                      }}
+                                                      disabled={vIdx === 0}
+                                                      className={`p-1 rounded hover:bg-gray-100 ${vIdx === 0 ? 'text-gray-200' : 'text-gray-400 hover:text-slate-600'}`}
+                                                   >
+                                                      <ArrowUp size={14} />
+                                                   </button>
+                                                   <button 
+                                                      onClick={() => {
+                                                         if (vIdx < tab.variants.length - 1) {
+                                                            const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                            const temp = newTabs[idx].variants[vIdx];
+                                                            newTabs[idx].variants[vIdx] = newTabs[idx].variants[vIdx + 1];
+                                                            newTabs[idx].variants[vIdx + 1] = temp;
+                                                            handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                         }
+                                                      }}
+                                                      disabled={vIdx === tab.variants.length - 1}
+                                                      className={`p-1 rounded hover:bg-gray-100 ${vIdx === tab.variants.length - 1 ? 'text-gray-200' : 'text-gray-400 hover:text-slate-600'}`}
+                                                   >
+                                                      <ArrowDown size={14} />
+                                                   </button>
+                                                </div>
+
+                                                <div className="flex gap-2 pl-2 border-l border-gray-100">
+                                                   <button className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors ${variant.thumbnail ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
+                                                      <ImageIcon size={12} />
+                                                      {variant.thumbnail ? 'OK' : 'Img'}
+                                                   </button>
+                                                   <button className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors ${variant.resource ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
+                                                      <Box size={12} />
+                                                      {variant.resource ? 'OK' : 'Res'}
+                                                   </button>
+                                                   <button 
+                                                      onClick={() => {
+                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                         newTabs[idx].variants = newTabs[idx].variants.filter(v => v.id !== variant.id);
+                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                      }}
+                                                      className="text-gray-300 hover:text-red-400 ml-2"
+                                                   >
+                                                      <X size={14} />
+                                                   </button>
+                                                </div>
+                                             </div>
+                                             
+                                             {/* Public Title Input */}
+                                             <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase w-16">Titre public</span>
                                                 <input 
                                                    type="text" 
-                                                   value={variant.label}
+                                                   value={variant.title || ''}
                                                    onChange={(e) => {
                                                       const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                      newTabs[idx].variants[vIdx].label = e.target.value;
+                                                      newTabs[idx].variants[vIdx].title = e.target.value;
                                                       handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                    }}
-                                                   className="flex-1 text-sm font-bold text-slate-700 border-none p-0 focus:ring-0 outline-none bg-transparent placeholder-gray-400"
-                                                   placeholder="Nom de la variante"
+                                                   className="flex-1 text-xs border border-gray-200 rounded px-2 py-1 text-slate-600 focus:ring-0 focus:border-brand-coral"
+                                                   placeholder="Titre affiché au client (ex: Un petit garçon)"
                                                 />
-                                                <select
-                                                   value={variant.type || 'options'}
-                                                   onChange={(e) => {
-                                                      const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                      newTabs[idx].variants[vIdx].type = e.target.value as 'options' | 'text';
-                                                      handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                                   }}
-                                                   className="text-xs border-gray-200 rounded py-0.5 pl-2 pr-6 bg-gray-50 text-slate-600 font-medium focus:ring-0"
-                                                >
-                                                   <option value="options">Options</option>
-                                                   <option value="text">Texte</option>
-                                                </select>
-                                             </div>
-
-                                             <div className="flex gap-2">
-                                                <button className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors ${variant.thumbnail ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
-                                                   <ImageIcon size={12} />
-                                                   {variant.thumbnail ? 'OK' : 'Img'}
-                                                </button>
-                                                <button className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] border transition-colors ${variant.resource ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
-                                                   <Box size={12} />
-                                                   {variant.resource ? 'OK' : 'Res'}
-                                                </button>
-                                                <button 
-                                                   onClick={() => {
-                                                      const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                      newTabs[idx].variants = newTabs[idx].variants.filter(v => v.id !== variant.id);
-                                                      handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                                   }}
-                                                   className="text-gray-300 hover:text-red-400 ml-2"
-                                                >
-                                                   <X size={14} />
-                                                </button>
                                              </div>
                                           </div>
 

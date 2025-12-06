@@ -6,6 +6,10 @@ import LoadingScreen from './components/LoadingScreen';
 import AdminDashboard from './components/AdminDashboard';
 import { AppState, BookConfig, Story, Theme, Activity } from './types';
 import { generateStoryText } from './services/geminiService';
+import { Switch, Route, useLocation } from 'wouter';
+import StaticPage from './pages/StaticPage';
+import CategoryPage from './pages/CategoryPage';
+import NotFound from './pages/NotFound';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('HOME');
@@ -58,30 +62,54 @@ const App: React.FC = () => {
 
   return (
     <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
-      {appState === 'HOME' && <Hero onStart={startCreation} onAdminClick={() => setAppState('ADMIN')} />}
-      
-      {appState === 'CREATE' && (
-        <Wizard 
-          onComplete={handleConfigComplete} 
-          onCancel={cancelCreation}
-          initialTheme={initialTheme}
-          initialActivity={initialActivity}
-        />
-      )}
+      <Switch>
+        {/* Main Application Flow (SPA-like at root) */}
+        <Route path="/">
+          {appState === 'HOME' && <Hero onStart={startCreation} onAdminClick={() => setAppState('ADMIN')} />}
+          
+          {appState === 'CREATE' && (
+            <Wizard 
+              onComplete={handleConfigComplete} 
+              onCancel={cancelCreation}
+              initialTheme={initialTheme}
+              initialActivity={initialActivity}
+            />
+          )}
 
-      {appState === 'GENERATING' && <LoadingScreen />}
+          {appState === 'GENERATING' && <LoadingScreen />}
 
-      {appState === 'READING' && story && config && (
-        <BookPreview 
-          story={story} 
-          config={config} 
-          onReset={handleReset} 
-        />
-      )}
-      
-      {appState === 'ADMIN' && (
-        <AdminDashboard onBack={() => setAppState('HOME')} />
-      )}
+          {appState === 'READING' && story && config && (
+            <BookPreview 
+              story={story} 
+              config={config} 
+              onReset={handleReset} 
+            />
+          )}
+          
+          {appState === 'ADMIN' && (
+            <AdminDashboard onBack={() => setAppState('HOME')} />
+          )}
+        </Route>
+
+        {/* Content Pages */}
+        <Route path="/products/:category" component={CategoryPage} />
+        <Route path="/occasion/:occasion" component={CategoryPage} />
+        
+        <Route path="/for/:audience">
+          {(params) => <StaticPage title={decodeURIComponent(params.audience)} category="Pour qui ?" />}
+        </Route>
+        
+        <Route path="/about/:topic">
+          {(params) => <StaticPage title={decodeURIComponent(params.topic)} category="À propos" />}
+        </Route>
+        
+        <Route path="/help/:topic">
+          {(params) => <StaticPage title={decodeURIComponent(params.topic)} category="Aide" />}
+        </Route>
+
+        {/* 404 */}
+        <Route component={NotFound} />
+      </Switch>
 
       {error && (
         <div className="fixed bottom-4 right-4 bg-white border-l-4 border-brand-coral text-slate-700 px-6 py-4 rounded shadow-card z-50">

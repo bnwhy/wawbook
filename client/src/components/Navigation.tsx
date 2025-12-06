@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight } from 'lucide-react';
+import { Link, useLocation } from 'wouter';
 
 interface NavigationProps {
   onStart: () => void;
@@ -10,6 +11,7 @@ const MENU_STRUCTURE = [
   {
     label: "Produits",
     type: "simple",
+    basePath: "/products",
     items: [
       "Nouveau",
       "Bestsellers",
@@ -21,6 +23,7 @@ const MENU_STRUCTURE = [
   {
     label: "Pour qui ?",
     type: "columns",
+    basePath: "/for",
     columns: [
       {
         title: "Enfants",
@@ -35,6 +38,7 @@ const MENU_STRUCTURE = [
   {
     label: "Occasions",
     type: "grid",
+    basePath: "/occasion",
     items: [
       "Naissance", "Anniversaire", "Fête des Pères", "Fête des Mères", 
       "Noël", "Baptême", "Rentrée", "Pâques", 
@@ -44,6 +48,7 @@ const MENU_STRUCTURE = [
   {
     label: "À propos",
     type: "simple",
+    basePath: "/about",
     items: [
       "L'entreprise", "Parrainage", "Carrières", "Offres", 
       "Nos Valeurs", "Programme écologie", "Blog"
@@ -52,6 +57,7 @@ const MENU_STRUCTURE = [
   {
     label: "Aide",
     type: "simple",
+    basePath: "/help",
     items: [
       "FAQ", "Contact", "Service client", "Mentions légales"
     ]
@@ -89,6 +95,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItem, setExpandedMobileItem] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -96,12 +103,16 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const getLink = (base: string, item: string) => {
+    return `${base}/${encodeURIComponent(item)}`;
+  };
+
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-2' : 'bg-transparent py-4'}`}>
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         
         {/* Logo */}
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo(0, 0)}>
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setLocation('/')}>
           <CloudLogo />
           <span className="text-3xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
             wawbook
@@ -130,10 +141,12 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
                   {menu.type === 'simple' && menu.items && (
                     <div className="flex flex-col gap-1 p-2">
                       {menu.items.map((item, i) => (
-                        <a key={i} href="#" className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2 whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
-                          {item as string}
-                        </a>
+                        <Link key={i} href={getLink(menu.basePath || '', item as string)}>
+                          <a className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2 whitespace-nowrap">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
+                            {item as string}
+                          </a>
+                        </Link>
                       ))}
                     </div>
                   )}
@@ -146,10 +159,12 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
                           <h4 className="font-display font-black text-cloud-blue mb-3 px-2 text-lg">{col.title}</h4>
                           <div className="flex flex-col gap-1">
                             {col.items.map((item, j) => (
-                              <a key={j} href="#" className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
-                                {item}
-                              </a>
+                              <Link key={j} href={getLink(menu.basePath || '', item)}>
+                                <a className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
+                                  {item}
+                                </a>
+                              </Link>
                             ))}
                           </div>
                         </div>
@@ -161,10 +176,12 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
                   {menu.type === 'grid' && menu.items && (
                     <div className="grid grid-cols-2 gap-2 p-4 w-[400px]">
                       {menu.items.map((item, i) => (
-                        <a key={i} href="#" className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-accent-sun"></span>
-                          {item as string}
-                        </a>
+                        <Link key={i} href={getLink(menu.basePath || '', item as string)}>
+                          <a className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent-sun"></span>
+                            {item as string}
+                          </a>
+                        </Link>
                       ))}
                     </div>
                   )}
@@ -224,18 +241,24 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
                <div className={`overflow-hidden transition-all duration-300 ${expandedMobileItem === idx ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
                  <div className="bg-cloud-lightest/50 rounded-xl p-3 flex flex-col gap-2 mb-2">
                     {menu.type === 'simple' && menu.items && menu.items.map((item, i) => (
-                      <a key={i} href="#" className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">{item as string}</a>
+                      <Link key={i} href={getLink(menu.basePath || '', item as string)}>
+                        <a className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">{item as string}</a>
+                      </Link>
                     ))}
 
                     {menu.type === 'grid' && menu.items && menu.items.map((item, i) => (
-                      <a key={i} href="#" className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">{item as string}</a>
+                      <Link key={i} href={getLink(menu.basePath || '', item as string)}>
+                        <a className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">{item as string}</a>
+                      </Link>
                     ))}
 
                     {menu.type === 'columns' && menu.columns && menu.columns.map((col, i) => (
                       <div key={i} className="mb-2">
                         <h5 className="text-xs font-black text-cloud-blue uppercase tracking-wider mb-1 px-2">{col.title}</h5>
                         {col.items.map((item, j) => (
-                          <a key={j} href="#" className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block text-sm">{item}</a>
+                          <Link key={j} href={getLink(menu.basePath || '', item)}>
+                            <a className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block text-sm">{item}</a>
+                          </Link>
                         ))}
                       </div>
                     ))}

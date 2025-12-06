@@ -52,6 +52,7 @@ export interface ContentConfiguration {
   pages: PageDefinition[];
   texts: TextElement[];
   images: ImageVariant[];
+  imageElements?: ImageElement[];
 }
 
 export interface PageDefinition {
@@ -66,6 +67,7 @@ export interface TextElement {
   label: string; // Internal label
   type: 'fixed' | 'variable';
   content: string; // Default content or variable key
+  style?: React.CSSProperties;
   position: {
     pageIndex: number;
     zoneId: string; // e.g., "header", "body", "footer"
@@ -73,7 +75,24 @@ export interface TextElement {
     x?: number; // Percentage 0-100
     y?: number; // Percentage 0-100
     width?: number; // Percentage
-    style?: React.CSSProperties;
+    rotation?: number;
+  };
+}
+
+export interface ImageElement {
+  id: string;
+  label: string;
+  type: 'static' | 'variable';
+  url?: string;
+  variableKey?: string;
+  position: {
+    pageIndex: number;
+    layer?: number;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    rotation?: number;
   };
 }
 

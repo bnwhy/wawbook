@@ -11,9 +11,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isEditing, setIsEditing] = useState(false);
   
   // Content Editor State
-  const [selectedVariant, setSelectedVariant] = useState<string>('default');
+  const [selectedVariant, setSelectedVariant] = useState<string>('default'); // Used for previewing specific combinations
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedAvatarTabId, setSelectedAvatarTabId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
+  const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
 
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
@@ -795,159 +797,530 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      {/* Main Editor Area */}
                      <div className="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col relative">
                         {selectedPageId ? (
-                           <div className="flex-1 overflow-y-auto p-8">
-                              <div className="max-w-5xl mx-auto">
-                                 
-                                 {/* Page Header */}
-                                 <div className="flex justify-between items-start mb-8">
-                                    <div>
-                                       <h2 className="text-2xl font-bold text-slate-800 mb-1">
-                                          {selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.label}
-                                       </h2>
-                                       <p className="text-slate-500">
-                                          {selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.description}
-                                       </p>
-                                    </div>
-                                    <button className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors">
-                                       <Trash2 size={20} />
-                                    </button>
-                                 </div>
-
-                                 {/* VARIANTS GRID */}
-                                 <div className="mb-8">
-                                    <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-                                       <Image size={20} className="text-brand-coral" />
-                                       Illustrations par Combinaison
-                                    </h3>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                       {currentCombinations.map((variant) => {
-                                          const parts = variant.split(' + ');
-                                          return (
-                                          <div key={variant} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden group hover:shadow-md transition-all">
-                                             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-                                                <div className="flex justify-between items-start mb-2">
-                                                   <span className="font-bold text-xs text-slate-500 uppercase tracking-wider">Variante</span>
-                                                   <span className="w-2 h-2 rounded-full bg-red-400" title="Image manquante"></span>
-                                                </div>
-                                                <div className="flex flex-wrap gap-1">
-                                                   {parts.map((p, i) => (
-                                                      <span key={i} className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-white border border-gray-200 text-slate-700 shadow-sm">
-                                                         {p}
-                                                      </span>
-                                                   ))}
-                                                </div>
-                                             </div>
-                                             
-                                             <div className="aspect-[3/2] bg-gray-100 relative flex items-center justify-center group-hover:bg-gray-200 transition-colors cursor-pointer overflow-hidden">
-                                                {/* Mock Image Preview */}
-                                                <div className="text-center z-10">
-                                                   <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-                                                   <span className="text-xs font-bold text-gray-500">Uploader Image</span>
-                                                </div>
-                                                
-                                                {/* Text Overlay Preview */}
-                                                 {selectedBook.contentConfig.texts
-                                                  .filter(t => t.position.pageIndex === selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.pageNumber)
-                                                  .map(text => (
-                                                     <div 
-                                                        key={text.id}
-                                                        className="absolute border border-dashed border-blue-400 bg-blue-50/50 text-[10px] text-blue-800 p-1 cursor-move hover:bg-blue-100/80 transition-colors z-20"
-                                                        style={{
-                                                           left: `${text.position.x || 10}%`,
-                                                           top: `${text.position.y || 10}%`,
-                                                        }}
-                                                        title={`Position: ${text.position.x}%, ${text.position.y}%`}
-                                                     >
-                                                        {text.label}
-                                                     </div>
-                                                  ))}
-                                             </div>
-                                          </div>
-                                       )})}
-                                       
-                                       {/* Add Variant Hint */}
-                                       <div className="border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 p-4 text-center bg-gray-50/30">
-                                          <span className="text-xs font-medium max-w-[200px]">
-                                             Les variantes sont générées automatiquement depuis l'onglet Wizard.
-                                          </span>
-                                       </div>
-                                    </div>
-                                 </div>
-
-                                 {/* TEXT ZONES */}
-                                 <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                                    <div className="flex justify-between items-center mb-4">
-                                       <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                                          <Type size={20} className="text-brand-coral" />
-                                          Textes de la page
-                                       </h3>
-                                       <button className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold transition-colors">
-                                          + Ajouter Zone Texte
+                           <div className="flex-1 flex flex-col h-full">
+                              
+                              {/* Editor Toolbar */}
+                              <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0">
+                                 <div className="flex items-center gap-4">
+                                    <h2 className="font-bold text-slate-800">
+                                       {selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.label}
+                                    </h2>
+                                    <div className="h-6 w-px bg-gray-200"></div>
+                                    <div className="flex bg-gray-100 rounded-lg p-1">
+                                       <button 
+                                          onClick={() => setViewMode('single')}
+                                          className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'single' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                       >
+                                          Page unique
+                                       </button>
+                                       <button 
+                                          onClick={() => setViewMode('spread')}
+                                          className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'spread' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                       >
+                                          Double page
                                        </button>
                                     </div>
-                                    
-                                    <div className="space-y-3">
-                                       {selectedBook.contentConfig.texts
-                                          .filter(t => t.position.pageIndex === selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.pageNumber)
-                                          .map(text => (
-                                             <div key={text.id} className="p-4 bg-slate-50 rounded-lg border border-gray-200 flex gap-4 items-start">
-                                                <div className="w-8 h-8 bg-white rounded border border-gray-200 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
-                                                   T
+                                 </div>
+                                 
+                                 <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                       <span className="text-xs font-bold text-gray-400 uppercase">Aperçu Variante:</span>
+                                       <select 
+                                          value={selectedVariant}
+                                          onChange={(e) => setSelectedVariant(e.target.value)}
+                                          className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral"
+                                       >
+                                          {currentCombinations.map(c => (
+                                             <option key={c} value={c}>{c}</option>
+                                          ))}
+                                       </select>
+                                    </div>
+                                 </div>
+                              </div>
+
+                              {/* Canvas & Sidebar Container */}
+                              <div className="flex-1 flex overflow-hidden">
+                                 
+                                 {/* CANVAS AREA */}
+                                 <div className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative">
+                                    {/* Page Container */}
+                                    <div className={`transition-all duration-300 flex gap-0 shadow-2xl ${viewMode === 'spread' ? 'aspect-[3/2] w-[90%]' : 'aspect-[3/4] h-[90%]'}`}>
+                                       
+                                       {/* PAGE RENDERER */}
+                                       {(() => {
+                                          const currentPage = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
+                                          if (!currentPage) return null;
+                                          
+                                          const pagesToShow = viewMode === 'spread' 
+                                             ? [currentPage, selectedBook.contentConfig.pages.find(p => p.pageNumber === currentPage.pageNumber + 1)].filter(Boolean)
+                                             : [currentPage];
+
+                                          return pagesToShow.map((page: any, idx) => (
+                                             <div key={page.id} className="flex-1 bg-white relative overflow-hidden group border-r border-gray-100 last:border-0">
+                                                
+                                                {/* 1. BASE LAYER (Background Variant) */}
+                                                <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+                                                   {/* Find image for current variant & page */}
+                                                   {(() => {
+                                                      const bgImage = selectedBook.contentConfig.images.find(
+                                                         img => img.pageIndex === page.pageNumber && 
+                                                               (img.combinationKey === selectedVariant || img.combinationKey === 'default') // Fallback logic
+                                                      );
+                                                      
+                                                      if (bgImage?.imageUrl) {
+                                                         return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background" />;
+                                                      }
+                                                      return (
+                                                         <div className="text-center text-gray-300">
+                                                            <ImageIcon size={48} className="mx-auto mb-2 opacity-50" />
+                                                            <span className="text-xs font-bold block">Aucune illustration</span>
+                                                            <span className="text-[10px]">Variante: {selectedVariant}</span>
+                                                         </div>
+                                                      );
+                                                   })()}
                                                 </div>
-                                                <div className="flex-1">
-                                                   <div className="flex justify-between mb-1">
-                                                      <span className="font-bold text-sm text-slate-700">{text.label}</span>
-                                                      <div className="flex items-center gap-2">
-                                                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${text.type === 'variable' ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'}`}>
-                                                            {text.type}
-                                                         </span>
+
+                                                {/* 2. IMAGE LAYERS (Stickers/Overlays) */}
+                                                {(selectedBook.contentConfig.imageElements || [])
+                                                   .filter(el => el.position.pageIndex === page.pageNumber)
+                                                   .map(el => (
+                                                      <div
+                                                         key={el.id}
+                                                         onClick={(e) => { e.stopPropagation(); setActiveLayerId(el.id); }}
+                                                         className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
+                                                         style={{
+                                                            left: `${el.position.x}%`,
+                                                            top: `${el.position.y}%`,
+                                                            width: `${el.position.width}%`,
+                                                            height: el.position.height ? `${el.position.height}%` : 'auto',
+                                                            transform: `rotate(${el.position.rotation || 0}deg)`
+                                                         }}
+                                                      >
+                                                         {el.type === 'static' && el.url ? (
+                                                            <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
+                                                         ) : (
+                                                            <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
+                                                               {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
+                                                            </div>
+                                                         )}
                                                       </div>
-                                                   </div>
-                                                   <p className="text-sm text-slate-600 font-mono bg-white p-2 rounded border border-gray-200 mb-2">
-                                                      {text.content}
-                                                   </p>
-                                                   
-                                                   {/* Position Controls */}
-                                                   <div className="flex gap-4 text-xs text-gray-500 items-center">
-                                                      <span>Position (0-100%):</span>
-                                                      <div className="flex items-center gap-1">
-                                                         X: <input 
-                                                            type="number" 
-                                                            className="w-12 border rounded px-1 py-0.5 bg-white" 
-                                                            placeholder="10"
-                                                            value={text.position.x || ''}
-                                                            onChange={(e) => {
-                                                               const newTexts = selectedBook.contentConfig.texts.map(t => t.id === text.id ? {...t, position: {...t.position, x: parseInt(e.target.value)}} : t);
-                                                               handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                                            }}
-                                                         />
+                                                   ))
+                                                }
+
+                                                {/* 3. TEXT LAYERS */}
+                                                {selectedBook.contentConfig.texts
+                                                   .filter(t => t.position.pageIndex === page.pageNumber)
+                                                   .map(text => (
+                                                      <div 
+                                                         key={text.id}
+                                                         onClick={(e) => { e.stopPropagation(); setActiveLayerId(text.id); }}
+                                                         className={`absolute p-2 cursor-move border-2 transition-all ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                         style={{
+                                                            left: `${text.position.x}%`,
+                                                            top: `${text.position.y}%`,
+                                                            width: `${text.position.width || 30}%`,
+                                                            transform: `rotate(${text.position.rotation || 0}deg)`,
+                                                            ...text.style
+                                                         }}
+                                                      >
+                                                         <div className={`font-medium ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
+                                                            {text.content}
+                                                         </div>
                                                       </div>
-                                                      <div className="flex items-center gap-1">
-                                                         Y: <input 
-                                                            type="number" 
-                                                            className="w-12 border rounded px-1 py-0.5 bg-white" 
-                                                            placeholder="10"
-                                                            value={text.position.y || ''}
-                                                            onChange={(e) => {
-                                                               const newTexts = selectedBook.contentConfig.texts.map(t => t.id === text.id ? {...t, position: {...t.position, y: parseInt(e.target.value)}} : t);
-                                                               handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                                            }}
-                                                         />
-                                                      </div>
+                                                   ))
+                                                }
+                                             </div>
+                                          ));
+                                       })()}
+                                    </div>
+                                 </div>
+
+                                 {/* RIGHT PANEL: LAYERS & PROPERTIES */}
+                                 <div className="w-80 bg-white border-l border-gray-200 flex flex-col shadow-xl z-20">
+                                    <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                                       <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                                          <Layers size={16} /> Calques
+                                       </h3>
+                                       
+                                       {/* Add Layer Menu */}
+                                       <div className="flex gap-2">
+                                          <button 
+                                             onClick={() => {
+                                                const currentPage = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
+                                                if(!currentPage) return;
+                                                
+                                                const newText: TextElement = {
+                                                   id: `text-${Date.now()}`,
+                                                   label: 'Nouveau Texte',
+                                                   type: 'fixed',
+                                                   content: 'Texte ici...',
+                                                   position: { pageIndex: currentPage.pageNumber, zoneId: 'body', x: 10, y: 10, width: 30 }
+                                                };
+                                                const newTexts = [...selectedBook.contentConfig.texts, newText];
+                                                handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                setActiveLayerId(newText.id);
+                                             }}
+                                             className="p-1.5 bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-600"
+                                             title="Ajouter Texte"
+                                          >
+                                             <Type size={16} />
+                                          </button>
+                                          <button 
+                                              onClick={() => {
+                                                const currentPage = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
+                                                if(!currentPage) return;
+
+                                                const newImg: ImageElement = {
+                                                   id: `img-${Date.now()}`,
+                                                   label: 'Nouvelle Image',
+                                                   type: 'static',
+                                                   position: { pageIndex: currentPage.pageNumber, x: 20, y: 20, width: 20, height: 20 }
+                                                };
+                                                // Handle optional imageElements array
+                                                const currentElements = selectedBook.contentConfig.imageElements || [];
+                                                handleSaveBook({
+                                                   ...selectedBook, 
+                                                   contentConfig: {
+                                                      ...selectedBook.contentConfig, 
+                                                      imageElements: [...currentElements, newImg]
+                                                   }
+                                                });
+                                                setActiveLayerId(newImg.id);
+                                              }}
+                                             className="p-1.5 bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-600"
+                                             title="Ajouter Image"
+                                          >
+                                             <Image size={16} />
+                                          </button>
+                                       </div>
+                                    </div>
+
+                                    {/* Layers List */}
+                                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                       {/* Base Layer Item */}
+                                       <div className="flex items-center gap-3 p-2 rounded bg-gray-50 border border-gray-100 opacity-70">
+                                          <Image size={14} className="text-gray-400" />
+                                          <span className="text-xs font-bold text-gray-500 flex-1">Illustration de fond</span>
+                                          <span className="text-[10px] bg-gray-200 px-1 rounded text-gray-500">Auto</span>
+                                       </div>
+
+                                       {/* Dynamic Layers List */}
+                                       {(() => {
+                                          const currentPage = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
+                                          if (!currentPage) return null;
+
+                                          const textLayers = selectedBook.contentConfig.texts
+                                             .filter(t => t.position.pageIndex === currentPage.pageNumber)
+                                             .map(t => ({...t, _kind: 'text'}));
+                                          
+                                          const imgLayers = (selectedBook.contentConfig.imageElements || [])
+                                             .filter(i => i.position.pageIndex === currentPage.pageNumber)
+                                             .map(i => ({...i, _kind: 'image'}));
+                                          
+                                          const allLayers = [...textLayers, ...imgLayers]; // Should sort by z-index ideally
+
+                                          return allLayers.map(layer => (
+                                             <div 
+                                                key={layer.id}
+                                                onClick={() => setActiveLayerId(layer.id)}
+                                                className={`flex items-center gap-3 p-2 rounded border cursor-pointer group ${activeLayerId === layer.id ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
+                                             >
+                                                {layer._kind === 'text' ? <Type size={14} className="text-slate-400" /> : <Image size={14} className="text-slate-400" />}
+                                                <div className="flex-1 min-w-0">
+                                                   <div className="text-xs font-bold text-slate-700 truncate">{layer.label}</div>
+                                                   <div className="text-[10px] text-gray-400 truncate">
+                                                      {layer._kind === 'text' ? (layer as any).content : (layer as any).type}
                                                    </div>
                                                 </div>
-                                                <button className="text-gray-400 hover:text-red-500 p-1">
-                                                   <Trash2 size={16} />
+                                                <button 
+                                                   onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      // Delete logic
+                                                      if (layer._kind === 'text') {
+                                                         const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== layer.id);
+                                                         handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                      } else {
+                                                         const newImgs = (selectedBook.contentConfig.imageElements || []).filter(i => i.id !== layer.id);
+                                                         handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+                                                      }
+                                                      if (activeLayerId === layer.id) setActiveLayerId(null);
+                                                   }}
+                                                   className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 p-1"
+                                                >
+                                                   <Trash2 size={14} />
                                                 </button>
                                              </div>
-                                       ))}
-                                       {selectedBook.contentConfig.texts.filter(t => t.position.pageIndex === selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.pageNumber).length === 0 && (
-                                          <div className="text-center py-6 text-gray-400 italic text-sm">
-                                             Aucun texte configuré pour cette page.
-                                          </div>
-                                       )}
+                                          ));
+                                       })()}
                                     </div>
+
+                                    {/* Properties Panel */}
+                                    {activeLayerId && (
+                                       <div className="h-1/2 border-t border-gray-200 bg-gray-50 flex flex-col">
+                                          <div className="p-3 border-b border-gray-200 bg-white font-bold text-xs uppercase text-slate-500 tracking-wider">
+                                             Propriétés
+                                          </div>
+                                          <div className="p-4 overflow-y-auto space-y-4">
+                                             {(() => {
+                                                const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
+                                                const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
+                                                const layer = textLayer || imgLayer;
+                                                
+                                                if (!layer) return <div className="text-xs text-gray-400">Calque introuvable</div>;
+                                                
+                                                const isText = !!textLayer;
+
+                                                const updateLayer = (updates: any) => {
+                                                   if (isText) {
+                                                      const newTexts = selectedBook.contentConfig.texts.map(t => t.id === layer.id ? {...t, ...updates} : t);
+                                                      handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                   } else {
+                                                      const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => i.id === layer.id ? {...i, ...updates} : i);
+                                                      handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+                                                   }
+                                                };
+
+                                                return (
+                                                   <>
+                                                      {/* Common Props */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase">Label</label>
+                                                         <input 
+                                                            type="text" 
+                                                            value={layer.label}
+                                                            onChange={(e) => updateLayer({label: e.target.value})}
+                                                            className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1"
+                                                         />
+                                                      </div>
+
+                                                      {/* Type Selector (Fixed vs Variable) */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase">Type de contenu</label>
+                                                         <div className="flex bg-white rounded border border-gray-300 mt-1 p-0.5">
+                                                            <button 
+                                                               onClick={() => updateLayer({type: isText ? 'fixed' : 'static'})}
+                                                               className={`flex-1 py-1 text-xs font-medium rounded ${['fixed', 'static'].includes(layer.type) ? 'bg-gray-100 text-slate-800' : 'text-gray-400'}`}
+                                                            >
+                                                               Fixe
+                                                            </button>
+                                                            <button 
+                                                               onClick={() => updateLayer({type: 'variable'})}
+                                                               className={`flex-1 py-1 text-xs font-medium rounded ${layer.type === 'variable' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400'}`}
+                                                            >
+                                                               Variable
+                                                            </button>
+                                                         </div>
+                                                      </div>
+
+                                                      {/* Content Input */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">
+                                                            {layer.type === 'variable' ? 'Variable Wizard' : 'Contenu'}
+                                                         </label>
+                                                         
+                                                         {layer.type === 'variable' ? (
+                                                            <select 
+                                                               value={isText ? (layer as any).content : (layer as any).variableKey}
+                                                               onChange={(e) => updateLayer(isText ? {content: e.target.value} : {variableKey: e.target.value})}
+                                                               className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-indigo-50/50 border-indigo-200 text-indigo-700"
+                                                            >
+                                                               <option value="">Choisir une variable...</option>
+                                                               <optgroup label="Enfant">
+                                                                  <option value="{child.name}">Prénom Enfant</option>
+                                                                  <option value="{child.hairColor}">Couleur Cheveux</option>
+                                                                  <option value="{child.skinTone}">Teint Peau</option>
+                                                               </optgroup>
+                                                               <optgroup label="Adulte">
+                                                                  <option value="{adult.name}">Prénom Adulte</option>
+                                                                  <option value="{adult.role}">Rôle (Papa/Maman)</option>
+                                                               </optgroup>
+                                                            </select>
+                                                         ) : (
+                                                            isText ? (
+                                                               <textarea 
+                                                                  value={(layer as any).content}
+                                                                  onChange={(e) => updateLayer({content: e.target.value})}
+                                                                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 h-20"
+                                                               />
+                                                            ) : (
+                                                               <div className="flex gap-2">
+                                                                  <input 
+                                                                     type="text" 
+                                                                     placeholder="URL de l'image"
+                                                                     value={(layer as any).url || ''}
+                                                                     onChange={(e) => updateLayer({url: e.target.value})}
+                                                                     className="flex-1 text-xs border border-gray-300 rounded px-2 py-1"
+                                                                  />
+                                                               </div>
+                                                            )
+                                                         )}
+                                                      </div>
+
+                                                      {/* Position Grid */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Position & Taille (%)</label>
+                                                         <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">X</span>
+                                                               <input type="number" value={layer.position.x || 0} onChange={(e) => updateLayer({position: {...layer.position, x: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                            <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">Y</span>
+                                                               <input type="number" value={layer.position.y || 0} onChange={(e) => updateLayer({position: {...layer.position, y: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                            <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">W</span>
+                                                               <input type="number" value={layer.position.width || 0} onChange={(e) => updateLayer({position: {...layer.position, width: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                            <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">Rot</span>
+                                                               <input type="number" value={layer.position.rotation || 0} onChange={(e) => updateLayer({position: {...layer.position, rotation: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                         </div>
+                                                      </div>
+
+                                                   </>
+                                                );
+                                             })()}
+                                          </div>
+                                       </div>
+                                    )}
+
+                                 </div>
+
+                              </div>
+                           </div>
+                        ) : (
+                           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
+                              <Layers size={64} className="mb-4 opacity-50" />
+                              <p className="text-lg font-medium">Sélectionnez une page à gauche pour l'éditer</p>
+                           </div>
+                        )}
+                     </div>
+                                                const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
+                                                const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
+                                                const layer = textLayer || imgLayer;
+                                                
+                                                if (!layer) return <div className="text-xs text-gray-400">Calque introuvable</div>;
+                                                
+                                                const isText = !!textLayer;
+
+                                                const updateLayer = (updates: any) => {
+                                                   if (isText) {
+                                                      const newTexts = selectedBook.contentConfig.texts.map(t => t.id === layer.id ? {...t, ...updates} : t);
+                                                      handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                   } else {
+                                                      const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => i.id === layer.id ? {...i, ...updates} : i);
+                                                      handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+                                                   }
+                                                };
+
+                                                return (
+                                                   <>
+                                                      {/* Common Props */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase">Label</label>
+                                                         <input 
+                                                            type="text" 
+                                                            value={layer.label}
+                                                            onChange={(e) => updateLayer({label: e.target.value})}
+                                                            className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1"
+                                                         />
+                                                      </div>
+
+                                                      {/* Type Selector (Fixed vs Variable) */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase">Type de contenu</label>
+                                                         <div className="flex bg-white rounded border border-gray-300 mt-1 p-0.5">
+                                                            <button 
+                                                               onClick={() => updateLayer({type: isText ? 'fixed' : 'static'})}
+                                                               className={`flex-1 py-1 text-xs font-medium rounded ${['fixed', 'static'].includes(layer.type) ? 'bg-gray-100 text-slate-800' : 'text-gray-400'}`}
+                                                            >
+                                                               Fixe
+                                                            </button>
+                                                            <button 
+                                                               onClick={() => updateLayer({type: 'variable'})}
+                                                               className={`flex-1 py-1 text-xs font-medium rounded ${layer.type === 'variable' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400'}`}
+                                                            >
+                                                               Variable
+                                                            </button>
+                                                         </div>
+                                                      </div>
+
+                                                      {/* Content Input */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">
+                                                            {layer.type === 'variable' ? 'Variable Wizard' : 'Contenu'}
+                                                         </label>
+                                                         
+                                                         {layer.type === 'variable' ? (
+                                                            <select 
+                                                               value={isText ? (layer as any).content : (layer as any).variableKey}
+                                                               onChange={(e) => updateLayer(isText ? {content: e.target.value} : {variableKey: e.target.value})}
+                                                               className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-indigo-50/50 border-indigo-200 text-indigo-700"
+                                                            >
+                                                               <option value="">Choisir une variable...</option>
+                                                               <optgroup label="Enfant">
+                                                                  <option value="{child.name}">Prénom Enfant</option>
+                                                                  <option value="{child.hairColor}">Couleur Cheveux</option>
+                                                                  <option value="{child.skinTone}">Teint Peau</option>
+                                                               </optgroup>
+                                                               <optgroup label="Adulte">
+                                                                  <option value="{adult.name}">Prénom Adulte</option>
+                                                                  <option value="{adult.role}">Rôle (Papa/Maman)</option>
+                                                               </optgroup>
+                                                            </select>
+                                                         ) : (
+                                                            isText ? (
+                                                               <textarea 
+                                                                  value={(layer as any).content}
+                                                                  onChange={(e) => updateLayer({content: e.target.value})}
+                                                                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 h-20"
+                                                               />
+                                                            ) : (
+                                                               <div className="flex gap-2">
+                                                                  <input 
+                                                                     type="text" 
+                                                                     placeholder="URL de l'image"
+                                                                     value={(layer as any).url || ''}
+                                                                     onChange={(e) => updateLayer({url: e.target.value})}
+                                                                     className="flex-1 text-xs border border-gray-300 rounded px-2 py-1"
+                                                                  />
+                                                               </div>
+                                                            )
+                                                         )}
+                                                      </div>
+
+                                                      {/* Position Grid */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Position & Taille (%)</label>
+                                                         <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">X</span>
+                                                               <input type="number" value={layer.position.x || 0} onChange={(e) => updateLayer({position: {...layer.position, x: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                            <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">Y</span>
+                                                               <input type="number" value={layer.position.y || 0} onChange={(e) => updateLayer({position: {...layer.position, y: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                            <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">W</span>
+                                                               <input type="number" value={layer.position.width || 0} onChange={(e) => updateLayer({position: {...layer.position, width: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                            <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">Rot</span>
+                                                               <input type="number" value={layer.position.rotation || 0} onChange={(e) => updateLayer({position: {...layer.position, rotation: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                         </div>
+                                                      </div>
+
+                                                   </>
+                                                );
+                                             })()}
+                                          </div>
+                                       </div>
+                                    )}
+
                                  </div>
 
                               </div>

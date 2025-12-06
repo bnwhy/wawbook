@@ -187,7 +187,8 @@ const DEFAULT_WIZARD_CONFIG = {
 const DEFAULT_CONTENT_CONFIG = {
   pages: [],
   texts: [],
-  images: []
+  images: [],
+  imageElements: []
 };
 
 export const INITIAL_BOOKS: BookProduct[] = [

@@ -112,7 +112,10 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         
         {/* Logo */}
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setLocation('/')}>
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => {
+          setLocation('/');
+          window.location.reload(); 
+        }}>
           <CloudLogo />
           <span className="text-3xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
             wawbook

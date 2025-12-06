@@ -1093,55 +1093,90 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          />
                                                       </div>
 
-                                                      {/* Type Selector (Fixed vs Variable) */}
-                                                      <div>
-                                                         <label className="text-[10px] font-bold text-gray-500 uppercase">Type de contenu</label>
-                                                         <div className="flex bg-white rounded border border-gray-300 mt-1 p-0.5">
-                                                            <button 
-                                                               onClick={() => updateLayer({type: isText ? 'fixed' : 'static'})}
-                                                               className={`flex-1 py-1 text-xs font-medium rounded ${['fixed', 'static'].includes(layer.type) ? 'bg-gray-100 text-slate-800' : 'text-gray-400'}`}
-                                                            >
-                                                               Fixe
-                                                            </button>
-                                                            <button 
-                                                               onClick={() => updateLayer({type: 'variable'})}
-                                                               className={`flex-1 py-1 text-xs font-medium rounded ${layer.type === 'variable' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400'}`}
-                                                            >
-                                                               Variable
-                                                            </button>
+                                                      {/* Type Selector (Fixed vs Variable) - Only for images */}
+                                                      {!isText && (
+                                                         <div>
+                                                            <label className="text-[10px] font-bold text-gray-500 uppercase">Type de contenu</label>
+                                                            <div className="flex bg-white rounded border border-gray-300 mt-1 p-0.5">
+                                                               <button 
+                                                                  onClick={() => updateLayer({type: 'static'})}
+                                                                  className={`flex-1 py-1 text-xs font-medium rounded ${layer.type === 'static' ? 'bg-gray-100 text-slate-800' : 'text-gray-400'}`}
+                                                               >
+                                                                  Fixe
+                                                               </button>
+                                                               <button 
+                                                                  onClick={() => updateLayer({type: 'variable'})}
+                                                                  className={`flex-1 py-1 text-xs font-medium rounded ${layer.type === 'variable' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400'}`}
+                                                               >
+                                                                  Variable
+                                                               </button>
+                                                            </div>
                                                          </div>
-                                                      </div>
+                                                      )}
 
                                                       {/* Content Input */}
                                                       <div>
                                                          <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">
-                                                            {layer.type === 'variable' ? 'Variable Wizard' : 'Contenu'}
+                                                            {isText ? 'Contenu Texte' : (layer.type === 'variable' ? 'Variable Wizard' : 'URL Image')}
                                                          </label>
                                                          
-                                                         {layer.type === 'variable' ? (
-                                                            <select 
-                                                               value={isText ? (layer as any).content : (layer as any).variableKey}
-                                                               onChange={(e) => updateLayer(isText ? {content: e.target.value} : {variableKey: e.target.value})}
-                                                               className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-indigo-50/50 border-indigo-200 text-indigo-700"
-                                                            >
-                                                               <option value="">Choisir une variable...</option>
-                                                               <optgroup label="Enfant">
-                                                                  <option value="{child.name}">Prénom Enfant</option>
-                                                                  <option value="{child.hairColor}">Couleur Cheveux</option>
-                                                                  <option value="{child.skinTone}">Teint Peau</option>
-                                                               </optgroup>
-                                                               <optgroup label="Adulte">
-                                                                  <option value="{adult.name}">Prénom Adulte</option>
-                                                                  <option value="{adult.role}">Rôle (Papa/Maman)</option>
-                                                               </optgroup>
-                                                            </select>
-                                                         ) : (
-                                                            isText ? (
+                                                         {isText ? (
+                                                            <div className="space-y-2">
+                                                               {/* Variable Inserter */}
+                                                               <div className="flex gap-2">
+                                                                  <select 
+                                                                     className="flex-1 text-xs border border-gray-300 rounded px-2 py-1 bg-white"
+                                                                     onChange={(e) => {
+                                                                        if (e.target.value) {
+                                                                           updateLayer({content: ((layer as any).content || '') + e.target.value});
+                                                                           e.target.value = ''; // Reset select
+                                                                        }
+                                                                     }}
+                                                                  >
+                                                                     <option value="">Insérer une variable...</option>
+                                                                     {selectedBook.wizardConfig.tabs.map(tab => {
+                                                                        // Filter only text variants
+                                                                        const textVariants = tab.variants.filter(v => v.type === 'text');
+                                                                        if (textVariants.length === 0) return null;
+                                                                        
+                                                                        return (
+                                                                           <optgroup key={tab.id} label={tab.label}>
+                                                                              {textVariants.map(v => (
+                                                                                 <option key={v.id} value={`{${tab.id}.${v.id}}`}>
+                                                                                    {v.label}
+                                                                                 </option>
+                                                                              ))}
+                                                                           </optgroup>
+                                                                        );
+                                                                     })}
+                                                                  </select>
+                                                               </div>
+
                                                                <textarea 
                                                                   value={(layer as any).content}
                                                                   onChange={(e) => updateLayer({content: e.target.value})}
-                                                                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 h-20"
+                                                                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 h-24 font-mono leading-relaxed"
+                                                                  placeholder="Écrivez votre texte ici... Utilisez {tab.variable} pour insérer des données dynamiques."
                                                                />
+                                                            </div>
+                                                         ) : (
+                                                            layer.type === 'variable' ? (
+                                                               <select 
+                                                                  value={(layer as any).variableKey}
+                                                                  onChange={(e) => updateLayer({variableKey: e.target.value})}
+                                                                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-indigo-50/50 border-indigo-200 text-indigo-700"
+                                                               >
+                                                                  <option value="">Choisir une variable image...</option>
+                                                                  {selectedBook.wizardConfig.tabs.map(tab => (
+                                                                     <optgroup key={tab.id} label={tab.label}>
+                                                                        {tab.variants.filter(v => v.type === 'options').map(v => (
+                                                                           <option key={v.id} value={`${tab.id}.${v.id}`}>
+                                                                              {v.label}
+                                                                           </option>
+                                                                        ))}
+                                                                     </optgroup>
+                                                                  ))}
+                                                               </select>
                                                             ) : (
                                                                <div className="flex gap-2">
                                                                   <input 

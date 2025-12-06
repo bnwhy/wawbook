@@ -14,11 +14,11 @@ import paintingImage from '@assets/generated_images/children\'s_book_cover_for_p
 import readingImage from '@assets/generated_images/children\'s_book_cover_for_reading_theme_with_french_title.png';
 import natureImage from '@assets/generated_images/children\'s_book_cover_for_gardening_theme_with_french_title.png';
 import cookingImage from '@assets/generated_images/children\'s_book_cover_for_cooking_theme_with_french_title.png';
-import dadImage from '@assets/generated_images/children\'s_book_cover_for_dad_and_child.png';
-import momImage from '@assets/generated_images/children\'s_book_cover_for_mom_and_child.png';
-import grandpaImage from '@assets/generated_images/children\'s_book_cover_for_grandpa_and_child.png';
-import grandmaImage from '@assets/generated_images/children\'s_book_cover_for_grandma_and_child.png';
-import siblingsImage from '@assets/generated_images/children\'s_book_cover_for_siblings.png';
+import dadImage from '@assets/generated_images/children\'s_book_cover_for_dad_and_child_with_french_title.png';
+import momImage from '@assets/generated_images/children\'s_book_cover_for_mom_and_child_with_french_title.png';
+import grandpaImage from '@assets/generated_images/children\'s_book_cover_for_grandpa_and_child_with_french_title.png';
+import grandmaImage from '@assets/generated_images/children\'s_book_cover_for_grandma_and_child_with_french_title.png';
+import siblingsImage from '@assets/generated_images/children\'s_book_cover_for_siblings_with_french_title.png';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity, bookTitle?: string) => void;

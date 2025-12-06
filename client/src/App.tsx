@@ -18,10 +18,13 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [initialTheme, setInitialTheme] = useState<Theme | undefined>(undefined);
   const [initialActivity, setInitialActivity] = useState<Activity | undefined>(undefined);
+  const [selectedBookTitle, setSelectedBookTitle] = useState<string | undefined>(undefined);
+  const [location, setLocation] = useLocation(); // Add useLocation hook
 
-  const startCreation = (theme?: Theme, activity?: Activity) => {
+  const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string) => {
     setInitialTheme(theme);
     setInitialActivity(activity);
+    setSelectedBookTitle(bookTitle);
     setAppState('CREATE');
     setError(null);
   };
@@ -31,6 +34,7 @@ const App: React.FC = () => {
     setConfig(null);
     setInitialTheme(undefined);
     setInitialActivity(undefined);
+    setSelectedBookTitle(undefined);
   };
 
   const handleConfigComplete = async (finalConfig: BookConfig) => {
@@ -73,6 +77,7 @@ const App: React.FC = () => {
               onCancel={cancelCreation}
               initialTheme={initialTheme}
               initialActivity={initialActivity}
+              bookTitle={selectedBookTitle}
             />
           )}
 
@@ -92,7 +97,16 @@ const App: React.FC = () => {
         </Route>
 
         {/* Content Pages */}
-        <Route path="/products/:category" component={CategoryPage} />
+        <Route path="/products/:category">
+          {(params) => (
+            <CategoryPage 
+              onSelectBook={(title) => {
+                startCreation(undefined, undefined, title);
+                setLocation('/');
+              }} 
+            />
+          )}
+        </Route>
         <Route path="/occasion/:occasion" component={CategoryPage} />
         
         <Route path="/for/:audience">

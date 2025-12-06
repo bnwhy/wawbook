@@ -9,6 +9,7 @@ interface WizardProps {
   onCancel: () => void;
   initialTheme?: Theme;
   initialActivity?: Activity;
+  bookTitle?: string;
 }
 
 // --- CONSTANTS ---
@@ -210,7 +211,14 @@ const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, ini
           <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col lg:h-[calc(100%-2rem)]">
              
              <div className="p-4 border-b border-gray-100">
-                <h2 className="text-xl font-display font-black text-cloud-dark">Créez vos personnages principaux</h2>
+                {bookTitle && (
+                   <div className="text-xs font-bold text-brand-coral uppercase tracking-wider mb-1">
+                      Personnalisation du livre
+                   </div>
+                )}
+                <h2 className="text-xl font-display font-black text-cloud-dark">
+                   {bookTitle || "Créez vos personnages principaux"}
+                </h2>
              </div>
 
              {/* TABS */}

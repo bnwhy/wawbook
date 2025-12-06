@@ -3,9 +3,22 @@ import Navigation from '../components/Navigation';
 import { ArrowLeft, BookOpen, Star, Heart } from 'lucide-react';
 import { useLocation } from 'wouter';
 
-const CategoryPage: React.FC = () => {
+interface CategoryPageProps {
+  onSelectBook?: (title: string) => void;
+}
+
+const CategoryPage: React.FC<CategoryPageProps> = ({ onSelectBook }) => {
   const [location, setLocation] = useLocation();
   const category = decodeURIComponent(location.split('/').pop() || 'Catalogue');
+
+  const handleBookClick = (title: string) => {
+    if (onSelectBook) {
+      onSelectBook(title);
+    } else {
+      // Fallback if no handler provided (e.g. direct access)
+      setLocation('/'); 
+    }
+  };
 
   return (
     <div className="min-h-screen bg-brand-cream font-sans">
@@ -56,7 +69,10 @@ const CategoryPage: React.FC = () => {
                 </p>
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                   <span className="font-bold text-slate-800">29,90 €</span>
-                  <button className="text-brand-coral font-bold text-sm hover:underline">
+                  <button 
+                    onClick={() => handleBookClick(`Le Voyage Magique #${item}`)}
+                    className="text-brand-coral font-bold text-sm hover:underline"
+                  >
                     Personnaliser &rarr;
                   </button>
                 </div>

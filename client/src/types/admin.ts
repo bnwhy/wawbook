@@ -1,4 +1,4 @@
-import { Theme } from './types';
+import { Theme } from '../types';
 
 export interface BookProduct {
   id: string;
@@ -8,6 +8,9 @@ export interface BookProduct {
   promoCode?: string;
   coverImage: string;
   theme: Theme;
+  category: 'family' | 'theme' | 'activity' | 'occasion';
+  badgeText?: string;
+  oldPrice?: number;
   wizardConfig: WizardConfiguration;
   contentConfig: ContentConfiguration;
 }

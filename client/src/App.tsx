@@ -10,6 +10,7 @@ import { Switch, Route, useLocation } from 'wouter';
 import StaticPage from './pages/StaticPage';
 import CategoryPage from './pages/CategoryPage';
 import NotFound from './pages/NotFound';
+import { BooksProvider } from './context/BooksContext';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('HOME');
@@ -65,8 +66,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
-      <Switch>
+    <BooksProvider>
+      <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
+        <Switch>
         {/* Main Application Flow (SPA-like at root) */}
         <Route path="/">
           {appState === 'HOME' && <Hero onStart={startCreation} onAdminClick={() => setAppState('ADMIN')} />}
@@ -143,7 +145,8 @@ const App: React.FC = () => {
             </button>
         </div>
       )}
-    </div>
+      </div>
+    </BooksProvider>
   );
 };
 

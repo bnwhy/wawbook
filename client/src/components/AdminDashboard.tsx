@@ -2,89 +2,11 @@ import React, { useState } from 'react';
 import { Book, User, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition } from '../types/admin';
-
-// --- MOCK INITIAL DATA ---
-const INITIAL_BOOKS: BookProduct[] = [
-  {
-    id: '1',
-    name: 'Un lien magique',
-    description: "Une histoire d'amour et de complicité unique.",
-    price: 29.90,
-    promoCode: 'WELCOME10',
-    theme: Theme.Adventure,
-    coverImage: 'adventure_cover.jpg',
-    wizardConfig: {
-      avatarStyle: 'watercolor',
-      tabs: [
-        { 
-          id: 't1', 
-          label: 'Enfant', 
-          type: 'character', 
-          options: ['hair', 'skin', 'clothes'], 
-          variants: [
-            {
-              id: 'v1', 
-              label: 'Garçon', 
-              title: 'Un garçon',
-              type: 'options',
-              options: [
-                { id: 'o1', label: 'Blond' },
-                { id: 'o2', label: 'Brun' }
-              ]
-            }, 
-            {
-              id: 'v2', 
-              label: 'Fille',
-              title: 'Une fille',
-              type: 'options',
-              options: [
-                { id: 'o3', label: 'Blonde' },
-                { id: 'o4', label: 'Brune' }
-              ]
-            }
-          ] 
-        },
-        { 
-          id: 't2', 
-          label: 'Parent', 
-          type: 'character', 
-          options: ['hair', 'skin', 'beard'], 
-          variants: [
-            {
-              id: 'v3', 
-              label: 'Papa',
-              type: 'options',
-              options: []
-            }, 
-            {
-              id: 'v4', 
-              label: 'Maman',
-              type: 'options',
-              options: []
-            }
-          ] 
-        }
-      ]
-    },
-    contentConfig: {
-      pages: [
-        { id: 'p0', pageNumber: 0, label: 'Couverture', description: 'Couverture rigide personnalisée' },
-        { id: 'p1', pageNumber: 1, label: 'Page 1', description: 'Introduction dans la chambre' },
-        { id: 'p2', pageNumber: 2, label: 'Page 2', description: 'Départ à l\'aventure' },
-        { id: 'p3', pageNumber: 3, label: 'Page 3', description: 'Rencontre magique' },
-      ],
-      texts: [
-        { id: 'txt1', label: 'Titre Couverture', type: 'variable', content: '{{CHILD_NAME}} et {{PARENT_NAME}}', position: { pageIndex: 0, zoneId: 'title' } },
-        { id: 'txt2', label: 'Dédicace', type: 'fixed', content: 'Pour mon petit trésor.', position: { pageIndex: 1, zoneId: 'body' } }
-      ],
-      images: []
-    }
-  }
-];
+import { useBooks } from '../context/BooksContext';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const { books, addBook, updateBook, deleteBook } = useBooks();
   const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content'>('books');
-  const [books, setBooks] = useState<BookProduct[]>(INITIAL_BOOKS);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   
@@ -101,9 +23,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const tabs = book.wizardConfig.tabs;
     if (tabs.length === 0) return ['Défaut'];
 
-    // Cartesian product of all tab variants
-    const cartesian = (a: string[], b: string[]) => [].concat(...a.map(d => b.map(e => [].concat(d, e))));
-    
     // Get variants for each tab
     const tabValues = tabs.map(tab => {
       if (tab.variants.length > 0) {
@@ -168,7 +87,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
 
   const handleSaveBook = (updatedBook: BookProduct) => {
-    setBooks(books.map(b => b.id === updatedBook.id ? updatedBook : b));
+    updateBook(updatedBook);
     setIsEditing(false);
   };
 
@@ -179,11 +98,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       description: '',
       price: 29.90,
       theme: Theme.Adventure,
+      category: 'theme',
       coverImage: '',
       wizardConfig: { avatarStyle: 'watercolor', tabs: [] },
       contentConfig: { pages: [], texts: [], images: [] }
     };
-    setBooks([...books, newBook]);
+    addBook(newBook);
     setSelectedBookId(newBook.id);
     setIsEditing(true);
   };

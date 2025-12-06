@@ -470,6 +470,35 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    <option value="options">Choix (Options)</option>
                                                    <option value="text">Texte (Libre)</option>
                                                 </select>
+                                                
+                                                {variant.type === 'text' && (
+                                                   <div className="flex gap-2 mt-2">
+                                                      <input 
+                                                         type="number" 
+                                                         placeholder="Min" 
+                                                         value={variant.minLength || ''}
+                                                         onChange={(e) => {
+                                                            const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                            newTabs[idx].variants[vIdx].minLength = parseInt(e.target.value) || undefined;
+                                                            handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                         }}
+                                                         className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
+                                                         title="Longueur minimum"
+                                                      />
+                                                      <input 
+                                                         type="number" 
+                                                         placeholder="Max" 
+                                                         value={variant.maxLength || ''}
+                                                         onChange={(e) => {
+                                                            const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                            newTabs[idx].variants[vIdx].maxLength = parseInt(e.target.value) || undefined;
+                                                            handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                         }}
+                                                         className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
+                                                         title="Longueur maximum"
+                                                      />
+                                                   </div>
+                                                )}
                                              </div>
 
                                              <button 
@@ -559,6 +588,29 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                         const url = URL.createObjectURL(file);
                                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
                                                                         newTabs[idx].variants[vIdx].options[oIdx].resource = url;
+                                                                        handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                                     }
+                                                                  }}
+                                                               />
+                                                            </div>
+
+                                                            <div className="text-center group/upload cursor-pointer relative">
+                                                               <div className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-colors mb-1 ${option.avatar ? 'border-purple-200 bg-purple-50 text-purple-500' : 'border-gray-200 bg-gray-50 group-hover/upload:border-purple-500 group-hover/upload:text-purple-500 text-gray-300'}`}>
+                                                                  <User size={16} />
+                                                               </div>
+                                                               <div className={`text-[9px] font-bold ${option.avatar ? 'text-purple-600' : 'text-gray-400 group-hover/upload:text-purple-500'}`}>Avatar</div>
+
+                                                               {/* Hidden File Input for Mock Upload */}
+                                                               <input 
+                                                                  type="file" 
+                                                                  className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                  onChange={(e) => {
+                                                                     const file = e.target.files?.[0];
+                                                                     if (file) {
+                                                                        // Mock upload - create object URL
+                                                                        const url = URL.createObjectURL(file);
+                                                                        const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                        newTabs[idx].variants[vIdx].options[oIdx].avatar = url;
                                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                                      }
                                                                   }}

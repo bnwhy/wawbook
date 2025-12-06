@@ -22,6 +22,7 @@ export interface WizardOption {
   label: string;
   thumbnail?: string;
   resource?: string;
+  avatar?: string; // Preview/Avatar image
 }
 
 export interface WizardVariant {
@@ -29,6 +30,8 @@ export interface WizardVariant {
   label: string; // Internal name
   title?: string; // Public display title
   type: 'options' | 'text';
+  minLength?: number;
+  maxLength?: number;
   thumbnail?: string;
   resource?: string;
   options: WizardOption[];

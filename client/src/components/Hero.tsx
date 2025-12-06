@@ -70,6 +70,27 @@ const ACTIVITY_CARDS = [
   { id: 'Cuisine', title: 'Le Petit Chef', badgeText: 'Passion Cuisine', image: cookingImage, price: "29,90 €", oldPrice: "34,90 €", description: "Miam ! Une histoire gourmande à dévorer sans modération." },
 ];
 
+const FAMILY_CARDS = [
+  {
+    id: 'grandparents',
+    title: 'Papi, Mamie & Moi',
+    badgeText: 'Famille',
+    image: readingImage, // Placeholder
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Une aventure tendre qui célèbre le lien unique entre les grands-parents et leurs petits-enfants."
+  },
+  {
+    id: 'siblings',
+    title: 'Les Super Frères & Sœurs',
+    badgeText: 'Famille',
+    image: natureImage, // Placeholder
+    price: "34,90 €",
+    oldPrice: "39,90 €",
+    description: "Une histoire pleine de complicité pour apprendre à grandir ensemble."
+  }
+];
+
 const FAQS = [
   {
     question: "Est-ce vraiment magique ?",
@@ -184,6 +205,59 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
         {/* --- STOREFRONT SECTION (Themes & Activities) --- */}
         <section id="themes" className="py-24 px-6 bg-white relative z-10">
           <div className="max-w-7xl mx-auto">
+            
+            {/* FAMILY COLLECTION */}
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4">Notre collection pour la famille</h2>
+              <p className="text-xl text-cloud-dark/60 font-medium">Des histoires pour célébrer ceux qu'on aime</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-7xl mx-auto justify-center">
+              {/* Center the cards if fewer than 4 */}
+              <div className="hidden lg:block lg:col-span-1"></div>
+              {FAMILY_CARDS.map((card, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => onStart(undefined, undefined, card.title)}
+                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                >
+                  {/* Image Container */}
+                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                      <img 
+                        src={card.image} 
+                        alt={card.title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
+                          <Heart size={12} className="text-accent-melon fill-current" />
+                          Nouveau
+                      </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5 flex flex-col flex-grow">
+                     <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
+                     <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.title}</h3>
+                     <p className="text-cloud-dark/60 text-sm font-medium line-clamp-2 mb-6 leading-relaxed">
+                        {card.description}
+                     </p>
+                     
+                     <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice}</span>
+                            <span className="text-xl font-black text-accent-melon">{card.price}</span>
+                        </div>
+                        <button className="bg-cloud-dark text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
+                            <PenTool size={14} />
+                            Créer
+                        </button>
+                     </div>
+                  </div>
+                </div>
+              ))}
+              <div className="hidden lg:block lg:col-span-1"></div>
+            </div>
+
             {/* THEMES */}
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4">Nos Univers Magiques</h2>

@@ -509,7 +509,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    </button>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="flex flex-col gap-2">
                                                    {(variant.options || []).map((option, oIdx) => (
                                                       <div key={option.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-start gap-3 group/option">
                                                          <div className="w-12 h-12 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-gray-300 shrink-0">

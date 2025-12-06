@@ -997,13 +997,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                     {/* Layers List */}
                                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                                       {/* Base Layer Item */}
-                                       <div className="flex items-center gap-3 p-2 rounded bg-gray-50 border border-gray-100 opacity-70">
-                                          <Image size={14} className="text-gray-400" />
-                                          <span className="text-xs font-bold text-gray-500 flex-1">Illustration de fond</span>
-                                          <span className="text-[10px] bg-gray-200 px-1 rounded text-gray-500">Auto</span>
-                                       </div>
-
                                        {/* Dynamic Layers List */}
                                        {(() => {
                                           const currentPage = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);

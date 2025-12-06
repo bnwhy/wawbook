@@ -6,10 +6,37 @@ import { useBooks } from '../context/BooksContext';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
-  const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content'>('books');
+  const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'settings'>('books');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   
+  // Menus State (Mockup)
+  const [menus, setMenus] = useState([
+    {
+      id: 'main',
+      title: 'Menu Principal',
+      handle: 'main-menu',
+      items: [
+        { id: '1', label: 'Accueil', url: '/' },
+        { id: '2', label: 'Nos Livres', url: '/books' },
+        { id: '3', label: 'À Propos', url: '/about' },
+        { id: '4', label: 'Contact', url: '/contact' }
+      ]
+    },
+    {
+      id: 'footer',
+      title: 'Pied de page',
+      handle: 'footer-menu',
+      items: [
+        { id: '1', label: 'Mentions Légales', url: '/legal' },
+        { id: '2', label: 'CGV', url: '/terms' },
+        { id: '3', label: 'Confidentialité', url: '/privacy' },
+        { id: '4', label: 'Livraison', url: '/shipping' }
+      ]
+    }
+  ]);
+  const [editingMenuId, setEditingMenuId] = useState<string | null>(null);
+
   // Content Editor State
   const [selectedVariant, setSelectedVariant] = useState<string>('default'); // Used for previewing specific combinations
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
@@ -131,7 +158,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
            </button>
 
            <button 
-             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-slate-800 text-slate-400 hover:text-white"
+             onClick={() => { setActiveTab('menus'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'menus' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
            >
               <Menu size={20} />
               <span className="font-medium">Menus</span>
@@ -152,7 +180,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
            </button>
 
            <button 
-             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-slate-800 text-slate-400 hover:text-white"
+             onClick={() => { setActiveTab('settings'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'settings' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
            >
               <Settings size={20} />
               <span className="font-medium">Paramétrages</span>
@@ -277,6 +306,124 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       </div>
                     ))}
                  </div>
+              </div>
+            )}
+
+            {/* --- VIEW: MENUS --- */}
+            {activeTab === 'menus' && (
+              <div className="max-w-4xl mx-auto space-y-8">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-800">Navigation</h2>
+                        <p className="text-slate-500 mt-1">Gérez les menus de votre boutique (en-tête et pied de page).</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
+                    {menus.map(menu => (
+                        <div key={menu.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-800">{menu.title}</h3>
+                                    <div className="text-xs text-slate-400 font-mono mt-1">Handle: {menu.handle}</div>
+                                </div>
+                                <button 
+                                    onClick={() => {
+                                        const newMenus = menus.map(m => {
+                                            if(m.id === menu.id) {
+                                                return {
+                                                    ...m,
+                                                    items: [...m.items, { id: Date.now().toString(), label: 'Nouveau lien', url: '#' }]
+                                                }
+                                            }
+                                            return m;
+                                        });
+                                        setMenus(newMenus);
+                                    }}
+                                    className="text-sm bg-white border border-gray-300 hover:bg-gray-50 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2"
+                                >
+                                    <Plus size={16} /> Ajouter un lien
+                                </button>
+                            </div>
+                            
+                            <div className="p-0">
+                                {menu.items.length === 0 ? (
+                                    <div className="p-8 text-center text-gray-400 italic">Aucun lien dans ce menu</div>
+                                ) : (
+                                    <div className="divide-y divide-gray-100">
+                                        {menu.items.map((item, idx) => (
+                                            <div key={item.id} className="p-4 flex items-center gap-4 hover:bg-slate-50 group">
+                                                <div className="text-gray-300 cursor-move">
+                                                    <div className="flex flex-col gap-[2px]">
+                                                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current"></div><div className="w-1 h-1 rounded-full bg-current"></div></div>
+                                                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current"></div><div className="w-1 h-1 rounded-full bg-current"></div></div>
+                                                        <div className="flex gap-[2px]"><div className="w-1 h-1 rounded-full bg-current"></div><div className="w-1 h-1 rounded-full bg-current"></div></div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex-1 grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Label</label>
+                                                        <input 
+                                                            type="text" 
+                                                            value={item.label}
+                                                            onChange={(e) => {
+                                                                const newMenus = menus.map(m => {
+                                                                    if(m.id === menu.id) {
+                                                                        const newItems = [...m.items];
+                                                                        newItems[idx] = {...item, label: e.target.value};
+                                                                        return {...m, items: newItems};
+                                                                    }
+                                                                    return m;
+                                                                });
+                                                                setMenus(newMenus);
+                                                            }}
+                                                            className="w-full text-sm border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-brand-coral outline-none"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Lien (URL)</label>
+                                                        <input 
+                                                            type="text" 
+                                                            value={item.url}
+                                                            onChange={(e) => {
+                                                                 const newMenus = menus.map(m => {
+                                                                    if(m.id === menu.id) {
+                                                                        const newItems = [...m.items];
+                                                                        newItems[idx] = {...item, url: e.target.value};
+                                                                        return {...m, items: newItems};
+                                                                    }
+                                                                    return m;
+                                                                });
+                                                                setMenus(newMenus);
+                                                            }}
+                                                            className="w-full text-sm border border-gray-300 rounded px-3 py-1.5 focus:ring-2 focus:ring-brand-coral outline-none font-mono text-gray-600"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <button 
+                                                    onClick={() => {
+                                                        const newMenus = menus.map(m => {
+                                                            if(m.id === menu.id) {
+                                                                return {...m, items: m.items.filter(i => i.id !== item.id)};
+                                                            }
+                                                            return m;
+                                                        });
+                                                        setMenus(newMenus);
+                                                    }}
+                                                    className="text-gray-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-all"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
               </div>
             )}
 

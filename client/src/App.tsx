@@ -107,7 +107,16 @@ const App: React.FC = () => {
             />
           )}
         </Route>
-        <Route path="/occasion/:occasion" component={CategoryPage} />
+        <Route path="/occasion/:occasion">
+          {(params) => (
+            <CategoryPage 
+              onSelectBook={(title) => {
+                startCreation(undefined, undefined, title);
+                setLocation('/');
+              }} 
+            />
+          )}
+        </Route>
         
         <Route path="/for/:audience">
           {(params) => <StaticPage title={decodeURIComponent(params.audience)} category="Pour qui ?" />}

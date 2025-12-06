@@ -16,7 +16,7 @@ import natureImage from '@assets/generated_images/children\'s_book_cover_for_nat
 import cookingImage from '@assets/generated_images/children\'s_book_cover_for_cooking_theme.png';
 
 interface HeroProps {
-  onStart: (theme?: Theme, activity?: Activity) => void;
+  onStart: (theme?: Theme, activity?: Activity, bookTitle?: string) => void;
   onAdminClick?: () => void;
 }
 
@@ -194,7 +194,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
               {THEME_CARDS.map((card, idx) => (
                 <div 
                   key={idx}
-                  onClick={() => onStart(card.theme)}
+                  onClick={() => onStart(card.theme, undefined, card.title)}
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
@@ -243,7 +243,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                {ACTIVITY_CARDS.map((activity, idx) => (
                   <div 
                     key={idx} 
-                    onClick={() => onStart(undefined, activity.id as any)}
+                    onClick={() => onStart(undefined, activity.id as any, activity.title)}
                     className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                   >
                     {/* Image Container */}

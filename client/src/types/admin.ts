@@ -15,6 +15,7 @@ export interface BookProduct {
 export interface WizardConfiguration {
   avatarStyle: 'watercolor' | 'cartoon' | 'realistic';
   tabs: WizardTab[];
+  avatarMappings?: Record<string, string>; // key: "optId1_optId2" (sorted), value: "url"
 }
 
 export interface WizardOption {
@@ -22,7 +23,6 @@ export interface WizardOption {
   label: string;
   thumbnail?: string;
   resource?: string;
-  avatar?: string; // Preview/Avatar image
 }
 
 export interface WizardVariant {

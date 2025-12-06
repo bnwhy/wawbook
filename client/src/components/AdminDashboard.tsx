@@ -83,7 +83,7 @@ const INITIAL_BOOKS: BookProduct[] = [
 ];
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'content'>('books');
+  const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content'>('books');
   const [books, setBooks] = useState<BookProduct[]>(INITIAL_BOOKS);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -91,11 +91,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Content Editor State
   const [selectedVariant, setSelectedVariant] = useState<string>('default');
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [selectedAvatarTabId, setSelectedAvatarTabId] = useState<string | null>(null);
 
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
 
-  // Helper to generate combinations
+  // Helper to generate combinations for Storyboard (Global)
   const generateCombinations = (book: BookProduct) => {
     const tabs = book.wizardConfig.tabs;
     if (tabs.length === 0) return ['Défaut'];
@@ -127,6 +128,41 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
     
     return combinations;
+  };
+
+  // Helper to generate combinations for Avatar Mappings (Per Tab)
+  const generateAvatarCombinations = (tab: WizardTab) => {
+     // Filter out text variants or variants without options
+     const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
+     
+     if (relevantVariants.length === 0) return [];
+
+     // Helper for cartesian product of objects
+     const cartesian = (args: any[]) => {
+        const r: any[] = [];
+        const max = args.length - 1;
+        function helper(arr: any[], i: number) {
+           for (let j = 0, l = args[i].length; j < l; j++) {
+              const a = arr.slice(0); // clone arr
+              a.push(args[i][j]);
+              if (i === max) r.push(a);
+              else helper(a, i + 1);
+           }
+        }
+        helper([], 0);
+        return r;
+     };
+
+     const variantsOptions = relevantVariants.map(v => v.options);
+     const combos = cartesian(variantsOptions); // Array of arrays of options
+
+     return combos.map(combo => {
+        // Sort IDs for consistent key
+        const ids = combo.map((o: any) => o.id).sort();
+        const key = ids.join('_');
+        const label = combo.map((o: any) => o.label).join(' + ');
+        return { key, label, parts: combo };
+     });
   };
 
   const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
@@ -196,6 +232,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                >
                   <User size={20} />
                   <span className="font-medium">Wizard</span>
+               </button>
+
+               <button 
+                 onClick={() => setActiveTab('avatars')}
+                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'avatars' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800'}`}
+               >
+                  <Eye size={20} />
+                  <span className="font-medium">Prévisualisations</span>
                </button>
 
                <button 
@@ -593,29 +637,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   }}
                                                                />
                                                             </div>
-
-                                                            <div className="text-center group/upload cursor-pointer relative">
-                                                               <div className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-colors mb-1 ${option.avatar ? 'border-purple-200 bg-purple-50 text-purple-500' : 'border-gray-200 bg-gray-50 group-hover/upload:border-purple-500 group-hover/upload:text-purple-500 text-gray-300'}`}>
-                                                                  <User size={16} />
-                                                               </div>
-                                                               <div className={`text-[9px] font-bold ${option.avatar ? 'text-purple-600' : 'text-gray-400 group-hover/upload:text-purple-500'}`}>Avatar</div>
-
-                                                               {/* Hidden File Input for Mock Upload */}
-                                                               <input 
-                                                                  type="file" 
-                                                                  className="absolute inset-0 opacity-0 cursor-pointer"
-                                                                  onChange={(e) => {
-                                                                     const file = e.target.files?.[0];
-                                                                     if (file) {
-                                                                        // Mock upload - create object URL
-                                                                        const url = URL.createObjectURL(file);
-                                                                        const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                        newTabs[idx].variants[vIdx].options[oIdx].avatar = url;
-                                                                        handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                                                     }
-                                                                  }}
-                                                               />
-                                                            </div>
                                                          </div>
 
                                                          <div className="w-px h-8 bg-gray-100"></div>
@@ -678,6 +699,117 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            </div>
                         )}
                      </div>
+                  </div>
+               </div>
+            )}
+
+            {/* --- VIEW: AVATARS & PREVIEWS --- */}
+            {activeTab === 'avatars' && selectedBookId && selectedBook && (
+               <div className="max-w-6xl mx-auto h-[calc(100vh-180px)] flex flex-col">
+                  
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 shrink-0">
+                     <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Eye size={24} className="text-indigo-600" />
+                        Prévisualisation des Personnages
+                     </h2>
+                     <p className="text-slate-500 mb-6">
+                        Configurez l'apparence finale (avatar) pour chaque combinaison d'options possible. Ces images seront affichées dans le Wizard lors de la sélection.
+                     </p>
+
+                     {/* Tab Selector */}
+                     <div className="flex gap-2 border-b border-gray-100 pb-1">
+                        {selectedBook.wizardConfig.tabs.map(tab => (
+                           <button
+                              key={tab.id}
+                              onClick={() => setSelectedAvatarTabId(tab.id)}
+                              className={`px-4 py-2 rounded-t-lg font-bold text-sm transition-colors relative top-[1px] ${selectedAvatarTabId === tab.id || (!selectedAvatarTabId && tab === selectedBook.wizardConfig.tabs[0]) ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 border-b-transparent' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                           >
+                              {tab.label}
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+
+                  {/* Grid Area */}
+                  <div className="flex-1 overflow-y-auto bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                     {(() => {
+                        const targetTab = selectedBook.wizardConfig.tabs.find(t => t.id === (selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id));
+                        if (!targetTab) return <div className="text-gray-400">Aucun personnage trouvé.</div>;
+
+                        const combinations = generateAvatarCombinations(targetTab);
+
+                        if (combinations.length === 0) {
+                           return (
+                              <div className="text-center py-12 text-gray-400">
+                                 <User size={48} className="mx-auto mb-4 opacity-20" />
+                                 <p>Aucune combinaison d'options disponible pour ce personnage.</p>
+                                 <p className="text-sm mt-2">Ajoutez des variantes de type "Options" dans l'onglet Wizard.</p>
+                              </div>
+                           );
+                        }
+
+                        return (
+                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                              {combinations.map((combo) => {
+                                 const existingAvatar = selectedBook.wizardConfig.avatarMappings?.[combo.key];
+                                 
+                                 return (
+                                    <div key={combo.key} className="bg-slate-50 rounded-xl border border-gray-200 overflow-hidden group hover:shadow-md transition-all">
+                                       <div className="aspect-square bg-white relative flex items-center justify-center border-b border-gray-100">
+                                          {existingAvatar ? (
+                                             <img src={existingAvatar} alt="Avatar" className="w-full h-full object-contain p-4" />
+                                          ) : (
+                                             <User size={48} className="text-gray-200" />
+                                          )}
+                                          
+                                          {/* Upload Overlay */}
+                                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                             <div className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all">
+                                                <label className="cursor-pointer bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg hover:bg-indigo-700 flex items-center gap-2">
+                                                   <Upload size={14} />
+                                                   {existingAvatar ? 'Modifier' : 'Ajouter'}
+                                                   <input 
+                                                      type="file" 
+                                                      className="hidden" 
+                                                      onChange={(e) => {
+                                                         const file = e.target.files?.[0];
+                                                         if (file) {
+                                                            const url = URL.createObjectURL(file);
+                                                            const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
+                                                            newMappings[combo.key] = url;
+                                                            handleSaveBook({
+                                                               ...selectedBook,
+                                                               wizardConfig: {
+                                                                  ...selectedBook.wizardConfig,
+                                                                  avatarMappings: newMappings
+                                                               }
+                                                            });
+                                                         }
+                                                      }}
+                                                   />
+                                                </label>
+                                             </div>
+                                          </div>
+                                       </div>
+
+                                       <div className="p-3">
+                                          <div className="flex flex-wrap gap-1 mb-1">
+                                             {combo.parts.map((part: any, i: number) => (
+                                                <span key={i} className="text-[10px] font-bold px-1.5 py-0.5 bg-white border border-gray-200 rounded text-slate-600">
+                                                   {part.label}
+                                                </span>
+                                             ))}
+                                          </div>
+                                          <div className="text-[9px] text-gray-400 font-mono truncate" title={combo.key}>
+                                             KEY: {combo.key}
+                                          </div>
+                                       </div>
+                                    </div>
+                                 );
+                              })}
+                           </div>
+                        );
+                     })()}
                   </div>
                </div>
             )}

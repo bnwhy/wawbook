@@ -39,6 +39,8 @@ export interface BookConfig {
   theme: Theme;
   appearance: CharacterAppearance;
   dedication?: string;
+  // New dynamic structure
+  characters?: Record<string, any>;
 }
 
 export interface StoryPage {

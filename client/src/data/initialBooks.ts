@@ -23,6 +23,162 @@ import birthdayImage from '@assets/generated_images/children\'s_book_cover_for_b
 import fathersDayImage from '@assets/generated_images/children\'s_book_cover_for_father\'s_day_occasion_with_french_title.png';
 import mothersDayImage from '@assets/generated_images/children\'s_book_cover_for_mother\'s_day_occasion_with_french_title.png';
 
+const FAMILY_WIZARD_CONFIG = {
+  avatarStyle: 'watercolor' as const,
+  tabs: [
+    {
+      id: 'child',
+      label: 'Enfant',
+      type: 'character' as const,
+      options: [],
+      variants: [
+        {
+          id: 'gender',
+          label: 'Genre',
+          type: 'options' as const,
+          options: [
+            { id: 'boy', label: 'Garçon' },
+            { id: 'girl', label: 'Fille' }
+          ]
+        },
+        {
+          id: 'name',
+          label: 'Prénom',
+          type: 'text' as const,
+          minLength: 2,
+          maxLength: 20
+        },
+        {
+          id: 'skinTone',
+          label: 'Peau',
+          type: 'options' as const,
+          options: [
+            { id: 'Claire', label: 'Claire', resource: '#f6d6c8' },
+            { id: 'Beige', label: 'Beige', resource: '#f9cca4' },
+            { id: 'Muscade', label: 'Muscade', resource: '#edb17f' },
+            { id: 'Marron', label: 'Marron', resource: '#d19f79' },
+            { id: 'MarronFonce', label: 'Marron foncé', resource: '#ae836c' },
+            { id: 'Noir', label: 'Noir', resource: '#6a4730' }
+          ]
+        },
+        {
+          id: 'hairColor',
+          label: 'Cheveux',
+          type: 'options' as const,
+          options: [
+            { id: 'Blond', label: 'Blond', resource: '#f7e48c' },
+            { id: 'BlondFonce', label: 'Blond foncé', resource: '#ba9a0d' },
+            { id: 'Chatain', label: 'Châtain', resource: '#a76635' },
+            { id: 'Noir', label: 'Noir', resource: '#302e34' },
+            { id: 'Roux', label: 'Roux', resource: '#ef6c2a' },
+            { id: 'Gris', label: 'Gris', resource: '#b9b9bd' },
+            { id: 'Blanc', label: 'Blanc', resource: '#fefefe' }
+          ]
+        },
+        {
+          id: 'hairStyle',
+          label: 'Coiffure',
+          type: 'options' as const,
+          options: [
+            { id: 'Court', label: 'Court' },
+            { id: 'Hérissé', label: 'Hérissé' },
+            { id: 'Carré', label: 'Carré' },
+            { id: 'Long', label: 'Long' },
+            { id: 'Chignon', label: 'Chignon' },
+            { id: 'Nattes', label: 'Nattes' },
+            { id: 'Bouclé', label: 'Bouclé' },
+            { id: 'QueueCheval', label: 'Queue' }
+          ]
+        },
+        {
+          id: 'glasses',
+          label: 'Lunettes',
+          type: 'options' as const,
+          options: [
+            { id: 'None', label: 'Aucune' },
+            { id: 'Round', label: 'Rondes' },
+            { id: 'Square', label: 'Carrées' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'adult',
+      label: 'Adulte',
+      type: 'character' as const,
+      options: [],
+      variants: [
+        {
+          id: 'role',
+          label: 'Rôle',
+          type: 'options' as const,
+          options: [
+            { id: 'dad', label: 'Papa' },
+            { id: 'mom', label: 'Maman' },
+            { id: 'grandpa', label: 'Papi' },
+            { id: 'grandma', label: 'Mamie' }
+          ]
+        },
+        {
+          id: 'name',
+          label: 'Surnom',
+          type: 'text' as const,
+          minLength: 2,
+          maxLength: 20
+        },
+        {
+          id: 'skinTone',
+          label: 'Peau',
+          type: 'options' as const,
+          options: [
+            { id: 'Claire', label: 'Claire', resource: '#f6d6c8' },
+            { id: 'Beige', label: 'Beige', resource: '#f9cca4' },
+            { id: 'Muscade', label: 'Muscade', resource: '#edb17f' },
+            { id: 'Marron', label: 'Marron', resource: '#d19f79' },
+            { id: 'MarronFonce', label: 'Marron foncé', resource: '#ae836c' },
+            { id: 'Noir', label: 'Noir', resource: '#6a4730' }
+          ]
+        },
+         {
+          id: 'hairColor',
+          label: 'Cheveux',
+          type: 'options' as const,
+          options: [
+            { id: 'Blond', label: 'Blond', resource: '#f7e48c' },
+            { id: 'BlondFonce', label: 'Blond foncé', resource: '#ba9a0d' },
+            { id: 'Chatain', label: 'Châtain', resource: '#a76635' },
+            { id: 'Noir', label: 'Noir', resource: '#302e34' },
+            { id: 'Roux', label: 'Roux', resource: '#ef6c2a' },
+            { id: 'Gris', label: 'Gris', resource: '#b9b9bd' },
+            { id: 'Blanc', label: 'Blanc', resource: '#fefefe' }
+          ]
+        },
+        {
+          id: 'hairStyle',
+          label: 'Coiffure',
+          type: 'options' as const,
+          options: [
+             { id: 'Court', label: 'Court' },
+            { id: 'Chauve', label: 'Chauve' },
+            { id: 'Carré', label: 'Carré' },
+            { id: 'Long', label: 'Long' }
+          ]
+        },
+        {
+           id: 'beard',
+           label: 'Barbe',
+           type: 'options' as const,
+           options: [
+             { id: 'None', label: 'Aucune' },
+             { id: 'Moustache', label: 'Moustache' },
+             { id: 'Beard', label: 'Barbe' }
+           ]
+        }
+      ]
+    }
+  ]
+};
+
 const DEFAULT_WIZARD_CONFIG = {
   avatarStyle: 'watercolor' as const,
   tabs: []
@@ -100,11 +256,71 @@ export const INITIAL_BOOKS: BookProduct[] = [
   { id: 'Cuisine', name: 'Le Petit Chef', category: 'activity', theme: Theme.Adventure, badgeText: 'Passion Cuisine', coverImage: cookingImage, price: 29.90, oldPrice: 34.90, description: "Miam ! Une histoire gourmande à dévorer sans modération.", wizardConfig: DEFAULT_WIZARD_CONFIG, contentConfig: DEFAULT_CONTENT_CONFIG },
 
   // FAMILY
-  { id: 'dad', name: 'Mon Papa & Moi', category: 'family', theme: Theme.Bedtime, badgeText: 'Famille', coverImage: dadImage, price: 29.90, oldPrice: 34.90, description: "Un livre plein d'amour pour dire à son papa combien on l'aime.", wizardConfig: DEFAULT_WIZARD_CONFIG, contentConfig: DEFAULT_CONTENT_CONFIG },
-  { id: 'mom', name: 'Ma Maman & Moi', category: 'family', theme: Theme.Bedtime, badgeText: 'Famille', coverImage: momImage, price: 29.90, oldPrice: 34.90, description: "Une histoire tendre et douce à partager avec la meilleure des mamans.", wizardConfig: DEFAULT_WIZARD_CONFIG, contentConfig: DEFAULT_CONTENT_CONFIG },
-  { id: 'grandpa', name: 'Papi & Moi', category: 'family', theme: Theme.Bedtime, badgeText: 'Famille', coverImage: grandpaImage, price: 29.90, oldPrice: 34.90, description: "Des souvenirs précieux et des aventures rigolotes avec Papi.", wizardConfig: DEFAULT_WIZARD_CONFIG, contentConfig: DEFAULT_CONTENT_CONFIG },
-  { id: 'grandma', name: 'Mamie & Moi', category: 'family', theme: Theme.Bedtime, badgeText: 'Famille', coverImage: grandmaImage, price: 29.90, oldPrice: 34.90, description: "Les câlins, les gâteaux et les histoires de Mamie sont les meilleurs.", wizardConfig: DEFAULT_WIZARD_CONFIG, contentConfig: DEFAULT_CONTENT_CONFIG },
-  { id: 'siblings', name: 'Les Super Frères & Sœurs', category: 'family', theme: Theme.Adventure, badgeText: 'Famille', coverImage: siblingsImage, price: 29.90, oldPrice: 34.90, description: "Une équipe de choc pour affronter tous les défis ensemble !", wizardConfig: DEFAULT_WIZARD_CONFIG, contentConfig: DEFAULT_CONTENT_CONFIG },
+  {
+    id: 'dad',
+    name: 'Mon Papa & Moi',
+    category: 'family',
+    theme: Theme.Bedtime,
+    badgeText: 'Famille',
+    coverImage: dadImage,
+    price: 29.90,
+    oldPrice: 34.90,
+    description: "Un livre plein d'amour pour dire à son papa combien on l'aime.",
+    wizardConfig: FAMILY_WIZARD_CONFIG,
+    contentConfig: DEFAULT_CONTENT_CONFIG
+  },
+  {
+    id: 'mom',
+    name: 'Ma Maman & Moi',
+    category: 'family',
+    theme: Theme.Bedtime,
+    badgeText: 'Famille',
+    coverImage: momImage,
+    price: 29.90,
+    oldPrice: 34.90,
+    description: "Une histoire tendre et douce à partager avec la meilleure des mamans.",
+    wizardConfig: FAMILY_WIZARD_CONFIG,
+    contentConfig: DEFAULT_CONTENT_CONFIG
+  },
+  {
+    id: 'grandpa',
+    name: 'Papi & Moi',
+    category: 'family',
+    theme: Theme.Bedtime,
+    badgeText: 'Famille',
+    coverImage: grandpaImage,
+    price: 29.90,
+    oldPrice: 34.90,
+    description: "Des souvenirs précieux et des aventures rigolotes avec Papi.",
+    wizardConfig: FAMILY_WIZARD_CONFIG,
+    contentConfig: DEFAULT_CONTENT_CONFIG
+  },
+  {
+    id: 'grandma',
+    name: 'Mamie & Moi',
+    category: 'family',
+    theme: Theme.Bedtime,
+    badgeText: 'Famille',
+    coverImage: grandmaImage,
+    price: 29.90,
+    oldPrice: 34.90,
+    description: "Les câlins, les gâteaux et les histoires de Mamie sont les meilleurs.",
+    wizardConfig: FAMILY_WIZARD_CONFIG,
+    contentConfig: DEFAULT_CONTENT_CONFIG
+  },
+  {
+    id: 'siblings',
+    name: 'Les Super Frères & Sœurs',
+    category: 'family',
+    theme: Theme.Adventure,
+    badgeText: 'Famille',
+    coverImage: siblingsImage,
+    price: 29.90,
+    oldPrice: 34.90,
+    description: "Une équipe de choc pour affronter tous les défis ensemble !",
+    wizardConfig: FAMILY_WIZARD_CONFIG,
+    contentConfig: DEFAULT_CONTENT_CONFIG
+  },
 
   // OCCASIONS
   { id: 'birth', name: 'Bienvenue Bébé', category: 'occasion', theme: Theme.Bedtime, badgeText: 'Naissance', coverImage: birthImage, price: 29.90, oldPrice: 34.90, description: "Un souvenir inoubliable pour célébrer l'arrivée d'un nouveau-né.", wizardConfig: DEFAULT_WIZARD_CONFIG, contentConfig: DEFAULT_CONTENT_CONFIG },

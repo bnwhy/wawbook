@@ -159,7 +159,8 @@ const OutfitThumbnail = ({ style }: { style: Outfit }) => (
   </svg>
 );
 
-const Wizard: React.FC<WizardProps> = ({ onComplete, onCancel, initialTheme, initialActivity, bookTitle }) => {
+const Wizard: React.FC<WizardProps> = (props) => {
+  const { onComplete, onCancel, initialTheme, initialActivity, bookTitle } = props;
   const [config, setConfig] = useState<BookConfig>({
     childName: '',
     age: 5,

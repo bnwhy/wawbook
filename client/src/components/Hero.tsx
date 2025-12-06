@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit, Settings } from 'lucide-react';
+import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit, Settings, Gift } from 'lucide-react';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
 import explorerImage from '@assets/generated_images/children\'s_book_cover_for_explorer_theme_with_french_title.png';
@@ -19,6 +19,10 @@ import momImage from '@assets/generated_images/children\'s_book_cover_for_mom_an
 import grandpaImage from '@assets/generated_images/children\'s_book_cover_for_grandpa_and_child_with_french_title.png';
 import grandmaImage from '@assets/generated_images/children\'s_book_cover_for_grandma_and_child_with_french_title.png';
 import siblingsImage from '@assets/generated_images/children\'s_book_cover_for_siblings_with_french_title.png';
+import birthImage from '@assets/generated_images/children\'s_book_cover_for_birth_occasion_with_french_title.png';
+import birthdayImage from '@assets/generated_images/children\'s_book_cover_for_birthday_occasion_with_french_title.png';
+import fathersDayImage from '@assets/generated_images/children\'s_book_cover_for_father\'s_day_occasion_with_french_title.png';
+import mothersDayImage from '@assets/generated_images/children\'s_book_cover_for_mother\'s_day_occasion_with_french_title.png';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity, bookTitle?: string) => void;
@@ -73,6 +77,45 @@ const ACTIVITY_CARDS = [
   { id: 'Lecture', title: 'Rat de Bibliothèque', badgeText: 'Passion Lecture', image: readingImage, price: "29,90 €", oldPrice: "34,90 €", description: "L'aventure commence dès qu'on ouvre un bon livre." },
   { id: 'Jardinage', title: 'Le Petit Jardinier', badgeText: 'Passion Nature', image: natureImage, price: "29,90 €", oldPrice: "34,90 €", description: "Découvrir les secrets des plantes et des petites bêtes du jardin." },
   { id: 'Cuisine', title: 'Le Petit Chef', badgeText: 'Passion Cuisine', image: cookingImage, price: "29,90 €", oldPrice: "34,90 €", description: "Miam ! Une histoire gourmande à dévorer sans modération." },
+];
+
+const OCCASION_CARDS = [
+  {
+    id: 'birth',
+    title: 'Bienvenue Bébé',
+    badgeText: 'Naissance',
+    image: birthImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Un souvenir inoubliable pour célébrer l'arrivée d'un nouveau-né."
+  },
+  {
+    id: 'birthday',
+    title: 'Joyeux Anniversaire',
+    badgeText: 'Anniversaire',
+    image: birthdayImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Le cadeau parfait pour souffler ses bougies avec magie."
+  },
+  {
+    id: 'fathersDay',
+    title: 'Bonne Fête Papa',
+    badgeText: 'Fête des Pères',
+    image: fathersDayImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Pour dire je t'aime au meilleur papa du monde."
+  },
+  {
+    id: 'mothersDay',
+    title: 'Bonne Fête Maman',
+    badgeText: 'Fête des Mères',
+    image: mothersDayImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Une histoire pleine de tendresse pour la reine de la famille."
+  }
 ];
 
 const FAMILY_CARDS = [
@@ -370,6 +413,55 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                           <div className="flex flex-col">
                               <span className="text-xs text-gray-400 font-bold line-through">{activity.oldPrice}</span>
                               <span className="text-xl font-black text-accent-melon">{activity.price}</span>
+                          </div>
+                          <button className="bg-cloud-dark text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
+                              <PenTool size={14} />
+                              Créer
+                          </button>
+                       </div>
+                    </div>
+                  </div>
+               ))}
+            </div>
+
+            {/* OCCASIONS */}
+            <div className="text-center mb-16 mt-24">
+              <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-4">Pour toutes les occasions</h2>
+              <p className="text-xl text-cloud-dark/60 font-medium">Le cadeau idéal pour marquer les grands moments</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+               {OCCASION_CARDS.map((occasion, idx) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => onStart(undefined, undefined, occasion.title)}
+                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                  >
+                    {/* Image Container */}
+                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                        <img 
+                          src={occasion.image} 
+                          alt={occasion.title}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
+                            <Gift size={12} className="text-accent-melon fill-current" />
+                            Célébration
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5 flex flex-col flex-grow">
+                       <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{occasion.badgeText}</div>
+                       <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{occasion.title}</h3>
+                       <p className="text-cloud-dark/60 text-sm font-medium line-clamp-2 mb-6 leading-relaxed">
+                          {occasion.description}
+                       </p>
+                       
+                       <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                          <div className="flex flex-col">
+                              <span className="text-xs text-gray-400 font-bold line-through">{occasion.oldPrice}</span>
+                              <span className="text-xl font-black text-accent-melon">{occasion.price}</span>
                           </div>
                           <button className="bg-cloud-dark text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                               <PenTool size={14} />

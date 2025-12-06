@@ -244,9 +244,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
               <p className="text-xl text-cloud-dark/60 font-medium">Des histoires pour célébrer ceux qu'on aime</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-7xl mx-auto justify-center">
-              {/* Center the cards if fewer than 4 */}
-              <div className="hidden lg:block lg:col-span-1"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-24 max-w-7xl mx-auto justify-center">
               {FAMILY_CARDS.map((card, idx) => (
                 <div 
                   key={idx}
@@ -287,7 +285,6 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   </div>
                 </div>
               ))}
-              <div className="hidden lg:block lg:col-span-1"></div>
             </div>
 
             {/* THEMES */}

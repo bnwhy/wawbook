@@ -14,6 +14,11 @@ import paintingImage from '@assets/generated_images/children\'s_book_cover_for_p
 import readingImage from '@assets/generated_images/children\'s_book_cover_for_reading_theme.png';
 import natureImage from '@assets/generated_images/children\'s_book_cover_for_nature_theme.png';
 import cookingImage from '@assets/generated_images/children\'s_book_cover_for_cooking_theme.png';
+import dadImage from '@assets/generated_images/children\'s_book_cover_for_dad_and_child.png';
+import momImage from '@assets/generated_images/children\'s_book_cover_for_mom_and_child.png';
+import grandpaImage from '@assets/generated_images/children\'s_book_cover_for_grandpa_and_child.png';
+import grandmaImage from '@assets/generated_images/children\'s_book_cover_for_grandma_and_child.png';
+import siblingsImage from '@assets/generated_images/children\'s_book_cover_for_siblings.png';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity, bookTitle?: string) => void;
@@ -72,19 +77,46 @@ const ACTIVITY_CARDS = [
 
 const FAMILY_CARDS = [
   {
-    id: 'grandparents',
-    title: 'Papi, Mamie & Moi',
+    id: 'dad',
+    title: 'Mon Papa & Moi',
     badgeText: 'Famille',
-    image: readingImage, // Placeholder
+    image: dadImage,
     price: "29,90 €",
     oldPrice: "34,90 €",
-    description: "Une aventure tendre qui célèbre le lien unique entre les grands-parents et leurs petits-enfants."
+    description: "Un livre plein d'amour pour dire à son papa combien on l'aime."
+  },
+  {
+    id: 'mom',
+    title: 'Ma Maman & Moi',
+    badgeText: 'Famille',
+    image: momImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Une histoire tendre et douce à partager avec la meilleure des mamans."
+  },
+  {
+    id: 'grandpa',
+    title: 'Papi & Moi',
+    badgeText: 'Famille',
+    image: grandpaImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Des souvenirs précieux et des aventures rigolotes avec Papi."
+  },
+  {
+    id: 'grandma',
+    title: 'Mamie & Moi',
+    badgeText: 'Famille',
+    image: grandmaImage,
+    price: "29,90 €",
+    oldPrice: "34,90 €",
+    description: "Les moments magiques et les câlins tout doux chez Mamie."
   },
   {
     id: 'siblings',
     title: 'Les Super Frères & Sœurs',
     badgeText: 'Famille',
-    image: natureImage, // Placeholder
+    image: siblingsImage,
     price: "34,90 €",
     oldPrice: "39,90 €",
     description: "Une histoire pleine de complicité pour apprendre à grandir ensemble."

@@ -264,13 +264,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
             </div>
           </div>
 
-          {/* Progress */}
-          <div className="relative z-10 mt-8 flex justify-center">
-              <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-stone-500 shadow-sm">
-                  Vue {currentView + 1} / {totalViews}
-              </div>
-          </div>
-
           {/* Modify Link */}
           <div className="relative z-10 mt-6 flex justify-center">
              <button onClick={onStart} className="text-cloud-blue font-bold text-sm hover:underline flex items-center gap-1 transition-colors hover:text-cloud-deep">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight, ShoppingBag } from 'lucide-react';
+import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight, ShoppingCart } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useMenus } from '../context/MenuContext';
 import { useCart } from '../context/CartContext';
@@ -147,7 +147,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
           
           <Link href="/cart">
             <a className="hidden md:flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
-               <ShoppingBag size={20} />
+               <ShoppingCart size={20} />
                <span>Panier</span>
                {itemCount > 0 && (
                 <span className="w-5 h-5 bg-white text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">

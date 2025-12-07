@@ -182,25 +182,25 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
       <Navigation onStart={onStart} onAdminClick={onAdminClick} />
 
       {/* BOOK PREVIEW AREA */}
-      <div className="flex-col items-center justify-center py-12 px-4 relative overflow-hidden mt-20 bg-[#E5E0D8]">
+      <div className="flex flex-col items-center justify-center py-12 px-4 relative overflow-hidden mt-20 bg-[#E5E0D8] min-h-[800px]">
           
           {/* Texture */}
           <div className="absolute inset-0 bg-[#E5E0D8] opacity-100" style={{ backgroundImage: 'radial-gradient(#D6D1C9 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
 
           {/* Stage */}
-          <div className="relative z-10 flex items-center justify-center w-full max-w-6xl h-[650px] perspective-[2000px]">
+          <div className="relative z-10 flex items-center justify-center w-full max-w-6xl h-[650px] perspective-[2500px]">
             
             {/* Arrows */}
-            <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0">
+            <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
                 <ChevronLeft size={32} strokeWidth={2.5} />
             </button>
-            <button onClick={handleNext} disabled={currentView === totalViews - 1 || isFlipping} className="absolute right-4 lg:right-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0">
+            <button onClick={handleNext} disabled={currentView === totalViews - 1 || isFlipping} className="absolute right-4 lg:right-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
                 <ChevronRight size={32} strokeWidth={2.5} />
             </button>
 
             {/* BOOK OBJECT */}
-            <div className="relative w-[900px] h-[600px] flex shadow-2xl rounded-md bg-white">
+            <div className="relative w-[900px] h-[600px] flex shadow-2xl rounded-md bg-white preserve-3d">
                 
                 {/* 1. STATIC LAYER (Bottom) */}
                 <div className="absolute inset-0 flex w-full h-full z-0">
@@ -216,28 +216,32 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
 
                 {/* 2. FLIPPING LAYER (Top) */}
                 {isFlipping && (
-                    <div className="absolute inset-0 z-20 pointer-events-none" style={{ perspective: '2000px' }}>
+                    <div className="absolute inset-0 z-20 pointer-events-none perspective-[2500px]">
                         {direction === 'next' && (
-                            <div className="absolute right-0 w-1/2 h-full transform-style-3d origin-left animate-flip-next">
+                            <div className="absolute right-0 w-1/2 h-full transform-style-3d origin-left animate-flip-next shadow-2xl">
                                 {/* Front (Visible at start) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100">
+                                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5 z-20"></div>
                                     {currentSpread.right}
                                 </div>
                                 {/* Back (Visible at end) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100" style={{ transform: 'rotateY(180deg)' }}>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
                                     {nextSpread?.left}
                                 </div>
                             </div>
                         )}
 
                         {direction === 'prev' && (
-                            <div className="absolute left-0 w-1/2 h-full transform-style-3d origin-right animate-flip-prev">
+                            <div className="absolute left-0 w-1/2 h-full transform-style-3d origin-right animate-flip-prev shadow-2xl">
                                 {/* Front (Visible at start) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
                                     {currentSpread.left}
                                 </div>
                                 {/* Back (Visible at end) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100" style={{ transform: 'rotateY(-180deg)' }}>
+                                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5 z-20"></div>
                                     {prevSpread?.right}
                                 </div>
                             </div>
@@ -372,14 +376,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
         
         @keyframes flip-next {
             0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(-90deg) scale(1.1); }
             100% { transform: rotateY(-180deg); }
         }
         @keyframes flip-prev {
             0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg) scale(1.1); }
             100% { transform: rotateY(180deg); }
         }
-        .animate-flip-next { animation: flip-next 1.5s ease-in-out forwards; }
-        .animate-flip-prev { animation: flip-prev 1.5s ease-in-out forwards; }
+        .animate-flip-next { animation: flip-next 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
+        .animate-flip-prev { animation: flip-prev 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
       `}</style>
     </div>
   );

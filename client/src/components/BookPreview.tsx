@@ -408,12 +408,14 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                         </div>
                         <div className="flex justify-between items-center mb-4 text-sm">
                             <span className="text-gray-500">Livraison</span>
-                            <span className="font-bold text-green-600">Gratuite</span>
+                            <span className="font-bold text-cloud-dark">9.99€</span>
                         </div>
                         <div className="h-px bg-gray-200 w-full mb-4"></div>
                         <div className="flex justify-between items-center text-lg">
                             <span className="font-black text-cloud-dark">Total</span>
-                            <span className="font-black text-brand-coral">{selectedFormat === 'hardcover' ? '€44.99' : '€34.99'}</span>
+                            <span className="font-black text-brand-coral">
+                                {(selectedFormat === 'hardcover' ? 44.99 + 9.99 : 34.99 + 9.99).toFixed(2)}€
+                            </span>
                         </div>
                    </div>
 

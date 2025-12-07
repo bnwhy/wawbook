@@ -91,7 +91,9 @@ const App: React.FC = () => {
             <BookPreview 
               story={story} 
               config={config} 
-              onReset={handleReset} 
+              onReset={handleReset}
+              onStart={startCreation}
+              onAdminClick={() => setAppState('ADMIN')}
             />
           )}
           

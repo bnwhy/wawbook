@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Cloud } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings } from 'lucide-react';
 import { Story, BookConfig } from '../types';
 import { useBooks } from '../context/BooksContext';
+import Navigation from './Navigation';
 
 interface BookPreviewProps {
   story: Story;
   config: BookConfig;
   onReset: () => void;
+  onStart: () => void;
+  onAdminClick?: () => void;
 }
 
-const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset }) => {
+const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onStart, onAdminClick }) => {
   const { books } = useBooks();
   const book = books.find(b => b.name === story.title);
 
@@ -173,93 +176,146 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset }) => 
   const prevSpread = direction === 'prev' ? getSpreadContent(currentView - 1) : null;
 
   return (
-    <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center py-4 px-4 relative overflow-hidden font-sans">
-      {/* Texture */}
-      <div className="absolute inset-0 bg-[#E5E0D8] opacity-100" style={{ backgroundImage: 'radial-gradient(#D6D1C9 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+    <div className="min-h-screen flex flex-col font-sans bg-stone-100">
       
-      {/* Header */}
-      <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 pointer-events-none">
-        <button onClick={onReset} className="pointer-events-auto flex items-center text-stone-600 hover:text-stone-900 transition-colors gap-2 text-sm font-bold bg-white/80 px-4 py-2 rounded-full hover:bg-white shadow-sm">
-            <ArrowLeft size={18} /> Quitter la lecture
-        </button>
-      </div>
+      {/* NAVBAR */}
+      <Navigation onStart={onStart} onAdminClick={onAdminClick} />
 
-      {/* Stage */}
-      <div className="relative z-10 flex items-center justify-center w-full max-w-6xl h-[650px] perspective-[2000px]">
-        
-        {/* Arrows */}
-        <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0">
-            <ChevronLeft size={32} strokeWidth={2.5} />
-        </button>
-        <button onClick={handleNext} disabled={currentView === totalViews - 1 || isFlipping} className="absolute right-4 lg:right-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0">
-            <ChevronRight size={32} strokeWidth={2.5} />
-        </button>
+      <main className="flex-grow flex flex-col items-center justify-center py-12 px-4 relative overflow-hidden mt-20">
+          
+          {/* Texture */}
+          <div className="absolute inset-0 bg-[#E5E0D8] opacity-100" style={{ backgroundImage: 'radial-gradient(#D6D1C9 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
-        {/* BOOK OBJECT */}
-        <div className="relative w-[900px] h-[600px] flex shadow-2xl rounded-md bg-white">
+          {/* Back Button */}
+          <div className="absolute top-8 left-8 z-20">
+            <button onClick={onReset} className="flex items-center text-stone-600 hover:text-stone-900 transition-colors gap-2 text-sm font-bold bg-white/80 px-4 py-2 rounded-full hover:bg-white shadow-sm">
+                <ArrowLeft size={18} /> Quitter la lecture
+            </button>
+          </div>
+
+          {/* Stage */}
+          <div className="relative z-10 flex items-center justify-center w-full max-w-6xl h-[650px] perspective-[2000px]">
             
-            {/* 1. STATIC LAYER (Bottom) */}
-            <div className="absolute inset-0 flex w-full h-full z-0">
-                {/* LEFT SIDE */}
-                <div className="w-1/2 h-full border-r border-gray-200 bg-white overflow-hidden rounded-l-md">
-                    {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
-                </div>
-                {/* RIGHT SIDE */}
-                <div className="w-1/2 h-full bg-white overflow-hidden rounded-r-md">
-                    {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
-                </div>
-            </div>
+            {/* Arrows */}
+            <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0">
+                <ChevronLeft size={32} strokeWidth={2.5} />
+            </button>
+            <button onClick={handleNext} disabled={currentView === totalViews - 1 || isFlipping} className="absolute right-4 lg:right-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0">
+                <ChevronRight size={32} strokeWidth={2.5} />
+            </button>
 
-            {/* 2. FLIPPING LAYER (Top) */}
-            {isFlipping && (
-                <div className="absolute inset-0 z-20 pointer-events-none" style={{ perspective: '2000px' }}>
-                    {direction === 'next' && (
-                        <div className="absolute right-0 w-1/2 h-full transform-style-3d origin-left animate-flip-next">
-                            {/* Front (Visible at start) */}
-                            <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100">
-                                {currentSpread.right}
-                            </div>
-                            {/* Back (Visible at end) */}
-                            <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100" style={{ transform: 'rotateY(180deg)' }}>
-                                {nextSpread?.left}
-                            </div>
-                        </div>
-                    )}
-
-                    {direction === 'prev' && (
-                        <div className="absolute left-0 w-1/2 h-full transform-style-3d origin-right animate-flip-prev">
-                            {/* Front (Visible at start) */}
-                            <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100">
-                                {currentSpread.left}
-                            </div>
-                            {/* Back (Visible at end) */}
-                            <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100" style={{ transform: 'rotateY(-180deg)' }}>
-                                {prevSpread?.right}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* 3. STATIC IDLE LAYER (Only when not flipping to prevent flicker) */}
-            {!isFlipping && (
-                <div className="absolute inset-0 flex w-full h-full z-10 pointer-events-none">
+            {/* BOOK OBJECT */}
+            <div className="relative w-[900px] h-[600px] flex shadow-2xl rounded-md bg-white">
+                
+                {/* 1. STATIC LAYER (Bottom) */}
+                <div className="absolute inset-0 flex w-full h-full z-0">
+                    {/* LEFT SIDE */}
                     <div className="w-1/2 h-full border-r border-gray-200 bg-white overflow-hidden rounded-l-md">
-                        {currentSpread.left}
+                        {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
                     </div>
+                    {/* RIGHT SIDE */}
                     <div className="w-1/2 h-full bg-white overflow-hidden rounded-r-md">
-                        {currentSpread.right}
+                        {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
                     </div>
                 </div>
-            )}
 
-        </div>
-      </div>
+                {/* 2. FLIPPING LAYER (Top) */}
+                {isFlipping && (
+                    <div className="absolute inset-0 z-20 pointer-events-none" style={{ perspective: '2000px' }}>
+                        {direction === 'next' && (
+                            <div className="absolute right-0 w-1/2 h-full transform-style-3d origin-left animate-flip-next">
+                                {/* Front (Visible at start) */}
+                                <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100">
+                                    {currentSpread.right}
+                                </div>
+                                {/* Back (Visible at end) */}
+                                <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100" style={{ transform: 'rotateY(180deg)' }}>
+                                    {nextSpread?.left}
+                                </div>
+                            </div>
+                        )}
 
-      {/* Progress */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-stone-500 shadow-sm">
-          Vue {currentView + 1} / {totalViews}
-      </div>
+                        {direction === 'prev' && (
+                            <div className="absolute left-0 w-1/2 h-full transform-style-3d origin-right animate-flip-prev">
+                                {/* Front (Visible at start) */}
+                                <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100">
+                                    {currentSpread.left}
+                                </div>
+                                {/* Back (Visible at end) */}
+                                <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100" style={{ transform: 'rotateY(-180deg)' }}>
+                                    {prevSpread?.right}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 3. STATIC IDLE LAYER (Only when not flipping to prevent flicker) */}
+                {!isFlipping && (
+                    <div className="absolute inset-0 flex w-full h-full z-10 pointer-events-none">
+                        <div className="w-1/2 h-full border-r border-gray-200 bg-white overflow-hidden rounded-l-md">
+                            {currentSpread.left}
+                        </div>
+                        <div className="w-1/2 h-full bg-white overflow-hidden rounded-r-md">
+                            {currentSpread.right}
+                        </div>
+                    </div>
+                )}
+
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-stone-500 shadow-sm z-20">
+              Vue {currentView + 1} / {totalViews}
+          </div>
+
+      </main>
+
+      {/* FOOTER */}
+      <footer className="bg-cloud-dark text-cloud-lightest py-20 px-6 mt-auto">
+           <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
+              <div className="col-span-1 md:col-span-2">
+                 <div className="flex items-center gap-2 mb-6 text-white">
+                    <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">WawBook</span>
+                 </div>
+                 <p className="text-cloud-light/60 font-medium text-lg max-w-sm mb-8">
+                    Nous créons des moments magiques de lecture pour les enfants du monde entier.
+                 </p>
+                 <div className="flex gap-4">
+                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 cursor-pointer"><span className="font-black">I</span></div>
+                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 cursor-pointer"><span className="font-black">F</span></div>
+                 </div>
+
+                 {/* ADMIN LINK */}
+                 <button onClick={onAdminClick} className="mt-8 text-cloud-light/30 text-sm hover:text-white transition-colors flex items-center gap-2">
+                    <Settings size={14} /> Administration
+                 </button>
+              </div>
+              
+              <div>
+                 <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Explorer</h4>
+                 <ul className="space-y-4 font-medium text-cloud-light/60">
+                    <li className="hover:text-white cursor-pointer transition-colors">Accueil</li>
+                    <li className="hover:text-white cursor-pointer transition-colors">Histoires</li>
+                    <li className="hover:text-white cursor-pointer transition-colors">Blog</li>
+                    <li className="hover:text-white cursor-pointer transition-colors">À propos</li>
+                 </ul>
+              </div>
+
+              <div>
+                 <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Légal</h4>
+                 <ul className="space-y-4 font-medium text-cloud-light/60">
+                    <li className="hover:text-white cursor-pointer transition-colors">Confidentialité</li>
+                    <li className="hover:text-white cursor-pointer transition-colors">CGU</li>
+                    <li className="hover:text-white cursor-pointer transition-colors">Mentions Légales</li>
+                 </ul>
+              </div>
+           </div>
+           <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10 text-center text-cloud-light/40 font-bold text-sm">
+              © 2024 WawBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
+           </div>
+      </footer>
 
       <style>{`
         .backface-hidden { backface-visibility: hidden; }

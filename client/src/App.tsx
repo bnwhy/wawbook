@@ -11,6 +11,7 @@ import StaticPage from './pages/StaticPage';
 import CategoryPage from './pages/CategoryPage';
 import NotFound from './pages/NotFound';
 import { BooksProvider } from './context/BooksContext';
+import { MenuProvider } from './context/MenuContext';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('HOME');
@@ -67,8 +68,9 @@ const App: React.FC = () => {
 
   return (
     <BooksProvider>
-      <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
-        <Switch>
+      <MenuProvider>
+        <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
+          <Switch>
         {/* Main Application Flow (SPA-like at root) */}
         <Route path="/">
           {appState === 'HOME' && <Hero onStart={startCreation} onAdminClick={() => setAppState('ADMIN')} />}
@@ -146,6 +148,7 @@ const App: React.FC = () => {
         </div>
       )}
       </div>
+      </MenuProvider>
     </BooksProvider>
   );
 };

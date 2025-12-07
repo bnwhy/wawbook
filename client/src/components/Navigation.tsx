@@ -1,68 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import { useMenus } from '../context/MenuContext';
 
 interface NavigationProps {
   onStart: () => void;
   onAdminClick?: () => void;
 }
-
-const MENU_STRUCTURE = [
-  {
-    label: "Produits",
-    type: "simple",
-    basePath: "/products",
-    items: [
-      "Nouveau",
-      "Bestsellers",
-      "Livres d'enfants personnalisés",
-      "Livres à chercher et à trouver",
-      "Histoires à dormir debout"
-    ]
-  },
-  {
-    label: "Pour qui ?",
-    type: "columns",
-    basePath: "/for",
-    columns: [
-      {
-        title: "Enfants",
-        items: ["Nouveau-nés", "0–3 ans", "3–6 ans", "Enfants scolarisés"]
-      },
-      {
-        title: "Adultes / Famille",
-        items: ["Papa", "Maman", "Grands-parents", "Famille", "Frères & sœurs"]
-      }
-    ]
-  },
-  {
-    label: "Occasions",
-    type: "grid",
-    basePath: "/occasion",
-    items: [
-      "Naissance", "Anniversaire", "Fête des Pères", "Fête des Mères", 
-      "Noël", "Baptême", "Rentrée", "Pâques", 
-      "Journée des enfants", "Communion"
-    ]
-  },
-  {
-    label: "À propos",
-    type: "simple",
-    basePath: "/about",
-    items: [
-      "L'entreprise", "Parrainage", "Carrières", "Offres", 
-      "Nos Valeurs", "Programme écologie", "Blog"
-    ]
-  },
-  {
-    label: "Aide",
-    type: "simple",
-    basePath: "/help",
-    items: [
-      "FAQ", "Contact", "Service client", "Mentions légales"
-    ]
-  }
-];
 
 const CloudLogo = () => (
   <div className="relative w-12 h-12 flex items-center justify-center hover:scale-110 transition-transform duration-300">
@@ -91,6 +35,7 @@ const CloudLogo = () => (
 );
 
 const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
+  const { mainMenu } = useMenus();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItem, setExpandedMobileItem] = useState<number | null>(null);
@@ -124,7 +69,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
 
         {/* Desktop Menu */}
         <div className="hidden lg:flex items-center gap-1">
-          {MENU_STRUCTURE.map((menu, idx) => (
+          {mainMenu.map((menu, idx) => (
             <div 
               key={idx}
               className="relative group"
@@ -230,7 +175,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
         </div>
 
         <div className="p-4 flex flex-col gap-2">
-           {MENU_STRUCTURE.map((menu, idx) => (
+           {mainMenu.map((menu, idx) => (
              <div key={idx} className="border-b border-cloud-lightest last:border-0 pb-2 mb-2">
                <button 
                  onClick={() => setExpandedMobileItem(expandedMobileItem === idx ? null : idx)}

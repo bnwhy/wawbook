@@ -270,7 +270,8 @@ export const INITIAL_BOOKS: BookProduct[] = [
     oldPrice: 34.90,
     description: "Un livre plein d'amour pour dire à son papa combien on l'aime.",
     wizardConfig: FAMILY_WIZARD_CONFIG,
-    contentConfig: DEFAULT_CONTENT_CONFIG
+    contentConfig: DEFAULT_CONTENT_CONFIG,
+    associatedPaths: ['/for/Papa']
   },
   {
     id: 'mom',

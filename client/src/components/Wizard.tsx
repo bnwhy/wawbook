@@ -392,12 +392,12 @@ const Wizard: React.FC<WizardProps> = (props) => {
              
              {/* Avatar Visualization (Above Book) */}
              <div className="flex flex-col items-center animate-drop-in z-20">
-                <div className="w-48 h-48 rounded-full bg-white border-[6px] border-white shadow-xl overflow-hidden relative hover:scale-105 transition-transform duration-300">
+                <div className="w-64 h-64 rounded-full bg-white border-[8px] border-white shadow-xl overflow-hidden relative hover:scale-105 transition-transform duration-300">
                    {renderCharacterAvatar('child')}
                 </div>
-                <div className="mt-4 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full shadow-sm border border-white/50">
-                   <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-2">Héros</span>
-                   <span className="font-display font-black text-brand-coral text-lg">
+                <div className="mt-6 bg-white/80 backdrop-blur-sm px-8 py-3 rounded-full shadow-sm border border-white/50">
+                   <span className="text-sm font-bold text-gray-400 uppercase tracking-widest mr-3">Héros</span>
+                   <span className="font-display font-black text-brand-coral text-2xl">
                       {selections['child']?.['name'] || 'Votre Enfant'}
                    </span>
                 </div>

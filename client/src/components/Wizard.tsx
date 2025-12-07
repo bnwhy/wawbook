@@ -383,14 +383,14 @@ const Wizard: React.FC<WizardProps> = (props) => {
                 <img src={book.coverImage} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
                 
                 {/* Overlay Title */}
-                <div className="absolute top-10 left-0 right-0 text-center px-4">
+                <div className="absolute top-8 left-0 right-0 text-center px-4 z-20">
                    <h1 className="font-display font-black text-4xl text-cloud-dark drop-shadow-md text-white mix-blend-overlay opacity-90">
                       {book.name}
                    </h1>
                 </div>
 
                 {/* Avatar Preview */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 drop-shadow-2xl filter hover:scale-105 transition-transform">
+                <div className="absolute top-28 left-1/2 transform -translate-x-1/2 w-48 h-48 rounded-full bg-white/20 backdrop-blur-md border-[6px] border-white shadow-2xl overflow-hidden hover:scale-105 transition-transform z-10">
                    {renderCharacterAvatar('child')}
                 </div>
 

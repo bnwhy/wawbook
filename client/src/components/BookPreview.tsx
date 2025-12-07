@@ -274,7 +274,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
           {/* Modify Link */}
           <div className="relative z-10 mt-6 flex justify-center">
              <button onClick={onStart} className="text-cloud-blue font-bold text-sm hover:underline flex items-center gap-1 transition-colors hover:text-cloud-deep">
-                <ChevronLeft size={16} strokeWidth={3} /> Cliquez pour modifier vos personnages
+                <ChevronLeft size={16} strokeWidth={3} /> Back à la personnalisation
              </button>
           </div>
 

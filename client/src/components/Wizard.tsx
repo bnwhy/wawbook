@@ -136,13 +136,107 @@ const Wizard: React.FC<WizardProps> = (props) => {
   };
 
   const renderCharacterAvatar = (tabId: string) => {
+     const currentSelections = selections[tabId] || {};
      const skinColor = getSelectedResource(tabId, 'skinTone') || '#FFE0BD';
      const hairColor = getSelectedResource(tabId, 'hairColor') || '#302e34';
-     const gender = selections[tabId]?.['gender'];
+     const gender = currentSelections['gender'] || 'boy';
+     const hairStyle = currentSelections['hairStyle'] || (gender === 'girl' ? 'Long' : 'Court');
+     const glasses = currentSelections['glasses'] || 'None';
+     const beard = currentSelections['beard'] || 'None';
      
+     // Helper for hair back (behind head)
+     const renderHairBack = () => {
+        if (['Long', 'Carré', 'Bouclé', 'Nattes', 'QueueCheval'].includes(hairStyle)) {
+             return <path d="M25,50 Q20,95 50,95 Q80,95 75,50" fill={hairColor} />;
+        }
+        return null;
+     };
+
+     // Helper for hair front (on top of head)
+     const renderHairFront = () => {
+        switch(hairStyle) {
+            case 'Chauve': 
+                return <path d="M22,50 Q22,40 25,35 M78,50 Q78,40 75,35" stroke={hairColor} strokeWidth="1" fill="none" opacity="0.5" />;
+            case 'Hérissé':
+                return <path d="M28,45 L35,25 L45,40 L50,20 L55,40 L65,25 L72,45" fill={hairColor} />;
+            case 'Chignon':
+                return (
+                    <g>
+                        <circle cx="50" cy="20" r="12" fill={hairColor} />
+                        <path d="M28,50 Q50,25 72,50" fill={hairColor} />
+                    </g>
+                );
+            case 'Nattes':
+                return (
+                    <g>
+                        <path d="M28,50 Q50,25 72,50" fill={hairColor} />
+                        <rect x="15" y="50" width="10" height="30" rx="5" fill={hairColor} />
+                        <rect x="75" y="50" width="10" height="30" rx="5" fill={hairColor} />
+                    </g>
+                );
+            case 'Bouclé':
+                 return (
+                    <g>
+                        <circle cx="30" cy="40" r="8" fill={hairColor} />
+                        <circle cx="40" cy="30" r="8" fill={hairColor} />
+                        <circle cx="50" cy="28" r="8" fill={hairColor} />
+                        <circle cx="60" cy="30" r="8" fill={hairColor} />
+                        <circle cx="70" cy="40" r="8" fill={hairColor} />
+                    </g>
+                 );
+            case 'QueueCheval':
+                return (
+                    <g>
+                       <circle cx="70" cy="30" r="10" fill={hairColor} />
+                       <path d="M28,50 Q50,25 72,50" fill={hairColor} />
+                    </g>
+                );
+            case 'Carré':
+            case 'Long':
+            case 'Court':
+            default:
+                return <path d="M28,50 Q50,20 72,50 Q72,55 72,50 Q50,30 28,50" fill={hairColor} />;
+        }
+     };
+
+     const renderGlasses = () => {
+         if (glasses === 'Round') {
+             return (
+                 <g stroke="#333" strokeWidth="1.5" fill="white" fillOpacity="0.2">
+                     <circle cx="40" cy="52" r="7" />
+                     <circle cx="60" cy="52" r="7" />
+                     <line x1="47" y1="52" x2="53" y2="52" />
+                 </g>
+             );
+         }
+         if (glasses === 'Square') {
+             return (
+                 <g stroke="#333" strokeWidth="1.5" fill="white" fillOpacity="0.2">
+                     <rect x="32" y="46" width="14" height="12" rx="2" />
+                     <rect x="54" y="46" width="14" height="12" rx="2" />
+                     <line x1="46" y1="52" x2="54" y2="52" />
+                 </g>
+             );
+         }
+         return null;
+     };
+
+     const renderBeard = () => {
+         if (beard === 'Moustache') {
+             return <path d="M38,62 Q50,58 62,62" stroke={hairColor} strokeWidth="3" strokeLinecap="round" fill="none" />;
+         }
+         if (beard === 'Bouc') {
+             return <path d="M48,68 Q50,75 52,68 L50,68 Z" stroke={hairColor} strokeWidth="4" fill={hairColor} />;
+         }
+         if (beard === 'Barbe') {
+             return <path d="M30,55 Q50,90 70,55" fill={hairColor} opacity="0.9" />;
+         }
+         return null;
+     };
+
      // Simple avatar SVG composition
      return (
-        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg transition-all duration-500 ease-out">
            {/* Body/Outfit */}
            <path d="M20,100 Q50,70 80,100" fill={hairColor} opacity="0.5" />
            <path d="M30,100 L30,80 Q50,70 70,80 L70,100" fill="#60A5FA" /> {/* Generic Outfit Color */}
@@ -150,22 +244,31 @@ const Wizard: React.FC<WizardProps> = (props) => {
            {/* Neck */}
            <rect x="45" y="65" width="10" height="15" fill={skinColor} />
            
+           {/* Hair Back */}
+           {renderHairBack()}
+
            {/* Head */}
            <circle cx="50" cy="50" r="22" fill={skinColor} />
-           
-           {/* Hair Base */}
-           <path d="M28,50 Q50,20 72,50 Q75,60 72,50 Q50,15 28,50" fill={hairColor} />
            
            {/* Eyes */}
            <circle cx="43" cy="52" r="2" fill="#333" />
            <circle cx="57" cy="52" r="2" fill="#333" />
            
            {/* Smile */}
-           <path d="M45,60 Q50,63 55,60" fill="none" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
+           <path d="M45,62 Q50,65 55,62" fill="none" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
            
            {/* Blush */}
            <circle cx="40" cy="58" r="3" fill="#FFAAAA" opacity="0.4" />
            <circle cx="60" cy="58" r="3" fill="#FFAAAA" opacity="0.4" />
+
+           {/* Beard */}
+           {renderBeard()}
+
+           {/* Hair Front */}
+           {renderHairFront()}
+           
+           {/* Glasses */}
+           {renderGlasses()}
         </svg>
      );
   };

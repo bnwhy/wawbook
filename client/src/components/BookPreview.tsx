@@ -188,7 +188,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
       <div className="flex flex-col items-center justify-center py-12 px-4 relative overflow-hidden mt-20 min-h-[800px]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
           
           {/* Stage */}
-          <div className="relative z-10 flex items-center justify-center w-full max-w-6xl h-[650px] perspective-[2500px]">
+          <div className="relative z-10 flex items-center justify-center w-full max-w-6xl h-[650px] perspective-[2500px] animate-drop-in">
             
             {/* Arrows */}
             <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
@@ -347,6 +347,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
         }
         .animate-flip-next { animation: flip-next 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
         .animate-flip-prev { animation: flip-prev 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
+        
+        @keyframes drop-in {
+            0% { transform: translateY(-50px) scale(0.95); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .animate-drop-in { animation: drop-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
       `}</style>
     </div>
   );

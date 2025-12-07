@@ -6,6 +6,8 @@ import Navigation from './Navigation';
 import { useBooks } from '../context/BooksContext';
 import previewBackground from '@assets/generated_images/watercolor_paper_background_with_soft_pastel_splash.png';
 
+import Footer from './Footer';
+
 interface WizardProps {
   onComplete: (config: BookConfig) => void;
   onCancel: () => void;
@@ -174,7 +176,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
   const bgPattern = `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")`;
 
   return (
-    <div className="h-screen bg-stone-50 flex flex-col font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-stone-50 flex flex-col font-sans relative">
       
       {/* GLOBAL DEFS for Watercolor Style */}
       <svg width="0" height="0" className="absolute">
@@ -185,14 +187,14 @@ const Wizard: React.FC<WizardProps> = (props) => {
       <Navigation onStart={() => {}} />
 
       {/* WIZARD CONTENT */}
-      <div className="flex-1 flex items-start justify-center p-4 pt-20 md:p-8 md:pt-24 relative overflow-hidden w-full" style={{ backgroundImage: bgPattern }}>
+      <div className="flex-1 flex flex-col items-center w-full" style={{ backgroundImage: bgPattern }}>
         
-        <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start h-full">
+        <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start justify-center p-4 pt-20 md:p-8 md:pt-24 mb-12">
           
           {/* --- LEFT COLUMN: CONFIGURATION --- */}
-          <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col lg:h-[calc(100%-2rem)]">
+          <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col h-[600px] lg:h-[700px] sticky top-24">
              
-             <div className="p-4 border-b border-gray-100">
+             <div className="p-4 border-b border-gray-100 shrink-0">
                 <div className="text-xs font-bold text-brand-coral uppercase tracking-wider mb-1">
                    Personnalisation du livre
                 </div>
@@ -202,7 +204,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* TABS */}
-             <div className="flex border-b border-gray-200 overflow-x-auto">
+             <div className="flex border-b border-gray-200 overflow-x-auto shrink-0">
                 {wizardConfig.tabs.map(tab => (
                   <button 
                      key={tab.id}
@@ -310,7 +312,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* FOOTER ACTIONS */}
-             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end items-center">
+             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end items-center shrink-0">
                 <button 
                   onClick={handleComplete}
                   className="bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 px-6 py-3 rounded-full font-bold shadow-lg hover:brightness-105 transition-all flex items-center gap-2 hover:scale-105 hover:shadow-xl"
@@ -323,7 +325,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
           </div>
 
           {/* --- RIGHT COLUMN: PREVIEW --- */}
-          <div className="hidden lg:flex flex-1 h-[calc(100%-2rem)] bg-white rounded-lg shadow-2xl border-[8px] border-white overflow-hidden relative items-center justify-center">
+          <div className="hidden lg:flex flex-1 h-[700px] sticky top-24 bg-white rounded-lg shadow-2xl border-[8px] border-white overflow-hidden relative items-center justify-center">
              {/* Book Cover Simulation */}
              <div className="relative w-[80%] aspect-[3/4] shadow-2xl rounded-r-xl overflow-hidden transform rotate-1 hover:rotate-0 transition-duration-500">
                 {/* Background Image */}
@@ -350,6 +352,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
         </div>
       </div>
+      
+      {/* GLOBAL FOOTER */}
+      <Footer />
     </div>
   );
 };

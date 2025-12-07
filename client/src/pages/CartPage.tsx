@@ -105,7 +105,7 @@ const CartPage = () => {
             ))}
             
             <div className="text-center py-4">
-                 <p className="text-cloud-dark font-medium mb-6">Nous vous offrons 40 % de réduction sur votre deuxième livre avec le code <span className="font-black">YOUPI40</span></p>
+                 <p className="text-cloud-dark font-medium mb-6">Nous vous offrons 30 % de réduction sur votre deuxième livre avec le code <span className="font-black">BOOK30</span></p>
                  
                  <button 
                     onClick={() => setLocation('/')}

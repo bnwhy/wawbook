@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from './components/Hero';
 import Wizard from './components/Wizard';
 import BookPreview from './components/BookPreview';
@@ -15,6 +15,7 @@ import NotFound from './pages/NotFound';
 import { BooksProvider } from './context/BooksContext';
 import { MenuProvider } from './context/MenuContext';
 import { CartProvider } from './context/CartContext';
+import ScrollToTop from './components/ScrollToTop';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('HOME');
@@ -27,6 +28,11 @@ const App: React.FC = () => {
   const [initialSelections, setInitialSelections] = useState<Record<string, Record<string, any>> | undefined>(undefined);
   const [editingCartItemId, setEditingCartItemId] = useState<string | undefined>(undefined);
   const [location, setLocation] = useLocation(); // Add useLocation hook
+
+  // Scroll to top when appState changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [appState]);
 
   const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string, selections?: Record<string, Record<string, any>>, editingId?: string) => {
     setInitialTheme(theme);
@@ -84,6 +90,7 @@ const App: React.FC = () => {
       <MenuProvider>
         <CartProvider>
           <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
+            <ScrollToTop />
             <Switch>
           {/* Main Application Flow (SPA-like at root) */}
           <Route path="/">

@@ -427,10 +427,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                        <span>{editingCartItemId ? "Modifier le panier" : "Ajouter au panier"}</span>
                        <ArrowRight size={20} />
                    </button>
-                   
-                   <p className="text-center text-xs text-gray-400 mt-4">
-                       Satisfaction garantie ou remboursé sous 30 jours
-                   </p>
                </div>
            </div>
       </section>

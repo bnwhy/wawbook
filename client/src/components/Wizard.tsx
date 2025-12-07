@@ -65,6 +65,11 @@ const Wizard: React.FC<WizardProps> = (props) => {
   const [selections, setSelections] = useState<Record<string, Record<string, any>>>({});
   const [activeTabId, setActiveTabId] = useState<string>('');
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Initialize state when config loads
   useEffect(() => {
     if (wizardConfig && wizardConfig.tabs.length > 0) {

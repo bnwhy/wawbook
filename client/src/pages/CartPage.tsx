@@ -18,6 +18,28 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
   const [, setLocation] = useLocation();
   const [previewItem, setPreviewItem] = useState<CartItem | null>(null);
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
+  
+  // Promo Code State
+  const [promoCode, setPromoCode] = useState('');
+  const [isPromoInputVisible, setIsPromoInputVisible] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [promoError, setPromoError] = useState('');
+
+  const handleApplyPromo = () => {
+    if (!promoCode.trim()) return;
+    
+    // Mock promo logic
+    if (promoCode.toUpperCase() === 'YOUPI40') {
+        setDiscount(18.00);
+        setPromoError('');
+    } else if (promoCode.toUpperCase() === 'BOOK30') {
+        setDiscount(total * 0.3); // 30% off
+        setPromoError('');
+    } else {
+        setDiscount(0);
+        setPromoError('Code promo invalide');
+    }
+  };
 
   const handlePreview = async (item: CartItem) => {
     // Generate story for preview
@@ -157,10 +179,16 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                         <span>Expédition :</span>
                         <span className="font-bold text-cloud-dark">9.99€</span>
                     </div>
+                    {discount > 0 && (
+                        <div className="flex justify-between text-sm font-medium text-brand-coral">
+                            <span>Réduction :</span>
+                            <span className="font-bold">-{discount.toFixed(2)}€</span>
+                        </div>
+                    )}
                     
                     <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center">
                         <span className="font-bold text-lg text-cloud-dark">Total :</span>
-                        <span className="font-black text-2xl text-cloud-dark">{(total + 9.99).toFixed(2)}€</span>
+                        <span className="font-black text-2xl text-cloud-dark">{(total + 9.99 - discount).toFixed(2)}€</span>
                     </div>
                 </div>
                 
@@ -171,10 +199,34 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                     <Lock size={18} /> Paiement
                 </button>
                 
-                <div className="mt-4 text-center">
-                    <button className="text-sm text-stone-500 underline hover:text-cloud-blue transition-colors">
-                        Vous avez un code promo?
-                    </button>
+                <div className="mt-4">
+                    {!isPromoInputVisible ? (
+                        <button 
+                            onClick={() => setIsPromoInputVisible(true)}
+                            className="w-full text-sm text-stone-500 underline hover:text-cloud-blue transition-colors text-center"
+                        >
+                            Vous avez un code promo?
+                        </button>
+                    ) : (
+                        <div className="space-y-2">
+                             <div className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    value={promoCode}
+                                    onChange={(e) => setPromoCode(e.target.value)}
+                                    placeholder="Code promo"
+                                    className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-cloud-blue uppercase"
+                                />
+                                <button 
+                                    onClick={handleApplyPromo}
+                                    className="bg-white border border-cloud-dark/20 text-cloud-dark font-bold text-xs px-4 rounded hover:bg-gray-50 transition-colors uppercase"
+                                >
+                                    Appliquer
+                                </button>
+                             </div>
+                             {promoError && <p className="text-red-500 text-xs">{promoError}</p>}
+                        </div>
+                    )}
                 </div>
             </div>
           </div>

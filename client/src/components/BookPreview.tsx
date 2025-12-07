@@ -199,7 +199,14 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
             </button>
 
             {/* BOOK OBJECT */}
-            <div className={`relative w-[900px] h-[600px] flex shadow-2xl rounded-md preserve-3d ${currentView === 0 ? 'bg-transparent shadow-none' : 'bg-white'}`}>
+            <div 
+              className={`relative w-[900px] h-[600px] flex shadow-2xl rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${currentView === 0 ? 'bg-transparent shadow-none' : 'bg-white'}`}
+              style={{ 
+                transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev') 
+                  ? 'translateX(-25%)' 
+                  : 'translateX(0%)'
+              }}
+            >
                 
                 {/* 1. STATIC LAYER (Bottom) */}
                 <div className="absolute inset-0 flex w-full h-full z-0">

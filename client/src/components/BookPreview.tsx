@@ -146,7 +146,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
     return {
       left: (
         <div className="w-full h-full bg-white p-6 flex flex-col justify-center relative shadow-inner">
-            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/10 to-transparent pointer-events-none z-10"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/20 to-transparent pointer-events-none z-10 mix-blend-multiply"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-1 bg-black/10 pointer-events-none z-10"></div>
             {leftPage ? (
                 <>
                     <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-sm bg-cloud-lightest border-4 border-white">
@@ -160,7 +161,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
       ),
       right: (
         <div className="w-full h-full bg-white p-6 flex flex-col justify-center relative shadow-inner">
-            <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-10"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-black/20 to-transparent pointer-events-none z-10 mix-blend-multiply"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-black/10 pointer-events-none z-10"></div>
             {rightPage ? (
                 <>
                     <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-sm bg-cloud-lightest border-4 border-white">
@@ -204,13 +206,24 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
 
             {/* BOOK OBJECT */}
             <div 
-              className={`relative w-[900px] h-[600px] flex shadow-2xl rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
+              className={`relative w-[900px] h-[600px] flex rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent' : 'bg-white'}`}
               style={{ 
                 transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev') 
                   ? 'translateX(-25%)' 
-                  : 'translateX(0%)'
+                  : 'translateX(0%)',
+                boxShadow: (currentView === 0 || (currentView === 1 && direction === 'prev')) 
+                  ? 'none' 
+                  : '0 30px 60px -12px rgba(0, 0, 0, 0.4), 0 10px 30px -5px rgba(0,0,0,0.2)'
               }}
             >
+                {/* Page Thickness Effect (Bottom) */}
+                {currentView > 0 && (
+                   <div className="absolute bottom-[-10px] left-[2px] right-[2px] h-[10px] bg-gray-200 rounded-b-sm z-[-1] border border-gray-300"
+                        style={{
+                          background: 'repeating-linear-gradient(90deg, #f0f0f0, #f0f0f0 1px, #e5e5e5 2px, #e5e5e5 3px)'
+                        }}
+                   ></div>
+                )}
                 
                 {/* 1. STATIC LAYER (Bottom) */}
                 <div className="absolute inset-0 flex w-full h-full z-0">

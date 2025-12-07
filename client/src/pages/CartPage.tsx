@@ -1,11 +1,15 @@
 import React from 'react';
-import { useCart } from '../context/CartContext';
+import { useCart, CartItem } from '../context/CartContext';
 import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 
-const CartPage = () => {
+interface CartPageProps {
+  onEdit?: (item: CartItem) => void;
+}
+
+const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
   const { items, removeFromCart, updateQuantity, total } = useCart();
   const [, setLocation] = useLocation();
 
@@ -91,7 +95,10 @@ const CartPage = () => {
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-gray-50">
-                        <button className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors">
+                        <button 
+                            onClick={() => onEdit && onEdit(item)}
+                            className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors"
+                        >
                             <Edit2 size={14} /> Modifier
                         </button>
                         <button className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors">

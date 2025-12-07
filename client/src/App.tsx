@@ -111,7 +111,17 @@ const App: React.FC = () => {
           </Route>
 
           {/* Ecommerce Routes */}
-          <Route path="/cart" component={CartPage} />
+          <Route path="/cart">
+            <CartPage onEdit={(item) => {
+              startCreation(
+                item.config.theme, 
+                item.config.appearance.activity, 
+                item.bookTitle, 
+                item.config.characters
+              );
+              setLocation('/');
+            }} />
+          </Route>
           <Route path="/checkout" component={CheckoutPage} />
 
           {/* Content Pages */}

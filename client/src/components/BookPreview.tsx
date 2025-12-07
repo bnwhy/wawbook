@@ -14,11 +14,12 @@ interface BookPreviewProps {
   onReset: () => void;
   onStart: () => void;
   onAdminClick?: () => void;
+  editingCartItemId?: string;
 }
 
-const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onStart, onAdminClick }) => {
+const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onStart, onAdminClick, editingCartItemId }) => {
   const { books } = useBooks();
-  const { addToCart } = useCart();
+  const { addToCart, updateItem } = useCart();
   const [, setLocation] = useLocation();
   const book = books.find(b => b.name === story.title);
 
@@ -30,7 +31,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
 
   const handleAddToCart = () => {
     // Add to cart functionality
-    addToCart({
+    const itemData = {
       bookTitle: story.title,
       config,
       dedication,
@@ -38,13 +39,19 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
       price: selectedFormat === 'hardcover' ? 44.99 : 34.99,
       quantity: 1,
       coverImage: book?.coverImage
-    });
+    };
+
+    if (editingCartItemId) {
+        updateItem(editingCartItemId, itemData);
+    } else {
+        addToCart(itemData);
+    }
     
     // Show success feedback
     const btn = document.getElementById('add-to-cart-btn');
     if(btn) {
         const originalText = btn.innerHTML;
-        btn.innerHTML = `<span class="flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Ajouté !</span>`;
+        btn.innerHTML = `<span class="flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> ${editingCartItemId ? 'Modifié !' : 'Ajouté !'}</span>`;
         btn.classList.add('bg-green-500', 'hover:bg-green-600');
         btn.classList.remove('bg-cloud-blue', 'hover:bg-cloud-deep');
         

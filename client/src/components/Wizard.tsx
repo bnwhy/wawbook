@@ -15,6 +15,7 @@ interface WizardProps {
   initialActivity?: Activity;
   bookTitle?: string;
   initialSelections?: Record<string, Record<string, any>>;
+  isEditing?: boolean;
 }
 
 // --- WATERCOLOR SVG COMPONENTS ---
@@ -103,7 +104,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
       <div className="h-screen flex items-center justify-center bg-stone-50">
         <div className="text-center">
           <h2 className="text-xl font-bold text-gray-800 mb-2">Livre introuvable</h2>
-          <button onClick={onCancel} className="text-brand-coral hover:underline">Retour à l'accueil</button>
+          <button onClick={onCancel} className="text-brand-coral hover:underline">
+            {props.isEditing ? "Retour au panier" : "Retour à l'accueil"}
+          </button>
         </div>
       </div>
     );
@@ -363,13 +366,20 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* FOOTER ACTIONS */}
-             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end items-center shrink-0">
+             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
+                <button 
+                  onClick={onCancel}
+                  className="text-gray-400 hover:text-gray-600 font-bold text-sm px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                    {props.isEditing ? "Retour au panier" : "Annuler"}
+                </button>
+
                 <button 
                   onClick={handleComplete}
                   className="bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 px-6 py-3 rounded-full font-bold shadow-lg hover:brightness-105 transition-all flex items-center gap-2 hover:scale-105 hover:shadow-xl"
                 >
                    <Wand2 size={20} />
-                   Créer le livre
+                   {props.isEditing ? "Mettre à jour" : "Créer le livre"}
                 </button>
              </div>
 

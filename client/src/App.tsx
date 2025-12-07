@@ -25,24 +25,31 @@ const App: React.FC = () => {
   const [initialActivity, setInitialActivity] = useState<Activity | undefined>(undefined);
   const [selectedBookTitle, setSelectedBookTitle] = useState<string | undefined>(undefined);
   const [initialSelections, setInitialSelections] = useState<Record<string, Record<string, any>> | undefined>(undefined);
+  const [editingCartItemId, setEditingCartItemId] = useState<string | undefined>(undefined);
   const [location, setLocation] = useLocation(); // Add useLocation hook
 
-  const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string, selections?: Record<string, Record<string, any>>) => {
+  const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string, selections?: Record<string, Record<string, any>>, editingId?: string) => {
     setInitialTheme(theme);
     setInitialActivity(activity);
     setSelectedBookTitle(bookTitle);
     setInitialSelections(selections);
+    setEditingCartItemId(editingId);
     setAppState('CREATE');
     setError(null);
   };
 
   const cancelCreation = () => {
+    if (editingCartItemId) {
+        setLocation('/cart');
+        setEditingCartItemId(undefined);
+    }
     setAppState('HOME');
     setConfig(null);
     setInitialTheme(undefined);
     setInitialActivity(undefined);
     setSelectedBookTitle(undefined);
     setInitialSelections(undefined);
+    // editingCartItemId is reset above if it was set
   };
 
   const handleConfigComplete = async (finalConfig: BookConfig) => {
@@ -90,6 +97,7 @@ const App: React.FC = () => {
                 initialActivity={initialActivity}
                 bookTitle={selectedBookTitle}
                 initialSelections={initialSelections}
+                isEditing={!!editingCartItemId}
               />
             )}
 
@@ -102,6 +110,7 @@ const App: React.FC = () => {
                 onReset={handleReset}
                 onStart={() => startCreation(config.theme, undefined, story.title, config.characters)}
                 onAdminClick={() => setAppState('ADMIN')}
+                editingCartItemId={editingCartItemId}
               />
             )}
             
@@ -117,7 +126,8 @@ const App: React.FC = () => {
                 item.config.theme, 
                 item.config.appearance.activity, 
                 item.bookTitle, 
-                item.config.characters
+                item.config.characters,
+                item.id
               );
               setLocation('/');
             }} />

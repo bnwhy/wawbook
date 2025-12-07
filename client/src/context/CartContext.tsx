@@ -17,6 +17,7 @@ interface CartContextType {
   addToCart: (item: Omit<CartItem, 'id'>) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  updateItem: (id: string, updates: Partial<CartItem>) => void;
   clearCart: () => void;
   total: number;
   itemCount: number;
@@ -44,6 +45,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems(prev => prev.map(item => item.id === id ? { ...item, quantity } : item));
   };
 
+  const updateItem = (id: string, updates: Partial<CartItem>) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+  };
+
   const clearCart = () => {
     setItems([]);
   };
@@ -52,7 +57,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, total, itemCount }}>
+    <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, updateItem, clearCart, total, itemCount }}>
       {children}
     </CartContext.Provider>
   );

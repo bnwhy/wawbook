@@ -187,12 +187,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
           {/* Texture */}
           <div className="absolute inset-0 bg-[#E5E0D8] opacity-100" style={{ backgroundImage: 'radial-gradient(#D6D1C9 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
-          {/* Back Button */}
-          <div className="absolute top-8 left-8 z-20">
-            <button onClick={onReset} className="flex items-center text-stone-600 hover:text-stone-900 transition-colors gap-2 text-sm font-bold bg-white/80 px-4 py-2 rounded-full hover:bg-white shadow-sm">
-                <ArrowLeft size={18} /> Quitter la lecture
-            </button>
-          </div>
 
           {/* Stage */}
           <div className="relative z-10 flex items-center justify-center w-full max-w-6xl h-[650px] perspective-[2000px]">

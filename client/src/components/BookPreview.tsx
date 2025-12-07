@@ -31,7 +31,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
         setCurrentView(c => c + 1);
         setIsFlipping(false);
         setDirection(null);
-      }, 1500); // Match CSS duration
+      }, 1400); // Match CSS duration
     }
   };
 
@@ -43,7 +43,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
         setCurrentView(c => c - 1);
         setIsFlipping(false);
         setDirection(null);
-      }, 1500);
+      }, 1400);
     }
   };
 
@@ -221,12 +221,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                             <div className="absolute right-0 w-1/2 h-full transform-style-3d origin-left animate-flip-next shadow-2xl">
                                 {/* Front (Visible at start) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100">
-                                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5 z-20"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/20 z-20"></div>
                                     {currentSpread.right}
                                 </div>
                                 {/* Back (Visible at end) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100" style={{ transform: 'rotateY(180deg)' }}>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20 z-20"></div>
                                     {nextSpread?.left}
                                 </div>
                             </div>
@@ -236,12 +236,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                             <div className="absolute left-0 w-1/2 h-full transform-style-3d origin-right animate-flip-prev shadow-2xl">
                                 {/* Front (Visible at start) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100">
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20 z-20"></div>
                                     {currentSpread.left}
                                 </div>
                                 {/* Back (Visible at end) */}
                                 <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100" style={{ transform: 'rotateY(-180deg)' }}>
-                                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5 z-20"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/20 z-20"></div>
                                     {prevSpread?.right}
                                 </div>
                             </div>
@@ -372,20 +372,20 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
       <style>{`
         .backface-hidden { backface-visibility: hidden; }
         .transform-style-3d { transform-style: preserve-3d; }
-        .perspective-2000 { perspective: 2000px; }
+        .perspective-2000 { perspective: 2500px; }
         
         @keyframes flip-next {
-            0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(-90deg) scale(1.1); }
-            100% { transform: rotateY(-180deg); }
+            0% { transform: rotateY(0deg) translateZ(0); animation-timing-function: ease-in; }
+            50% { transform: rotateY(-90deg) translateZ(80px) scale(1.15); animation-timing-function: ease-out; }
+            100% { transform: rotateY(-180deg) translateZ(0); }
         }
         @keyframes flip-prev {
-            0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(90deg) scale(1.1); }
-            100% { transform: rotateY(180deg); }
+            0% { transform: rotateY(0deg) translateZ(0); animation-timing-function: ease-in; }
+            50% { transform: rotateY(90deg) translateZ(80px) scale(1.15); animation-timing-function: ease-out; }
+            100% { transform: rotateY(180deg) translateZ(0); }
         }
-        .animate-flip-next { animation: flip-next 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
-        .animate-flip-prev { animation: flip-prev 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
+        .animate-flip-next { animation: flip-next 1.4s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
+        .animate-flip-prev { animation: flip-prev 1.4s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
       `}</style>
     </div>
   );

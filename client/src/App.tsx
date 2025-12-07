@@ -45,7 +45,7 @@ const App: React.FC = () => {
     
     try {
       // 1. Get Template Story (Instantaneous now)
-      const generatedStory = await generateStoryText(finalConfig);
+      const generatedStory = await generateStoryText(finalConfig, selectedBookTitle);
       
       // 2. Set Story directly
       setStory(generatedStory);

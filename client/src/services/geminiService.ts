@@ -246,13 +246,18 @@ const STORY_TEMPLATES: Record<Theme, Story> = {
 /**
  * Génère l'histoire complète avec texte et images (Statiques)
  */
-export async function generateStoryText(config: BookConfig): Promise<Story> {
+export async function generateStoryText(config: BookConfig, bookTitle?: string): Promise<Story> {
   const template = STORY_TEMPLATES[config.theme];
   if (!template) throw new Error(`Aucun template trouvé pour le thème ${config.theme}`);
 
   const activityIntro = ACTIVITY_INTROS[config.appearance.activity] || ACTIVITY_INTROS['Aucune'];
 
   const newStory: Story = JSON.parse(JSON.stringify(template));
+  
+  // Override title if provided (to match the selected book in Admin/Wizard)
+  if (bookTitle) {
+    newStory.title = bookTitle;
+  }
 
   newStory.pages = newStory.pages.map((page, index) => {
     // Remplacement du texte

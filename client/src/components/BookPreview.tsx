@@ -19,6 +19,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
   const [currentView, setCurrentView] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
+  const [dedication, setDedication] = useState(config.dedication || '');
 
   const totalSpreads = Math.ceil(story.pages.length / 2); 
   const totalViews = 1 + 1 + totalSpreads + 1; // Cover + Intro + StorySpreads + Back
@@ -92,8 +93,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
              <div className="text-center opacity-80">
                 <h3 className="font-hand text-2xl text-accent-melon mb-2 font-bold">Cette histoire appartient à</h3>
                 <div className="font-display text-4xl text-cloud-dark font-black my-4 border-b-2 border-cloud-dark/10 pb-2 inline-block min-w-[200px]">{config.childName}</div>
-                <p className="font-display text-lg text-cloud-dark/60 italic mt-8 px-4">
-                    "{config.dedication || `Pour ${config.childName}, que tes rêves soient aussi grands que ton imagination.`}"
+                <p className="font-display text-lg text-cloud-dark/60 italic mt-8 px-4 whitespace-pre-wrap">
+                    "{dedication || config.dedication || `Pour ${config.childName}, que tes rêves soient aussi grands que ton imagination.`}"
                 </p>
              </div>
           </div>
@@ -279,10 +280,14 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                {/* COL 1 */}
                <div>
                    <h3 className="font-display font-black text-xl text-cloud-dark mb-2">1. Ajouter une dédicace</h3>
-                   <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Nous imprimerons votre message spécial dans votre livre</p>
-                   <button className="w-full py-3 px-4 border-2 border-cloud-dark/10 rounded-xl font-bold text-cloud-dark hover:border-cloud-blue hover:text-cloud-blue transition-colors bg-white flex items-center justify-center gap-2">
-                       Ajouter une dédicace
-                   </button>
+                   <p className="text-cloud-dark/60 text-sm font-medium mb-2">Nous imprimerons votre message spécial dans votre livre</p>
+                   <textarea 
+                      className="w-full p-3 border-2 border-cloud-dark/10 rounded-xl font-medium text-cloud-dark focus:border-cloud-blue focus:ring-0 outline-none transition-colors bg-white resize-none text-sm mb-4"
+                      rows={4}
+                      placeholder="Écrivez votre message personnel ici..."
+                      value={dedication}
+                      onChange={(e) => setDedication(e.target.value)}
+                   />
                </div>
 
                {/* COL 2 */}

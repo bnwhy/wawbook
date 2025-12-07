@@ -199,12 +199,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
             </button>
 
             {/* BOOK OBJECT */}
-            <div className="relative w-[900px] h-[600px] flex shadow-2xl rounded-md bg-white preserve-3d">
+            <div className={`relative w-[900px] h-[600px] flex shadow-2xl rounded-md preserve-3d ${currentView === 0 ? 'bg-transparent shadow-none' : 'bg-white'}`}>
                 
                 {/* 1. STATIC LAYER (Bottom) */}
                 <div className="absolute inset-0 flex w-full h-full z-0">
                     {/* LEFT SIDE */}
-                    <div className="w-1/2 h-full border-r border-gray-200 bg-white overflow-hidden rounded-l-md">
+                    <div className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${currentView === 0 ? 'bg-transparent border-none' : 'bg-white'}`}>
                         {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
                     </div>
                     {/* RIGHT SIDE */}
@@ -234,7 +234,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                         {direction === 'prev' && (
                             <div className="absolute left-0 w-1/2 h-full transform-style-3d origin-right animate-flip-prev shadow-2xl">
                                 {/* Front (Visible at start) */}
-                                <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100">
+                                <div className={`absolute inset-0 backface-hidden rounded-l-md overflow-hidden border-r border-gray-100 ${currentView === 1 ? 'bg-transparent border-none' : 'bg-white'}`}>
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
                                     {currentSpread.left}
                                 </div>
@@ -251,7 +251,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                 {/* 3. STATIC IDLE LAYER (Only when not flipping to prevent flicker) */}
                 {!isFlipping && (
                     <div className="absolute inset-0 flex w-full h-full z-10 pointer-events-none">
-                        <div className="w-1/2 h-full border-r border-gray-200 bg-white overflow-hidden rounded-l-md">
+                        <div className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${currentView === 0 ? 'bg-transparent border-none' : 'bg-white'}`}>
                             {currentSpread.left}
                         </div>
                         <div className="w-1/2 h-full bg-white overflow-hidden rounded-r-md">

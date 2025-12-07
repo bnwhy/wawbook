@@ -71,7 +71,15 @@ const CartPage = () => {
                             <p className="text-stone-500 italic text-sm mb-3">({item.dedication || "C'est un endroit étrange"})</p>
                             
                             <div className="space-y-1 text-sm text-stone-600">
-                                <p><span className="font-medium">Nom de l'enfant:</span> <span className="font-bold text-cloud-dark">{item.config.childName}</span> ({item.config.gender === 'Garçon' ? 'Garçon' : 'Fille'})</p>
+                                <p>
+                                    <span className="font-medium">Noms:</span> <span className="font-bold text-cloud-dark">
+                                        {item.config.childName} ({item.config.gender === 'Garçon' ? 'Garçon' : 'Fille'})
+                                        {item.config.characters && Object.entries(item.config.characters)
+                                            .filter(([key]) => key !== 'child')
+                                            .map(([_, char]: [string, any]) => char.name ? `, ${char.name} (${char.gender === 'boy' || char.role === 'dad' ? 'Garçon' : 'Fille'})` : '')
+                                            .join('')}
+                                    </span>
+                                </p>
                                 <p><span className="font-medium">Langue:</span> Français</p>
                                 <p><span className="font-medium">Format:</span> {item.format === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}</p>
                             </div>

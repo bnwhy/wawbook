@@ -388,7 +388,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
           </div>
 
           {/* --- RIGHT COLUMN: PREVIEW --- */}
-          <div className="hidden lg:flex flex-col gap-6 flex-1 h-[700px] sticky top-24 bg-stone-100 rounded-lg shadow-2xl border-[8px] border-white overflow-hidden relative items-center justify-center p-8">
+          <div className="hidden lg:flex flex-col gap-6 flex-1 h-[700px] sticky top-24 relative items-center justify-center p-8">
              
              {/* Avatar Visualization (Above Book) */}
              <div className="flex flex-col items-center animate-drop-in z-20">

@@ -304,10 +304,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* FOOTER ACTIONS */}
-             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
-                <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-sm font-bold px-4">
-                   Annuler
-                </button>
+             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end items-center">
                 <button 
                   onClick={handleComplete}
                   className="bg-brand-coral text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-red-500 transition-all flex items-center gap-2"

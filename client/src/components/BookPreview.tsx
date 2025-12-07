@@ -338,12 +338,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                    <h3 className="font-display font-black text-xl text-cloud-dark mb-2">1. Ajouter une dédicace</h3>
                    <p className="text-cloud-dark/60 text-sm font-medium mb-2">Nous imprimerons votre message spécial dans votre livre</p>
                    <textarea 
-                      className="w-full p-3 border-2 border-cloud-dark/10 rounded-xl font-medium text-cloud-dark focus:border-cloud-blue focus:ring-0 outline-none transition-colors bg-white resize-none text-sm mb-4"
+                      className="w-full p-3 border-2 border-cloud-dark/10 rounded-xl font-medium text-cloud-dark focus:border-cloud-blue focus:ring-0 outline-none transition-colors bg-white resize-none text-sm"
                       rows={4}
                       placeholder="Écrivez votre message personnel ici..."
                       value={dedication}
                       onChange={(e) => setDedication(e.target.value)}
+                      maxLength={600}
                    />
+                   <div className="text-right text-xs text-gray-400 mb-4 mt-1 font-medium">
+                       {dedication.length}/600
+                   </div>
                </div>
 
                {/* COL 2 */}

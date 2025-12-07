@@ -20,6 +20,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedAvatarTabId, setSelectedAvatarTabId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
+  const [expandedVariantIds, setExpandedVariantIds] = useState<Set<string>>(new Set());
 
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
@@ -112,6 +113,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     addBook(newBook);
     setSelectedBookId(newBook.id);
     setIsEditing(true);
+  };
+
+  const toggleVariantExpand = (variantId: string) => {
+    const newSet = new Set(expandedVariantIds);
+    if (newSet.has(variantId)) {
+        newSet.delete(variantId);
+    } else {
+        newSet.add(variantId);
+    }
+    setExpandedVariantIds(newSet);
   };
 
   return (
@@ -664,9 +675,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                  <div className="space-y-4">
                                     {tab.variants.map((variant, vIdx) => (
-                                       <div key={variant.id} className="relative group">
+                                       <div key={variant.id} className="relative group bg-white border border-gray-100 rounded-lg shadow-sm">
                                           {/* Variant Row */}
-                                          <div className="flex items-center gap-4 py-2 hover:bg-gray-50 rounded-lg px-2 -mx-2 transition-colors">
+                                          <div className="flex items-center gap-4 py-3 px-3">
+                                             <button 
+                                                onClick={() => toggleVariantExpand(variant.id)}
+                                                className="text-gray-400 hover:text-indigo-600 transition-colors"
+                                             >
+                                                {expandedVariantIds.has(variant.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                             </button>
+                                             
                                              <div className="text-gray-300 cursor-move hover:text-gray-500">
                                                 <div className="flex flex-col gap-[2px]">
                                                    <div className="flex gap-[2px]">
@@ -716,7 +734,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    <option value="text">Texte (Libre)</option>
                                                 </select>
                                                 
-                                                {variant.type === 'text' && (
+                                                {variant.type === 'text' && expandedVariantIds.has(variant.id) && (
                                                    <div className="flex gap-2 mt-2">
                                                       <input 
                                                          type="number" 
@@ -758,9 +776,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              </button>
                                           </div>
 
-                                          {/* Options Area (Nested) */}
-                                          {(variant.type === 'options' || !variant.type) && (
-                                             <div className="ml-12 mt-2 bg-gray-50/50 rounded-lg border border-gray-100 p-4 relative">
+                                          {/* Options Area (Nested) - Collapsible */}
+                                          {expandedVariantIds.has(variant.id) && (variant.type === 'options' || !variant.type) && (
+                                             <div className="px-4 pb-4">
+                                                <div className="bg-gray-50/50 rounded-lg border border-gray-100 p-4 relative">
                                                 {/* Vertical Connector Line */}
                                                 <div className="absolute -left-6 top-0 bottom-0 w-px bg-gray-200 border-l border-dashed border-gray-300"></div>
                                                 <div className="absolute -left-6 top-6 w-6 h-px bg-gray-200 border-t border-dashed border-gray-300"></div>
@@ -873,6 +892,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    ))}
                                                 </div>
                                              </div>
+                                          </div>
                                           )}
                                        </div>
                                     ))}

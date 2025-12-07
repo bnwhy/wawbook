@@ -307,10 +307,10 @@ const Wizard: React.FC<WizardProps> = (props) => {
              <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end items-center">
                 <button 
                   onClick={handleComplete}
-                  className="w-14 h-14 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-bold shadow-lg hover:bg-red-500 transition-all flex items-center justify-center hover:scale-105 hover:shadow-xl"
-                  title="Créer le livre"
+                  className="bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 px-6 py-3 rounded-full font-bold shadow-lg hover:brightness-105 transition-all flex items-center gap-2 hover:scale-105 hover:shadow-xl"
                 >
-                   <Wand2 size={24} />
+                   <Wand2 size={20} />
+                   Créer le livre
                 </button>
              </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Home, ArrowLeft, Cloud } from 'lucide-react';
 import { Story, BookConfig } from '../types';
+import { useBooks } from '../context/BooksContext';
 
 interface BookPreviewProps {
   story: Story;
@@ -11,6 +12,10 @@ interface BookPreviewProps {
 const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset }) => {
   const [pageIndex, setPageIndex] = useState(0); 
   const totalPages = story.pages.length + 2;
+  const { books } = useBooks();
+
+  // Find the original book template to get the cover image
+  const book = books.find(b => b.name === story.title);
 
   const handleNext = () => {
     if (pageIndex < totalPages - 1) setPageIndex(p => p + 1);
@@ -61,21 +66,34 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset }) => 
                 
                 {/* --- COVER VIEW --- */}
                 {pageIndex === 0 && (
-                    <div className="w-full h-full bg-cloud-blue flex flex-col items-center justify-center text-white relative p-10 text-center">
-                        <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
+                    <div className="w-full h-full relative flex flex-col items-center justify-center text-white p-10 text-center overflow-hidden">
                         
-                        <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center mb-8 text-7xl shadow-xl animate-bounce">
-                            ✨
-                        </div>
-                        <h1 className="font-display font-black text-5xl md:text-7xl mb-6 drop-shadow-md">{story.title}</h1>
-                        <div className="bg-white/20 px-8 py-2 rounded-full text-xl font-bold backdrop-blur-sm">
-                            Une aventure de {config.childName}
-                        </div>
-                        
-                        <div className="mt-12">
-                            <button onClick={handleNext} className="bg-accent-sun text-yellow-900 px-8 py-4 rounded-2xl font-black text-xl hover:scale-105 hover:shadow-lg transition-all shadow-md">
-                                Ouvrir le livre
-                            </button>
+                        {/* Dynamic Background */}
+                        {book?.coverImage ? (
+                            <>
+                                <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})` }}></div>
+                                <div className="absolute inset-0 bg-black/20"></div>
+                            </>
+                        ) : (
+                            <div className="absolute inset-0 bg-cloud-blue">
+                                <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
+                            </div>
+                        )}
+
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center mb-8 text-7xl shadow-xl animate-bounce">
+                                ✨
+                            </div>
+                            <h1 className="font-display font-black text-5xl md:text-7xl mb-6 drop-shadow-md text-white">{story.title}</h1>
+                            <div className="bg-white/20 px-8 py-2 rounded-full text-xl font-bold backdrop-blur-sm border border-white/30">
+                                Une aventure de {config.childName}
+                            </div>
+                            
+                            <div className="mt-12">
+                                <button onClick={handleNext} className="bg-accent-sun text-yellow-900 px-8 py-4 rounded-2xl font-black text-xl hover:scale-105 hover:shadow-lg transition-all shadow-md">
+                                    Ouvrir le livre
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

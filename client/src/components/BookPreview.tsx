@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight } from 'lucide-react';
+import { useLocation } from 'wouter';
 import { Story, BookConfig } from '../types';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
@@ -18,6 +19,7 @@ interface BookPreviewProps {
 const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onStart, onAdminClick }) => {
   const { books } = useBooks();
   const { addToCart } = useCart();
+  const [, setLocation] = useLocation();
   const book = books.find(b => b.name === story.title);
 
   const [currentView, setCurrentView] = useState(0);
@@ -50,7 +52,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
             btn.innerHTML = originalText;
             btn.classList.remove('bg-green-500', 'hover:bg-green-600');
             btn.classList.add('bg-cloud-blue', 'hover:bg-cloud-deep');
-        }, 2000);
+            
+            // Redirect to cart
+            setLocation('/cart');
+        }, 1000);
     }
   };
 

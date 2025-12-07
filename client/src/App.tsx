@@ -21,12 +21,14 @@ const App: React.FC = () => {
   const [initialTheme, setInitialTheme] = useState<Theme | undefined>(undefined);
   const [initialActivity, setInitialActivity] = useState<Activity | undefined>(undefined);
   const [selectedBookTitle, setSelectedBookTitle] = useState<string | undefined>(undefined);
+  const [initialSelections, setInitialSelections] = useState<Record<string, Record<string, any>> | undefined>(undefined);
   const [location, setLocation] = useLocation(); // Add useLocation hook
 
-  const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string) => {
+  const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string, selections?: Record<string, Record<string, any>>) => {
     setInitialTheme(theme);
     setInitialActivity(activity);
     setSelectedBookTitle(bookTitle);
+    setInitialSelections(selections);
     setAppState('CREATE');
     setError(null);
   };
@@ -37,6 +39,7 @@ const App: React.FC = () => {
     setInitialTheme(undefined);
     setInitialActivity(undefined);
     setSelectedBookTitle(undefined);
+    setInitialSelections(undefined);
   };
 
   const handleConfigComplete = async (finalConfig: BookConfig) => {
@@ -82,6 +85,7 @@ const App: React.FC = () => {
               initialTheme={initialTheme}
               initialActivity={initialActivity}
               bookTitle={selectedBookTitle}
+              initialSelections={initialSelections}
             />
           )}
 
@@ -92,7 +96,7 @@ const App: React.FC = () => {
               story={story} 
               config={config} 
               onReset={handleReset}
-              onStart={startCreation}
+              onStart={() => startCreation(config.theme, undefined, story.title, config.characters)}
               onAdminClick={() => setAppState('ADMIN')}
             />
           )}

@@ -12,6 +12,7 @@ interface WizardProps {
   initialTheme?: Theme;
   initialActivity?: Activity;
   bookTitle?: string;
+  initialSelections?: Record<string, Record<string, any>>;
 }
 
 // --- WATERCOLOR SVG COMPONENTS ---
@@ -69,19 +70,24 @@ const Wizard: React.FC<WizardProps> = (props) => {
       setActiveTabId(wizardConfig.tabs[0].id);
       
       // Initialize default selections if empty
-      const initialSelections: Record<string, Record<string, any>> = {};
+      const initialSelectionsState: Record<string, Record<string, any>> = {};
       wizardConfig.tabs.forEach(tab => {
-        initialSelections[tab.id] = {};
+        initialSelectionsState[tab.id] = {};
         tab.variants.forEach(variant => {
-          // Default to first option if available, or empty string
-          if (variant.type === 'options' && variant.options.length > 0) {
-            initialSelections[tab.id][variant.id] = variant.options[0].id;
+          // Check if we have prop initialSelections for this field
+          if (props.initialSelections && props.initialSelections[tab.id] && props.initialSelections[tab.id][variant.id] !== undefined) {
+             initialSelectionsState[tab.id][variant.id] = props.initialSelections[tab.id][variant.id];
           } else {
-            initialSelections[tab.id][variant.id] = '';
+             // Default to first option if available, or empty string
+             if (variant.type === 'options' && variant.options.length > 0) {
+               initialSelectionsState[tab.id][variant.id] = variant.options[0].id;
+             } else {
+               initialSelectionsState[tab.id][variant.id] = '';
+             }
           }
         });
       });
-      setSelections(initialSelections);
+      setSelections(initialSelectionsState);
     }
   }, [wizardConfig]);
 

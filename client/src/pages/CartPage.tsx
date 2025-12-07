@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart, CartItem } from '../context/CartContext';
 import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import BookPreview from '../components/BookPreview';
+import { generateStoryText } from '../services/geminiService';
+import { Story } from '../types';
 
 interface CartPageProps {
   onEdit?: (item: CartItem) => void;
@@ -12,6 +16,15 @@ interface CartPageProps {
 const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
   const { items, removeFromCart, updateQuantity, total } = useCart();
   const [, setLocation] = useLocation();
+  const [previewItem, setPreviewItem] = useState<CartItem | null>(null);
+  const [previewStory, setPreviewStory] = useState<Story | null>(null);
+
+  const handlePreview = async (item: CartItem) => {
+    // Generate story for preview
+    const story = await generateStoryText(item.config, item.bookTitle);
+    setPreviewStory(story);
+    setPreviewItem(item);
+  };
 
   if (items.length === 0) {
     return (
@@ -101,7 +114,10 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                         >
                             <Edit2 size={14} /> Modifier
                         </button>
-                        <button className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors">
+                        <button 
+                            onClick={() => handlePreview(item)}
+                            className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors"
+                        >
                             <Eye size={14} /> Aperçu
                         </button>
                     </div>
@@ -166,6 +182,22 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
       </main>
       
       <Footer />
+
+      <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
+        <DialogContent className="max-w-6xl w-full h-[90vh] p-0 overflow-hidden bg-stone-100 border-none">
+            {previewItem && previewStory && (
+                <div className="h-full w-full overflow-y-auto">
+                    <BookPreview 
+                        story={previewStory} 
+                        config={previewItem.config} 
+                        onReset={() => setPreviewItem(null)}
+                        onStart={() => setPreviewItem(null)}
+                        isModal={true}
+                    />
+                </div>
+            )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

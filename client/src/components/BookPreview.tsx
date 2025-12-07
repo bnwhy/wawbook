@@ -15,9 +15,10 @@ interface BookPreviewProps {
   onStart: () => void;
   onAdminClick?: () => void;
   editingCartItemId?: string;
+  isModal?: boolean;
 }
 
-const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onStart, onAdminClick, editingCartItemId }) => {
+const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onStart, onAdminClick, editingCartItemId, isModal = false }) => {
   const { books } = useBooks();
   const { addToCart, updateItem } = useCart();
   const [, setLocation] = useLocation();
@@ -226,16 +227,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
   const prevSpread = direction === 'prev' ? getSpreadContent(currentView - 1) : null;
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-stone-100">
+    <div className={`flex flex-col font-sans bg-stone-100 ${isModal ? 'h-full' : 'min-h-screen'}`}>
       
       {/* NAVBAR */}
-      <Navigation onStart={onStart} onAdminClick={onAdminClick} />
+      {!isModal && <Navigation onStart={onStart} onAdminClick={onAdminClick} />}
 
       {/* BOOK PREVIEW AREA */}
-      <div className="flex flex-col items-center justify-center py-12 px-4 relative overflow-hidden mt-20 min-h-[800px]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
+      <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : 'py-12 mt-20 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
           
           {/* Stage */}
-          <div className="relative z-10 flex items-center justify-center w-full max-w-6xl h-[650px] perspective-[2500px] animate-drop-in">
+          <div className={`relative z-10 flex items-center justify-center w-full max-w-6xl perspective-[2500px] animate-drop-in ${isModal ? 'h-[500px] scale-[0.85]' : 'h-[650px]'}`}>
             
             {/* Arrows */}
             <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
@@ -318,15 +319,18 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
           </div>
 
           {/* Modify Link */}
+          {!isModal && (
           <div className="relative z-10 mt-6 flex justify-center">
              <button onClick={onStart} className="text-cloud-blue font-bold text-sm hover:underline flex items-center gap-1 transition-colors hover:text-cloud-deep">
                 <ChevronLeft size={16} strokeWidth={3} /> Retour à la personnalisation
              </button>
           </div>
+          )}
 
       </div>
 
       {/* ORDER SECTION */}
+      {!isModal && (
       <section className="bg-white py-16 px-6 border-t-4 border-cloud-blue/10 relative z-10">
            <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12">
                {/* COL 1 */}
@@ -428,9 +432,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                </div>
            </div>
       </section>
+      )}
 
       {/* FOOTER */}
-      <Footer onAdminClick={onAdminClick} />
+      {!isModal && <Footer onAdminClick={onAdminClick} />}
 
       <style>{`
         .backface-hidden { backface-visibility: hidden; }

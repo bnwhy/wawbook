@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
-import { Trash2, Plus, Minus, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, Gift, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -32,121 +32,128 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col bg-stone-50 font-sans">
       <Navigation onStart={() => setLocation('/')} />
       
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
-        <h1 className="font-display font-black text-4xl text-stone-900 mb-8">Votre Panier</h1>
+        <h1 className="font-display font-black text-4xl text-cloud-dark mb-8">Votre panier</h1>
         
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <div key={item.id} className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 flex gap-6 relative overflow-hidden">
+              <div key={item.id} className="bg-white rounded-xl p-6 shadow-sm border border-stone-100 flex flex-col md:flex-row gap-6 relative">
+                
+                {/* Remove Button (Top Right) */}
+                <button 
+                    onClick={() => removeFromCart(item.id)}
+                    className="absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full flex items-center justify-center transition-colors"
+                >
+                    <X size={16} strokeWidth={3} />
+                </button>
+
                 {/* Book Thumbnail */}
-                <div className="w-24 h-32 bg-cloud-blue rounded-lg shadow-inner flex-shrink-0 relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 w-2 bg-black/10 z-10"></div>
+                <div className="w-full md:w-32 md:h-32 bg-cloud-blue rounded-full shadow-inner flex-shrink-0 relative overflow-hidden self-center md:self-start border-4 border-white shadow-lg">
                     {item.coverImage ? (
                         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${item.coverImage})` }}></div>
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white text-xs text-center p-2 font-bold">
+                        <div className="w-full h-full flex items-center justify-center text-white text-xs text-center p-2 font-bold bg-cloud-light">
                             {item.bookTitle}
                         </div>
                     )}
                 </div>
                 
                 {/* Details */}
-                <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                        <div className="flex justify-between items-start">
-                            <h3 className="font-display font-bold text-xl text-stone-800">{item.bookTitle}</h3>
-                            <button 
-                                onClick={() => removeFromCart(item.id)}
-                                className="text-stone-400 hover:text-red-500 transition-colors p-1"
-                            >
-                                <Trash2 size={18} />
-                            </button>
+                <div className="flex-1 flex flex-col justify-center">
+                    <div className="flex justify-between items-start pr-10">
+                        <div>
+                            <h3 className="font-display font-black text-xl text-cloud-dark mb-1">{item.bookTitle}</h3>
+                            <p className="text-stone-500 italic text-sm mb-3">({item.dedication || "C'est un endroit étrange"})</p>
+                            
+                            <div className="space-y-1 text-sm text-stone-600">
+                                <p><span className="font-medium">Nom de l'enfant:</span> <span className="font-bold text-cloud-dark">{item.config.childName}</span> ({item.config.gender === 'Garçon' ? 'Garçon' : 'Fille'})</p>
+                                <p><span className="font-medium">Langue:</span> Français</p>
+                                <p><span className="font-medium">Format:</span> {item.format === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}</p>
+                            </div>
                         </div>
-                        <p className="text-stone-500 text-sm mt-1">
-                            Une aventure de {item.config.childName} • {item.format === 'hardcover' ? 'Couverture Rigide' : 'Couverture Souple'}
-                        </p>
-                        {item.dedication && (
-                            <p className="text-stone-400 text-xs mt-2 italic line-clamp-2">"{item.dedication}"</p>
-                        )}
-                    </div>
-                    
-                    <div className="flex justify-between items-end mt-4">
-                        <div className="flex items-center bg-stone-100 rounded-lg p-1">
-                            <button 
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white text-stone-600 transition-colors"
-                            >
-                                <Minus size={14} />
-                            </button>
-                            <span className="w-8 text-center font-bold text-stone-800">{item.quantity}</span>
-                            <button 
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white text-stone-600 transition-colors"
-                            >
-                                <Plus size={14} />
-                            </button>
-                        </div>
-                        <div className="font-black text-xl text-brand-coral">
+                        
+                        <div className="font-black text-xl text-cloud-dark mt-2 md:mt-0">
                             {(item.price * item.quantity).toFixed(2)}€
                         </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-gray-50">
+                        <button className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors">
+                            <Edit2 size={14} /> Modifier
+                        </button>
+                        <button className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors">
+                            <Eye size={14} /> Aperçu
+                        </button>
+                    </div>
+
+                    <div className="mt-4">
+                        <label className="flex items-center gap-2 text-stone-500 text-sm cursor-pointer group select-none">
+                            <div className="w-5 h-5 border-2 border-stone-300 rounded flex items-center justify-center group-hover:border-cloud-blue transition-colors">
+                                {/* Checkbox placeholder */}
+                            </div>
+                            <Gift size={16} />
+                            <span>Ajouter un emballage cadeau: <span className="font-bold">€4.99</span></span>
+                        </label>
                     </div>
                 </div>
               </div>
             ))}
             
-            <button 
-                onClick={() => setLocation('/')}
-                className="text-stone-500 font-bold flex items-center gap-2 hover:text-cloud-blue transition-colors mt-4"
-            >
-                <ArrowLeft size={18} /> Continuer vos achats
-            </button>
+            <div className="text-center py-4">
+                 <p className="text-cloud-dark font-medium mb-6">Nous vous offrons 40 % de réduction sur votre deuxième livre avec le code <span className="font-black">YOUPI40</span></p>
+                 
+                 <button 
+                    onClick={() => setLocation('/')}
+                    className="inline-flex items-center gap-2 px-6 py-3 border-2 border-cloud-dark/20 rounded-lg text-cloud-dark font-bold hover:bg-white hover:border-cloud-dark/50 transition-colors"
+                >
+                    <Plus size={18} strokeWidth={3} /> Ajouter un autre livre
+                </button>
+            </div>
+            
+            <div className="mt-12">
+                <h3 className="font-display font-black text-2xl text-cloud-dark mb-6">Cherchez-vous d'autres cadeaux personnalisés ?</h3>
+                {/* Placeholder for upsell items */}
+            </div>
+
           </div>
           
           {/* Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-stone-100 sticky top-32">
-                <h3 className="font-display font-bold text-2xl text-stone-800 mb-6">Récapitulatif</h3>
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-stone-100 sticky top-32">
+                <h3 className="font-display font-black text-xl text-cloud-dark mb-6 leading-tight">Récapitulatif de la<br/>commande</h3>
                 
-                <div className="space-y-3 mb-6">
-                    <div className="flex justify-between text-stone-600">
-                        <span>Sous-total</span>
-                        <span className="font-bold">{total.toFixed(2)}€</span>
+                <div className="space-y-4 mb-6">
+                    <div className="flex justify-between text-stone-600 text-sm font-medium">
+                        <span>Sous-total :</span>
+                        <span className="font-bold text-cloud-dark">{total.toFixed(2)}€</span>
                     </div>
-                    <div className="flex justify-between text-stone-600">
-                        <span>Livraison</span>
-                        <span className="text-green-600 font-bold">Gratuite</span>
+                    <div className="flex justify-between text-stone-600 text-sm font-medium">
+                        <span>Expédition :</span>
+                        <span className="font-bold text-cloud-dark">9.99€</span>
                     </div>
-                    <div className="flex justify-between text-stone-600">
-                        <span>Taxes estimées</span>
-                        <span className="font-bold">{(total * 0.2).toFixed(2)}€</span>
-                    </div>
-                </div>
-                
-                <div className="border-t border-stone-100 pt-6 mb-8">
-                    <div className="flex justify-between items-end">
-                        <span className="font-bold text-lg text-stone-800">Total</span>
-                        <span className="font-black text-3xl text-brand-coral">{total.toFixed(2)}€</span>
+                    
+                    <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center">
+                        <span className="font-bold text-lg text-cloud-dark">Total :</span>
+                        <span className="font-black text-2xl text-cloud-dark">{(total + 9.99).toFixed(2)}€</span>
                     </div>
                 </div>
                 
                 <button 
                     onClick={() => setLocation('/checkout')}
-                    className="w-full bg-cloud-blue text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-deep hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-cloud-deep text-white font-bold text-lg py-3 px-4 rounded-lg shadow-md hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
                 >
-                    Paiement <ArrowRight size={20} />
+                    <Lock size={18} /> Paiement
                 </button>
                 
-                <div className="mt-6 flex justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all">
-                    {/* Payment Icons Mock */}
-                    <div className="h-6 w-10 bg-stone-200 rounded"></div>
-                    <div className="h-6 w-10 bg-stone-200 rounded"></div>
-                    <div className="h-6 w-10 bg-stone-200 rounded"></div>
-                    <div className="h-6 w-10 bg-stone-200 rounded"></div>
+                <div className="mt-4 text-center">
+                    <button className="text-sm text-stone-500 underline hover:text-cloud-blue transition-colors">
+                        Vous avez un code promo?
+                    </button>
                 </div>
             </div>
           </div>

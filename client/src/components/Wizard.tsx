@@ -268,16 +268,16 @@ const Wizard: React.FC<WizardProps> = (props) => {
                                <button
                                  key={opt.id}
                                  onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
-                                 className={`p-2 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${currentValue === opt.id ? 'bg-[#E8F5F2] border-[#8DD0C3] text-cloud-dark' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}
+                                 className={`p-2 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 aspect-square ${currentValue === opt.id ? 'bg-[#E8F5F2] border-[#8DD0C3] text-cloud-dark ring-2 ring-[#E8F5F2] ring-offset-1' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200 hover:scale-105'}`}
+                                 title={opt.label}
                                >
-                                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center overflow-hidden border border-gray-100 p-1">
+                                  <div className="w-full h-full flex items-center justify-center overflow-hidden p-1">
                                      {opt.thumbnail ? (
                                         <img src={opt.thumbnail} alt={opt.label} className="w-full h-full object-contain" />
                                      ) : (
-                                        <span className="text-[10px]">{opt.label[0]}</span>
+                                        <span className="text-lg font-bold">{opt.label[0]}</span>
                                      )}
                                   </div>
-                                  <span className="text-[10px] font-bold truncate w-full text-center">{opt.label}</span>
                                </button>
                              ))}
                           </div>

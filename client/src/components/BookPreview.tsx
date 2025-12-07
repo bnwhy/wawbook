@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight } from 'lucide-react';
 import { Story, BookConfig } from '../types';
 import { useBooks } from '../context/BooksContext';
 import Navigation from './Navigation';
@@ -21,7 +21,22 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
   const [currentView, setCurrentView] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
-  const [dedication, setDedication] = useState(config.dedication || '');
+  const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
+
+  const handleAddToCart = () => {
+    // Mock add to cart functionality
+    const orderDetails = {
+      bookTitle: story.title,
+      config,
+      dedication,
+      format: selectedFormat,
+      price: selectedFormat === 'hardcover' ? 44.99 : 34.99
+    };
+    console.log("Adding to cart:", orderDetails);
+    
+    // Show success feedback (mock)
+    alert(`Livre ajouté au panier !\n\nFormat: ${selectedFormat === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}\nPrix: ${orderDetails.price}€\n\nMerci de votre commande !`);
+  };
 
   const totalSpreads = Math.ceil(story.pages.length / 2); 
   const totalViews = 1 + 1 + totalSpreads + 1; // Cover + Intro + StorySpreads + Back
@@ -304,18 +319,47 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                    <h3 className="font-display font-black text-xl text-cloud-dark mb-2">2. Choisir le format</h3>
                    <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Quel type de couverture souhaitez-vous ?</p>
                    
-                   <div className="w-full p-4 border-2 border-cloud-blue bg-cloud-lightest/30 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all">
-                       <div className="w-16 h-20 bg-cloud-blue rounded shadow-inner flex items-center justify-center text-white">
-                           <BookOpen size={24} />
+                   <div className="space-y-4">
+                       {/* Hardcover Option */}
+                       <div 
+                           onClick={() => setSelectedFormat('hardcover')}
+                           className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === 'hardcover' ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                       >
+                           <div className={`w-16 h-20 rounded shadow-inner flex items-center justify-center text-white transition-colors ${selectedFormat === 'hardcover' ? 'bg-cloud-blue' : 'bg-gray-300'}`}>
+                               <BookOpen size={24} />
+                           </div>
+                           <div className="flex flex-col flex-1">
+                               <span className="font-bold text-cloud-dark text-sm">Couverture rigide</span>
+                               <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-1">Le plus populaire</span>
+                               <p className="text-[11px] text-cloud-dark/60 leading-tight mb-2">Souvenir élégant et durable ; parfait pour des souvenirs mémorables.</p>
+                               <span className="font-black text-cloud-dark">€44.99</span>
+                           </div>
+                           {selectedFormat === 'hardcover' && (
+                               <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
+                                   <Check size={12} strokeWidth={4} />
+                               </div>
+                           )}
                        </div>
-                       <div className="flex flex-col flex-1">
-                           <span className="font-bold text-cloud-dark text-sm">Couverture rigide</span>
-                           <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-1">Le plus populaire</span>
-                           <p className="text-[11px] text-cloud-dark/60 leading-tight mb-2">Souvenir élégant et durable ; parfait pour des souvenirs mémorables.</p>
-                           <span className="font-black text-cloud-dark">€44.99</span>
-                       </div>
-                       <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
-                           <Check size={12} strokeWidth={4} />
+
+                       {/* Softcover Option */}
+                       <div 
+                           onClick={() => setSelectedFormat('softcover')}
+                           className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === 'softcover' ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                       >
+                           <div className={`w-16 h-20 rounded shadow-inner flex items-center justify-center text-white transition-colors ${selectedFormat === 'softcover' ? 'bg-cloud-blue' : 'bg-gray-300'}`}>
+                               <BookOpen size={24} />
+                           </div>
+                           <div className="flex flex-col flex-1">
+                               <span className="font-bold text-cloud-dark text-sm">Couverture souple</span>
+                               <span className="text-[10px] text-transparent font-black uppercase tracking-wider mb-1 select-none">Standard</span>
+                               <p className="text-[11px] text-cloud-dark/60 leading-tight mb-2">Léger et flexible, idéal pour la lecture quotidienne.</p>
+                               <span className="font-black text-cloud-dark">€34.99</span>
+                           </div>
+                           {selectedFormat === 'softcover' && (
+                               <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
+                                   <Check size={12} strokeWidth={4} />
+                               </div>
+                           )}
                        </div>
                    </div>
                </div>
@@ -323,10 +367,35 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                {/* COL 3 */}
                <div>
                    <h3 className="font-display font-black text-xl text-cloud-dark mb-2">3. Commande complète</h3>
-                   <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Veuillez sélectionner un format pour continuer</p>
-                   <button className="w-full py-3 px-4 bg-cloud-blue text-white font-black text-lg rounded-xl hover:bg-cloud-deep transition-colors shadow-lg hover:scale-[1.02] active:scale-[0.98]">
-                       Ajouter au panier
+                   <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Veuillez vérifier votre sélection pour continuer</p>
+                   
+                   <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-6">
+                        <div className="flex justify-between items-center mb-2 text-sm">
+                            <span className="text-gray-500">Livre personnalisé</span>
+                            <span className="font-bold text-cloud-dark">{selectedFormat === 'hardcover' ? '€44.99' : '€34.99'}</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-4 text-sm">
+                            <span className="text-gray-500">Livraison</span>
+                            <span className="font-bold text-green-600">Gratuite</span>
+                        </div>
+                        <div className="h-px bg-gray-200 w-full mb-4"></div>
+                        <div className="flex justify-between items-center text-lg">
+                            <span className="font-black text-cloud-dark">Total</span>
+                            <span className="font-black text-brand-coral">{selectedFormat === 'hardcover' ? '€44.99' : '€34.99'}</span>
+                        </div>
+                   </div>
+
+                   <button 
+                       onClick={handleAddToCart}
+                       className="w-full py-4 px-4 bg-cloud-blue text-white font-black text-lg rounded-xl hover:bg-cloud-deep transition-colors shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                   >
+                       <span>Ajouter au panier</span>
+                       <ArrowRight size={20} />
                    </button>
+                   
+                   <p className="text-center text-xs text-gray-400 mt-4">
+                       Satisfaction garantie ou remboursé sous 30 jours
+                   </p>
                </div>
            </div>
       </section>

@@ -13,14 +13,31 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ onSelectBook }) => {
   const { books } = useBooks();
   const category = decodeURIComponent(location.split('/').pop() || 'Catalogue');
 
-  // Filter books based on category if needed (simple keyword match for now)
-  // In a real app, we would have categories in the data model
-  const displayBooks = books.length > 0 ? books : [
-    // Fallback if no books in context
-    { id: '1', name: 'Le Voyage Magique', description: 'Une aventure extraordinaire...', price: 29.90, coverImage: '' },
-    { id: '2', name: 'Mon Ami le Dragon', description: 'Une histoire fantastique...', price: 24.90, coverImage: '' },
-    { id: '3', name: 'La Forêt Enchantée', description: 'Découverte de la nature...', price: 27.90, coverImage: '' },
-  ];
+  // Filter books based on current path (menu association)
+  const displayBooks = React.useMemo(() => {
+    // 1. Try to find books explicitly linked to this menu path
+    const linkedBooks = books.filter(b => b.associatedPaths?.includes(location));
+    
+    if (linkedBooks.length > 0) return linkedBooks;
+
+    // 2. Fallback: Filter by category tag (legacy behavior)
+    // Map URL category to internal category types
+    const categoryMap: Record<string, string> = {
+      'products': 'theme',
+      'occasion': 'occasion',
+      'family': 'family',
+      'activity': 'activity'
+    };
+    
+    const urlSection = location.split('/')[1]; // e.g. "products"
+    const targetType = categoryMap[urlSection];
+
+    if (targetType) {
+       return books.filter(b => b.category === targetType);
+    }
+
+    return books;
+  }, [books, location]);
 
   const handleBookClick = (title: string) => {
     if (onSelectBook) {

@@ -10,6 +10,7 @@ export interface BookProduct {
   theme: Theme;
   category: 'family' | 'theme' | 'activity' | 'occasion';
   badgeText?: string;
+  associatedPaths?: string[]; // List of paths where this book should appear
   oldPrice?: number;
   wizardConfig: WizardConfiguration;
   contentConfig: ContentConfiguration;

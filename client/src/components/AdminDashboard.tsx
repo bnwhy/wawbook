@@ -518,6 +518,63 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      </div>
                   </div>
                   
+                  {/* Menu Association */}
+                  <div className="mb-6 border-t border-gray-100 pt-6">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Menu size={18} className="text-indigo-600" />
+                        Apparaître dans les menus
+                    </h3>
+                    <div className="bg-slate-50 rounded-xl p-4 border border-gray-200 max-h-60 overflow-y-auto">
+                        <div className="grid grid-cols-2 gap-3">
+                            {mainMenu.flatMap(menuItem => {
+                                const paths: { label: string, path: string }[] = [];
+                                if (menuItem.type === 'simple' || menuItem.type === 'grid') {
+                                    menuItem.items?.forEach(sub => {
+                                        paths.push({ 
+                                            label: `${menuItem.label} > ${sub}`, 
+                                            path: `${menuItem.basePath}/${encodeURIComponent(sub)}` 
+                                        });
+                                    });
+                                } else if (menuItem.type === 'columns') {
+                                    menuItem.columns?.forEach(col => {
+                                        col.items.forEach(sub => {
+                                            paths.push({ 
+                                                label: `${menuItem.label} > ${col.title} > ${sub}`, 
+                                                path: `${menuItem.basePath}/${encodeURIComponent(sub)}` 
+                                            });
+                                        });
+                                    });
+                                }
+                                return paths;
+                            }).map((option) => (
+                                <label key={option.path} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200 hover:border-brand-coral cursor-pointer transition-colors">
+                                    <input 
+                                        type="checkbox"
+                                        checked={(selectedBook.associatedPaths || []).includes(option.path)}
+                                        onChange={(e) => {
+                                            const currentPaths = selectedBook.associatedPaths || [];
+                                            let newPaths;
+                                            if (e.target.checked) {
+                                                newPaths = [...currentPaths, option.path];
+                                            } else {
+                                                newPaths = currentPaths.filter(p => p !== option.path);
+                                            }
+                                            handleSaveBook({...selectedBook, associatedPaths: newPaths});
+                                        }}
+                                        className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                    />
+                                    <span className="text-xs font-medium text-slate-600 truncate" title={option.label}>
+                                        {option.label}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                        {mainMenu.length === 0 && (
+                            <div className="text-center text-gray-400 text-sm italic">Aucun menu configuré</div>
+                        )}
+                    </div>
+                  </div>
+
                   <div className="flex justify-end pt-4 border-t border-gray-100">
                      <button className="bg-brand-coral text-white px-6 py-2 rounded-lg font-bold hover:bg-red-500 transition-colors flex items-center gap-2">
                         <Save size={18} /> Enregistrer

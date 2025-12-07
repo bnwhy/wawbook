@@ -204,7 +204,8 @@ export const INITIAL_BOOKS: BookProduct[] = [
     coverImage: explorerImage,
     badgeText: 'Best-seller',
     wizardConfig: DEFAULT_WIZARD_CONFIG,
-    contentConfig: DEFAULT_CONTENT_CONFIG
+    contentConfig: DEFAULT_CONTENT_CONFIG,
+    associatedPaths: ['/products/Nouveau', '/products/Bestsellers']
   },
   {
     id: 'magician',
@@ -217,7 +218,8 @@ export const INITIAL_BOOKS: BookProduct[] = [
     coverImage: magicianImage,
     badgeText: 'Magique',
     wizardConfig: DEFAULT_WIZARD_CONFIG,
-    contentConfig: DEFAULT_CONTENT_CONFIG
+    contentConfig: DEFAULT_CONTENT_CONFIG,
+    associatedPaths: ['/products/Nouveau']
   },
   {
     id: 'astronaut',

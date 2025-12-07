@@ -388,32 +388,31 @@ const Wizard: React.FC<WizardProps> = (props) => {
           </div>
 
           {/* --- RIGHT COLUMN: PREVIEW --- */}
-          <div className="hidden lg:flex flex-1 h-[700px] sticky top-24 bg-white rounded-lg shadow-2xl border-[8px] border-white overflow-hidden relative items-center justify-center">
+          <div className="hidden lg:flex flex-col gap-6 flex-1 h-[700px] sticky top-24 bg-stone-100 rounded-lg shadow-2xl border-[8px] border-white overflow-hidden relative items-center justify-center p-8">
+             
+             {/* Avatar Visualization (Above Book) */}
+             <div className="flex flex-col items-center animate-drop-in z-20">
+                <div className="w-48 h-48 rounded-full bg-white border-[6px] border-white shadow-xl overflow-hidden relative hover:scale-105 transition-transform duration-300">
+                   {renderCharacterAvatar('child')}
+                </div>
+                <div className="mt-4 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full shadow-sm border border-white/50">
+                   <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-2">Héros</span>
+                   <span className="font-display font-black text-brand-coral text-lg">
+                      {selections['child']?.['name'] || 'Votre Enfant'}
+                   </span>
+                </div>
+             </div>
+
              {/* Book Cover Simulation */}
-             <div className="relative w-[80%] aspect-[3/4] shadow-2xl rounded-r-xl overflow-hidden transform rotate-1 hover:rotate-0 transition-duration-500">
+             <div className="relative w-[60%] aspect-[3/4] shadow-2xl rounded-r-xl overflow-hidden transform rotate-1 hover:rotate-0 transition-duration-500 bg-white group">
                 {/* Background Image */}
                 <img src={book.coverImage} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
                 
                 {/* Overlay Title */}
                 <div className="absolute top-8 left-0 right-0 text-center px-4 z-20">
-                   <h1 className="font-display font-black text-4xl text-cloud-dark drop-shadow-md text-white mix-blend-overlay opacity-90">
+                   <h1 className="font-display font-black text-2xl text-cloud-dark drop-shadow-md text-white mix-blend-overlay opacity-90 leading-tight">
                       {book.name}
                    </h1>
-                </div>
-
-                {/* Avatar Preview */}
-                <div className="absolute top-28 left-1/2 transform -translate-x-1/2 w-48 h-48 rounded-full bg-white/20 backdrop-blur-md border-[6px] border-white shadow-2xl overflow-hidden hover:scale-105 transition-transform z-10">
-                   {renderCharacterAvatar('child')}
-                </div>
-
-                {/* Dynamic Preview Badge */}
-                <div className="absolute bottom-10 left-0 right-0 text-center">
-                   <div className="inline-block bg-white/90 backdrop-blur px-6 py-3 rounded-full shadow-lg">
-                      <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Héros</div>
-                      <div className="text-2xl font-display font-black text-brand-coral">
-                         {selections['child']?.['name'] || 'Votre Enfant'}
-                      </div>
-                   </div>
                 </div>
              </div>
           </div>

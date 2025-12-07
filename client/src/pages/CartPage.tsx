@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
-import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, Gift, X } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -89,16 +89,6 @@ const CartPage = () => {
                         <button className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors">
                             <Eye size={14} /> Aperçu
                         </button>
-                    </div>
-
-                    <div className="mt-4">
-                        <label className="flex items-center gap-2 text-stone-500 text-sm cursor-pointer group select-none">
-                            <div className="w-5 h-5 border-2 border-stone-300 rounded flex items-center justify-center group-hover:border-cloud-blue transition-colors">
-                                {/* Checkbox placeholder */}
-                            </div>
-                            <Gift size={16} />
-                            <span>Ajouter un emballage cadeau: <span className="font-bold">€4.99</span></span>
-                        </label>
                     </div>
                 </div>
               </div>

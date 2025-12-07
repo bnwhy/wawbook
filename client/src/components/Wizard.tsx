@@ -392,7 +392,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              
              {/* Avatar Visualization (Above Book) */}
              <div className="flex flex-col items-center animate-drop-in z-20">
-                <div className="w-64 h-64 rounded-full bg-white border-[8px] border-white shadow-xl overflow-hidden relative hover:scale-105 transition-transform duration-300">
+                <div className="w-64 h-64 rounded-full bg-white border-[8px] border-white shadow-xl overflow-hidden relative">
                    {renderCharacterAvatar('child')}
                 </div>
                 <div className="mt-6 bg-white/80 backdrop-blur-sm px-8 py-3 rounded-full shadow-sm border border-white/50">
@@ -404,7 +404,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* Book Cover Simulation */}
-             <div className="relative w-[60%] aspect-[3/4] shadow-2xl rounded-r-xl overflow-hidden transform rotate-1 hover:rotate-0 transition-duration-500 bg-white group">
+             <div className="relative w-[60%] aspect-[3/4] shadow-2xl rounded-r-xl overflow-hidden transform rotate-1 bg-white group">
                 {/* Background Image */}
                 <img src={book.coverImage} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
                 

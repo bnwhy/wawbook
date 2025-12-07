@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight } from 'lucide-react';
+import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight, ShoppingBag } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useMenus } from '../context/MenuContext';
+import { useCart } from '../context/CartContext';
 
 interface NavigationProps {
   onStart: () => void;
@@ -36,6 +37,7 @@ const CloudLogo = () => (
 
 const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
   const { mainMenu } = useMenus();
+  const { itemCount } = useCart();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItem, setExpandedMobileItem] = useState<number | null>(null);
@@ -142,6 +144,17 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
 
         {/* CTA Button & Mobile Toggle */}
         <div className="flex items-center gap-4">
+          <Link href="/cart">
+            <a className="relative p-2 text-cloud-dark hover:text-cloud-blue transition-colors">
+              <ShoppingBag size={24} />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-coral text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm animate-bounce-short">
+                  {itemCount}
+                </span>
+              )}
+            </a>
+          </Link>
+
           <button 
             onClick={onStart}
             className="hidden md:flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2"

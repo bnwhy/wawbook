@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight } from 'lucide-react';
 import { Story, BookConfig } from '../types';
 import { useBooks } from '../context/BooksContext';
+import { useCart } from '../context/CartContext';
 import Navigation from './Navigation';
 
 import Footer from './Footer';
@@ -16,6 +17,7 @@ interface BookPreviewProps {
 
 const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onStart, onAdminClick }) => {
   const { books } = useBooks();
+  const { addToCart } = useCart();
   const book = books.find(b => b.name === story.title);
 
   const [currentView, setCurrentView] = useState(0);
@@ -25,18 +27,31 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
   const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
 
   const handleAddToCart = () => {
-    // Mock add to cart functionality
-    const orderDetails = {
+    // Add to cart functionality
+    addToCart({
       bookTitle: story.title,
       config,
       dedication,
       format: selectedFormat,
-      price: selectedFormat === 'hardcover' ? 44.99 : 34.99
-    };
-    console.log("Adding to cart:", orderDetails);
+      price: selectedFormat === 'hardcover' ? 44.99 : 34.99,
+      quantity: 1,
+      coverImage: book?.coverImage
+    });
     
-    // Show success feedback (mock)
-    alert(`Livre ajouté au panier !\n\nFormat: ${selectedFormat === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}\nPrix: ${orderDetails.price}€\n\nMerci de votre commande !`);
+    // Show success feedback
+    const btn = document.getElementById('add-to-cart-btn');
+    if(btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<span class="flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Ajouté !</span>`;
+        btn.classList.add('bg-green-500', 'hover:bg-green-600');
+        btn.classList.remove('bg-cloud-blue', 'hover:bg-cloud-deep');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            btn.classList.add('bg-cloud-blue', 'hover:bg-cloud-deep');
+        }, 2000);
+    }
   };
 
   const totalSpreads = Math.ceil(story.pages.length / 2); 
@@ -387,6 +402,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                    </div>
 
                    <button 
+                       id="add-to-cart-btn"
                        onClick={handleAddToCart}
                        className="w-full py-4 px-4 bg-cloud-blue text-white font-black text-lg rounded-xl hover:bg-cloud-deep transition-colors shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                    >

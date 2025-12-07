@@ -4,6 +4,8 @@ import Wizard from './components/Wizard';
 import BookPreview from './components/BookPreview';
 import LoadingScreen from './components/LoadingScreen';
 import AdminDashboard from './components/AdminDashboard';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
 import { AppState, BookConfig, Story, Theme, Activity } from './types';
 import { generateStoryText } from './services/geminiService';
 import { Switch, Route, useLocation } from 'wouter';
@@ -12,6 +14,7 @@ import CategoryPage from './pages/CategoryPage';
 import NotFound from './pages/NotFound';
 import { BooksProvider } from './context/BooksContext';
 import { MenuProvider } from './context/MenuContext';
+import { CartProvider } from './context/CartContext';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('HOME');
@@ -72,41 +75,46 @@ const App: React.FC = () => {
   return (
     <BooksProvider>
       <MenuProvider>
-        <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
-          <Switch>
-        {/* Main Application Flow (SPA-like at root) */}
-        <Route path="/">
-          {appState === 'HOME' && <Hero onStart={startCreation} onAdminClick={() => setAppState('ADMIN')} />}
-          
-          {appState === 'CREATE' && (
-            <Wizard 
-              onComplete={handleConfigComplete} 
-              onCancel={cancelCreation}
-              initialTheme={initialTheme}
-              initialActivity={initialActivity}
-              bookTitle={selectedBookTitle}
-              initialSelections={initialSelections}
-            />
-          )}
+        <CartProvider>
+          <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
+            <Switch>
+          {/* Main Application Flow (SPA-like at root) */}
+          <Route path="/">
+            {appState === 'HOME' && <Hero onStart={startCreation} onAdminClick={() => setAppState('ADMIN')} />}
+            
+            {appState === 'CREATE' && (
+              <Wizard 
+                onComplete={handleConfigComplete} 
+                onCancel={cancelCreation}
+                initialTheme={initialTheme}
+                initialActivity={initialActivity}
+                bookTitle={selectedBookTitle}
+                initialSelections={initialSelections}
+              />
+            )}
 
-          {appState === 'GENERATING' && <LoadingScreen />}
+            {appState === 'GENERATING' && <LoadingScreen />}
 
-          {appState === 'READING' && story && config && (
-            <BookPreview 
-              story={story} 
-              config={config} 
-              onReset={handleReset}
-              onStart={() => startCreation(config.theme, undefined, story.title, config.characters)}
-              onAdminClick={() => setAppState('ADMIN')}
-            />
-          )}
-          
-          {appState === 'ADMIN' && (
-            <AdminDashboard onBack={() => setAppState('HOME')} />
-          )}
-        </Route>
+            {appState === 'READING' && story && config && (
+              <BookPreview 
+                story={story} 
+                config={config} 
+                onReset={handleReset}
+                onStart={() => startCreation(config.theme, undefined, story.title, config.characters)}
+                onAdminClick={() => setAppState('ADMIN')}
+              />
+            )}
+            
+            {appState === 'ADMIN' && (
+              <AdminDashboard onBack={() => setAppState('HOME')} />
+            )}
+          </Route>
 
-        {/* Content Pages */}
+          {/* Ecommerce Routes */}
+          <Route path="/cart" component={CartPage} />
+          <Route path="/checkout" component={CheckoutPage} />
+
+          {/* Content Pages */}
         <Route path="/products/:category">
           {(params) => (
             <CategoryPage 
@@ -154,6 +162,7 @@ const App: React.FC = () => {
         </div>
       )}
       </div>
+        </CartProvider>
       </MenuProvider>
     </BooksProvider>
   );

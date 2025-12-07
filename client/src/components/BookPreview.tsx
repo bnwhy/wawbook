@@ -422,7 +422,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                        onClick={handleAddToCart}
                        className="w-full py-4 px-4 bg-cloud-blue text-white font-black text-lg rounded-xl hover:bg-cloud-deep transition-colors shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                    >
-                       <span>Ajouter au panier</span>
+                       <span>{editingCartItemId ? "Modifier le panier" : "Ajouter au panier"}</span>
                        <ArrowRight size={20} />
                    </button>
                    

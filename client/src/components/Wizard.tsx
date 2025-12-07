@@ -116,6 +116,52 @@ const Wizard: React.FC<WizardProps> = (props) => {
     }));
   };
 
+  // Helper to get resource (color/image) for a selection
+  const getSelectedResource = (tabId: string, variantId: string) => {
+     const selectedId = selections[tabId]?.[variantId];
+     if (!selectedId) return null;
+     
+     const tab = wizardConfig.tabs.find(t => t.id === tabId);
+     const variant = tab?.variants.find(v => v.id === variantId);
+     const option = variant?.options.find(o => o.id === selectedId);
+     return option?.resource;
+  };
+
+  const renderCharacterAvatar = (tabId: string) => {
+     const skinColor = getSelectedResource(tabId, 'skinTone') || '#FFE0BD';
+     const hairColor = getSelectedResource(tabId, 'hairColor') || '#302e34';
+     const gender = selections[tabId]?.['gender'];
+     
+     // Simple avatar SVG composition
+     return (
+        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+           {/* Body/Outfit */}
+           <path d="M20,100 Q50,70 80,100" fill={hairColor} opacity="0.5" />
+           <path d="M30,100 L30,80 Q50,70 70,80 L70,100" fill="#60A5FA" /> {/* Generic Outfit Color */}
+           
+           {/* Neck */}
+           <rect x="45" y="65" width="10" height="15" fill={skinColor} />
+           
+           {/* Head */}
+           <circle cx="50" cy="50" r="22" fill={skinColor} />
+           
+           {/* Hair Base */}
+           <path d="M28,50 Q50,20 72,50 Q75,60 72,50 Q50,15 28,50" fill={hairColor} />
+           
+           {/* Eyes */}
+           <circle cx="43" cy="52" r="2" fill="#333" />
+           <circle cx="57" cy="52" r="2" fill="#333" />
+           
+           {/* Smile */}
+           <path d="M45,60 Q50,63 55,60" fill="none" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
+           
+           {/* Blush */}
+           <circle cx="40" cy="58" r="3" fill="#FFAAAA" opacity="0.4" />
+           <circle cx="60" cy="58" r="3" fill="#FFAAAA" opacity="0.4" />
+        </svg>
+     );
+  };
+
   const handleComplete = () => {
     // Map dynamic selections to BookConfig
     // For now, we map "child" tab to legacy fields if possible for compatibility
@@ -336,6 +382,11 @@ const Wizard: React.FC<WizardProps> = (props) => {
                    <h1 className="font-display font-black text-4xl text-cloud-dark drop-shadow-md text-white mix-blend-overlay opacity-90">
                       {book.name}
                    </h1>
+                </div>
+
+                {/* Avatar Preview */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 drop-shadow-2xl filter hover:scale-105 transition-transform">
+                   {renderCharacterAvatar('child')}
                 </div>
 
                 {/* Dynamic Preview Badge */}

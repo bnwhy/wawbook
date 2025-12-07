@@ -366,14 +366,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* FOOTER ACTIONS */}
-             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
-                <button 
-                  onClick={onCancel}
-                  className="text-gray-400 hover:text-gray-600 font-bold text-sm px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    {props.isEditing ? "Retour au panier" : "Annuler"}
-                </button>
-
+             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end items-center shrink-0">
                 <button 
                   onClick={handleComplete}
                   className="bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 px-6 py-3 rounded-full font-bold shadow-lg hover:brightness-105 transition-all flex items-center gap-2 hover:scale-105 hover:shadow-xl"

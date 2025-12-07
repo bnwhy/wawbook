@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check } from 'lucide-react';
 import { Story, BookConfig } from '../types';
 import { useBooks } from '../context/BooksContext';
 import Navigation from './Navigation';
@@ -181,7 +181,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
       {/* NAVBAR */}
       <Navigation onStart={onStart} onAdminClick={onAdminClick} />
 
-      <main className="flex-grow flex flex-col items-center justify-center py-12 px-4 relative overflow-hidden mt-20">
+      {/* BOOK PREVIEW AREA */}
+      <div className="flex-col items-center justify-center py-12 px-4 relative overflow-hidden mt-20 bg-[#E5E0D8]">
           
           {/* Texture */}
           <div className="absolute inset-0 bg-[#E5E0D8] opacity-100" style={{ backgroundImage: 'radial-gradient(#D6D1C9 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
@@ -266,11 +267,64 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
           </div>
 
           {/* Progress */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-stone-500 shadow-sm z-20">
-              Vue {currentView + 1} / {totalViews}
+          <div className="relative z-10 mt-8 flex justify-center">
+              <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-stone-500 shadow-sm">
+                  Vue {currentView + 1} / {totalViews}
+              </div>
           </div>
 
-      </main>
+          {/* Modify Link */}
+          <div className="relative z-10 mt-6 flex justify-center">
+             <button onClick={onStart} className="text-cloud-blue font-bold text-sm hover:underline flex items-center gap-1 transition-colors hover:text-cloud-deep">
+                <ChevronLeft size={16} strokeWidth={3} /> Cliquez pour modifier vos personnages
+             </button>
+          </div>
+
+      </div>
+
+      {/* ORDER SECTION */}
+      <section className="bg-white py-16 px-6 border-t-4 border-cloud-blue/10 relative z-10">
+           <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12">
+               {/* COL 1 */}
+               <div>
+                   <h3 className="font-display font-black text-xl text-cloud-dark mb-2">1. Ajouter une dédicace</h3>
+                   <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Nous imprimerons votre message spécial dans votre livre</p>
+                   <button className="w-full py-3 px-4 border-2 border-cloud-dark/10 rounded-xl font-bold text-cloud-dark hover:border-cloud-blue hover:text-cloud-blue transition-colors bg-white flex items-center justify-center gap-2">
+                       Ajouter une dédicace
+                   </button>
+               </div>
+
+               {/* COL 2 */}
+               <div>
+                   <h3 className="font-display font-black text-xl text-cloud-dark mb-2">2. Choisir le format</h3>
+                   <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Quel type de couverture souhaitez-vous ?</p>
+                   
+                   <div className="w-full p-4 border-2 border-cloud-blue bg-cloud-lightest/30 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all">
+                       <div className="w-16 h-20 bg-cloud-blue rounded shadow-inner flex items-center justify-center text-white">
+                           <BookOpen size={24} />
+                       </div>
+                       <div className="flex flex-col flex-1">
+                           <span className="font-bold text-cloud-dark text-sm">Couverture rigide</span>
+                           <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-1">Le plus populaire</span>
+                           <p className="text-[11px] text-cloud-dark/60 leading-tight mb-2">Souvenir élégant et durable ; parfait pour des souvenirs mémorables.</p>
+                           <span className="font-black text-cloud-dark">€44.99</span>
+                       </div>
+                       <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
+                           <Check size={12} strokeWidth={4} />
+                       </div>
+                   </div>
+               </div>
+
+               {/* COL 3 */}
+               <div>
+                   <h3 className="font-display font-black text-xl text-cloud-dark mb-2">3. Commande complète</h3>
+                   <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Veuillez sélectionner un format pour continuer</p>
+                   <button className="w-full py-3 px-4 bg-cloud-blue text-white font-black text-lg rounded-xl hover:bg-cloud-deep transition-colors shadow-lg hover:scale-[1.02] active:scale-[0.98]">
+                       Ajouter au panier
+                   </button>
+               </div>
+           </div>
+      </section>
 
       {/* FOOTER */}
       <footer className="bg-cloud-dark text-cloud-lightest py-20 px-6 mt-auto">

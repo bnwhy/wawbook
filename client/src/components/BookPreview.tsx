@@ -5,6 +5,8 @@ import { Story, BookConfig } from '../types';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
 import Navigation from './Navigation';
+import hardcoverIcon from '@assets/generated_images/hardcover_children_book_icon.png';
+import softcoverIcon from '@assets/generated_images/softcover_children_book_icon.png';
 
 import Footer from './Footer';
 
@@ -361,8 +363,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                            onClick={() => setSelectedFormat('hardcover')}
                            className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === 'hardcover' ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                        >
-                           <div className={`w-16 h-20 rounded shadow-inner flex items-center justify-center text-white transition-colors ${selectedFormat === 'hardcover' ? 'bg-cloud-blue' : 'bg-gray-300'}`}>
-                               <BookOpen size={24} />
+                           <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0">
+                               <img src={hardcoverIcon} alt="Couverture rigide" className="w-full h-full object-cover" />
                            </div>
                            <div className="flex flex-col flex-1">
                                <span className="font-bold text-cloud-dark text-sm">Couverture rigide</span>
@@ -382,8 +384,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
                            onClick={() => setSelectedFormat('softcover')}
                            className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === 'softcover' ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                        >
-                           <div className={`w-16 h-20 rounded shadow-inner flex items-center justify-center text-white transition-colors ${selectedFormat === 'softcover' ? 'bg-cloud-blue' : 'bg-gray-300'}`}>
-                               <BookOpen size={24} />
+                           <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0">
+                               <img src={softcoverIcon} alt="Couverture souple" className="w-full h-full object-cover" />
                            </div>
                            <div className="flex flex-col flex-1">
                                <span className="font-bold text-cloud-dark text-sm">Couverture souple</span>

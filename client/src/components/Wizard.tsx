@@ -263,21 +263,19 @@ const Wizard: React.FC<WizardProps> = (props) => {
                      return (
                        <div key={variant.id} className="space-y-2">
                           <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
-                          <div className="grid grid-cols-4 gap-3">
+                          <div className="flex gap-3 flex-wrap">
                              {variant.options.map((opt) => (
                                <button
                                  key={opt.id}
                                  onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
-                                 className={`p-2 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-2 aspect-square ${currentValue === opt.id ? 'bg-[#E8F5F2] border-[#8DD0C3] text-cloud-dark ring-2 ring-[#E8F5F2] ring-offset-1' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200 hover:scale-105'}`}
+                                 className={`w-14 h-14 rounded-full transition-all border border-gray-200 overflow-hidden flex items-center justify-center bg-white ${currentValue === opt.id ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] scale-110 ring-offset-2' : 'hover:scale-105'}`}
                                  title={opt.label}
                                >
-                                  <div className="w-full h-full flex items-center justify-center overflow-hidden p-1">
-                                     {opt.thumbnail ? (
-                                        <img src={opt.thumbnail} alt={opt.label} className="w-full h-full object-contain" />
-                                     ) : (
-                                        <span className="text-lg font-bold">{opt.label[0]}</span>
-                                     )}
-                                  </div>
+                                  {opt.thumbnail ? (
+                                     <img src={opt.thumbnail} alt={opt.label} className="w-full h-full object-cover" />
+                                  ) : (
+                                     <span className="text-sm font-bold text-gray-400">{opt.label[0]}</span>
+                                  )}
                                </button>
                              ))}
                           </div>

@@ -508,13 +508,6 @@ const Wizard: React.FC<WizardProps> = (props) => {
              <div className="relative w-[60%] aspect-[3/4] shadow-2xl rounded-r-xl overflow-hidden transform rotate-1 bg-white group">
                 {/* Background Image */}
                 <img src={book.coverImage} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
-                
-                {/* Overlay Title */}
-                <div className="absolute top-8 left-0 right-0 text-center px-4 z-20">
-                   <h1 className="font-display font-black text-2xl text-cloud-dark drop-shadow-md text-white mix-blend-overlay opacity-90 leading-tight">
-                      {book.name}
-                   </h1>
-                </div>
              </div>
           </div>
 

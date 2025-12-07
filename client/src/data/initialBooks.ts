@@ -23,6 +23,16 @@ import birthdayImage from '@assets/generated_images/children\'s_book_cover_for_b
 import fathersDayImage from '@assets/generated_images/children\'s_book_cover_for_father\'s_day_occasion_with_french_title.png';
 import mothersDayImage from '@assets/generated_images/children\'s_book_cover_for_mother\'s_day_occasion_with_french_title.png';
 
+// Wizard Assets
+import hairBald from '@assets/generated_images/bald_hairstyle_icon.png';
+import hairShort from '@assets/generated_images/short_hairstyle_icon.png';
+import hairSpiky from '@assets/generated_images/spiky_hairstyle_icon.png';
+import hairCurly from '@assets/generated_images/curly_hairstyle_icon.png';
+import hairLong from '@assets/generated_images/long_hairstyle_icon.png';
+import beardMustache from '@assets/generated_images/mustache_beard_icon.png';
+import beardGoatee from '@assets/generated_images/goatee_beard_icon.png';
+import beardFull from '@assets/generated_images/full_beard_icon.png';
+
 const FAMILY_WIZARD_CONFIG = {
   avatarStyle: 'watercolor' as const,
   tabs: [
@@ -158,10 +168,12 @@ const FAMILY_WIZARD_CONFIG = {
           label: 'Coiffure',
           type: 'options' as const,
           options: [
-             { id: 'Court', label: 'Court' },
-            { id: 'Chauve', label: 'Chauve' },
-            { id: 'Carré', label: 'Carré' },
-            { id: 'Long', label: 'Long' }
+            { id: 'Chauve', label: 'Chauve', thumbnail: hairBald },
+            { id: 'Court', label: 'Court', thumbnail: hairShort },
+            { id: 'Hérissé', label: 'Hérissé', thumbnail: hairSpiky },
+            { id: 'Bouclé', label: 'Bouclé', thumbnail: hairCurly },
+            { id: 'Long', label: 'Long', thumbnail: hairLong },
+            { id: 'Carré', label: 'Carré', thumbnail: hairLong } // Reusing long for now or could generate specific
           ]
         },
         {
@@ -169,9 +181,10 @@ const FAMILY_WIZARD_CONFIG = {
            label: 'Barbe',
            type: 'options' as const,
            options: [
-             { id: 'None', label: 'Aucune' },
-             { id: 'Moustache', label: 'Moustache' },
-             { id: 'Beard', label: 'Barbe' }
+             { id: 'None', label: 'Rasé' }, // No thumbnail for clean shaven or use a generic face
+             { id: 'Moustache', label: 'Moustache', thumbnail: beardMustache },
+             { id: 'Bouc', label: 'Bouc', thumbnail: beardGoatee },
+             { id: 'Barbe', label: 'Barbe', thumbnail: beardFull }
            ]
         }
       ]

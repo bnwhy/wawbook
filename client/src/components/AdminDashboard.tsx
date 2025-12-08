@@ -6,97 +6,6 @@ import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { MenuItem, MenuColumn } from '../types/menu';
 
-// Helper for cartesian product of objects
-const cartesian = (args: any[]) => {
-   if (args.length === 0) return [];
-   const r: any[] = [];
-   const max = args.length - 1;
-   function helper(arr: any[], i: number) {
-      for (let j = 0, l = args[i].length; j < l; j++) {
-         const a = arr.slice(0); // clone arr
-         a.push(args[i][j]);
-         if (i === max) r.push(a);
-         else helper(a, i + 1);
-      }
-   }
-   helper([], 0);
-   return r;
-};
-
-// Helper to generate combinations for Avatar Mappings (Per Tab)
-const generateAvatarCombinations = (tab: WizardTab) => {
-   if (!tab || !tab.variants) return [];
-   
-   // Filter out text variants or variants without options
-   const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
-   
-   if (relevantVariants.length === 0) return [];
-
-   const variantsOptions = relevantVariants.map(v => v.options);
-   const combos = cartesian(variantsOptions); // Array of arrays of options
-
-   return combos.map(combo => {
-      // Sort IDs for consistent key
-      const ids = combo.map((o: any) => o.id).sort();
-      const key = ids.join('_');
-      const label = combo.map((o: any) => o.label).join(' + ');
-      return { key, label, parts: combo };
-   });
-};
-
-// Helper to generate combinations for Storyboard (Global)
-// Returns objects with label and detailed selections per tab
-const generateCombinations = (book: BookProduct) => {
-    if (!book || !book.wizardConfig || !book.wizardConfig.tabs) return [{ label: 'Défaut', selections: {} }];
-
-    const tabs = book.wizardConfig.tabs.filter(t => t.type === 'character');
-    if (tabs.length === 0) return [{ label: 'Défaut', selections: {} }];
-
-    // For each tab, get all valid avatar combinations
-    // Returns: [{ tabId: 'child', combos: [{ key: 'Blond_Short', label: '...', parts: [...] }] }, ...]
-    const tabCombos = tabs.map(tab => {
-        const combos = generateAvatarCombinations(tab);
-        if (combos.length === 0) return { tabId: tab.id, combos: [{ key: 'default', label: tab.label }] };
-        return { tabId: tab.id, combos };
-    });
-
-    // Cartesian product of tabCombos
-    // We want to produce [{ label: "Child: Blond + Dad: Beard", selections: { child: "Blond_Short", dad: "Beard_..." } }]
-    
-    const cartesianCombos = (args: any[]) => {
-       if (args.length === 0) return [];
-       const r: any[] = [];
-       const max = args.length - 1;
-       function helper(arr: any[], i: number) {
-          for (let j = 0, l = args[i].combos.length; j < l; j++) {
-             const a = arr.slice(0);
-             a.push({ tabId: args[i].tabId, combo: args[i].combos[j] });
-             if (i === max) r.push(a);
-             else helper(a, i + 1);
-          }
-       }
-       helper([], 0);
-       return r;
-    };
-
-    const globalCombos = cartesianCombos(tabCombos);
-
-    return globalCombos.map((group: any[]) => {
-        const selections: Record<string, string> = {};
-        const labels: string[] = [];
-        
-        group.forEach(item => {
-            selections[item.tabId] = item.combo.key;
-            labels.push(`${item.combo.label}`);
-        });
-
-        return {
-            label: labels.join(' | '),
-            selections
-        };
-    });
-};
-
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -104,10 +13,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'settings'>('books');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof BookProduct, direction: 'asc' | 'desc' } | null>(null);
-
+  
   // Content Editor State
-  const [selectedVariant, setSelectedVariant] = useState<string>(''); // Used for previewing specific combinations
+  const [selectedVariant, setSelectedVariant] = useState<string>('default'); // Used for previewing specific combinations
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedAvatarTabId, setSelectedAvatarTabId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
@@ -117,24 +25,73 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
 
+  // Helper to generate combinations for Storyboard (Global)
+  const generateCombinations = (book: BookProduct) => {
+    const tabs = book.wizardConfig.tabs;
+    if (tabs.length === 0) return ['Défaut'];
 
+    // Get variants for each tab
+    const tabValues = tabs.map(tab => {
+      if (tab.variants.length > 0) {
+        // If variants have options, flatten them: "Variant + Option"
+        // If a variant has NO options, just use "Variant"
+        return tab.variants.flatMap(v => {
+          if (v.options && v.options.length > 0) {
+             return v.options.map(o => `${v.label} + ${o.label}`);
+          }
+          return [v.label];
+        });
+      }
+      return [tab.label];
+    });
+    
+    if (tabValues.length === 0) return ['Défaut'];
+    
+    // Calculate product
+    let combinations = tabValues[0];
+    for (let i = 1; i < tabValues.length; i++) {
+        combinations = combinations.flatMap(d => tabValues[i].map(e => `${d} + ${e}`));
+    }
+    
+    return combinations;
+  };
 
-  const currentCombinations = React.useMemo(() => {
-     if (!selectedBook) return [];
-     try {
-        return generateCombinations(selectedBook);
-     } catch (e) {
-        console.error("Error generating combinations:", e);
-        return [];
-     }
-  }, [selectedBook]);
-  
-  // Set default variant if none selected
-  React.useEffect(() => {
-     if (currentCombinations.length > 0 && !selectedVariant) {
-        setSelectedVariant(JSON.stringify(currentCombinations[0]));
-     }
-  }, [currentCombinations, selectedVariant]);
+  // Helper to generate combinations for Avatar Mappings (Per Tab)
+  const generateAvatarCombinations = (tab: WizardTab) => {
+     // Filter out text variants or variants without options
+     const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
+     
+     if (relevantVariants.length === 0) return [];
+
+     // Helper for cartesian product of objects
+     const cartesian = (args: any[]) => {
+        const r: any[] = [];
+        const max = args.length - 1;
+        function helper(arr: any[], i: number) {
+           for (let j = 0, l = args[i].length; j < l; j++) {
+              const a = arr.slice(0); // clone arr
+              a.push(args[i][j]);
+              if (i === max) r.push(a);
+              else helper(a, i + 1);
+           }
+        }
+        helper([], 0);
+        return r;
+     };
+
+     const variantsOptions = relevantVariants.map(v => v.options);
+     const combos = cartesian(variantsOptions); // Array of arrays of options
+
+     return combos.map(combo => {
+        // Sort IDs for consistent key
+        const ids = combo.map((o: any) => o.id).sort();
+        const key = ids.join('_');
+        const label = combo.map((o: any) => o.label).join(' + ');
+        return { key, label, parts: combo };
+     });
+  };
+
+  const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
 
   const handleSaveBook = (updatedBook: BookProduct) => {
     updateBook(updatedBook);
@@ -157,37 +114,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setSelectedBookId(newBook.id);
     setIsEditing(true);
   };
-
-  const handleSort = (key: keyof BookProduct) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-
-  const sortedBooks = React.useMemo(() => {
-    let sortableBooks = [...books];
-    if (sortConfig !== null) {
-      sortableBooks.sort((a, b) => {
-        const valA = a[sortConfig.key];
-        const valB = b[sortConfig.key];
-
-        if (valA === valB) return 0;
-        if (valA === undefined || valA === null) return 1;
-        if (valB === undefined || valB === null) return -1;
-
-        if (valA < valB) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (valA > valB) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableBooks;
-  }, [books, sortConfig]);
 
   const toggleVariantExpand = (variantId: string) => {
     const newSet = new Set(expandedVariantIds);
@@ -338,80 +264,36 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </button>
                  </div>
 
-                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                       <thead>
-                          <tr className="bg-slate-50 border-b border-gray-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                             <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('name')}>
-                                <div className="flex items-center gap-2">
-                                   Livre
-                                   {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
-                                </div>
-                             </th>
-                             <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('price')}>
-                                <div className="flex items-center gap-2">
-                                   Prix
-                                   {sortConfig?.key === 'price' && (sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
-                                </div>
-                             </th>
-                             <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('id')}>
-                                <div className="flex items-center gap-2">
-                                   Identifiant
-                                   {sortConfig?.key === 'id' && (sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
-                                </div>
-                             </th>
-                             <th className="px-6 py-4">Personnages</th>
-                             <th className="px-6 py-4 text-right">Actions</th>
-                          </tr>
-                       </thead>
-                       <tbody className="divide-y divide-gray-100">
-                          {sortedBooks.map(book => (
-                             <tr key={book.id} className="hover:bg-slate-50 transition-colors group">
-                                <td className="px-6 py-4">
-                                   <div className="flex items-center gap-4">
-                                      <div className="w-10 h-10 bg-slate-100 rounded flex items-center justify-center text-slate-300 shrink-0">
-                                         <Book size={18} />
-                                      </div>
-                                      <div>
-                                         <div className="font-bold text-slate-900">{book.name}</div>
-                                         <div className="text-xs text-slate-400 line-clamp-1 max-w-[200px]">{book.description}</div>
-                                      </div>
-                                   </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                   <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
-                                      {book.price} €
-                                   </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                   <code className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600 font-mono">
-                                      {book.id}
-                                   </code>
-                                </td>
-                                <td className="px-6 py-4">
-                                   <div className="flex items-center gap-2 text-sm text-slate-600">
-                                      <Users size={16} className="text-slate-400" />
-                                      <span className="font-medium">{book.wizardConfig.tabs.length}</span>
-                                   </div>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                   <button 
-                                      onClick={() => { setSelectedBookId(book.id); setIsEditing(true); }}
-                                      className="text-slate-400 hover:text-brand-coral font-medium text-sm transition-colors flex items-center justify-end gap-1 ml-auto"
-                                   >
-                                      <Settings size={16} /> Configurer
-                                   </button>
-                                </td>
-                             </tr>
-                          ))}
-                       </tbody>
-                    </table>
-                    {sortedBooks.length === 0 && (
-                       <div className="p-12 text-center text-gray-400">
-                          <Book size={48} className="mx-auto mb-4 opacity-20" />
-                          <p>Aucun livre dans le catalogue.</p>
-                       </div>
-                    )}
+                 <div className="flex flex-col gap-4">
+                    {books.map(book => (
+                      <div key={book.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-6 group hover:shadow-md hover:border-brand-coral transition-all">
+                         <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-300 shrink-0">
+                            <Book size={24} />
+                         </div>
+                         
+                         <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-1">
+                               <h3 className="font-bold text-lg text-slate-900 truncate">{book.name}</h3>
+                               <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{book.price} €</span>
+                            </div>
+                            <p className="text-sm text-slate-500 line-clamp-1 mb-2">{book.description}</p>
+                            <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
+                               <span className="bg-slate-100 px-1.5 py-0.5 rounded">ID: {book.id}</span>
+                               <span>•</span>
+                               <span>{book.wizardConfig.tabs.length} Personnages</span>
+                            </div>
+                         </div>
+
+                         <div className="shrink-0">
+                            <button 
+                              onClick={() => { setSelectedBookId(book.id); setIsEditing(true); }}
+                              className="bg-slate-100 text-slate-600 px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-brand-coral hover:text-white transition-colors"
+                            >
+                              Configurer
+                            </button>
+                         </div>
+                      </div>
+                    ))}
                  </div>
               </div>
             )}
@@ -1246,10 +1128,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        <select 
                                           value={selectedVariant}
                                           onChange={(e) => setSelectedVariant(e.target.value)}
-                                          className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral max-w-[200px]"
+                                          className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral"
                                        >
-                                          {currentCombinations.map((c: any, idx: number) => (
-                                             <option key={idx} value={JSON.stringify(c)}>{c.label}</option>
+                                          {currentCombinations.map(c => (
+                                             <option key={c} value={c}>{c}</option>
                                           ))}
                                        </select>
                                     </div>
@@ -1317,36 +1199,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          {el.type === 'static' && el.url ? (
                                                             <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
                                                          ) : (
-                                                            (() => {
-                                                                // Handle Variable Image (Avatar)
-                                                                if (el.variableKey) {
-                                                                    // Parse variableKey (e.g., "child" or "child.hair")
-                                                                    const [tabId, variantId] = el.variableKey.split('.');
-                                                                    
-                                                                    // Check if we have a selected variant configuration
-                                                                    let variantConfig: any = null;
-                                                                    try {
-                                                                        variantConfig = selectedVariant ? JSON.parse(selectedVariant) : null;
-                                                                    } catch (e) {}
-
-                                                                    // If we are showing a full character avatar (no variantId)
-                                                                    if (tabId && !variantId && variantConfig && variantConfig.selections) {
-                                                                        const comboKey = variantConfig.selections[tabId];
-                                                                        if (comboKey) {
-                                                                            const avatarUrl = selectedBook.wizardConfig.avatarMappings?.[comboKey];
-                                                                            if (avatarUrl) {
-                                                                                return <img src={avatarUrl} className="w-full h-full object-contain" alt="Avatar" />;
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-
-                                                                return (
-                                                                    <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
-                                                                       {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
-                                                                    </div>
-                                                                );
-                                                            })()
+                                                            <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
+                                                               {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
+                                                            </div>
                                                          )}
                                                       </div>
                                                    ))
@@ -1607,7 +1462,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   <option value="">Choisir une variable image...</option>
                                                                   {selectedBook.wizardConfig.tabs.map(tab => (
                                                                      <optgroup key={tab.id} label={tab.label}>
-                                                                        <option value={tab.id}>Avatar complet ({tab.label})</option>
                                                                         {tab.variants.filter(v => v.type === 'options').map(v => (
                                                                            <option key={v.id} value={`${tab.id}.${v.id}`}>
                                                                               {v.label}

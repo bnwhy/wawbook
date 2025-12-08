@@ -397,6 +397,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              <div className="p-4 space-y-6 overflow-y-auto flex-1">
                 {activeTab && activeTab.variants.map(variant => {
                   const currentValue = selections[activeTabId]?.[variant.id];
+                  const options = variant.options || [];
 
                   // --- RENDER: TEXT INPUT ---
                   if (variant.type === 'text') {
@@ -419,16 +420,16 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
                   // --- RENDER: VISUAL OPTIONS (Colors/Icons) ---
                   // Check if options have 'resource' (colors/images) or just labels
-                  const isColorPicker = variant.options.some(o => o.resource && o.resource.startsWith('#'));
-                  const hasThumbnails = variant.options.some(o => o.thumbnail);
-                  const isGrid = variant.options.length > 6 && !isColorPicker;
+                  const isColorPicker = options.some(o => o.resource && o.resource.startsWith('#'));
+                  const hasThumbnails = options.some(o => o.thumbnail);
+                  const isGrid = options.length > 6 && !isColorPicker;
 
                   if (isColorPicker) {
                     return (
                       <div key={variant.id} className="space-y-2">
                          <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
                          <div className="flex gap-3 flex-wrap">
-                            {variant.options.map((opt) => (
+                            {options.map((opt) => (
                               <button
                                 key={opt.id}
                                 onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
@@ -447,7 +448,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                        <div key={variant.id} className="space-y-2">
                           <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
                           <div className="flex gap-3 flex-wrap">
-                             {variant.options.map((opt) => (
+                             {options.map((opt) => (
                                <button
                                  key={opt.id}
                                  onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
@@ -471,7 +472,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     <div key={variant.id} className="space-y-2">
                        <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
                        <div className={`grid ${isGrid ? 'grid-cols-4' : 'grid-cols-2'} gap-2`}>
-                          {variant.options.map((opt) => (
+                          {options.map((opt) => (
                             <button
                               key={opt.id}
                               onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}

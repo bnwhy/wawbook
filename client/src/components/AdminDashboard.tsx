@@ -25,16 +25,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
 
-  // Helper to generate combinations for Storyboard (Global)
-  const generateCombinations = (book: BookProduct) => {
+  const currentCombinations = React.useMemo(() => {
+    if (!selectedBook) return [];
+    
     // 1. Find all "character" tabs
-    const charTabs = book.wizardConfig.tabs.filter(t => t.type === 'character');
+    const charTabs = selectedBook.wizardConfig.tabs.filter(t => t.type === 'character');
     
     if (charTabs.length === 0) return ['Défaut'];
 
     // 2. Find all "options" variants within those tabs
-    // We want a flat list of ALL option-sets to combine.
-    // e.g. [ [Boy, Girl], [Short, Long], [Blue, Green] ]
     const allOptionSets: { label: string, options: any[] }[] = [];
 
     charTabs.forEach(tab => {
@@ -50,16 +49,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     if (allOptionSets.length === 0) return ['Défaut'];
 
-    // 3. Cartesian Product
+    // 3. Cartesian Product with LIMIT
     const cartesian = (args: any[]) => {
         const r: any[] = [];
         const max = args.length - 1;
+        const LIMIT = 2000; // Limit to prevent crash
+
         function helper(arr: any[], i: number) {
+            if (r.length >= LIMIT) return;
+
             for (let j = 0, l = args[i].length; j < l; j++) {
-                const a = arr.slice(0); // clone arr
+                const a = arr.slice(0);
                 a.push(args[i][j]);
-                if (i === max) r.push(a);
-                else helper(a, i + 1);
+                if (i === max) {
+                    r.push(a);
+                    if (r.length >= LIMIT) return;
+                }
+                else {
+                    helper(a, i + 1);
+                    if (r.length >= LIMIT) return;
+                }
             }
         }
         helper([], 0);
@@ -70,12 +79,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const combinations = cartesian(optionsLists);
 
     // 4. Map to strings (keys)
-    // Format: "Option1_Option2_..." (sorted IDs)
-    return combinations.map(combo => {
+    const results = combinations.map(combo => {
         const ids = combo.map((o: any) => o.id).sort();
         return ids.join('_');
     });
-  };
+
+    if (results.length >= 2000) {
+        results.push('... (Liste tronquée pour la performance)');
+    }
+    
+    return results;
+  }, [selectedBook]);
 
   // Helper to generate combinations for Avatar Mappings (Per Tab)
   const generateAvatarCombinations = (tab: WizardTab) => {
@@ -111,8 +125,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return { key, label, parts: combo };
      });
   };
-
-  const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
 
   const handleSaveBook = (updatedBook: BookProduct) => {
     updateBook(updatedBook);

@@ -16,7 +16,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [sortConfig, setSortConfig] = useState<{ key: keyof BookProduct, direction: 'asc' | 'desc' } | null>(null);
 
   // Content Editor State
-  const [selectedVariant, setSelectedVariant] = useState<string>('default'); // Used for previewing specific combinations
+  const [selectedVariant, setSelectedVariant] = useState<string>(''); // Used for previewing specific combinations
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedAvatarTabId, setSelectedAvatarTabId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
@@ -26,36 +26,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
 
-  // Helper to generate combinations for Storyboard (Global)
-  const generateCombinations = (book: BookProduct) => {
-    const tabs = book.wizardConfig.tabs;
-    if (tabs.length === 0) return ['Défaut'];
-
-    // Get variants for each tab
-    const tabValues = tabs.map(tab => {
-      if (tab.variants.length > 0) {
-        // If variants have options, flatten them: "Variant + Option"
-        // If a variant has NO options, just use "Variant"
-        return tab.variants.flatMap(v => {
-          if (v.options && v.options.length > 0) {
-             return v.options.map(o => `${v.label} + ${o.label}`);
-          }
-          return [v.label];
-        });
-      }
-      return [tab.label];
-    });
-    
-    if (tabValues.length === 0) return ['Défaut'];
-    
-    // Calculate product
-    let combinations = tabValues[0];
-    for (let i = 1; i < tabValues.length; i++) {
-        combinations = combinations.flatMap(d => tabValues[i].map(e => `${d} + ${e}`));
-    }
-    
-    return combinations;
-  };
 
   // Helper to generate combinations for Avatar Mappings (Per Tab)
   const generateAvatarCombinations = (tab: WizardTab) => {
@@ -92,7 +62,64 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
      });
   };
 
+  // Helper to generate combinations for Storyboard (Global)
+  // Returns objects with label and detailed selections per tab
+  const generateCombinations = (book: BookProduct) => {
+    const tabs = book.wizardConfig.tabs.filter(t => t.type === 'character');
+    if (tabs.length === 0) return [{ label: 'Défaut', selections: {} }];
+
+    // For each tab, get all valid avatar combinations
+    // Returns: [{ tabId: 'child', combos: [{ key: 'Blond_Short', label: '...', parts: [...] }] }, ...]
+    const tabCombos = tabs.map(tab => {
+        const combos = generateAvatarCombinations(tab);
+        if (combos.length === 0) return { tabId: tab.id, combos: [{ key: 'default', label: tab.label }] };
+        return { tabId: tab.id, combos };
+    });
+
+    // Cartesian product of tabCombos
+    // We want to produce [{ label: "Child: Blond + Dad: Beard", selections: { child: "Blond_Short", dad: "Beard_..." } }]
+    
+    const cartesian = (args: any[]) => {
+       const r: any[] = [];
+       const max = args.length - 1;
+       function helper(arr: any[], i: number) {
+          for (let j = 0, l = args[i].combos.length; j < l; j++) {
+             const a = arr.slice(0);
+             a.push({ tabId: args[i].tabId, combo: args[i].combos[j] });
+             if (i === max) r.push(a);
+             else helper(a, i + 1);
+          }
+       }
+       helper([], 0);
+       return r;
+    };
+
+    const globalCombos = cartesian(tabCombos);
+
+    return globalCombos.map((group: any[]) => {
+        const selections: Record<string, string> = {};
+        const labels: string[] = [];
+        
+        group.forEach(item => {
+            selections[item.tabId] = item.combo.key;
+            labels.push(`${item.combo.label}`);
+        });
+
+        return {
+            label: labels.join(' | '),
+            selections
+        };
+    });
+  };
+
   const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
+  
+  // Set default variant if none selected
+  React.useEffect(() => {
+     if (currentCombinations.length > 0 && !selectedVariant) {
+        setSelectedVariant(JSON.stringify(currentCombinations[0]));
+     }
+  }, [currentCombinations, selectedVariant]);
 
   const handleSaveBook = (updatedBook: BookProduct) => {
     updateBook(updatedBook);
@@ -1197,10 +1224,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        <select 
                                           value={selectedVariant}
                                           onChange={(e) => setSelectedVariant(e.target.value)}
-                                          className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral"
+                                          className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral max-w-[200px]"
                                        >
-                                          {currentCombinations.map(c => (
-                                             <option key={c} value={c}>{c}</option>
+                                          {currentCombinations.map((c: any, idx: number) => (
+                                             <option key={idx} value={JSON.stringify(c)}>{c.label}</option>
                                           ))}
                                        </select>
                                     </div>
@@ -1268,9 +1295,36 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          {el.type === 'static' && el.url ? (
                                                             <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
                                                          ) : (
-                                                            <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
-                                                               {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
-                                                            </div>
+                                                            (() => {
+                                                                // Handle Variable Image (Avatar)
+                                                                if (el.variableKey) {
+                                                                    // Parse variableKey (e.g., "child" or "child.hair")
+                                                                    const [tabId, variantId] = el.variableKey.split('.');
+                                                                    
+                                                                    // Check if we have a selected variant configuration
+                                                                    let variantConfig: any = null;
+                                                                    try {
+                                                                        variantConfig = selectedVariant ? JSON.parse(selectedVariant) : null;
+                                                                    } catch (e) {}
+
+                                                                    // If we are showing a full character avatar (no variantId)
+                                                                    if (tabId && !variantId && variantConfig && variantConfig.selections) {
+                                                                        const comboKey = variantConfig.selections[tabId];
+                                                                        if (comboKey) {
+                                                                            const avatarUrl = selectedBook.wizardConfig.avatarMappings?.[comboKey];
+                                                                            if (avatarUrl) {
+                                                                                return <img src={avatarUrl} className="w-full h-full object-contain" alt="Avatar" />;
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+
+                                                                return (
+                                                                    <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
+                                                                       {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
+                                                                    </div>
+                                                                );
+                                                            })()
                                                          )}
                                                       </div>
                                                    ))
@@ -1531,6 +1585,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   <option value="">Choisir une variable image...</option>
                                                                   {selectedBook.wizardConfig.tabs.map(tab => (
                                                                      <optgroup key={tab.id} label={tab.label}>
+                                                                        <option value={tab.id}>Avatar complet ({tab.label})</option>
                                                                         {tab.variants.filter(v => v.type === 'options').map(v => (
                                                                            <option key={v.id} value={`${tab.id}.${v.id}`}>
                                                                               {v.label}

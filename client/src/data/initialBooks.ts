@@ -22,6 +22,7 @@ import birthImage from '@assets/generated_images/children\'s_book_cover_for_birt
 import birthdayImage from '@assets/generated_images/children\'s_book_cover_for_birthday_occasion_with_french_title.png';
 import fathersDayImage from '@assets/generated_images/children\'s_book_cover_for_father\'s_day_occasion_with_french_title.png';
 import mothersDayImage from '@assets/generated_images/children\'s_book_cover_for_mother\'s_day_occasion_with_french_title.png';
+import boyBlondAvatar from '@assets/generated_images/watercolor_boy_avatar_light_skin_blond_hair_short.png';
 
 // Wizard Assets
 import hairBald from '@assets/generated_images/bald_hairstyle_icon.png';
@@ -204,6 +205,18 @@ const DEFAULT_CONTENT_CONFIG = {
   imageElements: []
 };
 
+const FAMILY_CONTENT_CONFIG = {
+    ...DEFAULT_CONTENT_CONFIG,
+    images: [
+        {
+            id: 'avatar-boy-blond',
+            combinationKey: 'Blond_Claire_Court_None_boy',
+            pageIndex: 1, // Assume page 1 for now or as needed
+            imageUrl: boyBlondAvatar
+        }
+    ]
+};
+
 export const INITIAL_BOOKS: BookProduct[] = [
   // THEMES
   {
@@ -275,15 +288,15 @@ export const INITIAL_BOOKS: BookProduct[] = [
   {
     id: 'dad',
     name: 'Mon Papa & Moi',
-    category: 'family',
-    theme: Theme.Bedtime,
-    badgeText: 'Famille',
-    coverImage: dadImage,
+    description: "Un livre plein d'amour pour dire à son papa combien on l'aime.",
     price: 29.90,
     oldPrice: 34.90,
-    description: "Un livre plein d'amour pour dire à son papa combien on l'aime.",
+    category: 'family',
+    theme: Theme.Bedtime,
+    coverImage: dadImage,
+    badgeText: 'Famille',
     wizardConfig: FAMILY_WIZARD_CONFIG,
-    contentConfig: DEFAULT_CONTENT_CONFIG,
+    contentConfig: FAMILY_CONTENT_CONFIG,
     associatedPaths: ['/for/Papa']
   },
   {

@@ -1,0 +1,1257 @@
+
+<!DOCTYPE html>
+<html lang="fr" class="">
+<head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>Prévisualiser le livre personnalisé de Louis | Librio</title>
+    
+                            <meta name="description" content="Prévisualisez le livre d&#039;enfant personnalisé que vous avez créé pour votre enfant. Ils sont là, sur chaque page !" />
+
+                        <meta name="keywords" content=""/>
+                    <meta name="robots" content="noindex, nofollow, noimageindex, noarchive, nosnippet">
+                        <link rel="canonical" href="https://librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p" />
+
+        
+        <meta property="og:type" content="product">
+    <meta property="og:title" content="Nos mots à nous">
+    <meta property="og:url" content="https://librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p">
+    <meta property="og:description" content="Un livre chaleureux qui met en avant le lien spécial entre un père et ses enfants. Une réflexion sincère et drôle sur la vie de famille telle qu’elle est.">
+    <meta property="og:locale:locale" content="fr">
+    <meta property="og:locale:alternate" content="de">
+    <meta property="product:category" content="Livres pour enfants personnalisés">
+
+                    <meta property="og:image" content="https://storage.googleapis.com/site-media-production/media/cache/product_gallery_full/6d/c0/75a6cfd4d19df74997ffbdec6023.png">
+    
+    
+        <link rel="apple-touch-icon" sizes="180x180" href="/build/shop/images/fav/apple-touch-icon.png?v=2">
+<link rel="apple-touch-icon-128x128" sizes="128x128" href="/build/shop/images/fav/apple-touch-icon-128x128.png?v=3">
+<link rel="icon" type="image/png" href="/build/shop/images/fav/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/build/shop/images/fav/favicon-16x16.png" sizes="16x16">
+<link rel="mask-icon" href="/build/shop/images/fav/safari-pinned-tab.svg" color="#255067">
+<link rel="shortcut icon" href="/build/shop/images/fav/favicon.ico?v=2">
+<meta name="theme-color" content="#ffffff">
+<meta name="msapplication-square150x150logo" content="/build/shop/images/fav/mstile-150x150.png">
+<meta name="msapplication-TileImage" content="/build/shop/images/fav/mstile-150x150.png">
+<meta name="msapplication-TileColor" content="#da532c">
+        <link rel="manifest" href="/build/shop/manifest.json">
+                            <meta name="generator" content="7.3.7" />
+                    
+    
+
+
+            <link rel="preload" href="/build/shop/fonts/icons.woff2" as="font">
+        <link rel="preload" href="/build/shop/fonts/brand-icons.woff2" as="font">
+
+        <link rel="preload" href="/build/shop/fonts/GothamRounded-Medium.woff2" as="font">
+        <link rel="preload" href="/build/shop/fonts/GothamRounded-Book.woff2" as="font">
+    
+    
+    
+    
+        
+<script data-cookieconsent="ignore">
+	window.dataLayer = window.dataLayer || [];
+	window.dataLayer.push({
+		'librio': {
+			'pageType': 'preview',
+			'code': 'librio-010',
+            'name': 'Nos\u0020mots\u0020\u00E0\u0020nous',
+            'taxon': 'Livres\u0020pour\u0020enfants\u0020personnalis\u00E9s'
+		}
+	});
+</script>
+
+
+        
+
+<script type="text/javascript">
+    window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({"env":"prod","route":"librio_taxonified_product_preview","channel":{"code":"eur","name":"EUR"},"locale":"fr","currency":"EUR"});
+    </script>
+<script data-cookieconsent="ignore">
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag("consent", "default", {
+        ad_personalization: "granted",
+        ad_storage: "granted",
+        ad_user_data: "granted",
+        analytics_storage: "granted",
+        functionality_storage: "granted",
+        personalization_storage: "granted",
+        security_storage: "granted",
+        wait_for_update: 2000,
+    });
+    gtag("set", "ads_data_redaction", false);
+    gtag("set", "url_passthrough", false);
+</script>
+
+<!-- Google Tag Manager  -->
+<script data-cookieconsent="ignore">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-53TQZW2');</script>
+<!-- End Google Tag Manager -->
+
+<script type="text/javascript">
+    var gtmEnhancedEcommerceCurrencyCode = 'EUR';
+</script>
+
+
+        
+    <link rel="stylesheet" href="https://storage.googleapis.com/librio-assets/7.3.7/build/shop/shop-vendor.b7cfe5c3.css">
+<link rel="stylesheet" href="https://storage.googleapis.com/librio-assets/7.3.7/build/shop/shop-entry.37ea2713.css">
+
+    
+
+
+
+
+    </head>
+<body class="">
+    <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-53TQZW2"
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+
+
+
+    <script>
+	window.fbAsyncInit = function() {
+		FB.init({
+			appId: '204346503467052',
+			logging: false,
+			xfbml: false,
+			version: 'v8.0'
+		});
+		FB.AppEvents.logPageView();
+	};
+
+	(function(d, s, id){
+		var js, fjs = d.getElementsByTagName(s)[0];
+		if (d.getElementById(id)) {return;}
+		js = d.createElement(s); js.id = id;
+		js.src = "https://connect.facebook.net/en_US/sdk.js";
+		fjs.parentNode.insertBefore(js, fjs);
+	}(document, 'script', 'facebook-jssdk'));
+</script>
+
+            
+        
+    
+
+
+
+                
+
+
+<section  class="librio-wrapper callout " >
+        <div class="ui container">
+        <div class="text-center">
+                            <span class="small-text">15 % de réduction pour l'achat de deux livres ou plus avec le code : <strong>YOUPI15</strong><br> 🎄 Livraison de Noël : Dernier délai pour les commandes en Suisse, le 20 décembre.🎄&nbsp;<a href="#delivery">Savoir plus</a></span>
+                <span class="large-text">15 % de réduction pour l'achat de deux livres ou plus avec le code : <strong>YOUPI15</strong><br> 🎄 Dernier délai pour les commandes de Noël en France : 16 décembre. 🎄&nbsp;<a href="#delivery">Savoir plus</a></span>
+                    </div>
+    </div>
+</section>
+
+        
+    
+<header class="librio-header-menu new">
+    <div class="container borderless secondary menu">
+        <nav class="navbar navbar-expand-lg navbar-light py-0 w-100">
+            <div class="librio-main-menu">
+                <button data-librio-mobile-menu-control class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <i data-menu-icon="open" class="navbar-toggler-icon large bars icon"></i>
+                </button>
+                <a class="librio-logo fitted mobile-menu-item" href="https://librio.com/fr/"><img width="122" height="40" class="ui middle aligned image" src="/build/shop/images/logo.png" alt="Librio"></a>
+                <div class="d-md-flex d-lg-none align-items-center justify-content-end librio-header-options">
+                                            <div class="item me-2 d-none d-md-block">
+                            <div class="dropdown" id="sylius-locale-selector">
+                                <button class="dropdown-toggle btn item sylius-active-locale" type="button" id="dropdownLocaleMobileButton" data-bs-toggle="dropdown" data-cyp-language=fr aria-expanded="false">
+                                    Français
+                                </button>
+                                <div class="dropdown-menu pointing" aria-labelledby="dropdownLocaleMobileButton">
+                                                                                                                    <a href="/en/personalised-childrens-books/lost-for-words/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-locale" data-cyp-language=en rel="nofollow">English</a>                                                                                                                    <a href="/de/personalisierte-kinderbuecher/ein-starkes-team/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-locale" data-cyp-language=de rel="nofollow">Deutsch</a>                                                                                                                    <a href="/es/libros-infantiles-personalizados/nuestra-historia/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-locale" data-cyp-language=es rel="nofollow">Español</a>                                                                                                                                                                                                                                        <a href="/it/libri-personalizzati-per-bambini/quando-mancano-le-parole/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-locale" data-cyp-language=it rel="nofollow">Italiano</a>                                                                    </div>
+                            </div>
+                        </div>
+                                        <div class="item me-2 d-none d-md-block">
+                                                    
+<div class="dropdown " id="sylius-currency-selector">
+    <button class="dropdown-toggle btn item sylius-active-channel" type="button" id="dropdownChannelButton"
+            data-bs-toggle="dropdown" aria-expanded="false">EUR</button>
+    <div class="dropdown-menu pointing" aria-labelledby="dropdownChannelButton">
+                                    <a href="https://au.librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-channel">aud</a>
+                                                <a href="https://ch.librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-channel">chf</a>
+                                                <a href="https://uk.librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-channel">gbp</a>
+                                                <a href="https://us.librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-channel">usd</a>
+                        </div>
+</div>
+
+                                            </div>
+                    <div class="item">
+                        <a href="/fr/cart/" data-librio-cart-toggle class="ui cart librio-mobile-cart-text text-decoration-none d-lg-none" aria-label="Cart"><i class="cart icon"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapse navbar-collapse librio-header-links" id="navbarMenu">
+                <div class="d-flex align-items-center justify-content-center d-lg-none w-100 py-4">
+                    <button class="navbar-toggler close-menu" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                        <svg data-menu-icon="close" width="20" height="19" viewBox="0 0 20 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M1.39383 18.2011C1.77873 18.5972 2.41183 18.6063 2.8079 18.2214L18.5706 2.90317C18.9667 2.51827 18.9757 1.88517 18.5908 1.4891L17.8939 0.771955C17.509 0.375887 16.8759 0.366832 16.4798 0.751732L0.717134 16.0699C0.321065 16.4548 0.312011 17.0879 0.696911 17.484L1.39383 18.2011Z" fill="#2E576F"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M18.0001 18.1463C17.6152 18.5424 16.9821 18.5515 16.586 18.1666L0.823337 2.84836C0.427268 2.46346 0.418214 1.83036 0.803114 1.43429L1.50004 0.717146C1.88494 0.321077 2.51804 0.312023 2.91411 0.696923L18.6768 16.0151C19.0729 16.4 19.0819 17.0331 18.697 17.4292L18.0001 18.1463Z" fill="#2E576F"/>
+                        </svg>
+                    </button>
+                    <button class="back-menu d-none" type="button" data-close-submenu>
+                        <svg width="14" height="23" viewBox="0 0 14 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5.30037 11.6763L5.12484 11.5L5.30037 11.3236L13.4126 3.17329C13.807 2.77701 13.8062 2.13625 13.4109 1.74089L12.217 0.547029C11.821 0.150985 11.1789 0.150999 10.7829 0.54702L10.7829 0.547029L0.546991 10.783L0.546982 10.783C0.150959 11.1789 0.150945 11.821 0.546947 12.2171L10.7829 22.453C11.179 22.849 11.821 22.849 12.217 22.453L12.3938 22.6297L12.217 22.453L13.4109 21.2591C13.8062 20.8638 13.807 20.223 13.4126 19.8267L5.30037 11.6763Z" fill="#2E576F" stroke="white" stroke-width="0.5"/>
+                        </svg>
+                    </button>
+                    <a class="librio-logo fitted mobile-menu-item" href="https://librio.com/fr/"><img class="ui middle aligned image" width="122" height="40" src="/build/shop/images/logo.png" alt="Librio"></a>
+                </div>
+                <div>
+                                    
+<ul class="navbar-nav mr-auto ms-md-2">
+            <li data-submenu-opener class="nav-item">
+                     <a class="nav-link first-level lh-0" href="https://librio.com/fr/produits" rel="index,follow"  role="button" data-open-submenu="navbarSubMenu1" data-text="Produits">
+                Produits
+                                      <svg class="d-lg-none" width="14" height="23" viewBox="0 0 14 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M8.65751 11.6763L8.83305 11.5L8.65751 11.3236L0.545324 3.17329C0.150898 2.77701 0.151656 2.13625 0.547017 1.74089L1.74087 0.547029C2.13692 0.150985 2.77898 0.150999 3.17496 0.54702L3.17497 0.547029L13.4109 10.783L13.4109 10.783C13.8069 11.1789 13.8069 11.821 13.4109 12.2171L3.17497 22.453C2.77893 22.849 2.13686 22.849 1.74088 22.453L1.5641 22.6297L1.74087 22.453L0.547017 21.2591C0.151656 20.8638 0.150898 20.223 0.545325 19.8267L8.65751 11.6763Z" fill="#2E576F" stroke="white" stroke-width="0.5"/>
+                     </svg>
+                              </a>
+        
+                    <div class="librio-header-sub-menu" id="navbarSubMenu1" data-submenu>
+                                <a class="sub-menu-title d-lg-none lh-0 mb-3" href="https://librio.com/fr/produits">Produits</a>
+                                                <ul class="row container mx-auto list-unstyled">
+                                    <li class="col-12 col-lg-4">
+                                                                        <p class="sub-menu-block-title"><strong>Livres</strong></p>
+                                                <ul class="sub-menu-block-list">
+                                                                                                                                                                                                            <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/produits" rel="index,follow" class="nav-link second-level">Tous les livres</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/nouveaux-livres-d-enfants" rel="index,follow" class="nav-link second-level">Nouveau</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/bestsellers-livres-pour-enfants" rel="index,follow" class="nav-link second-level">Bestsellers</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/livres-d-enfants-personnalises" rel="index,follow" class="nav-link second-level">Livres d'enfants personnalisés</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/livres-de-recherche-et-decouverte-personnalises" rel="index,follow" class="nav-link second-level">Livres à chercher et à trouver</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/courtes-histoires-pour-dormir" rel="index,follow" class="nav-link second-level">Histoires à dormir debout</a>
+                                        </li>
+                                                                                                                                                                                                                    </ul>
+                    </li>
+                                    <li class="col-12 col-lg-4">
+                                                                        <p class="sub-menu-block-title"><strong>Autre produits</strong></p>
+                                                <ul class="sub-menu-block-list">
+                                                                                                                                                                                                            <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cartes-de-voeux-personnalisees" rel="index,follow" class="nav-link second-level">Cartes de vœux</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/impressions-art-personnalisees/impression-dart-pour-bebe" rel="index,follow" class="nav-link second-level">Affiches</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                                                </ul>
+                    </li>
+                                                <li class="col-12 col-lg-4 pt-4 d-lg-flex justify-content-end">
+                    <div class="sub-menu-highlight w-auto">
+                                                                                                                                                                                                <a href="https://librio.com/fr/produits" rel="index,follow" >
+                                                    
+                                                <img width="300" height="225" class="sub-menu-highlight-image img-fluid" loading="lazy" src="https://storage.googleapis.com/site-media-production/1ef976d0-03cb-68c4-8979-650da8835f39/6d89206a885db92d2214c63cd5cd9e690f03ec97.thumbnail.png" alt="menu.all.personalised" />
+
+                                                    </a>
+                                                                                                                                                                                            <a class="sub-menu-highlight-text" href="https://librio.com/fr/produits" rel="index,follow" >
+                            Tous les produits personnalisés
+                        </a>
+                                                                </div>
+                </li>
+                                </ul>
+            </div>
+        
+    </li>
+                <li data-submenu-opener class="nav-item">
+                    <span class="nav-link first-level cursor-default lh-0" data-open-submenu="navbarSubMenu2">
+               Pour qui ?
+                                    <svg class="d-lg-none" width="14" height="23" viewBox="0 0 14 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8.65751 11.6763L8.83305 11.5L8.65751 11.3236L0.545324 3.17329C0.150898 2.77701 0.151656 2.13625 0.547017 1.74089L1.74087 0.547029C2.13692 0.150985 2.77898 0.150999 3.17496 0.54702L3.17497 0.547029L13.4109 10.783L13.4109 10.783C13.8069 11.1789 13.8069 11.821 13.4109 12.2171L3.17497 22.453C2.77893 22.849 2.13686 22.849 1.74088 22.453L1.5641 22.6297L1.74087 22.453L0.547017 21.2591C0.151656 20.8638 0.150898 20.223 0.545325 19.8267L8.65751 11.6763Z" fill="#2E576F" stroke="white" stroke-width="0.5"/>
+                    </svg>
+                            </span>
+        
+                    <div class="librio-header-sub-menu" id="navbarSubMenu2" data-submenu>
+                                <span class="sub-menu-title d-lg-none lh-0 mb-3">Pour qui ?</span>
+                                                <ul class="row container mx-auto list-unstyled">
+                                    <li class="col-12 col-lg-4">
+                                                                        <p class="sub-menu-block-title"><strong>Pour enfants</strong></p>
+                                                <ul class="sub-menu-block-list">
+                                                                                                                                                                                                            <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-personnalises-pour-bebe" rel="index,follow" class="nav-link second-level">Nouveau-nés</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-personnalises-0-a-3-ans" rel="index,follow" class="nav-link second-level">0-3 ans</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/livres-personnalises-pour-les-3-a-6-ans" rel="index,follow" class="nav-link second-level">3-6 ans</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/livres-pour-les-6-ans-et-plus" rel="index,follow" class="nav-link second-level">Enfants des écoles</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-pour-les-freres-et-soeurs" rel="index,follow" class="nav-link second-level">Frères et sœurs</a>
+                                        </li>
+                                                                                                                        </ul>
+                    </li>
+                                    <li class="col-12 col-lg-4">
+                                                                        <p class="sub-menu-block-title"><strong>Pour adultes</strong></p>
+                                                <ul class="sub-menu-block-list">
+                                                                                                                                                                                                            <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-pour-papa" rel="index,follow" class="nav-link second-level">Papa</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-pour-maman" rel="index,follow" class="nav-link second-level">Maman</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/livres-enfants-personnalises/un-lien-magique" rel="index,follow" class="nav-link second-level">Grands-parents</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-pour-toute-la-famille" rel="index,follow" class="nav-link second-level">Famille</a>
+                                        </li>
+                                                                                                                        </ul>
+                    </li>
+                                                <li class="col-12 col-lg-4 pt-4 d-lg-flex justify-content-end">
+                    <div class="sub-menu-highlight w-auto">
+                                                                                                                                                                                        
+                                                <img width="300" height="225" class="sub-menu-highlight-image img-fluid" loading="lazy" src="https://storage.googleapis.com/site-media-production/1ef976cd-e932-6ea6-b7cd-5f394318786a/ae779792b93323515c8ea690aa221cef078f5475.thumbnail.png" alt="menu.gifts" />
+
+                                                    </a>
+                                                                                                                                                                                                            </div>
+                </li>
+                                </ul>
+            </div>
+        
+    </li>
+                <li data-submenu-opener class="nav-item">
+                    <span class="nav-link first-level cursor-default lh-0" data-open-submenu="navbarSubMenu3">
+               Occasion
+                                    <svg class="d-lg-none" width="14" height="23" viewBox="0 0 14 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8.65751 11.6763L8.83305 11.5L8.65751 11.3236L0.545324 3.17329C0.150898 2.77701 0.151656 2.13625 0.547017 1.74089L1.74087 0.547029C2.13692 0.150985 2.77898 0.150999 3.17496 0.54702L3.17497 0.547029L13.4109 10.783L13.4109 10.783C13.8069 11.1789 13.8069 11.821 13.4109 12.2171L3.17497 22.453C2.77893 22.849 2.13686 22.849 1.74088 22.453L1.5641 22.6297L1.74087 22.453L0.547017 21.2591C0.151656 20.8638 0.150898 20.223 0.545325 19.8267L8.65751 11.6763Z" fill="#2E576F" stroke="white" stroke-width="0.5"/>
+                    </svg>
+                            </span>
+        
+                    <div class="librio-header-sub-menu" id="navbarSubMenu3" data-submenu>
+                                <span class="sub-menu-title d-lg-none lh-0 mb-3">Occasion</span>
+                                                <ul class="row container mx-auto list-unstyled">
+                                    <li class="col-12 col-lg-4">
+                                                                        <p class="sub-menu-block-title"><strong>Les plus populaires</strong></p>
+                                                <ul class="sub-menu-block-list">
+                                                                                                                                                                                                            <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-personnalises-pour-bebe" rel="index,follow" class="nav-link second-level">Nouveau bébé</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeau-danniversaire" rel="index,follow" class="nav-link second-level">Anniversaire</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-pour-la-fete-des-peres" rel="index,follow" class="nav-link second-level">Fête des Pères</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-pour-la-fete-des-meres" rel="index,follow" class="nav-link second-level">Fête des Mères</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-de-noel" rel="index,follow" class="nav-link second-level">Noël</a>
+                                        </li>
+                                                                                                                                                                                                                    </ul>
+                    </li>
+                                    <li class="col-12 col-lg-4">
+                                                                        <p class="sub-menu-block-title"><strong>Evénements</strong></p>
+                                                <ul class="sub-menu-block-list">
+                                                                                                                                                                                                                                                                                                        <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-de-bapteme" rel="index,follow" class="nav-link second-level">Baptême</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-pour-la-rentree" rel="index,follow" class="nav-link second-level">Retour à l'école</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/cadeaux-de-paques" rel="index,follow" class="nav-link second-level">Pâques</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                                                                                                            <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/journee-de-lenfant" rel="index,follow" class="nav-link second-level">Journée des enfants</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/idees-de-cadeaux-pour-une-premiere-communion" rel="index,follow" class="nav-link second-level">Communion</a>
+                                        </li>
+                                                                                                                                                                                                                    </ul>
+                    </li>
+                                                <li class="col-12 col-lg-4 pt-4 d-lg-flex justify-content-end">
+                    <div class="sub-menu-highlight w-auto">
+                                                                                                                                                                                                <a href="https://librio.com/fr/cadeaux-de-noel" rel="index,follow" >
+                                                    
+                                                <img width="300" height="225" class="sub-menu-highlight-image img-fluid" loading="lazy" src="https://storage.googleapis.com/site-media-production/1ef976cc-4a4f-6682-b64d-5f454570440a/28bf9255e8e722e92a5f6dbed3ae99f6985a80dc.thumbnail.png" alt="menu.christmas" />
+
+                                                    </a>
+                                                                                                                                                                                            <a class="sub-menu-highlight-text" href="https://librio.com/fr/cadeaux-de-noel" rel="index,follow" >
+                            Des cadeaux de Noël
+                        </a>
+                                                                </div>
+                </li>
+                                </ul>
+            </div>
+        
+    </li>
+                <li data-submenu-opener class="nav-item">
+                     <a class="nav-link first-level lh-0" href="https://librio.com/fr/a-propos" rel="index,follow"  role="button" data-open-submenu="navbarSubMenu4" data-text="À propos de Librio">
+                À propos de Librio
+                                      <svg class="d-lg-none" width="14" height="23" viewBox="0 0 14 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M8.65751 11.6763L8.83305 11.5L8.65751 11.3236L0.545324 3.17329C0.150898 2.77701 0.151656 2.13625 0.547017 1.74089L1.74087 0.547029C2.13692 0.150985 2.77898 0.150999 3.17496 0.54702L3.17497 0.547029L13.4109 10.783L13.4109 10.783C13.8069 11.1789 13.8069 11.821 13.4109 12.2171L3.17497 22.453C2.77893 22.849 2.13686 22.849 1.74088 22.453L1.5641 22.6297L1.74087 22.453L0.547017 21.2591C0.151656 20.8638 0.150898 20.223 0.545325 19.8267L8.65751 11.6763Z" fill="#2E576F" stroke="white" stroke-width="0.5"/>
+                     </svg>
+                              </a>
+        
+                    <div class="librio-header-sub-menu" id="navbarSubMenu4" data-submenu>
+                                <a class="sub-menu-title d-lg-none lh-0 mb-3" href="https://librio.com/fr/a-propos">À propos de Librio</a>
+                                                <ul class="row container mx-auto list-unstyled">
+                                    <li class="col-12 col-lg-4">
+                                                                        <p class="sub-menu-block-title"><strong>L'entreprise</strong></p>
+                                                <ul class="sub-menu-block-list">
+                                                                                                                                                                                                            <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/a-propos" rel="index,follow" class="nav-link second-level">Qui sommes-nous ?</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/amis" rel="index,follow" class="nav-link second-level">Parrainez un ami</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/postes-a-pourvoir" rel="index,follow" class="nav-link second-level">Travailler à Librio</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/rabais" rel="index,follow" class="nav-link second-level">Réductions</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/presse" rel="index,follow" class="nav-link second-level">Demande de renseignements à la presse</a>
+                                        </li>
+                                                                                                                        </ul>
+                    </li>
+                                    <li class="col-12 col-lg-4">
+                                                                        <p class="sub-menu-block-title"><strong>Nos valeurs</strong></p>
+                                                <ul class="sub-menu-block-list">
+                                                                                                                                                                                                            <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/plus-quun-livre" rel="index,follow" class="nav-link second-level">Plus qu'un livre</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/arbres" rel="index,follow" class="nav-link second-level">Engagement environnemental</a>
+                                        </li>
+                                                                                                                                                                                                                                                                                <li class="sub-menu-block-list-item">
+                                            <a href="https://librio.com/fr/social" rel="index,follow" class="nav-link second-level">Engagement social</a>
+                                        </li>
+                                                                                                                        </ul>
+                    </li>
+                                                <li class="col-12 col-lg-4 pt-4 d-lg-flex justify-content-end">
+                    <div class="sub-menu-highlight w-auto">
+                                                                                                                                                                                                <a href="https://blog.librio.com/"  >
+                                                    
+                                                <img width="300" height="225" class="sub-menu-highlight-image img-fluid" loading="lazy" src="https://storage.googleapis.com/site-media-production/1ef976cb-0f98-65a8-820c-533f69acc36f/c41569893aadde4f914e34c4525273b058f69af4.thumbnail.png" alt="menu.blog" />
+
+                                                    </a>
+                                                                                                                                                                                            <a class="sub-menu-highlight-text" href="https://blog.librio.com/"  >
+                            Notre Blog
+                        </a>
+                                                                </div>
+                </li>
+                                </ul>
+            </div>
+        
+    </li>
+    </ul>
+
+                                </div>
+
+                <div class="librio-beacon nav-link d-lg-none" data-librio-beacon-toggle="">Aide</div>
+
+                <div class="d-lg-flex align-items-center justify-content-end librio-header-options">
+                                            <div class="item">
+                            <div class="dropdown" id="sylius-locale-selector">
+                                <button class="dropdown-toggle btn item sylius-active-locale" type="button" id="dropdownLocaleButton" data-bs-toggle="dropdown" data-cyp-language=fr aria-expanded="false">
+                                    Français
+                                </button>
+                                <div class="dropdown-menu pointing" aria-labelledby="dropdownLocaleButton">
+                                                                                                                    <a href="/en/personalised-childrens-books/lost-for-words/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-locale" data-cyp-language=en rel="nofollow">English</a>                                                                                                                    <a href="/de/personalisierte-kinderbuecher/ein-starkes-team/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-locale" data-cyp-language=de rel="nofollow">Deutsch</a>                                                                                                                    <a href="/es/libros-infantiles-personalizados/nuestra-historia/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-locale" data-cyp-language=es rel="nofollow">Español</a>                                                                                                                                                                                                                                        <a href="/it/libri-personalizzati-per-bambini/quando-mancano-le-parole/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-locale" data-cyp-language=it rel="nofollow">Italiano</a>                                                                    </div>
+                            </div>
+                        </div>
+                                        <div class="item">
+                                                    
+<div class="dropdown " id="sylius-currency-selector">
+    <button class="dropdown-toggle btn item sylius-active-channel" type="button" id="dropdownChannelButton"
+            data-bs-toggle="dropdown" aria-expanded="false">EUR</button>
+    <div class="dropdown-menu pointing" aria-labelledby="dropdownChannelButton">
+                                    <a href="https://au.librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-channel">aud</a>
+                                                <a href="https://ch.librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-channel">chf</a>
+                                                <a href="https://uk.librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-channel">gbp</a>
+                                                <a href="https://us.librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous/p/d741b1878201bec471416c0c95a91204" class="dropdown-item sylius-available-channel">usd</a>
+                        </div>
+</div>
+
+                                            </div>
+
+                    <div class="item d-none d-lg-block">
+                        
+
+<div class="dropdown me-0" id="sylius-cart-selector">
+    <button class="dropdown-toggle no-arrow btn item sylius-active-locale" type="button" id="sylius-cart-button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="cart icon"></i>
+        <span id="sylius-cart-total">
+            €0.00
+        </span>
+    </button>
+    <div class="dropdown-menu dropdown-menu-end pointing right" aria-labelledby="sylius-cart-button">
+        <div class="flowing cart hidden popup librio-cart-summary pb-2">
+                            Votre panier est vide.
+            
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+                    </div>
+                </div>
+                <div class="d-flex justify-content-center d-lg-none mt-5 mb-3">
+                    <a class="text-primary text-decoration-none ps-md-4 pe-md-4 mx-3 mx-md-0" href="https://fb.com/librio.en/"><i class="large fitted facebook f icon"></i></a>
+                    <a class="text-primary text-decoration-none ps-md-4 pe-md-4 mx-3 mx-md-0" href="https://instagram.com/libriogram.en/"><i class="large fitted instagram icon"></i></a>
+                    <a class="text-primary text-decoration-none ps-md-4 pe-md-0 mx-3 mx-md-0" href="https://blog.librio.com/?lang=en"><i class="large fitted rss icon"></i></a>
+                </div>
+            </div>
+
+        </nav>
+    </div>
+</header>
+
+    <main role="main">
+        
+
+                                                                                                                                                
+    <aside data-fbq-item="librio-010" data-fbq-childname="Louis,Maxime" data-fbq-childgender="male,male"></aside>
+
+            <section class="librio-wrapper product-preview librio-010">
+            <div class="container text-center">
+                <div class="loader-container loader-container--book" data-librio-loader>
+                                        <img src="https://previews.librio.com/librio-010/coversb?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick&amp;cover=right"
+                         alt="Nos mots à nous"
+                         width="600"
+                         height="720"
+                         class="loader-container__book-cover img-fluid"
+                         data-librio-img-loader
+                         fetchpriority="high"
+                         loading="eager"
+                         decoding="async" />
+                    <div class="loader-container__animation">
+                        <img src="/build/shop/images/preview/book-animation.png" alt="Librio book animation" width="92" />
+                        <strong class="mt-3">Ton histoire prend vie…</strong>
+                    </div>
+                </div>
+            </div>
+            
+                                <div class="preview-container ui container"
+                    data-librio-preview
+                    data-product-configuration='{&quot;global&quot;:{&quot;configuratorType&quot;:&quot;librio-010&quot;,&quot;previewType&quot;:&quot;librio-010&quot;,&quot;configuratorAssetLocation&quot;:&quot;configurator\/librio-010\/&quot;,&quot;previewAssetLocation&quot;:&quot;configurator\/default\/&quot;},&quot;roles&quot;:{&quot;viable&quot;:[&quot;sidekick&quot;,&quot;protagonist&quot;],&quot;required&quot;:[&quot;sidekick&quot;,&quot;protagonist&quot;],&quot;optional&quot;:[]},&quot;models&quot;:{&quot;protagonist&quot;:{&quot;id&quot;:&quot;protagonist&quot;,&quot;roles&quot;:[&quot;protagonist&quot;],&quot;fields&quot;:{&quot;required&quot;:[&quot;gender&quot;,&quot;skinColour&quot;,&quot;clothes&quot;,&quot;hairColour&quot;],&quot;optional&quot;:[&quot;hairStyle&quot;,&quot;glasses&quot;]},&quot;variations&quot;:{&quot;gender&quot;:[&quot;male&quot;,&quot;female&quot;],&quot;skinColour&quot;:[&quot;white&quot;,&quot;tan&quot;,&quot;medium-tan&quot;,&quot;dark-brown&quot;,&quot;brown&quot;,&quot;black&quot;],&quot;hairStyle&quot;:[false,&quot;0&quot;,&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,&quot;5&quot;,&quot;6&quot;,&quot;7&quot;,&quot;8&quot;,&quot;9&quot;],&quot;hairColour&quot;:[&quot;black&quot;,&quot;blonde&quot;,&quot;brown&quot;,&quot;red&quot;],&quot;clothes&quot;:[&quot;coral&quot;,&quot;yellow&quot;,&quot;green&quot;,&quot;orange&quot;],&quot;glasses&quot;:[false,&quot;black&quot;]}},&quot;sidekick&quot;:{&quot;id&quot;:&quot;sidekick&quot;,&quot;roles&quot;:[&quot;sidekick&quot;],&quot;fields&quot;:{&quot;required&quot;:[&quot;gender&quot;,&quot;skinColour&quot;,&quot;clothes&quot;,&quot;hairColour&quot;],&quot;optional&quot;:[&quot;hairStyle&quot;,&quot;beard&quot;,&quot;glasses&quot;]},&quot;variations&quot;:{&quot;gender&quot;:[&quot;male&quot;],&quot;skinColour&quot;:[&quot;white&quot;,&quot;tan&quot;,&quot;medium-tan&quot;,&quot;dark-brown&quot;,&quot;brown&quot;,&quot;black&quot;],&quot;hairStyle&quot;:[false,&quot;0&quot;,&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,&quot;5&quot;,&quot;6&quot;,&quot;7&quot;,&quot;8&quot;,&quot;9&quot;,&quot;10&quot;,&quot;11&quot;],&quot;hairColour&quot;:[&quot;black&quot;,&quot;blonde&quot;,&quot;brown&quot;,&quot;red&quot;,&quot;grey&quot;],&quot;beard&quot;:[false,&quot;0&quot;,&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,&quot;5&quot;,&quot;6&quot;,&quot;7&quot;,&quot;8&quot;],&quot;clothes&quot;:[&quot;yellow&quot;,&quot;green&quot;,&quot;red&quot;,&quot;blue&quot;],&quot;glasses&quot;:[false,&quot;black&quot;]}}}}'
+                    data-json-token='{&quot;hash&quot;:&quot;d741b1878201bec471416c0c95a91204&quot;,&quot;product&quot;:&quot;librio-010&quot;,&quot;configuration&quot;:{&quot;id&quot;:&quot;librio-010&quot;,&quot;resourceBase&quot;:&quot;products\/librio-010\/&quot;,&quot;language&quot;:&quot;fr&quot;,&quot;characters&quot;:[{&quot;name&quot;:&quot;Louis&quot;,&quot;role&quot;:&quot;sidekick&quot;,&quot;skinColour&quot;:&quot;white&quot;,&quot;hairColour&quot;:&quot;blonde&quot;,&quot;glasses&quot;:false,&quot;gender&quot;:&quot;male&quot;,&quot;hairStyle&quot;:&quot;9&quot;,&quot;clothes&quot;:&quot;green&quot;,&quot;beard&quot;:false,&quot;model&quot;:&quot;sidekick&quot;},{&quot;name&quot;:&quot;Maxime&quot;,&quot;role&quot;:&quot;protagonist&quot;,&quot;skinColour&quot;:&quot;tan&quot;,&quot;hairColour&quot;:&quot;black&quot;,&quot;glasses&quot;:false,&quot;gender&quot;:&quot;male&quot;,&quot;beard&quot;:false,&quot;clothes&quot;:&quot;green&quot;,&quot;hairStyle&quot;:&quot;0&quot;,&quot;model&quot;:&quot;protagonist&quot;}]}}'
+                    data-dimensions='{&quot;w&quot;:666.6666666666667,&quot;h&quot;:800}'
+                                                >
+                                            <div class="cover" data-page-side data-background-file="https://previews.librio.com/librio-010/coversb?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick&amp;cover=right" >
+                            
+                                                                <div class="stamp stamp--hide start-preview d-none d-md-block" data-librio-preview-cover-helper><b>CLIQUER</b> ici<br>pour un aperçu</div>
+                                    <div class="stamp stamp--hide start-preview d-md-none" data-librio-preview-cover-helper><b>SWIPE</b><br>pour prévisualiser</div>
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/00dedicationl?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/00dedicationr?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick&amp;dedication=" >
+                            
+                                <div class="text-overlay dedication" data-librio-preview-dedication-display></div>
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/01l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/01r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/02l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/02r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/03l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/03r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/04l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/04r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/05l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/05r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/06l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/06r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/07l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/07r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/08l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/08r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/09l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/09r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/10l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/10r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/11l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/11r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/12l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/12r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/13l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/13r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/14l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/14r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/15l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/15r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/16l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/16r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/17l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/17r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/18l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/18r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/19l?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="page" data-page-side data-background-file="https://previews.librio.com/librio-010/19r?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick" >
+                            
+                                                    </div>
+                                            <div class="cover" data-page-side data-background-file="https://previews.librio.com/librio-010/coversb?locale=fr&amp;name=Maxime__Louis&amp;hash=male_Btan_Cgreen_S0_Oblack_Y_Rprotagonist__male_Bwhite_Cgreen_S9_Oblonde_Y_Rsidekick&amp;cover=left" >
+                            
+                                                    </div>
+                                    </div>
+            
+            <div class="click-to-edit-link content text-center py-2 py-md-4">
+                <svg width="10" height="15" viewBox="0 0 10 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7.58979 0.231959C7.96786 -0.0773196 8.53497 -0.0773196 8.87524 0.231959L9.7448 1.02234C10.0851 1.33162 10.0851 1.84708 9.7448 2.19072L3.9225 7.48282L9.7448 12.8093C10.0851 13.1529 10.0851 13.6684 9.7448 13.9777L8.87524 14.768C8.53497 15.0773 7.96786 15.0773 7.58979 14.768L0.255199 8.06701C-0.0850662 7.75773 -0.0850662 7.24227 0.255199 6.93299L7.58979 0.231959Z" fill="#205872"/>
+                </svg>
+                <a class="ms-2" href="/fr/livres-enfants-personnalises/nos-mots-a-nous/c/d741b1878201bec471416c0c95a91204">
+                    <u class="fw-bold text-primary">Cliquez pour modifier vos personnages</u>
+                </a>
+            </div>
+
+        </section>
+
+                                                                        
+        <section class="librio-wrapper product-preview-options librio-010">
+            <div class="container">
+                <div class="row justify-content-center">
+                                            <div class="col-12 col-md-4 py-3 dedication">
+                            <h2>Ajouter une dédicace</h2>
+                            <p class="dedication-intro">Nous imprimerons votre message spécial dans votre livre
+</p>
+                            <button class="btn librio-button basic primary add-btn d-none d-md-inline-block" data-librio-dedication-modal-show>Ajouter une dédicace</button>
+                            <div class="preview-dedication d-md-none" data-librio-preview-dedication-container>
+                                <div class="title no-top-padding">
+                                    <button class="btn librio-button primary basic add-btn px-3 collapsed"
+                                            data-bs-toggle="collapse" href="#collapseDedication" role="button"
+                                            aria-expanded="false" aria-controls="collapseDedication">
+                                        Ajouter
+                                    </button>
+                                </div>
+                                <div class="content mt-3 collapse" id="collapseDedication">
+                                    <div class="content">
+                                                                                    <i class="big info circle icon dedication-disclaimer" data-bs-container="#collapseDedication" data-bs-toggle="popover" data-bs-html="true" data-bs-placement="left" data-bs-custom-class="popover-primary" data-bs-content="Attention : la dédicace imprimée peut différer légèrement de l'aperçu, surtout si vous ajoutez de nouvelles lignes. N'hésitez pas à nous contacter si vous avez des questions."></i>
+                                                                                <div class="description form">
+                                                                                                                                    <div class="d-none alert alert-danger" role="alert" data-librio-alert-bound-to="dedication" data-librio-dedication-error-message>Il semble que vous ayez utilisé des caractères spéciaux que nous ne pouvons pas imprimer. Veuillez vous en tenir aux lettres et aux chiffres.</div>
+                                            <textarea class="dedication-entry w-100" maxlength="600" data-librio-character-counter data-librio-preview-dedication data-original-dedication="Beaucoup&#x20;d&#x2019;autres&#x20;ont&#x20;v&#x00E9;cu&#x20;cette&#x20;aventure&#x20;avant&#x20;nous,&#x20;mais&#x20;notre&#x20;histoire&#x20;sera&#x20;toujours&#x20;unique,&#x20;parce&#x20;que&#x20;nous&#x20;l&#x2019;&#x00E9;crivons&#x20;ensemble.&#x20;&#x0A;&#x0A;Gr&#x00E2;ce&#x20;&#x00E0;&#x20;l&#x2019;amour,&#x20;&#x00E0;&#x20;la&#x20;confiance,&#x20;&#x00E0;&#x20;l&#x2019;&#x00E9;coute&#x20;et&#x20;&#x00E0;&#x20;tous&#x20;les&#x20;bons&#x20;et&#x20;mauvais&#x20;moments&#x20;que&#x20;nous&#x20;partageons,&#x20;nous&#x20;avancerons&#x20;toujours&#x20;main&#x20;dans&#x20;la&#x20;main.&#x20;&#x0A;Jour&#x20;apr&#x00E8;s&#x20;jour.&#x20;Ann&#x00E9;e&#x20;apr&#x00E8;s&#x20;ann&#x00E9;e.&#x0A;&#x20;&#x0A;Ce&#x20;sera&#x20;l&#x2019;aventure&#x20;de&#x20;toute&#x20;une&#x20;vie&#x20;&#x21;" data-librio-bound-field="dedication">Beaucoup d’autres ont vécu cette aventure avant nous, mais notre histoire sera toujours unique, parce que nous l’écrivons ensemble. 
+
+Grâce à l’amour, à la confiance, à l’écoute et à tous les bons et mauvais moments que nous partageons, nous avancerons toujours main dans la main. 
+Jour après jour. Année après année.
+ 
+Ce sera l’aventure de toute une vie !</textarea>
+                                                                                    </div>
+                                    </div>
+                                    <div class="row actions">
+                                        <div class="col">
+                                            <button type="button" class="btn librio-button primary basic w-100 disabled" data-librio-reset-dedication>
+                                                Réinitialiser
+                                            </button>
+                                        </div>
+                                        <div class="col">
+                                            <button type="button" class="btn librio-button primary basic flat w-100" data-librio-close-dedication>
+                                                Sauvegarder
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                        <div class="col-12 col-md-8">
+                                                    
+
+
+    
+
+
+
+<div id="sylius-product-selecting-variant">
+
+    
+
+    <form name="sylius_add_to_cart" method="post" action="/fr/ajax/cart/add?productId=23" id="sylius-product-adding-to-cart" class="row loadable form mx-0" novalidate="novalidate" data-redirect="/fr/cart/">
+    
+
+    <div class="col-12 col-md-7 col-lg-6 py-3 px-0 px-md-3">
+        <h2>Choisir le format</h2>
+        <p>Quel type de couverture souhaitez-vous ?</p>
+        <div class="ui red label bottom pointing hidden sylius-validation-error" id="sylius-cart-validation-error"></div>
+                                    
+
+<div class="field" id="sylius-product-variants">
+    <table class="radio-as-buttons w-100">                                 <tr>
+                <td class="pb-2">
+                                                                                        
+                    
+                        <input type="radio" class="hidden" id="sylius_add_to_cart_cartItem_variant_0" name="sylius_add_to_cart[cartItem][variant]" required="required" value="librio_hb_librio10"  /><label for="sylius_add_to_cart_cartItem_variant_0" class="button" data-librio-enable-add-to-cart="null" ><div class="image"><img alt="Couverture&#x20;rigide" src="/build/shop/images/formats/librio_hb.png" /></div><div class="detail"><div class="top"><span class="name">Couverture rigide</span><span class="special">Le plus populaire</span></div><span class="description">Souvenir élégant et durable ; parfait pour des souvenirs mémorables et pour faire des cadeaux.</span><span class="price sylius-product-variant-price" data-applied-promotions="[]"  >€44.99</span></div></label>
+
+                                        
+                </td>
+            </tr>
+                                <tr>
+                <td class="">
+                                                                                        
+                    
+                        <input type="radio" class="hidden" id="sylius_add_to_cart_cartItem_variant_1" name="sylius_add_to_cart[cartItem][variant]" required="required" value="librio_sb_librio10"  /><label for="sylius_add_to_cart_cartItem_variant_1" class="button" data-librio-enable-add-to-cart="null" ><div class="image"><img alt="Couverture&#x20;souple" src="/build/shop/images/formats/librio_sb.png" /></div><div class="detail"><div class="top"><span class="name">Couverture souple</span></div><span class="description">Léger, flexible et polyvalent ; idéal pour un plaisir quotidien</span><span class="price sylius-product-variant-price" data-applied-promotions="[]"  >€34.99</span></div></label>
+
+                                        
+                </td>
+            </tr>
+            </table>
+</div>
+                        </div>
+    <div class="col-12 col-md-5 col-lg-6 py-3 complete-order px-0 px-md-2">
+        <h2 class="d-none d-md-block">Commande complète</h2>
+        <p class="d-none d-md-block" data-librio-preview-complete-message data-action-fulfilled="Cliquez ci-dessous pour continuer" data-action-required="Veuillez sélectionner un format pour continuer">
+                            Veuillez sélectionner un format pour continuer
+                                    </p>
+                <script>
+            var global_personalisation = {"id":"librio-010","resourceBase":"products\/librio-010\/","language":"fr","dedication":"","characters":[{"name":"Louis","role":"sidekick","skinColour":"white","hairColour":"blonde","glasses":false,"gender":"male","hairStyle":"9","clothes":"green","beard":false,"model":"sidekick"},{"name":"Maxime","role":"protagonist","skinColour":"tan","hairColour":"black","glasses":false,"gender":"male","beard":false,"clothes":"green","hairStyle":"0","model":"protagonist"}],"preview":{"background":{"image":"bg.png","ratio":"ratio1x1"},"microservices":true,"height":800}};
+        </script>
+        <input type="hidden" id="sylius_add_to_cart_cartItem_personalisation" name="sylius_add_to_cart[cartItem][personalisation]" rows="50" data-librio-configured-product="" value="{&quot;id&quot;:&quot;librio-010&quot;,&quot;resourceBase&quot;:&quot;products\/librio-010\/&quot;,&quot;language&quot;:&quot;fr&quot;,&quot;dedication&quot;:&quot;&quot;,&quot;characters&quot;:[{&quot;name&quot;:&quot;Louis&quot;,&quot;role&quot;:&quot;sidekick&quot;,&quot;skinColour&quot;:&quot;white&quot;,&quot;hairColour&quot;:&quot;blonde&quot;,&quot;glasses&quot;:false,&quot;gender&quot;:&quot;male&quot;,&quot;hairStyle&quot;:&quot;9&quot;,&quot;clothes&quot;:&quot;green&quot;,&quot;beard&quot;:false,&quot;model&quot;:&quot;sidekick&quot;},{&quot;name&quot;:&quot;Maxime&quot;,&quot;role&quot;:&quot;protagonist&quot;,&quot;skinColour&quot;:&quot;tan&quot;,&quot;hairColour&quot;:&quot;black&quot;,&quot;glasses&quot;:false,&quot;gender&quot;:&quot;male&quot;,&quot;beard&quot;:false,&quot;clothes&quot;:&quot;green&quot;,&quot;hairStyle&quot;:&quot;0&quot;,&quot;model&quot;:&quot;protagonist&quot;}],&quot;preview&quot;:{&quot;background&quot;:{&quot;image&quot;:&quot;bg.png&quot;,&quot;ratio&quot;:&quot;ratio1x1&quot;},&quot;microservices&quot;:true,&quot;height&quot;:800}}" />
+
+        <div class="d-block d-md-inline-block"  data-bs-toggle="tooltip" data-bs-placement="top" title="Veuillez sélectionner un format pour continuer" data-inverted="" data-position="top center" data-librio-add-to-cart-tooltip>
+            <button type="submit" class="btn librio-button primary checkout-btn  disabled" disabled data-librio-add-to-cart>Ajouter au panier</button>
+        </div>
+
+        <input type="hidden" id="sylius_add_to_cart__token" name="sylius_add_to_cart[_token]" value="1562f9379efd45c2256.0t-AQkzNyTYzUMPYJZh3T5zzYOIoY4sTxafInHrxRJU.k5e0Fji3hFdyM7C5bMszCPOAUKlkAcRVkdCs7w60N_iwvfIMOLWERQIAtA" />
+    </div>
+    </form>
+
+    
+</div>
+
+
+                                                
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <div class="modal fade" data-librio-dedication-modal id="dedicationModal" tabindex="-1" aria-labelledby="dedicationModal" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        Ajoutez un message unique
+                        <button type="button" class="btn btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="close icon"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="description ui form">
+                                                                                    <div class="d-none alert alert-danger" role="alert" data-librio-alert-bound-to="dedication" data-librio-dedication-error-message>Il semble que vous ayez utilisé des caractères spéciaux que nous ne pouvons pas imprimer. Veuillez vous en tenir aux lettres et aux chiffres.</div>
+                            <textarea class="dedication-entry w-100" maxlength="600" data-librio-character-counter data-librio-configurator-text-input data-librio-preview-dedication data-original-dedication="Beaucoup&#x20;d&#x2019;autres&#x20;ont&#x20;v&#x00E9;cu&#x20;cette&#x20;aventure&#x20;avant&#x20;nous,&#x20;mais&#x20;notre&#x20;histoire&#x20;sera&#x20;toujours&#x20;unique,&#x20;parce&#x20;que&#x20;nous&#x20;l&#x2019;&#x00E9;crivons&#x20;ensemble.&#x20;&#x0A;&#x0A;Gr&#x00E2;ce&#x20;&#x00E0;&#x20;l&#x2019;amour,&#x20;&#x00E0;&#x20;la&#x20;confiance,&#x20;&#x00E0;&#x20;l&#x2019;&#x00E9;coute&#x20;et&#x20;&#x00E0;&#x20;tous&#x20;les&#x20;bons&#x20;et&#x20;mauvais&#x20;moments&#x20;que&#x20;nous&#x20;partageons,&#x20;nous&#x20;avancerons&#x20;toujours&#x20;main&#x20;dans&#x20;la&#x20;main.&#x20;&#x0A;Jour&#x20;apr&#x00E8;s&#x20;jour.&#x20;Ann&#x00E9;e&#x20;apr&#x00E8;s&#x20;ann&#x00E9;e.&#x0A;&#x20;&#x0A;Ce&#x20;sera&#x20;l&#x2019;aventure&#x20;de&#x20;toute&#x20;une&#x20;vie&#x20;&#x21;" data-librio-bound-field="dedication">Beaucoup d’autres ont vécu cette aventure avant nous, mais notre histoire sera toujours unique, parce que nous l’écrivons ensemble. 
+
+Grâce à l’amour, à la confiance, à l’écoute et à tous les bons et mauvais moments que nous partageons, nous avancerons toujours main dans la main. 
+Jour après jour. Année après année.
+ 
+Ce sera l’aventure de toute une vie !</textarea>
+                                                                                        <div class="mb-0 mt-3 alert alert-warning" role="alert">Attention : la dédicace imprimée peut différer légèrement de l'aperçu, surtout si vous ajoutez de nouvelles lignes. N'hésitez pas à nous contacter si vous avez des questions.</div>
+                                                    </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="actions row w-100">
+                            <div class="col-6 pe-2">
+                                <button type="button" class="btn librio-button w-100 disabled" data-librio-reset-dedication>
+                                    Réinitialiser
+                                </button>
+                            </div>
+                            <div class="col-6 ps-2">
+                                <button type="button" class="btn librio-button flat w-100 positive" data-bs-dismiss="modal" data-librio-close-dedication>
+                                    Sauvegarder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        
+
+    
+    <input type="hidden" name="configured_product" value="{&quot;id&quot;:&quot;librio-010&quot;,&quot;resourceBase&quot;:&quot;products\/librio-010\/&quot;,&quot;language&quot;:&quot;fr&quot;,&quot;dedication&quot;:&quot;&quot;,&quot;characters&quot;:[{&quot;name&quot;:&quot;Louis&quot;,&quot;role&quot;:&quot;sidekick&quot;,&quot;skinColour&quot;:&quot;white&quot;,&quot;hairColour&quot;:&quot;blonde&quot;,&quot;glasses&quot;:false,&quot;gender&quot;:&quot;male&quot;,&quot;hairStyle&quot;:&quot;9&quot;,&quot;clothes&quot;:&quot;green&quot;,&quot;beard&quot;:false,&quot;model&quot;:&quot;sidekick&quot;},{&quot;name&quot;:&quot;Maxime&quot;,&quot;role&quot;:&quot;protagonist&quot;,&quot;skinColour&quot;:&quot;tan&quot;,&quot;hairColour&quot;:&quot;black&quot;,&quot;glasses&quot;:false,&quot;gender&quot;:&quot;male&quot;,&quot;beard&quot;:false,&quot;clothes&quot;:&quot;green&quot;,&quot;hairStyle&quot;:&quot;0&quot;,&quot;model&quot;:&quot;protagonist&quot;}],&quot;preview&quot;:{&quot;background&quot;:{&quot;image&quot;:&quot;bg.png&quot;,&quot;ratio&quot;:&quot;ratio1x1&quot;},&quot;microservices&quot;:true,&quot;height&quot;:800}}" data-librio-configured-product />
+        
+
+    </main>
+
+            <footer id="footer" class="footer">
+    <div class="container">
+        <div class="row flex-md-row-reverse">
+            <div class="col-12 col-md-7 col-lg-6">
+                <div class="ui inverted divided row">
+
+                    <div class="col-12 col-md-4 col-lg-5">
+                        <div class="row">
+    <div class="col-6 col-md-12 ps-3 py-3 customer-care">
+        <div class="inverted header h4">Service clientèle</div>
+        <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                                                                    <a class="item" href="https://help.librio.com/"  data-librio-beacon-toggle>
+                    Nous contacter / FAQ
+                </a>
+                            </li>
+                                                <li class="mb-2">
+                                                                                    <a class="item" href="https://librio.com/fr/terms" rel="noindex,nofollow" >
+                    Conditions générales de vente
+                </a>
+                            </li>
+                                                <li class="mb-2">
+                                                                                    <a class="item" href="https://librio.com/fr/privacy" rel="index,follow" >
+                    Charte de confidentialité
+                </a>
+                            </li>
+                                                <li class="mb-2">
+                                                                                    <a class="item" href="https://librio.com/fr/terms" rel="noindex,nofollow" >
+                    Mentions légales
+                </a>
+                            </li>
+                                 </ul>
+    </div>
+    <div class="col-6 col-md-12 ps-3 py-3 pt-md-4 librio-ag">
+        <div class="inverted header h4">© Librio AG</div>
+        <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                                                                    <a class="item" href="https://librio.com/fr/a-propos" rel="index,follow" >
+                    À propos de nous
+                </a>
+                            </li>
+                                                <li class="mb-2">
+                                                                                    <a class="item" href="https://librio.com/fr/plus-quun-livre" rel="index,follow" >
+                    Nos valeurs
+                </a>
+                            </li>
+                                                <li class="mb-2">
+                                                                                    <a class="item" href="https://librio.com/fr/postes-a-pourvoir" rel="index,follow" >
+                    Carrières
+                </a>
+                            </li>
+                                                <li class="mb-2">
+                                                                                    <a class="item" href="https://blog.librio.com/"  >
+                    Blog
+                </a>
+                            </li>
+                                                <li class="mb-2">
+                                                                                    <a class="item" href="https://librio.com/fr/presse" rel="index,follow" >
+                    Presse
+                </a>
+                            </li>
+                                 </ul>
+    </div>
+</div>
+
+                    </div>
+                    <div class="col-12 col-md-8 col-lg-7 pt-3 social">
+                        <div class="text-end payment-icons">
+                            <i class="librio-icon li-visa"></i>
+                            <i class="librio-icon li-mastercard"></i>
+                                                                                        <i class="librio-icon li-paypal"></i>
+                                                                                    <i class="librio-icon li-sofort"></i>
+                        </div>
+                        <div class="d-flex justify-content-between justify-content-md-end mt-3">
+                            <a class="text-white ps-md-4 pe-md-4 mx-3 mx-md-0" href="https://fb.com/librio.en/" aria-label="Facebook"><i class="big fitted facebook icon"></i></a>
+                            <a class="text-white ps-md-4 pe-md-4 mx-3 mx-md-0" href="https://instagram.com/libriogram.en/" aria-label="Instagram"><i class="big fitted instagram icon"></i></a>
+                            <a class="text-white ps-md-4 pe-md-0 mx-3 mx-md-0" href="https://blog.librio.com/?lang=en" aria-label="RSS"><i class="big fitted rss icon"></i></a>
+                        </div>
+                                                
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-12 col-md-5 col-lg-6 librio-world mt-3 mt-md-0">
+                <div class="row">
+                    <div class="col-12 col-md-6 col-lg-6 col-xl-6 pt-3">
+                        <div class="inverted header h4">L&#039;univers de Librio</div>
+<ul class="list-unstyled inverted">
+                                <li class="mb-2"><a href="https://librio.com/fr/produits" rel="index,follow" class="item d-block">Tous les livres personnalisés</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/cadeaux-personnalises-pour-bebe" rel="index,follow" class="item d-block">Livres pour nouveaux-nés</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/cadeaux-personnalises-0-a-3-ans" rel="index,follow" class="item d-block">Livres pour les 0-3 ans</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-personnalises-pour-les-3-a-6-ans" rel="index,follow" class="item d-block">Livres pour les 3-6 ans</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/cartes-de-voeux-personnalisees" rel="index,follow" class="item d-block">Cartes de voeux</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/impressions-art-personnalisees/impression-dart-pour-bebe" rel="index,follow" class="item d-block">Affiches</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/larbre-la-cle-et-moi" rel="index,follow" class="item d-block">L'Arbre, la Clé et Moi</a></li>
+                                                <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/mon-voyage-autour-du-monde" rel="index,follow" class="item d-block">Mon voyage autour du monde</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/mon-voyage-a-travers-leurope" rel="index,follow" class="item d-block">Mon voyage à travers l’Europe</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-pour-les-6-ans-et-plus" rel="index,follow" class="item d-block">Livres pour les écoliers</a></li>
+            </ul>
+
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-6 col-xl-6">
+                        <ul class="list-unstyled inverted">
+                                <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/une-aventure-fantastique-avec-globi" rel="index,follow" class="item d-block">Mon aventure fantastique avec Globi</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/bienvenue-au-monde" rel="index,follow" class="item d-block">Bienvenue au monde</a></li>
+                                                <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/mon-fantabuleux-orchestre" rel="index,follow" class="item d-block">Mon fantabuleux orchestre</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/moi-globi-et-le-petit-lynx" rel="index,follow" class="item d-block">Moi, Globi et le petit lynx</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/nos-mots-a-nous" rel="index,follow" class="item d-block">Nos mots à nous</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/un-amour-plus-fort-que-tout" rel="index,follow" class="item d-block">Un amour plus fort que tout</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/100-mots-pour-moi" rel="index,follow" class="item d-block">Mes 100 mots</a></li>
+                                            <li class="mb-2"><a href="https://librio.com/fr/livres-enfants-personnalises/un-lien-magique" rel="index,follow" class="item d-block">Un Lien Magique</a></li>
+            </ul>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+    
+    
+        <script src="https://widget.reviews.io/rating-snippet/dist.js"></script>
+<link rel="stylesheet" href="https://widget.reviews.io/rating-snippet/dist.css" />
+<script>
+    ratingSnippet("ruk_rating_snippet",{
+        store: 'libriode',
+        color: "#fed011",
+        linebreak: false,
+        usePolaris: false,
+        text:  'Commentaires',
+    });
+</script>
+
+            <script>
+            var webpPolyfillUrls = [
+                '//unpkg.com/webp-hero@0.0.0-dev.26/dist-cjs/polyfills.js',
+                '//unpkg.com/webp-hero@0.0.0-dev.26/dist-cjs/webp-hero.bundle.js'
+            ];
+            function scriptLoader(scripts, callback) {
+                var count = scripts.length;
+
+                function urlCallback(url) {
+                    return function () {
+                        if (count < 1) { callback(); }
+                    };
+                }
+
+                function loadScript(url) {
+                    var s = document.createElement('script');
+                    s.setAttribute('src', url);
+                    s.onload = urlCallback(url);
+                    document.head.appendChild(s);
+                }
+
+                for (var i=0;i<count;i++) { loadScript(scripts[i]); }
+            };
+
+            //if ie 11
+            if (Object.hasOwnProperty.call(window, "ActiveXObject") && !window.ActiveXObject) {
+                scriptLoader(webpPolyfillUrls, function() {
+                    var webpMachine = new webpHero.WebpMachine();
+                    webpMachine.polyfillDocument();
+                });
+            }
+        </script>
+    
+    <script>
+        var global_personalisation = {"id":"librio-010","resourceBase":"products\/librio-010\/","language":"fr","dedication":"","characters":[{"name":"Louis","role":"sidekick","skinColour":"white","hairColour":"blonde","glasses":false,"gender":"male","hairStyle":"9","clothes":"green","beard":false,"model":"sidekick"},{"name":"Maxime","role":"protagonist","skinColour":"tan","hairColour":"black","glasses":false,"gender":"male","beard":false,"clothes":"green","hairStyle":"0","model":"protagonist"}],"preview":{"background":{"image":"bg.png","ratio":"ratio1x1"},"microservices":true,"height":800}};
+    </script>
+
+            <script type="text/javascript">
+        var FE_ASSET_DIR = "/build/shop";
+        var APP_VERSION = "7.3.7";
+        var ENVIRONMENT = "production";
+    </script>
+    <script src="https://storage.googleapis.com/librio-assets/7.3.7/build/shop/shop-vendor.548f5682.js"></script>
+    <script src="https://storage.googleapis.com/librio-assets/7.3.7/build/shop/shop-sylius.f47f7275.js"></script>
+    <script src="https://storage.googleapis.com/librio-assets/7.3.7/build/shop/shop-entry.50dace3e.js"></script>
+    
+
+
+
+<script src="/bundles/gtmplugin/prototype.events.js" defer></script>
+
+
+    <script src="https://pay.datatrans.com/upp/payment/js/datatrans-2.0.0.js"></script>
+<script src="/bundles/libriosyliusdatatransplugin/js/common.js"></script>
+<script src="/bundles/libriosyliusdatatransplugin/js/order-show.js"></script>
+
+        <script src="https://js.sentry-cdn.com/6ec8bc0ea674450ddf45d3271f465435.min.js" crossorigin="anonymous"></script>
+    <script>
+    // wrap in sentry goo if we are online
+    if (typeof Sentry !== 'undefined') {
+        Sentry.onLoad(function () {
+            Sentry.init({
+                release: APP_VERSION,
+                environment: ENVIRONMENT,
+                integrations: [new Sentry.Integrations.BrowserTracing()],
+                // Adding sample rate as recommended by Sentry, see: https://docs.sentry.io/platforms/javascript/performance/
+                tracesSampleRate: 0.5,
+                // Even if the integration is not set we are getting replays so let's set this just in case.
+                replaysSessionSampleRate: 0.1,
+                replaysOnErrorSampleRate: 1.0,
+                ignoreErrors: [
+                    // Random plugins/extensions
+                    'top.GLOBALS',
+                    // See: http://blog.errorception.com/2012/03/tale-of-unfindable-js-error.html
+                    'originalCreateNotification',
+                    'canvas.contentDocument',
+                    'MyApp_RemoveAllHighlights',
+                    'http://tt.epicplay.com',
+                    'Can\'t find variable: ZiteReader',
+                    'jigsaw is not defined',
+                    'ComboSearch is not defined',
+                    'http://loading.retry.widdit.com/',
+                    'atomicFindClose',
+                    // Facebook borked
+                    'fb_xd_fragment',
+                    // ISP "optimizing" proxy - `Cache-Control: no-transform` seems to
+                    // reduce this. (thanks @acdha)
+                    // See http://stackoverflow.com/questions/4113268
+                    'bmi_SafeAddOnload',
+                    'EBCallBackMessageReceived',
+                    // See http://toolbar.conduit.com/Developer/HtmlAndGadget/Methods/JSInjection.aspx
+                    'conduitPage',
+                    // Microsoft SafeLink garbage
+                    // https://forum.sentry.io/t/unhandledrejection-non-error-promise-rejection-captured-with-value/14062/13
+                    "Non-Error exception captured",
+                    "Object Not Found Matching Id",
+                    // https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded#comment86691361_49384120
+                    'ResizeObserver loop limit exceeded',
+                    // https://developers.facebook.com/community/threads/320013549791141/
+                    "Can't find variable: _AutofillCallbackHandler"
+                ],
+                blacklistUrls: [
+                    // Facebook flakiness
+                    /graph\.facebook\.com/i,
+                    // Facebook blocked
+                    /connect\.facebook\.net\/en_US\/all\.js/i,
+                    // Woopra flakiness
+                    /eatdifferent\.com\.woopra-ns\.com/i,
+                    /static\.woopra\.com\/js\/woopra\.js/i,
+                    // Chrome extensions
+                    /extensions\//i,
+                    /^chrome:\/\//i,
+                    // Other plugins
+                    /127\.0\.0\.1:4001\/isrunning/i,  // Cacaoweb
+                    /webappstoolbarba\.texthelp\.com\//i,
+                    /metrics\.itunes\.apple\.com\.edgesuite\.net\//i,
+
+                    //librio
+                    /taboola\.com/,
+                    /helpscout\.com/,
+                    /hotjar\.com/,
+                    /profity\.com/,
+                    /taboola\.com/,
+                    /lacmp\.net/,
+                    /pintrest\.com/,
+                ]
+            })
+        });
+    }
+    </script>
+    <script type="text/javascript" src="//www.klaviyo.com/media/js/public/klaviyo_subscribe.js"></script>
+    
+    <script src="https://storage.googleapis.com/librio-assets/7.3.7/build/shop/shop-product.fc05018a.js"></script>
+
+
+                <script type="text/javascript">
+            window.dataLayer.push({"ecommerce":null});
+        </script>
+            <script type="text/javascript">
+            window.dataLayer.push({"event":"view_item","ecommerce":{"items":[{"item_id":"librio-010","item_name":"Nos mots \u00e0 nous","affiliation":"EUR","item_category":"Livres pour enfants personnalis\u00e9s","index":0,"price":44.99}],"value":44.99,"currency":"EUR"}});
+        </script>
+    
+
+
+
+        <div id="beacon-facade">
+	<div class="container p-0">
+		<button aria-label="Open Beacon" aria-expanded="false" class="button">
+			<span class="icon  sc-fzozJi dNhjmB c-FabButton__icon--icon is-fab-shown" data-testid="fab-icon"><svg width="24" height="22" xmlns="http://www.w3.org/2000/svg"><path d="M20.347 20.871l-.003-.05c0 .017.001.034.003.05zm-.243-4.278a2 2 0 0 1 .513-1.455c1.11-1.226 1.383-2.212 1.383-4.74C22 5.782 18.046 2 13.125 2h-2.25C5.954 2 2 5.78 2 10.399c0 4.675 4.01 8.626 8.875 8.626h2.25c.834 0 1.606-.207 3.212-.798a2 2 0 0 1 1.575.083l2.355 1.161-.163-2.878zM10.875 0h2.25C19.13 0 24 4.656 24 10.399c0 2.6-.25 4.257-1.9 6.08l.243 4.279c.072.845-.807 1.471-1.633 1.162l-3.682-1.816c-1.212.446-2.527.921-3.903.921h-2.25C4.869 21.025 0 16.142 0 10.4 0 4.656 4.869 0 10.875 0z" fill="#FFF"></path></svg></span>
+			<span class="text  sc-AxmLO etKEBq c-FabButton__text is-fab-shown"><span data-cy="Truncate" class="Truncatecss__TruncateUI-oij0sx-0 hgZYVr c-Truncate is-end"><div class="c-EventListenerRoot"></div><span class="c-Truncate__content">Aide</span></span></span>
+		</button>
+	</div>
+</div>
+<script type="text/javascript" defer>
+        var helpscout_beacon_id = false || "a9656e75-3365-4d2e-920b-c752f196337e"
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var $facade = $("#beacon-facade");
+        $facade.on("mouseover", (e) => {
+            hsLoadBeacon($facade);
+        });
+
+        $facade.on("touchstart", (e) => {
+            hsLoadBeacon($facade);
+        }, {passive: true});
+
+        $facade.on("click", (e) => {
+            hsLoadBeacon($facade);
+            window.Beacon("toggle");
+            // $facade.find('.icon').html('...');
+        });
+
+        //set handler for answer tab
+        $('[data-librio-beacon-toggle]').click(function (e) {
+            e.preventDefault();
+            hsLoadBeacon($facade);
+            window.Beacon('open');
+            window.Beacon('navigate', '/');
+        });
+
+        //set handler for answer tab
+        $('[data-librio-answers-beacon-toggle]').click(function (e) {
+            e.preventDefault();
+            hsLoadBeacon($facade);
+            window.Beacon('open');
+            window.Beacon('navigate', '/answers/');
+        });
+
+        //set handler for ask tab
+        $('[data-librio-ask-beacon-toggle]').click(function (e) {
+            e.preventDefault();
+            hsLoadBeacon($facade);
+            window.Beacon('open');
+            window.Beacon('navigate', '/ask/');
+        });
+
+        //set handler for article ID
+        $('[data-librio-article-beacon-toggle]').click(function (e) {
+            e.preventDefault();
+            const articleId = $(this).data('librio-article-beacon-toggle').toString();
+            hsLoadBeacon($facade);
+            window.Beacon('open');
+            window.Beacon('article', articleId);
+        });
+
+        function hsLoadBeacon($facade) {
+            if (typeof window.Beacon == "undefined") {
+                var script = document.createElement("script");
+                script.id = "beacon";
+                script.text = `!function(e,t,n){function a(){var e=t.getElementsByTagName("script")[0],n=t.createElement("script");n.type="text/javascript",n.async=!0,n.src="https://beacon-v2.helpscout.net",e.parentNode.insertBefore(n,e)}if(e.Beacon=n=function(t,n,a){e.Beacon.readyQueue.push({method:t,options:n,data:a})},n.readyQueue=[],"complete"===t.readyState)return a();e.attachEvent?e.attachEvent("onload",a):e.addEventListener("load",a,!1)}(window,document,window.Beacon||function(){});`;
+                document.head.appendChild(script);
+
+                //load
+                if (helpscout_beacon_id !== false && helpscout_beacon_id.length > 0) {
+
+                    //init & config
+                    window.Beacon('init', helpscout_beacon_id);
+                    window.Beacon("config", {
+                        // mode: "askFirst",
+                        enableFabAnimation: false
+                    });
+                    window.Beacon('on', 'ready', function(){
+                        window.setTimeout(function(){
+                            if ($facade.is(':hover')) {
+                                $facade.on('mouseout touchend', function(){
+                                    $facade.css({'display': 'none'});
+                                });
+                            } else {
+                                $facade.css({'display': 'none'});
+                            }
+                        }, 200);
+                    });
+
+                    //on beacon open ensure it's open in the mobile view
+                    window.Beacon('on', 'open', function () {
+                        toggleBeacon(true)
+                    });
+                    window.Beacon('on', 'close', function () {
+                        toggleBeacon(false)
+                    });
+                }
+            }
+        }
+
+        function toggleBeacon(state) {
+            $('#beacon-container').toggleClass('open', state);
+        }
+    });
+</script>
+
+
+</body>
+</html>

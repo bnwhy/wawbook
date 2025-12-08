@@ -69,8 +69,7 @@ const FAMILY_WIZARD_CONFIG = {
           label: 'Prénom',
           type: 'text' as const,
           minLength: 2,
-          maxLength: 20,
-          options: []
+          maxLength: 20
         },
         {
           id: 'skinTone',
@@ -148,8 +147,7 @@ const FAMILY_WIZARD_CONFIG = {
           label: 'Surnom',
           type: 'text' as const,
           minLength: 2,
-          maxLength: 20,
-          options: []
+          maxLength: 20
         },
         {
           id: 'skinTone',

@@ -26,6 +26,37 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Helper to get selected book
   const selectedBook = books.find(b => b.id === selectedBookId);
 
+  // Helper to generate combinations for Storyboard (Global)
+  const generateCombinations = (book: BookProduct) => {
+    const tabs = book.wizardConfig.tabs;
+    if (tabs.length === 0) return ['Défaut'];
+
+    // Get variants for each tab
+    const tabValues = tabs.map(tab => {
+      if (tab.variants.length > 0) {
+        // If variants have options, flatten them: "Variant + Option"
+        // If a variant has NO options, just use "Variant"
+        return tab.variants.flatMap(v => {
+          if (v.options && v.options.length > 0) {
+             return v.options.map(o => `${v.label} + ${o.label}`);
+          }
+          return [v.label];
+        });
+      }
+      return [tab.label];
+    });
+    
+    if (tabValues.length === 0) return ['Défaut'];
+    
+    // Calculate product
+    let combinations = tabValues[0];
+    for (let i = 1; i < tabValues.length; i++) {
+        combinations = combinations.flatMap(d => tabValues[i].map(e => `${d} + ${e}`));
+    }
+    
+    return combinations;
+  };
+
   // Helper to generate combinations for Avatar Mappings (Per Tab)
   const generateAvatarCombinations = (tab: WizardTab) => {
      // Filter out text variants or variants without options
@@ -59,54 +90,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         const label = combo.map((o: any) => o.label).join(' + ');
         return { key, label, parts: combo };
      });
-  };
-
-  // Helper to generate combinations for Storyboard (Global)
-  const generateCombinations = (book: BookProduct) => {
-    const tabs = book.wizardConfig.tabs;
-    if (tabs.length === 0) return [];
-
-    // For each tab, generate its avatar combinations
-    const tabCombos = tabs.map(tab => {
-        const combos = generateAvatarCombinations(tab);
-        if (combos.length === 0) return [{ key: 'default', label: 'Défaut', parts: [] }];
-        return combos;
-    });
-
-    // Cartesian product for global combinations
-    const cartesian = (args: any[]) => {
-       const r: any[] = [];
-       const max = args.length - 1;
-       function helper(arr: any[], i: number) {
-          for (let j = 0, l = args[i].length; j < l; j++) {
-             const a = arr.slice(0);
-             a.push(args[i][j]);
-             if (i === max) r.push(a);
-             else helper(a, i + 1);
-          }
-       }
-       helper([], 0);
-       return r;
-    };
-
-    const globalCombos = cartesian(tabCombos);
-
-    return globalCombos.map(comboArr => {
-       // comboArr is array of {key, label, parts}
-       const combinedLabel = comboArr.map((c: any) => c.label).join(' + ');
-       
-       const avatarKeys: Record<string, string> = {};
-       comboArr.forEach((c: any, idx: number) => {
-           if (tabs[idx]) {
-               avatarKeys[tabs[idx].id] = c.key;
-           }
-       });
-
-       return {
-           label: combinedLabel,
-           avatarKeys
-       };
-    });
   };
 
   const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
@@ -145,15 +128,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     let sortableBooks = [...books];
     if (sortConfig !== null) {
       sortableBooks.sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
-
-        if (aValue === undefined || bValue === undefined) return 0;
-
-        if (aValue < bValue) {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        if (aValue > bValue) {
+        if (a[sortConfig.key] > b[sortConfig.key]) {
           return sortConfig.direction === 'asc' ? 1 : -1;
         }
         return 0;
@@ -1214,25 +1192,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </div>
                                  
                                  <div className="flex items-center gap-3">
-                                    {/* Avatar Preview */}
-                                    {(() => {
-                                       const currentCombo = currentCombinations.find(c => c.label === selectedVariant);
-                                       if (currentCombo && selectedBook.wizardConfig.avatarMappings && selectedBook.wizardConfig.tabs.length > 0) {
-                                          const firstTabId = selectedBook.wizardConfig.tabs[0].id;
-                                          const avatarKey = currentCombo.avatarKeys[firstTabId];
-                                          const avatarUrl = selectedBook.wizardConfig.avatarMappings[avatarKey];
-                                          
-                                          if (avatarUrl) {
-                                             return (
-                                                <div className="w-8 h-8 rounded-full bg-white border border-gray-200 overflow-hidden shadow-sm">
-                                                   <img src={avatarUrl} alt="Avatar" className="w-full h-full object-contain" />
-                                                </div>
-                                             );
-                                          }
-                                       }
-                                       return null;
-                                    })()}
-
                                     <div className="flex items-center gap-2">
                                        <span className="text-xs font-bold text-gray-400 uppercase">Aperçu Variante:</span>
                                        <select 
@@ -1240,8 +1199,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           onChange={(e) => setSelectedVariant(e.target.value)}
                                           className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral"
                                        >
-                                          {currentCombinations.map((c: any) => (
-                                             <option key={c.label} value={c.label}>{c.label}</option>
+                                          {currentCombinations.map(c => (
+                                             <option key={c} value={c}>{c}</option>
                                           ))}
                                        </select>
                                     </div>

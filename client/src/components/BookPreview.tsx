@@ -128,7 +128,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         setCurrentView(c => c + 1);
         setIsFlipping(false);
         setDirection(null);
-      }, 1500); // Match CSS duration
+      }, 600); // Match CSS duration
     }
   };
 
@@ -140,7 +140,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         setCurrentView(c => c - 1);
         setIsFlipping(false);
         setDirection(null);
-      }, 1500);
+      }, 600);
     }
   };
 
@@ -402,7 +402,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
             {/* BOOK OBJECT */}
             <div 
-              className={`relative w-[900px] h-[600px] flex shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
+              className={`relative w-[900px] h-[600px] flex shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] rounded-md preserve-3d transition-transform duration-[600ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
               style={{ 
                 transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev') 
                   ? 'translateX(-25%)' 
@@ -664,16 +664,20 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         
         @keyframes flip-next {
             0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(-90deg) scale(1.1); }
             100% { transform: rotateY(-180deg); }
         }
         @keyframes flip-prev {
             0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(90deg) scale(1.1); }
             100% { transform: rotateY(180deg); }
         }
-        .animate-flip-next { animation: flip-next 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
-        .animate-flip-prev { animation: flip-prev 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
+        .animate-flip-next { 
+            animation: flip-next 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; 
+            will-change: transform;
+        }
+        .animate-flip-prev { 
+            animation: flip-prev 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; 
+            will-change: transform;
+        }
         
         @keyframes drop-in {
             0% { transform: translateY(-50px) scale(0.95); opacity: 0; }

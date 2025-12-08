@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Story, BookConfig } from '../types';
+import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
 import Navigation from './Navigation';
@@ -13,6 +14,7 @@ import Footer from './Footer';
 interface BookPreviewProps {
   story: Story;
   config: BookConfig;
+  bookProduct?: BookProduct;
   onReset: () => void;
   onStart: () => void;
   onAdminClick?: () => void;
@@ -20,17 +22,54 @@ interface BookPreviewProps {
   isModal?: boolean;
 }
 
-const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onStart, onAdminClick, editingCartItemId, isModal = false }) => {
+const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, onReset, onStart, onAdminClick, editingCartItemId, isModal = false }) => {
   const { books } = useBooks();
   const { addToCart, updateItem } = useCart();
   const [, setLocation] = useLocation();
-  const book = books.find(b => b.name === story.title);
+  const book = bookProduct || books.find(b => b.name === story.title);
 
   const [currentView, setCurrentView] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
   const [dedication, setDedication] = useState(config.dedication || '');
   const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
+
+  // --- HELPER: Resolve Variables ---
+  const resolveTextVariable = (text: string) => {
+    return text.replace(/\{([^}]+)\}/g, (match, key) => {
+        if (key === 'childName') return config.childName;
+        
+        // Handle {tabId.variantId}
+        const [tabId, variantId] = key.split('.');
+        if (tabId && variantId && config.characters?.[tabId]) {
+            return config.characters[tabId][variantId] || match;
+        }
+        return match;
+    });
+  };
+
+  const getCombinationKey = () => {
+    if (!book?.wizardConfig?.tabs) return 'default';
+    
+    // Collect all option IDs from character tabs
+    const optionIds: string[] = [];
+    
+    book.wizardConfig.tabs.forEach(tab => {
+        if (tab.type === 'character' && config.characters?.[tab.id]) {
+            tab.variants.forEach(v => {
+                if (v.type === 'options') {
+                    const selectedOptId = config.characters![tab.id][v.id];
+                    if (selectedOptId) optionIds.push(selectedOptId);
+                }
+            });
+        }
+    });
+    
+    if (optionIds.length === 0) return 'default';
+    return optionIds.sort().join('_');
+  };
+
+  const currentCombinationKey = getCombinationKey();
 
   const handleAddToCart = () => {
     // Add to cart functionality
@@ -69,7 +108,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
     }
   };
 
-  const totalSpreads = Math.ceil(story.pages.length / 2); 
+  // Determine total views based on content source
+  const getContentPages = () => {
+      if (book?.contentConfig?.pages?.length) {
+          return book.contentConfig.pages;
+      }
+      return story.pages; // Fallback
+  };
+
+  const contentPages = getContentPages();
+  const totalSpreads = Math.ceil(contentPages.length / 2); 
   const totalViews = 1 + 1 + totalSpreads + 1; // Cover + Intro + StorySpreads + Back
 
   const handleNext = () => {
@@ -97,6 +145,132 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
   };
 
   // --- CONTENT GENERATORS ---
+
+  const resolveImageUrl = (el: ImageElement) => {
+      if (el.type === 'static') return el.url;
+      
+      if (el.type === 'variable' && el.variableKey) {
+          // If variableKey is a Tab ID (e.g. "child")
+          const tabId = el.variableKey;
+          const tab = book?.wizardConfig?.tabs.find(t => t.id === tabId);
+          
+          if (tab && config.characters?.[tabId]) {
+              // Construct combination key for this tab
+              const optionIds: string[] = [];
+              tab.variants.forEach(v => {
+                 if (v.type === 'options') {
+                     const selectedOptId = config.characters![tabId][v.id];
+                     if (selectedOptId) optionIds.push(selectedOptId);
+                 }
+              });
+              
+              if (optionIds.length > 0) {
+                  const key = optionIds.sort().join('_');
+                  // Look up in avatarMappings
+                  if (book?.wizardConfig?.avatarMappings?.[key]) {
+                      return book.wizardConfig.avatarMappings[key];
+                  }
+              }
+          }
+      }
+      return el.url; // Fallback
+  };
+
+  const renderPageContent = (pageIndex: number, isLeft: boolean) => {
+      // 1. Check if we have Admin Config
+      if (book?.contentConfig?.pages) {
+          const pageDef = book.contentConfig.pages.find(p => p.pageNumber === pageIndex);
+          
+          if (!pageDef) {
+             return <div className="w-full h-full flex items-center justify-center text-cloud-dark/20">Page vide</div>;
+          }
+
+          // Background Image
+          const bgImage = book.contentConfig.images.find(
+             img => img.pageIndex === pageIndex && 
+                   (img.combinationKey === currentCombinationKey || img.combinationKey === 'default')
+          );
+
+          // Texts
+          const pageTexts = book.contentConfig.texts.filter(t => t.position.pageIndex === pageIndex);
+
+          // Images (Stickers)
+          const pageImages = (book.contentConfig.imageElements || []).filter(i => i.position.pageIndex === pageIndex);
+
+          return (
+            <div className="w-full h-full relative overflow-hidden bg-white">
+                {/* Background */}
+                {bgImage?.imageUrl ? (
+                    <img src={bgImage.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Background" />
+                ) : (
+                    <div className="absolute inset-0 bg-gray-50 flex items-center justify-center text-gray-300">
+                        <Cloud size={48} className="opacity-20" />
+                    </div>
+                )}
+
+                {/* Stickers */}
+                {pageImages.map(el => {
+                    const imageUrl = resolveImageUrl(el);
+                    return (
+                        <div 
+                            key={el.id}
+                            className="absolute z-10"
+                            style={{
+                                left: `${el.position.x}%`,
+                                top: `${el.position.y}%`,
+                                width: `${el.position.width}%`,
+                                height: el.position.height ? `${el.position.height}%` : 'auto',
+                                transform: `rotate(${el.position.rotation || 0}deg)`
+                            }}
+                        >
+                            {imageUrl && <img src={imageUrl} className="w-full h-full object-contain" alt={el.label} />}
+                        </div>
+                    );
+                })}
+
+                {/* Texts */}
+                {pageTexts.map(text => (
+                    <div 
+                        key={text.id}
+                        className="absolute z-20"
+                        style={{
+                            left: `${text.position.x}%`,
+                            top: `${text.position.y}%`,
+                            width: `${text.position.width || 30}%`,
+                            transform: `rotate(${text.position.rotation || 0}deg)`,
+                            ...text.style
+                        }}
+                    >
+                        <div className="font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center">
+                            {resolveTextVariable(text.content)}
+                        </div>
+                    </div>
+                ))}
+
+                {/* Page Number */}
+                <div className={`absolute bottom-6 ${isLeft ? 'left-8' : 'right-8'} text-cloud-dark/40 font-bold text-xs z-30`}>
+                    Page {pageIndex}
+                </div>
+            </div>
+          );
+      }
+
+      // 2. Fallback to Simple Story (Legacy)
+      const storyPage = story.pages[pageIndex - 1]; // story.pages is 0-indexed, pageIndex is 1-indexed (starts after intro)
+      
+      if (!storyPage) return <div className="w-full h-full flex items-center justify-center text-cloud-dark/20">Page vide</div>;
+
+      return (
+        <div className="w-full h-full bg-white p-6 flex flex-col justify-center relative shadow-inner">
+            <div className={`absolute ${isLeft ? 'right-0' : 'left-0'} top-0 bottom-0 w-6 bg-gradient-to-${isLeft ? 'l' : 'r'} from-black/10 to-transparent pointer-events-none z-10`}></div>
+            <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-sm bg-cloud-lightest border-4 border-white">
+                {storyPage.imageUrl ? <img src={storyPage.imageUrl} className="w-full h-full object-cover" alt="Illustration" /> : <div className="w-full h-full flex items-center justify-center text-cloud-blue/30"><Cloud size={48} /></div>}
+            </div>
+            <div className="mt-6 font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center">{storyPage.text}</div>
+            <div className={`absolute bottom-6 ${isLeft ? 'left-8' : 'right-8'} text-cloud-dark/20 font-bold text-xs`}>Page {pageIndex}</div>
+        </div>
+      );
+  };
 
   const getSpreadContent = (index: number) => {
     // 0: Cover
@@ -185,39 +359,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, onReset, onSta
     }
 
     // Story Spreads
-    const storyIndexStart = (index - 2) * 2;
-    const leftPage = story.pages[storyIndexStart];
-    const rightPage = story.pages[storyIndexStart + 1];
+    // index starts at 2 (0=cover, 1=intro)
+    // page 1 is at index 2 (left) if we want spread view
+    // But page numbers in book are 1, 2, 3...
+    // Spread 1: Page 1 (Left), Page 2 (Right)
+    const spreadIndex = index - 2;
+    const leftPageNum = spreadIndex * 2 + 1;
+    const rightPageNum = spreadIndex * 2 + 2;
 
     return {
-      left: (
-        <div className="w-full h-full bg-white p-6 flex flex-col justify-center relative shadow-inner">
-            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/10 to-transparent pointer-events-none z-10"></div>
-            {leftPage ? (
-                <>
-                    <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-sm bg-cloud-lightest border-4 border-white">
-                        {leftPage.imageUrl ? <img src={leftPage.imageUrl} className="w-full h-full object-cover" alt="Illustration" /> : <div className="w-full h-full flex items-center justify-center text-cloud-blue/30"><Cloud size={48} /></div>}
-                    </div>
-                    <div className="mt-6 font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center">{leftPage.text}</div>
-                    <div className="absolute bottom-6 left-8 text-cloud-dark/20 font-bold text-xs">Page {storyIndexStart + 1}</div>
-                </>
-            ) : <div className="w-full h-full flex items-center justify-center text-cloud-dark/20">Page vide</div>}
-        </div>
-      ),
-      right: (
-        <div className="w-full h-full bg-white p-6 flex flex-col justify-center relative shadow-inner">
-            <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-10"></div>
-            {rightPage ? (
-                <>
-                    <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-sm bg-cloud-lightest border-4 border-white">
-                        {rightPage.imageUrl ? <img src={rightPage.imageUrl} className="w-full h-full object-cover" alt="Illustration" /> : <div className="w-full h-full flex items-center justify-center text-cloud-blue/30"><Cloud size={48} /></div>}
-                    </div>
-                    <div className="mt-6 font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center">{rightPage.text}</div>
-                    <div className="absolute bottom-6 right-8 text-cloud-dark/20 font-bold text-xs">Page {storyIndexStart + 2}</div>
-                </>
-            ) : <div className="w-full h-full flex items-center justify-center bg-gray-50/50"><Cloud size={32} className="text-gray-200" /></div>}
-        </div>
-      )
+      left: renderPageContent(leftPageNum, true),
+      right: renderPageContent(rightPageNum, false)
     };
   };
 

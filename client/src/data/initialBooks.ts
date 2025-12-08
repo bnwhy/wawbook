@@ -23,6 +23,7 @@ import birthdayImage from '@assets/generated_images/children\'s_book_cover_for_b
 import fathersDayImage from '@assets/generated_images/children\'s_book_cover_for_father\'s_day_occasion_with_french_title.png';
 import mothersDayImage from '@assets/generated_images/children\'s_book_cover_for_mother\'s_day_occasion_with_french_title.png';
 import boyBlondAvatar from '@assets/generated_images/watercolor_boy_avatar_light_skin_blond_hair_short.png';
+import boyBlondLightAvatar from '@assets/generated_images/watercolor_avatar_of_a_boy_with_blond_hair_and_light_skin.png';
 
 // Wizard Assets
 import hairBald from '@assets/generated_images/bald_hairstyle_icon.png';
@@ -36,6 +37,9 @@ import beardFull from '@assets/generated_images/full_beard_icon.png';
 
 const FAMILY_WIZARD_CONFIG = {
   avatarStyle: 'watercolor' as const,
+  avatarMappings: {
+    'Blond_Claire_Court_None_boy': boyBlondLightAvatar
+  },
   tabs: [
     {
       id: 'child',

@@ -114,7 +114,6 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
              <div className="mt-10 flex flex-wrap justify-center gap-8 text-sm font-bold text-cloud-dark/50">
                 <span className="flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full"><CheckCircle size={20} className="text-accent-mint" /> 100% Personnalisé</span>
                 <span className="flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full"><CheckCircle size={20} className="text-accent-mint" /> Magie Instantanée</span>
-                <span className="flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full"><CheckCircle size={20} className="text-accent-mint" /> Gratuit</span>
              </div>
           </div>
         </header>

@@ -402,22 +402,40 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
             {/* BOOK OBJECT */}
             <div 
-              className={`relative w-[900px] h-[600px] flex shadow-2xl rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
+              className={`relative w-[900px] h-[600px] flex shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
               style={{ 
                 transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev') 
                   ? 'translateX(-25%)' 
                   : 'translateX(0%)'
               }}
             >
+                {/* 3D Page Thickness Effect (Visible when book is open) */}
+                {currentView > 0 && !((currentView === 1 && direction === 'prev')) && (
+                   <>
+                      {/* Left Page Stack */}
+                      <div className="absolute top-1 bottom-1 left-1 w-2 bg-gray-100 rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-4px) translateZ(-2px)' }}></div>
+                      <div className="absolute top-2 bottom-2 left-2 w-2 bg-gray-50 rounded-l-sm border-l border-gray-100" style={{ transform: 'translateX(-8px) translateZ(-4px)' }}></div>
+                      
+                      {/* Right Page Stack */}
+                      <div className="absolute top-1 bottom-1 right-1 w-2 bg-gray-100 rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(4px) translateZ(-2px)' }}></div>
+                      <div className="absolute top-2 bottom-2 right-2 w-2 bg-gray-50 rounded-r-sm border-r border-gray-100" style={{ transform: 'translateX(8px) translateZ(-4px)' }}></div>
+                   </>
+                )}
                 
                 {/* 1. STATIC LAYER (Bottom) */}
                 <div className="absolute inset-0 flex w-full h-full z-0">
                     {/* LEFT SIDE */}
-                    <div className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none' : 'bg-white'}`}>
+                    <div 
+                        onClick={() => { if (currentView > 0) handlePrev(); }}
+                        className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : 'bg-white cursor-pointer hover:bg-gray-50/50 transition-colors'}`}
+                    >
                         {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
                     </div>
                     {/* RIGHT SIDE */}
-                    <div className="w-1/2 h-full bg-white overflow-hidden rounded-r-md">
+                    <div 
+                        onClick={() => { if (currentView < totalViews - 1) handleNext(); }}
+                        className={`w-1/2 h-full bg-white overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/50 transition-colors`}
+                    >
                         {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
                     </div>
                 </div>

@@ -8,6 +8,7 @@ import { MenuItem, MenuColumn } from '../types/menu';
 
 // Helper for cartesian product of objects
 const cartesian = (args: any[]) => {
+   if (args.length === 0) return [];
    const r: any[] = [];
    const max = args.length - 1;
    function helper(arr: any[], i: number) {
@@ -24,6 +25,8 @@ const cartesian = (args: any[]) => {
 
 // Helper to generate combinations for Avatar Mappings (Per Tab)
 const generateAvatarCombinations = (tab: WizardTab) => {
+   if (!tab || !tab.variants) return [];
+   
    // Filter out text variants or variants without options
    const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
    
@@ -44,6 +47,8 @@ const generateAvatarCombinations = (tab: WizardTab) => {
 // Helper to generate combinations for Storyboard (Global)
 // Returns objects with label and detailed selections per tab
 const generateCombinations = (book: BookProduct) => {
+    if (!book || !book.wizardConfig || !book.wizardConfig.tabs) return [{ label: 'Défaut', selections: {} }];
+
     const tabs = book.wizardConfig.tabs.filter(t => t.type === 'character');
     if (tabs.length === 0) return [{ label: 'Défaut', selections: {} }];
 
@@ -59,6 +64,7 @@ const generateCombinations = (book: BookProduct) => {
     // We want to produce [{ label: "Child: Blond + Dad: Beard", selections: { child: "Blond_Short", dad: "Beard_..." } }]
     
     const cartesianCombos = (args: any[]) => {
+       if (args.length === 0) return [];
        const r: any[] = [];
        const max = args.length - 1;
        function helper(arr: any[], i: number) {
@@ -113,7 +119,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
 
 
-  const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
+  const currentCombinations = React.useMemo(() => {
+     if (!selectedBook) return [];
+     try {
+        return generateCombinations(selectedBook);
+     } catch (e) {
+        console.error("Error generating combinations:", e);
+        return [];
+     }
+  }, [selectedBook]);
   
   // Set default variant if none selected
   React.useEffect(() => {
@@ -156,10 +170,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     let sortableBooks = [...books];
     if (sortConfig !== null) {
       sortableBooks.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        const valA = a[sortConfig.key];
+        const valB = b[sortConfig.key];
+
+        if (valA === valB) return 0;
+        if (valA === undefined || valA === null) return 1;
+        if (valB === undefined || valB === null) return -1;
+
+        if (valA < valB) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (valA > valB) {
           return sortConfig.direction === 'asc' ? 1 : -1;
         }
         return 0;

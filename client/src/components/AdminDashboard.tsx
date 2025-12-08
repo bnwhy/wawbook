@@ -13,7 +13,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'settings'>('books');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  
+  const [sortConfig, setSortConfig] = useState<{ key: keyof BookProduct, direction: 'asc' | 'desc' } | null>(null);
+
   // Content Editor State
   const [selectedVariant, setSelectedVariant] = useState<string>('default'); // Used for previewing specific combinations
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
@@ -114,6 +115,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setSelectedBookId(newBook.id);
     setIsEditing(true);
   };
+
+  const handleSort = (key: keyof BookProduct) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedBooks = React.useMemo(() => {
+    let sortableBooks = [...books];
+    if (sortConfig !== null) {
+      sortableBooks.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableBooks;
+  }, [books, sortConfig]);
 
   const toggleVariantExpand = (variantId: string) => {
     const newSet = new Set(expandedVariantIds);
@@ -264,36 +289,80 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </button>
                  </div>
 
-                 <div className="flex flex-col gap-4">
-                    {books.map(book => (
-                      <div key={book.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-6 group hover:shadow-md hover:border-brand-coral transition-all">
-                         <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-300 shrink-0">
-                            <Book size={24} />
-                         </div>
-                         
-                         <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-1">
-                               <h3 className="font-bold text-lg text-slate-900 truncate">{book.name}</h3>
-                               <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{book.price} €</span>
-                            </div>
-                            <p className="text-sm text-slate-500 line-clamp-1 mb-2">{book.description}</p>
-                            <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
-                               <span className="bg-slate-100 px-1.5 py-0.5 rounded">ID: {book.id}</span>
-                               <span>•</span>
-                               <span>{book.wizardConfig.tabs.length} Personnages</span>
-                            </div>
-                         </div>
-
-                         <div className="shrink-0">
-                            <button 
-                              onClick={() => { setSelectedBookId(book.id); setIsEditing(true); }}
-                              className="bg-slate-100 text-slate-600 px-5 py-2.5 rounded-lg font-bold text-sm hover:bg-brand-coral hover:text-white transition-colors"
-                            >
-                              Configurer
-                            </button>
-                         </div>
-                      </div>
-                    ))}
+                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                       <thead>
+                          <tr className="bg-slate-50 border-b border-gray-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                             <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('name')}>
+                                <div className="flex items-center gap-2">
+                                   Livre
+                                   {sortConfig?.key === 'name' && (sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                                </div>
+                             </th>
+                             <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('price')}>
+                                <div className="flex items-center gap-2">
+                                   Prix
+                                   {sortConfig?.key === 'price' && (sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                                </div>
+                             </th>
+                             <th className="px-6 py-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('id')}>
+                                <div className="flex items-center gap-2">
+                                   Identifiant
+                                   {sortConfig?.key === 'id' && (sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                                </div>
+                             </th>
+                             <th className="px-6 py-4">Personnages</th>
+                             <th className="px-6 py-4 text-right">Actions</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-gray-100">
+                          {sortedBooks.map(book => (
+                             <tr key={book.id} className="hover:bg-slate-50 transition-colors group">
+                                <td className="px-6 py-4">
+                                   <div className="flex items-center gap-4">
+                                      <div className="w-10 h-10 bg-slate-100 rounded flex items-center justify-center text-slate-300 shrink-0">
+                                         <Book size={18} />
+                                      </div>
+                                      <div>
+                                         <div className="font-bold text-slate-900">{book.name}</div>
+                                         <div className="text-xs text-slate-400 line-clamp-1 max-w-[200px]">{book.description}</div>
+                                      </div>
+                                   </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                   <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                                      {book.price} €
+                                   </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                   <code className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600 font-mono">
+                                      {book.id}
+                                   </code>
+                                </td>
+                                <td className="px-6 py-4">
+                                   <div className="flex items-center gap-2 text-sm text-slate-600">
+                                      <Users size={16} className="text-slate-400" />
+                                      <span className="font-medium">{book.wizardConfig.tabs.length}</span>
+                                   </div>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                   <button 
+                                      onClick={() => { setSelectedBookId(book.id); setIsEditing(true); }}
+                                      className="text-slate-400 hover:text-brand-coral font-medium text-sm transition-colors flex items-center justify-end gap-1 ml-auto"
+                                   >
+                                      <Settings size={16} /> Configurer
+                                   </button>
+                                </td>
+                             </tr>
+                          ))}
+                       </tbody>
+                    </table>
+                    {sortedBooks.length === 0 && (
+                       <div className="p-12 text-center text-gray-400">
+                          <Book size={48} className="mx-auto mb-4 opacity-20" />
+                          <p>Aucun livre dans le catalogue.</p>
+                       </div>
+                    )}
                  </div>
               </div>
             )}

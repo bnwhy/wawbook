@@ -27,33 +27,54 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Helper to generate combinations for Storyboard (Global)
   const generateCombinations = (book: BookProduct) => {
-    const tabs = book.wizardConfig.tabs;
-    if (tabs.length === 0) return ['Défaut'];
+    // 1. Find all "character" tabs
+    const charTabs = book.wizardConfig.tabs.filter(t => t.type === 'character');
+    
+    if (charTabs.length === 0) return ['Défaut'];
 
-    // Get variants for each tab
-    const tabValues = tabs.map(tab => {
-      if (tab.variants.length > 0) {
-        // If variants have options, flatten them: "Variant + Option"
-        // If a variant has NO options, just use "Variant"
-        return tab.variants.flatMap(v => {
-          if (v.options && v.options.length > 0) {
-             return v.options.map(o => `${v.label} + ${o.label}`);
-          }
-          return [v.label];
+    // 2. Find all "options" variants within those tabs
+    // We want a flat list of ALL option-sets to combine.
+    // e.g. [ [Boy, Girl], [Short, Long], [Blue, Green] ]
+    const allOptionSets: { label: string, options: any[] }[] = [];
+
+    charTabs.forEach(tab => {
+        tab.variants.forEach(variant => {
+            if (variant.type === 'options' && variant.options && variant.options.length > 0) {
+                allOptionSets.push({
+                    label: variant.label,
+                    options: variant.options
+                });
+            }
         });
-      }
-      return [tab.label];
     });
-    
-    if (tabValues.length === 0) return ['Défaut'];
-    
-    // Calculate product
-    let combinations = tabValues[0];
-    for (let i = 1; i < tabValues.length; i++) {
-        combinations = combinations.flatMap(d => tabValues[i].map(e => `${d} + ${e}`));
-    }
-    
-    return combinations;
+
+    if (allOptionSets.length === 0) return ['Défaut'];
+
+    // 3. Cartesian Product
+    const cartesian = (args: any[]) => {
+        const r: any[] = [];
+        const max = args.length - 1;
+        function helper(arr: any[], i: number) {
+            for (let j = 0, l = args[i].length; j < l; j++) {
+                const a = arr.slice(0); // clone arr
+                a.push(args[i][j]);
+                if (i === max) r.push(a);
+                else helper(a, i + 1);
+            }
+        }
+        helper([], 0);
+        return r;
+    };
+
+    const optionsLists = allOptionSets.map(s => s.options);
+    const combinations = cartesian(optionsLists);
+
+    // 4. Map to strings (keys)
+    // Format: "Option1_Option2_..." (sorted IDs)
+    return combinations.map(combo => {
+        const ids = combo.map((o: any) => o.id).sort();
+        return ids.join('_');
+    });
   };
 
   // Helper to generate combinations for Avatar Mappings (Per Tab)

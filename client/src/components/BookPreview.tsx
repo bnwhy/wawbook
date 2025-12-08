@@ -128,7 +128,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         setCurrentView(c => c + 1);
         setIsFlipping(false);
         setDirection(null);
-      }, 600); // Match CSS duration
+      }, 1500); // Match CSS duration
     }
   };
 
@@ -140,7 +140,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         setCurrentView(c => c - 1);
         setIsFlipping(false);
         setDirection(null);
-      }, 600);
+      }, 1500);
     }
   };
 
@@ -402,7 +402,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
             {/* BOOK OBJECT */}
             <div 
-              className={`relative w-[900px] h-[600px] flex shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] rounded-md preserve-3d transition-transform duration-[600ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
+              className={`relative w-[900px] h-[600px] flex shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
               style={{ 
                 transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev') 
                   ? 'translateX(-25%)' 
@@ -412,37 +412,13 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {/* 3D Page Thickness Effect (Visible when book is open) */}
                 {currentView > 0 && !((currentView === 1 && direction === 'prev')) && (
                    <>
-                      {/* Left Page Stack - Realistic Paper Layers */}
-                      <div className="absolute top-0.5 bottom-0.5 left-0 w-4 bg-[#f8f8f8] rounded-l-sm border-l border-gray-300 shadow-[-5px_5px_15px_rgba(0,0,0,0.2)]" 
-                           style={{ 
-                               transform: 'translateX(-100%) translateZ(-1px)',
-                               backgroundImage: 'linear-gradient(to right, #e5e5e5 0%, #ffffff 10%, #f0f0f0 20%, #ffffff 30%, #e5e5e5 100%)' 
-                           }}>
-                           {/* Paper Lines */}
-                           <div className="absolute inset-0 opacity-50" 
-                                style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.05) 2px, transparent 3px)' }}>
-                           </div>
-                      </div>
+                      {/* Left Page Stack */}
+                      <div className="absolute top-1 bottom-1 left-1 w-2 bg-gray-100 rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-4px) translateZ(-2px)' }}></div>
+                      <div className="absolute top-2 bottom-2 left-2 w-2 bg-gray-50 rounded-l-sm border-l border-gray-100" style={{ transform: 'translateX(-8px) translateZ(-4px)' }}></div>
                       
-                      {/* Right Page Stack - Realistic Paper Layers */}
-                      <div className="absolute top-0.5 bottom-0.5 right-0 w-4 bg-[#f8f8f8] rounded-r-sm border-r border-gray-300 shadow-[5px_5px_15px_rgba(0,0,0,0.2)]" 
-                           style={{ 
-                               transform: 'translateX(100%) translateZ(-1px)',
-                               backgroundImage: 'linear-gradient(to left, #e5e5e5 0%, #ffffff 10%, #f0f0f0 20%, #ffffff 30%, #e5e5e5 100%)'
-                           }}>
-                           {/* Paper Lines */}
-                           <div className="absolute inset-0 opacity-50" 
-                                style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.05) 2px, transparent 3px)' }}>
-                           </div>
-                      </div>
-
-                      {/* Bottom Thickness (Visible at bottom edge) */}
-                       <div className="absolute -bottom-2 left-0 right-0 h-2 bg-[#f0f0f0] mx-4 rounded-b-sm border-b border-gray-300 shadow-md"
-                            style={{
-                                transform: 'translateZ(-2px)',
-                                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.05) 2px, transparent 3px)'
-                            }}>
-                       </div>
+                      {/* Right Page Stack */}
+                      <div className="absolute top-1 bottom-1 right-1 w-2 bg-gray-100 rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(4px) translateZ(-2px)' }}></div>
+                      <div className="absolute top-2 bottom-2 right-2 w-2 bg-gray-50 rounded-r-sm border-r border-gray-100" style={{ transform: 'translateX(8px) translateZ(-4px)' }}></div>
                    </>
                 )}
                 
@@ -451,38 +427,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     {/* LEFT SIDE */}
                     <div 
                         onClick={() => { if (currentView > 0) handlePrev(); }}
-                        className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md relative group ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : 'bg-white cursor-pointer'}`}
+                        className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : 'bg-white cursor-pointer hover:bg-gray-50/50 transition-colors'}`}
                     >
                         {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
-                        
-                        {/* Page Shadow Gradient (Spine) */}
-                        {currentView > 0 && <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-black/20 to-transparent pointer-events-none mix-blend-multiply z-10"></div>}
-                        
-                        {/* Hover Curl Effect */}
-                        {currentView > 0 && (
-                            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20"></div>
-                        )}
                     </div>
                     {/* RIGHT SIDE */}
                     <div 
                         onClick={() => { if (currentView < totalViews - 1) handleNext(); }}
-                        className={`w-1/2 h-full bg-white overflow-hidden rounded-r-md cursor-pointer relative group`}
+                        className={`w-1/2 h-full bg-white overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/50 transition-colors`}
                     >
                         {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
-
-                        {/* Page Shadow Gradient (Spine) */}
-                        <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-black/20 to-transparent pointer-events-none mix-blend-multiply z-10"></div>
-                        
-                        {/* Hover Curl Effect */}
-                        <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20"></div>
-                        
-                        {/* Click Hint (First view only) */}
-                        {currentView === 1 && (
-                            <div className="absolute right-8 top-1/2 -translate-y-1/2 bg-cloud-blue/90 text-white p-4 rounded-full shadow-xl animate-pulse pointer-events-none z-30 transform rotate-12">
-                                <div className="font-bold text-xs uppercase tracking-widest mb-1 text-center">Cliquer</div>
-                                <div className="text-center text-xs">pour tourner</div>
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -664,20 +618,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         
         @keyframes flip-next {
             0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(-90deg) scale(1.1); }
             100% { transform: rotateY(-180deg); }
         }
         @keyframes flip-prev {
             0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg) scale(1.1); }
             100% { transform: rotateY(180deg); }
         }
-        .animate-flip-next { 
-            animation: flip-next 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; 
-            will-change: transform;
-        }
-        .animate-flip-prev { 
-            animation: flip-prev 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; 
-            will-change: transform;
-        }
+        .animate-flip-next { animation: flip-next 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
+        .animate-flip-prev { animation: flip-prev 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
         
         @keyframes drop-in {
             0% { transform: translateY(-50px) scale(0.95); opacity: 0; }

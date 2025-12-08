@@ -48,7 +48,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     });
   };
 
-  const generateConfigurationHash = () => {
+  const getCombinationKey = () => {
     if (!book?.wizardConfig?.tabs) return 'default';
     
     // Collect all option IDs from character tabs
@@ -69,12 +69,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     return optionIds.sort().join('_');
   };
 
-  const currentCombinationKey = generateConfigurationHash();
-
-  // DEBUG: Simulating Librio-like Hash logging
-  useEffect(() => {
-    console.log("Current Configuration Hash:", currentCombinationKey);
-  }, [currentCombinationKey]);
+  const currentCombinationKey = getCombinationKey();
 
   const handleAddToCart = () => {
     // Add to cart functionality

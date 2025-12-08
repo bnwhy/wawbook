@@ -24,7 +24,7 @@ import fathersDayImage from '@assets/generated_images/children\'s_book_cover_for
 import mothersDayImage from '@assets/generated_images/children\'s_book_cover_for_mother\'s_day_occasion_with_french_title.png';
 import boyBlondAvatar from '@assets/generated_images/watercolor_boy_avatar_light_skin_blond_hair_short.png';
 import boyBlondLightAvatar from '@assets/generated_images/watercolor_avatar_of_a_boy_with_blond_hair_and_light_skin.png';
-import boyBlondRoundGlassesAvatar from '@assets/generated_images/watercolor_avatar_of_a_boy_with_blond_hair,_light_skin,_and_round_glasses.png';
+import boyBlondRoundGlassesAvatar from '@assets/generated_images/watercolor_avatar_of_a_boy_with_blond_hair,_light_skin,_short_hair_and_round_glasses.png';
 
 // Wizard Assets
 import hairBald from '@assets/generated_images/bald_hairstyle_icon.png';

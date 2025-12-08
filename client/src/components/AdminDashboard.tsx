@@ -6,6 +6,91 @@ import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { MenuItem, MenuColumn } from '../types/menu';
 
+// Helper for cartesian product of objects
+const cartesian = (args: any[]) => {
+   const r: any[] = [];
+   const max = args.length - 1;
+   function helper(arr: any[], i: number) {
+      for (let j = 0, l = args[i].length; j < l; j++) {
+         const a = arr.slice(0); // clone arr
+         a.push(args[i][j]);
+         if (i === max) r.push(a);
+         else helper(a, i + 1);
+      }
+   }
+   helper([], 0);
+   return r;
+};
+
+// Helper to generate combinations for Avatar Mappings (Per Tab)
+const generateAvatarCombinations = (tab: WizardTab) => {
+   // Filter out text variants or variants without options
+   const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
+   
+   if (relevantVariants.length === 0) return [];
+
+   const variantsOptions = relevantVariants.map(v => v.options);
+   const combos = cartesian(variantsOptions); // Array of arrays of options
+
+   return combos.map(combo => {
+      // Sort IDs for consistent key
+      const ids = combo.map((o: any) => o.id).sort();
+      const key = ids.join('_');
+      const label = combo.map((o: any) => o.label).join(' + ');
+      return { key, label, parts: combo };
+   });
+};
+
+// Helper to generate combinations for Storyboard (Global)
+// Returns objects with label and detailed selections per tab
+const generateCombinations = (book: BookProduct) => {
+    const tabs = book.wizardConfig.tabs.filter(t => t.type === 'character');
+    if (tabs.length === 0) return [{ label: 'Défaut', selections: {} }];
+
+    // For each tab, get all valid avatar combinations
+    // Returns: [{ tabId: 'child', combos: [{ key: 'Blond_Short', label: '...', parts: [...] }] }, ...]
+    const tabCombos = tabs.map(tab => {
+        const combos = generateAvatarCombinations(tab);
+        if (combos.length === 0) return { tabId: tab.id, combos: [{ key: 'default', label: tab.label }] };
+        return { tabId: tab.id, combos };
+    });
+
+    // Cartesian product of tabCombos
+    // We want to produce [{ label: "Child: Blond + Dad: Beard", selections: { child: "Blond_Short", dad: "Beard_..." } }]
+    
+    const cartesianCombos = (args: any[]) => {
+       const r: any[] = [];
+       const max = args.length - 1;
+       function helper(arr: any[], i: number) {
+          for (let j = 0, l = args[i].combos.length; j < l; j++) {
+             const a = arr.slice(0);
+             a.push({ tabId: args[i].tabId, combo: args[i].combos[j] });
+             if (i === max) r.push(a);
+             else helper(a, i + 1);
+          }
+       }
+       helper([], 0);
+       return r;
+    };
+
+    const globalCombos = cartesianCombos(tabCombos);
+
+    return globalCombos.map((group: any[]) => {
+        const selections: Record<string, string> = {};
+        const labels: string[] = [];
+        
+        group.forEach(item => {
+            selections[item.tabId] = item.combo.key;
+            labels.push(`${item.combo.label}`);
+        });
+
+        return {
+            label: labels.join(' | '),
+            selections
+        };
+    });
+};
+
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -27,90 +112,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const selectedBook = books.find(b => b.id === selectedBookId);
 
 
-  // Helper to generate combinations for Avatar Mappings (Per Tab)
-  const generateAvatarCombinations = (tab: WizardTab) => {
-     // Filter out text variants or variants without options
-     const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
-     
-     if (relevantVariants.length === 0) return [];
-
-     // Helper for cartesian product of objects
-     const cartesian = (args: any[]) => {
-        const r: any[] = [];
-        const max = args.length - 1;
-        function helper(arr: any[], i: number) {
-           for (let j = 0, l = args[i].length; j < l; j++) {
-              const a = arr.slice(0); // clone arr
-              a.push(args[i][j]);
-              if (i === max) r.push(a);
-              else helper(a, i + 1);
-           }
-        }
-        helper([], 0);
-        return r;
-     };
-
-     const variantsOptions = relevantVariants.map(v => v.options);
-     const combos = cartesian(variantsOptions); // Array of arrays of options
-
-     return combos.map(combo => {
-        // Sort IDs for consistent key
-        const ids = combo.map((o: any) => o.id).sort();
-        const key = ids.join('_');
-        const label = combo.map((o: any) => o.label).join(' + ');
-        return { key, label, parts: combo };
-     });
-  };
-
-  // Helper to generate combinations for Storyboard (Global)
-  // Returns objects with label and detailed selections per tab
-  const generateCombinations = (book: BookProduct) => {
-    const tabs = book.wizardConfig.tabs.filter(t => t.type === 'character');
-    if (tabs.length === 0) return [{ label: 'Défaut', selections: {} }];
-
-    // For each tab, get all valid avatar combinations
-    // Returns: [{ tabId: 'child', combos: [{ key: 'Blond_Short', label: '...', parts: [...] }] }, ...]
-    const tabCombos = tabs.map(tab => {
-        const combos = generateAvatarCombinations(tab);
-        if (combos.length === 0) return { tabId: tab.id, combos: [{ key: 'default', label: tab.label }] };
-        return { tabId: tab.id, combos };
-    });
-
-    // Cartesian product of tabCombos
-    // We want to produce [{ label: "Child: Blond + Dad: Beard", selections: { child: "Blond_Short", dad: "Beard_..." } }]
-    
-    const cartesian = (args: any[]) => {
-       const r: any[] = [];
-       const max = args.length - 1;
-       function helper(arr: any[], i: number) {
-          for (let j = 0, l = args[i].combos.length; j < l; j++) {
-             const a = arr.slice(0);
-             a.push({ tabId: args[i].tabId, combo: args[i].combos[j] });
-             if (i === max) r.push(a);
-             else helper(a, i + 1);
-          }
-       }
-       helper([], 0);
-       return r;
-    };
-
-    const globalCombos = cartesian(tabCombos);
-
-    return globalCombos.map((group: any[]) => {
-        const selections: Record<string, string> = {};
-        const labels: string[] = [];
-        
-        group.forEach(item => {
-            selections[item.tabId] = item.combo.key;
-            labels.push(`${item.combo.label}`);
-        });
-
-        return {
-            label: labels.join(' | '),
-            selections
-        };
-    });
-  };
 
   const currentCombinations = selectedBook ? generateCombinations(selectedBook) : [];
   

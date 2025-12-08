@@ -11,9 +11,6 @@ import softcoverIcon from '@assets/generated_images/softcover_children_book_icon
 
 import Footer from './Footer';
 
-import leavesBorder from '@assets/generated_images/watercolor_leaves_border_for_book_cover.png';
-import happyChildren from '@assets/generated_images/two_happy_children_hugging_watercolor.png';
-
 interface BookPreviewProps {
   story: Story;
   config: BookConfig;
@@ -73,16 +70,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   const currentCombinationKey = getCombinationKey();
-
-  // Helper to resolve avatar image for cover
-  const getCoverAvatar = () => {
-      // Try to find the avatar sticker from the content config if available
-      // Assuming the first page might have it or we look for a specific 'avatar' mapping
-      if (book?.wizardConfig?.avatarMappings?.[currentCombinationKey]) {
-          return book.wizardConfig.avatarMappings[currentCombinationKey];
-      }
-      return happyChildren; // Fallback
-  };
 
   const handleAddToCart = () => {
     // Add to cart functionality
@@ -291,7 +278,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       return {
         left: <div className="w-full h-full bg-transparent" />, // Empty space left of cover
         right: (
-          <div className="w-full h-full relative flex flex-col items-center overflow-hidden bg-white shadow-inner border-l-8 border-gray-100">
+          <div className="w-full h-full relative flex flex-col items-center justify-center text-white p-6 text-center overflow-hidden bg-cloud-blue shadow-inner border-l-8 border-gray-100">
              {/* Spine / Binding Effect */}
              <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-200 to-white border-r border-black/5 z-30"></div>
              <div className="absolute left-3 top-0 bottom-0 w-1 bg-black/10 z-20 mix-blend-multiply"></div>
@@ -299,44 +286,24 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
              {/* Cover Thickness (Right Edge) */}
              <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-black/20 to-transparent z-20 pointer-events-none"></div>
 
-             {/* --- COVER CONTENT --- */}
-             <div className="absolute inset-0 z-0">
-                {/* Border Image */}
-                <img src={leavesBorder} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="Border" />
-                
-                {/* Fallback Main Illustration if book.coverImage not set */}
-                {!book?.coverImage && (
-                    <div className="absolute inset-x-0 bottom-0 h-2/3 flex items-end justify-center pb-12">
-                         <img src={getCoverAvatar()} className="w-3/4 object-contain drop-shadow-md" alt="Cover Art" />
-                    </div>
-                )}
-                
-                {/* If book cover exists, use it as background but keep border? Or just full image */}
-                {book?.coverImage && (
-                    <img src={book.coverImage} className="absolute inset-0 w-full h-full object-cover -z-10" alt="Cover" />
-                )}
-             </div>
-
-             <div className="relative z-10 flex flex-col items-center w-full h-full pt-16 px-8 text-center">
-                {/* Badge */}
-                <div className="absolute top-6 right-6 bg-red-400 text-white text-xs font-bold py-1 px-3 rounded-lg shadow-md transform rotate-3 border-2 border-white border-dashed">
-                    CLIQUER ici<br/>pour un aperçu
+             {book?.coverImage ? (
+                <>
+                    <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginLeft: '12px' }}></div>
+                    <div className="absolute inset-0 bg-black/20" style={{ marginLeft: '12px' }}></div>
+                </>
+             ) : (
+                <div className="absolute inset-0 bg-cloud-blue" style={{ marginLeft: '12px' }}>
+                     <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
                 </div>
-
-                {/* Title */}
-                <h1 className="font-hand font-bold text-6xl text-teal-600 leading-none tracking-tight mb-2 uppercase drop-shadow-sm">
-                    {config.childName} <span className="text-4xl align-middle">&</span> Louis
-                </h1>
-                
-                {/* Subtitle */}
-                <h2 className="font-hand font-bold text-2xl text-teal-500 tracking-widest uppercase mb-8">
-                    NOS MOTS À NOUS
-                </h2>
-
-                {/* Logo Bottom Right */}
-                <div className="absolute bottom-6 right-6">
-                    <div className="bg-red-500 text-white font-bold text-xs px-2 py-0.5 rounded-sm">librio</div>
+             )}
+    
+             <div className="relative z-10 flex flex-col items-center pl-4">
+                <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 text-6xl shadow-xl">✨</div>
+                <h1 className="font-display font-black text-4xl md:text-5xl mb-4 drop-shadow-md text-white leading-tight">{story.title}</h1>
+                <div className="bg-white/20 px-6 py-2 rounded-full text-lg font-bold backdrop-blur-sm border border-white/30">
+                    Une aventure de {config.childName}
                 </div>
+                <div className="mt-12 animate-pulse text-white/80 font-bold uppercase tracking-widest text-sm">Ouvrir le livre</div>
              </div>
           </div>
         )

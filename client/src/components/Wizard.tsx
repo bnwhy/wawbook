@@ -137,6 +137,24 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
   const renderCharacterAvatar = (tabId: string) => {
      const currentSelections = selections[tabId] || {};
+
+     // Check for custom avatar mapping (uploaded via Admin)
+     const tab = wizardConfig.tabs.find(t => t.id === tabId);
+     if (tab && wizardConfig.avatarMappings) {
+        const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
+        const selectedOptionIds = relevantVariants
+            .map(v => currentSelections[v.id])
+            .filter(id => id && id !== '') // Filter out empty strings/undefined
+            .sort();
+        
+        const combinationKey = selectedOptionIds.join('_');
+        const customAvatarUrl = wizardConfig.avatarMappings[combinationKey];
+        
+        if (customAvatarUrl) {
+           return <img src={customAvatarUrl} alt="Avatar" className="w-full h-full object-cover transition-all duration-500 ease-out" />;
+        }
+     }
+
      const skinColor = getSelectedResource(tabId, 'skinTone') || '#FFE0BD';
      const hairColor = getSelectedResource(tabId, 'hairColor') || '#302e34';
      const gender = currentSelections['gender'] || 'boy';

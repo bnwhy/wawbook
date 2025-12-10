@@ -71,7 +71,7 @@ const StaticPage: React.FC<StaticPageProps> = ({ title, category }) => {
           <Mail className="text-blue-500 mb-4" size={32} />
           <h3 className="font-bold text-lg mb-1">Email</h3>
           <p className="text-slate-600 mb-4">Réponse sous 24h ouvrées</p>
-          <a href="mailto:hello@wawbook.com" className="text-blue-600 font-bold hover:underline">hello@wawbook.com</a>
+          <a href="mailto:hello@nuagebook.com" className="text-blue-600 font-bold hover:underline">hello@nuagebook.com</a>
         </div>
         <div className="bg-green-50 p-6 rounded-xl border border-green-100">
           <Phone className="text-green-500 mb-4" size={32} />
@@ -88,7 +88,7 @@ const StaticPage: React.FC<StaticPageProps> = ({ title, category }) => {
           Contenu pour "{displayTitle}" en cours de rédaction.
         </p>
         <p>
-          Chez WawBook, nous nous efforçons de créer les meilleures histoires pour vos enfants. 
+          Chez NuageBook, nous nous efforçons de créer les meilleures histoires pour vos enfants. 
           Cette page détaillera bientôt tout ce que vous devez savoir sur <strong>{displayTitle}</strong>.
         </p>
         <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 my-8">

@@ -65,7 +65,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
         }}>
           <CloudLogo />
           <span className="text-3xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
-            wawbook
+            nuagebook
           </span>
         </div>
 

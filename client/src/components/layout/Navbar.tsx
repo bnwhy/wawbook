@@ -36,10 +36,10 @@ export function Navbar() {
           <Link href="/">
             <a className="flex items-center gap-3 group transition-transform hover:scale-105 duration-300">
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30 bg-white p-1 shadow-sm">
-                 <img src={logoImage} alt="WawBook Logo" className="w-full h-full object-contain" />
+                 <img src={logoImage} alt="NuageBook Logo" className="w-full h-full object-contain" />
               </div>
               <span className="font-serif text-4xl text-primary drop-shadow-sm tracking-wide">
-                WawBook
+                NuageBook
               </span>
             </a>
           </Link>

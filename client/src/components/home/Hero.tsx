@@ -77,7 +77,7 @@ export function Hero() {
               <div className="absolute top-0 right-0 w-full h-full bg-accent rounded-[3rem] rotate-6 -z-10 transform translate-x-4 translate-y-4"></div>
               <img 
                 src={heroBg} 
-                alt="WawBook World" 
+                alt="NuageBook World" 
                 className="w-full h-auto rounded-[3rem] border-8 border-white shadow-xl object-cover aspect-square"
               />
               

@@ -603,6 +603,80 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         />
                      </div>
                   </div>
+
+                  {/* Features Editor */}
+                  <div className="mb-6 border-t border-gray-100 pt-6">
+                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                         <Settings size={18} className="text-indigo-600" />
+                         Caractéristiques du Livre
+                     </h3>
+                     
+                     <div className="grid grid-cols-2 gap-6">
+                        <div className="col-span-2 md:col-span-1">
+                           <label className="block text-sm font-bold text-slate-700 mb-2">Langues (séparées par virgule)</label>
+                           <textarea 
+                             value={selectedBook.features?.languages?.join(', ') || ''}
+                             onChange={(e) => {
+                                const langs = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                handleSaveBook({
+                                   ...selectedBook, 
+                                   features: { ...selectedBook.features, languages: langs }
+                                });
+                             }}
+                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none h-24 text-sm resize-none"
+                             placeholder="Français, Anglais..."
+                           />
+                        </div>
+                        
+                        <div className="col-span-2 md:col-span-1">
+                           <label className="block text-sm font-bold text-slate-700 mb-2">Options de Personnalisation</label>
+                           <textarea 
+                             value={selectedBook.features?.customization?.join(', ') || ''}
+                             onChange={(e) => {
+                                const customs = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                handleSaveBook({
+                                   ...selectedBook, 
+                                   features: { ...selectedBook.features, customization: customs }
+                                });
+                             }}
+                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none h-24 text-sm resize-none"
+                             placeholder="Nom, Coiffure, Lunettes..."
+                           />
+                        </div>
+
+                        <div>
+                           <label className="block text-sm font-bold text-slate-700 mb-2">Nombre de Pages</label>
+                           <input 
+                             type="number"
+                             value={selectedBook.features?.pages || 40}
+                             onChange={(e) => {
+                                handleSaveBook({
+                                   ...selectedBook, 
+                                   features: { ...selectedBook.features, pages: parseInt(e.target.value) || 0 }
+                                });
+                             }}
+                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none"
+                           />
+                        </div>
+
+                        <div>
+                           <label className="block text-sm font-bold text-slate-700 mb-2">Formats (séparés par virgule)</label>
+                           <input 
+                             type="text"
+                             value={selectedBook.features?.formats?.join(', ') || ''}
+                             onChange={(e) => {
+                                const formats = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                handleSaveBook({
+                                   ...selectedBook, 
+                                   features: { ...selectedBook.features, formats: formats }
+                                });
+                             }}
+                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none"
+                             placeholder="Broché : 21x21 cm, Relié..."
+                           />
+                        </div>
+                     </div>
+                  </div>
                   
                   {/* Menu Association */}
                   <div className="mb-6 border-t border-gray-100 pt-6">

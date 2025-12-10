@@ -59,7 +59,19 @@ const CloudLogo = () => (
   </div>
 );
 
-const BookCardInfo = () => (
+interface BookCardInfoProps {
+  features?: {
+    languages?: string[];
+    customization?: string[];
+    pages?: number;
+    formats?: string[];
+  };
+}
+
+const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
+  if (!features) return null;
+
+  return (
   <div className="mb-4" onClick={(e) => e.stopPropagation()}>
     <details className="group/info">
       <summary className="cursor-pointer text-[11px] font-bold text-cloud-dark/60 hover:text-cloud-blue flex items-center justify-between transition-colors list-none outline-none select-none py-1">
@@ -67,28 +79,36 @@ const BookCardInfo = () => (
          <ChevronDown size={14} className="group-open/info:rotate-180 transition-transform" />
       </summary>
       <div className="mt-2 text-[10px] text-cloud-dark/60 space-y-2 pb-2 border-t border-dashed border-gray-100 pt-2 leading-relaxed animate-fade-in cursor-text">
-         <div>
-           <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>
-           Français, allemand, anglais, espagnol, italien, norvégien, suédois, luxembourgeois, turc, portugais, catalan, galicien, basque, néerlandais
-         </div>
-         <div>
-           <span className="font-bold block text-cloud-dark/80 mb-0.5">Personnalisation:</span>
-           Nom, genre, couleur de peau, cheveux, coiffure, barbe, vêtements, lunettes
-         </div>
+         {features.languages && features.languages.length > 0 && (
+           <div>
+             <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>
+             {features.languages.join(', ')}
+           </div>
+         )}
+         {features.customization && features.customization.length > 0 && (
+           <div>
+             <span className="font-bold block text-cloud-dark/80 mb-0.5">Personnalisation:</span>
+             {features.customization.join(', ')}
+           </div>
+         )}
          <div className="grid grid-cols-2 gap-2">
-             <div>
-               <span className="font-bold block text-cloud-dark/80 mb-0.5">Pages:</span> 40
-             </div>
-             <div>
-               <span className="font-bold block text-cloud-dark/80 mb-0.5">Format:</span>
-               Broché : 21,5 x 25,8 cm<br/>
-               Relié : 22,2 x 26,5 cm
-             </div>
+             {features.pages && (
+               <div>
+                 <span className="font-bold block text-cloud-dark/80 mb-0.5">Pages:</span> {features.pages}
+               </div>
+             )}
+             {features.formats && features.formats.length > 0 && (
+               <div>
+                 <span className="font-bold block text-cloud-dark/80 mb-0.5">Format:</span>
+                 {features.formats.map((f, i) => <div key={i}>{f}</div>)}
+               </div>
+             )}
          </div>
       </div>
     </details>
   </div>
-);
+  );
+};
 
 const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   const { books } = useBooks();
@@ -194,7 +214,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                         {card.description}
                      </p>
                      
-                     <BookCardInfo />
+                     <BookCardInfo features={card.features} />
                      
                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                         <div className="flex flex-col">
@@ -245,7 +265,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                         {card.description}
                      </p>
                      
-                     <BookCardInfo />
+                     <BookCardInfo features={card.features} />
                      
                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                         <div className="flex flex-col">
@@ -292,7 +312,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                           {activity.description}
                        </p>
                        
-                       <BookCardInfo />
+                       <BookCardInfo features={activity.features} />
                        
                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                           <div className="flex flex-col">
@@ -343,7 +363,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                           {occasion.description}
                        </p>
                        
-                       <BookCardInfo />
+                       <BookCardInfo features={occasion.features} />
                        
                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                           <div className="flex flex-col">

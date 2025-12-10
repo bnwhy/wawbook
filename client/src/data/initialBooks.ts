@@ -228,6 +228,13 @@ const FAMILY_CONTENT_CONFIG = {
     ]
 };
 
+const DEFAULT_FEATURES = {
+  languages: ['Français', 'Allemand', 'Anglais', 'Espagnol', 'Italien', 'Norvégien', 'Suédois', 'Luxembourgeois', 'Turc', 'Portugais', 'Catalan', 'Galicien', 'Basque', 'Néerlandais'],
+  customization: ['Nom', 'Genre', 'Couleur de peau', 'Cheveux', 'Coiffure', 'Barbe', 'Vêtements', 'Lunettes'],
+  pages: 40,
+  formats: ['Broché : 21,5 x 25,8 cm', 'Relié : 22,2 x 26,5 cm']
+};
+
 export const INITIAL_BOOKS: BookProduct[] = [
   // THEMES
   {
@@ -240,6 +247,7 @@ export const INITIAL_BOOKS: BookProduct[] = [
     theme: Theme.Adventure,
     coverImage: explorerImage,
     badgeText: 'Best-seller',
+    features: DEFAULT_FEATURES,
     wizardConfig: DEFAULT_WIZARD_CONFIG,
     contentConfig: DEFAULT_CONTENT_CONFIG,
     associatedPaths: ['/products/Nouveau', '/products/Bestsellers']

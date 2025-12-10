@@ -12,6 +12,12 @@ export interface BookProduct {
   badgeText?: string;
   associatedPaths?: string[]; // List of paths where this book should appear
   oldPrice?: number;
+  features?: {
+    languages?: string[];
+    customization?: string[];
+    pages?: number;
+    formats?: string[];
+  };
   wizardConfig: WizardConfiguration;
   contentConfig: ContentConfiguration;
 }

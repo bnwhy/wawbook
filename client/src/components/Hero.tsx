@@ -60,32 +60,34 @@ const CloudLogo = () => (
 );
 
 const BookCardInfo = () => (
-  <details className="mb-4 group/info">
-    <summary className="cursor-pointer text-[11px] font-bold text-cloud-dark/40 hover:text-cloud-blue flex items-center justify-between transition-colors list-none outline-none select-none py-1">
-       <span>Plus d'informations</span>
-       <ChevronDown size={14} className="group-open/info:rotate-180 transition-transform text-cloud-blue/50" />
-    </summary>
-    <div className="mt-2 text-[10px] text-cloud-dark/60 space-y-2 pb-2 border-t border-dashed border-gray-100 pt-2 leading-relaxed animate-fade-in">
-       <div>
-         <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>
-         Français, allemand, anglais, espagnol, italien, norvégien, suédois, luxembourgeois, turc, portugais, catalan, galicien, basque, néerlandais
-       </div>
-       <div>
-         <span className="font-bold block text-cloud-dark/80 mb-0.5">Personnalisation:</span>
-         Nom, genre, couleur de peau, cheveux, coiffure, barbe, vêtements, lunettes
-       </div>
-       <div className="grid grid-cols-2 gap-2">
-           <div>
-             <span className="font-bold block text-cloud-dark/80 mb-0.5">Pages:</span> 40
-           </div>
-           <div>
-             <span className="font-bold block text-cloud-dark/80 mb-0.5">Format:</span>
-             Broché : 21,5 x 25,8 cm<br/>
-             Relié : 22,2 x 26,5 cm
-           </div>
-       </div>
-    </div>
-  </details>
+  <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+    <details className="group/info">
+      <summary className="cursor-pointer text-[11px] font-bold text-cloud-dark/40 hover:text-cloud-blue flex items-center justify-between transition-colors list-none outline-none select-none py-1">
+         <span>Plus d'informations</span>
+         <ChevronDown size={14} className="group-open/info:rotate-180 transition-transform text-cloud-blue/50" />
+      </summary>
+      <div className="mt-2 text-[10px] text-cloud-dark/60 space-y-2 pb-2 border-t border-dashed border-gray-100 pt-2 leading-relaxed animate-fade-in cursor-text">
+         <div>
+           <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>
+           Français, allemand, anglais, espagnol, italien, norvégien, suédois, luxembourgeois, turc, portugais, catalan, galicien, basque, néerlandais
+         </div>
+         <div>
+           <span className="font-bold block text-cloud-dark/80 mb-0.5">Personnalisation:</span>
+           Nom, genre, couleur de peau, cheveux, coiffure, barbe, vêtements, lunettes
+         </div>
+         <div className="grid grid-cols-2 gap-2">
+             <div>
+               <span className="font-bold block text-cloud-dark/80 mb-0.5">Pages:</span> 40
+             </div>
+             <div>
+               <span className="font-bold block text-cloud-dark/80 mb-0.5">Format:</span>
+               Broché : 21,5 x 25,8 cm<br/>
+               Relié : 22,2 x 26,5 cm
+             </div>
+         </div>
+      </div>
+    </details>
+  </div>
 );
 
 const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {

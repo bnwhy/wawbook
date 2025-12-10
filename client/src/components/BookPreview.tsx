@@ -421,7 +421,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       {!isModal && <Navigation onStart={onStart} />}
 
       {/* BOOK PREVIEW AREA */}
-      <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : 'py-12 mt-8 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
+      <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : 'py-2 mt-2 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
           
           {/* Stage */}
           <div className={`relative z-10 flex items-center justify-center w-full max-w-7xl perspective-[2500px] animate-drop-in ${isModal ? 'h-[600px] scale-[0.85]' : 'h-[850px]'}`}>

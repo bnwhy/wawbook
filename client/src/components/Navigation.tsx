@@ -63,7 +63,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           window.location.reload(); 
         }}>
           <CloudLogo />
-          <span className="text-3xl font-hand font-bold text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
+          <span className="text-3xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
             nuagebook
           </span>
         </div>

@@ -27,7 +27,7 @@ const INITIAL_MENU: MenuItem[] = [
       },
       {
         title: "Adultes / Famille",
-        items: ["Papa", "Maman", "Grands-parents", "Famille"]
+        items: ["Papa", "Maman", "Grands-parents", "Famille", "Frères & sœurs"]
       }
     ]
   },

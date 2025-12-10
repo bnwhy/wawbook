@@ -124,12 +124,12 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
              </div>
              
              <h1 className="text-5xl md:text-8xl font-display font-black text-cloud-dark mb-8 leading-[0.9] text-balance tracking-tight drop-shadow-sm">
-               Des livres personnalisés pour <span className="text-cloud-blue relative inline-block">
-                 petits et grands
+               Des livres <span className="text-cloud-blue relative inline-block">
+                 personnalisés
                  <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun opacity-100" viewBox="0 0 100 10" preserveAspectRatio="none">
                    <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
                  </svg>
-               </span>
+               </span> pour petits et grands
              </h1>
              
              <p className="text-xl md:text-2xl text-cloud-dark/70 font-medium mb-12 leading-relaxed text-balance max-w-2xl mx-auto">Choisissez un univers, créez son avatar, et hop ! 

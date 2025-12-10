@@ -389,7 +389,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : 'py-12 mt-20 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
           
           {/* Stage */}
-          <div className={`relative z-10 flex items-center justify-center w-full max-w-6xl perspective-[2500px] animate-drop-in ${isModal ? 'h-[500px] scale-[0.85]' : 'h-[650px]'}`}>
+          <div className={`relative z-10 flex items-center justify-center w-full max-w-7xl perspective-[2500px] animate-drop-in ${isModal ? 'h-[600px] scale-[0.85]' : 'h-[850px]'}`}>
             
             {/* Arrows */}
             <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
@@ -401,7 +401,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
             {/* BOOK OBJECT */}
             <div 
-              className={`relative w-[900px] h-[600px] flex shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
+              className={`relative w-[1080px] h-[720px] flex shadow-[0_30px_60px_rgba(0,0,0,0.4)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
               style={{ 
                 transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev') 
                   ? 'translateX(-25%)' 
@@ -411,29 +411,35 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {/* 3D Page Thickness Effect (Visible when book is open) */}
                 {currentView > 0 && !((currentView === 1 && direction === 'prev')) && (
                    <>
-                      {/* Left Page Stack */}
-                      <div className="absolute top-1 bottom-1 left-1 w-2 bg-gray-100 rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-4px) translateZ(-2px)' }}></div>
-                      <div className="absolute top-2 bottom-2 left-2 w-2 bg-gray-50 rounded-l-sm border-l border-gray-100" style={{ transform: 'translateX(-8px) translateZ(-4px)' }}></div>
+                      {/* Left Page Stack - More layers for rigid effect */}
+                      <div className="absolute top-1 bottom-1 left-1 w-1 bg-gray-200 rounded-l-sm border-l border-gray-300" style={{ transform: 'translateX(-2px) translateZ(-1px)' }}></div>
+                      <div className="absolute top-1.5 bottom-1.5 left-1 w-1 bg-white rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-4px) translateZ(-2px)' }}></div>
+                      <div className="absolute top-2 bottom-2 left-1 w-1 bg-gray-100 rounded-l-sm border-l border-gray-300" style={{ transform: 'translateX(-6px) translateZ(-3px)' }}></div>
+                      <div className="absolute top-2.5 bottom-2.5 left-1 w-1 bg-white rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-8px) translateZ(-4px)' }}></div>
+                      <div className="absolute top-3 bottom-3 left-1 w-1 bg-gray-50 rounded-l-sm border-l border-gray-100" style={{ transform: 'translateX(-10px) translateZ(-5px)' }}></div>
                       
-                      {/* Right Page Stack */}
-                      <div className="absolute top-1 bottom-1 right-1 w-2 bg-gray-100 rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(4px) translateZ(-2px)' }}></div>
-                      <div className="absolute top-2 bottom-2 right-2 w-2 bg-gray-50 rounded-r-sm border-r border-gray-100" style={{ transform: 'translateX(8px) translateZ(-4px)' }}></div>
+                      {/* Right Page Stack - More layers for rigid effect */}
+                      <div className="absolute top-1 bottom-1 right-1 w-1 bg-gray-200 rounded-r-sm border-r border-gray-300" style={{ transform: 'translateX(2px) translateZ(-1px)' }}></div>
+                      <div className="absolute top-1.5 bottom-1.5 right-1 w-1 bg-white rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(4px) translateZ(-2px)' }}></div>
+                      <div className="absolute top-2 bottom-2 right-1 w-1 bg-gray-100 rounded-r-sm border-r border-gray-300" style={{ transform: 'translateX(6px) translateZ(-3px)' }}></div>
+                      <div className="absolute top-2.5 bottom-2.5 right-1 w-1 bg-white rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(8px) translateZ(-4px)' }}></div>
+                      <div className="absolute top-3 bottom-3 right-1 w-1 bg-gray-50 rounded-r-sm border-r border-gray-100" style={{ transform: 'translateX(10px) translateZ(-5px)' }}></div>
                    </>
                 )}
                 
                 {/* 1. STATIC LAYER (Bottom) */}
-                <div className="absolute inset-0 flex w-full h-full z-0">
+                <div className="absolute inset-0 flex w-full h-full z-0 perspective-[2500px]">
                     {/* LEFT SIDE */}
                     <div 
                         onClick={() => { if (currentView > 0) handlePrev(); }}
-                        className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : 'bg-white cursor-pointer hover:bg-gray-50/50 transition-colors'}`}
+                        className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md origin-right transition-transform duration-500 ease-out hover:[transform:rotateY(5deg)] ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : 'bg-white cursor-pointer hover:bg-gray-50/10'}`}
                     >
                         {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
                     </div>
                     {/* RIGHT SIDE */}
                     <div 
                         onClick={() => { if (currentView < totalViews - 1) handleNext(); }}
-                        className={`w-1/2 h-full bg-white overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/50 transition-colors`}
+                        className={`w-1/2 h-full bg-white overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/10 transition-transform duration-500 ease-out origin-left hover:[transform:rotateY(-5deg)] shadow-sm`}
                     >
                         {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
                     </div>

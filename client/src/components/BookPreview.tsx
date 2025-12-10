@@ -476,7 +476,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     {/* RIGHT SIDE */}
                     <div 
                         onClick={() => { if (currentView < totalViews - 1) handleNext(); }}
-                        className={`w-1/2 h-full bg-white overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/10 transition-transform duration-500 ease-out origin-left hover:[transform:rotateY(-5deg)] shadow-sm`}
+                        className={`w-1/2 h-full overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/10 transition-transform duration-500 ease-out origin-left hover:[transform:rotateY(-5deg)] ${(currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next') ? 'bg-transparent shadow-none pointer-events-none' : 'bg-white shadow-sm'}`}
                     >
                         {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
                     </div>
@@ -523,7 +523,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         <div className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${currentView === 0 ? 'bg-transparent border-none' : 'bg-white'}`}>
                             {currentSpread.left}
                         </div>
-                        <div className="w-1/2 h-full bg-white overflow-hidden rounded-r-md">
+                        <div className={`w-1/2 h-full overflow-hidden rounded-r-md ${currentView === totalViews - 1 ? 'bg-transparent' : 'bg-white'}`}>
                             {currentSpread.right}
                         </div>
                     </div>

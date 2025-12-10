@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag } from 'lucide-react';
+import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';

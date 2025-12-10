@@ -17,7 +17,6 @@ import dadImage from '@assets/generated_images/children\'s_book_cover_for_dad_an
 import momImage from '@assets/generated_images/children\'s_book_cover_for_mom_and_child_with_french_title.png';
 import grandpaImage from '@assets/generated_images/children\'s_book_cover_for_grandpa_and_child_with_french_title.png';
 import grandmaImage from '@assets/generated_images/children\'s_book_cover_for_grandma_and_child_with_french_title.png';
-import siblingsImage from '@assets/generated_images/children\'s_book_cover_for_siblings_with_french_title.png';
 import birthImage from '@assets/generated_images/children\'s_book_cover_for_birth_occasion_with_french_title.png';
 import birthdayImage from '@assets/generated_images/children\'s_book_cover_for_birthday_occasion_with_french_title.png';
 import fathersDayImage from '@assets/generated_images/children\'s_book_cover_for_father\'s_day_occasion_with_french_title.png';
@@ -347,19 +346,6 @@ export const INITIAL_BOOKS: BookProduct[] = [
     price: 29.90,
     oldPrice: 34.90,
     description: "Les câlins, les gâteaux et les histoires de Mamie sont les meilleurs.",
-    wizardConfig: FAMILY_WIZARD_CONFIG,
-    contentConfig: DEFAULT_CONTENT_CONFIG
-  },
-  {
-    id: 'siblings',
-    name: 'Les Super Frères & Sœurs',
-    category: 'family',
-    theme: Theme.Adventure,
-    badgeText: 'Famille',
-    coverImage: siblingsImage,
-    price: 29.90,
-    oldPrice: 34.90,
-    description: "Une équipe de choc pour affronter tous les défis ensemble !",
     wizardConfig: FAMILY_WIZARD_CONFIG,
     contentConfig: DEFAULT_CONTENT_CONFIG
   },

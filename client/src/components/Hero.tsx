@@ -11,16 +11,16 @@ interface HeroProps {
 
 const FAQS = [
   {
-    question: "Est-ce vraiment magique ?",
-    answer: "Oui ! En quelques secondes, le prénom de votre enfant est tissé dans une magnifique histoire illustrée."
+    question: "Est-ce un livre physique ?",
+    answer: "Absolument ! C'est un véritable album relié de haute qualité (couverture rigide ou souple) que vous recevrez par la poste."
   },
   {
     question: "Pour quel âge ?",
     answer: "C'est parfait pour les enfants de 1 à 10 ans. Les histoires sont douces, positives et faciles à comprendre."
   },
   {
-    question: "Ça prend combien de temps ?",
-    answer: "C'est instantané ! Dès que vous validez, le livre est prêt à être lu."
+    question: "Puis-je voir le résultat avant d'acheter ?",
+    answer: "Oui ! Vous pouvez prévisualiser l'intégralité du livre personnalisé gratuitement sur votre écran avant de commander."
   }
 ];
 
@@ -33,14 +33,14 @@ const STEPS = [
   },
   {
     icon: <Sparkles size={32} className="text-white" />,
-    title: "2. La magie opère",
-    desc: "Nous assemblons les pages de ton livre unique.",
+    title: "2. Tu prévisualises",
+    desc: "Découvre instantanément ton histoire personnalisée à l'écran.",
     color: "bg-accent-melon"
   },
   {
-    icon: <BookOpen size={32} className="text-white" />,
-    title: "3. Tu lis l'histoire",
-    desc: "Découvre le livre magique sur ton écran tout de suite.",
+    icon: <Gift size={32} className="text-white" />,
+    title: "3. Tu reçois ton livre",
+    desc: "Un magnifique album papier imprimé avec soin, livré dans ta boîte aux lettres.",
     color: "bg-cloud-sky"
   }
 ];

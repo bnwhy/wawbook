@@ -94,7 +94,7 @@ const App: React.FC = () => {
             <Switch>
           {/* Main Application Flow (SPA-like at root) */}
           <Route path="/">
-            {appState === 'HOME' && <Hero onStart={startCreation} onAdminClick={() => setAppState('ADMIN')} />}
+            {appState === 'HOME' && <Hero onStart={startCreation} />}
             
             {appState === 'CREATE' && (
               <Wizard 
@@ -116,14 +116,14 @@ const App: React.FC = () => {
                 config={config} 
                 onReset={handleReset}
                 onStart={() => startCreation(config.theme, undefined, story.title, config.characters)}
-                onAdminClick={() => setAppState('ADMIN')}
                 editingCartItemId={editingCartItemId}
               />
             )}
-            
-            {appState === 'ADMIN' && (
-              <AdminDashboard onBack={() => setAppState('HOME')} />
-            )}
+          </Route>
+
+          {/* Admin Route - Isolated */}
+          <Route path="/admin">
+            <AdminDashboard onBack={() => setLocation('/')} />
           </Route>
 
           {/* Ecommerce Routes */}

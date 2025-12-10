@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import heroBg from "@assets/generated_images/pastel_hero_background_wawbook.png";
 import { Sparkles, ArrowRight } from "lucide-react";
 
-export function Hero() {
+export function Hero({ onStart }: { onStart: () => void }) {
   return (
     <section className="relative overflow-hidden bg-[#fffdf5] pt-10 pb-20 md:pt-16 md:pb-28">
       
@@ -46,7 +46,7 @@ export function Hero() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Button size="lg" className="rounded-3xl text-xl h-16 px-10 bg-primary hover:bg-primary/90 text-white font-serif shadow-[0_8px_0_rgb(219,112,147)] hover:shadow-[0_4px_0_rgb(219,112,147)] hover:translate-y-[4px] transition-all active:shadow-none active:translate-y-[8px]">
+                <Button onClick={onStart} size="lg" className="rounded-3xl text-xl h-16 px-10 bg-primary hover:bg-primary/90 text-white font-serif shadow-[0_8px_0_rgb(219,112,147)] hover:shadow-[0_4px_0_rgb(219,112,147)] hover:translate-y-[4px] transition-all active:shadow-none active:translate-y-[8px]">
                   Je crée mon livre !
                 </Button>
               </div>

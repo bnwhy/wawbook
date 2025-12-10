@@ -6,7 +6,6 @@ import { useCart } from '../context/CartContext';
 
 interface NavigationProps {
   onStart: () => void;
-  onAdminClick?: () => void;
 }
 
 const CloudLogo = () => (
@@ -35,7 +34,7 @@ const CloudLogo = () => (
   </div>
 );
 
-const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
+const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
   const { mainMenu } = useMenus();
   const { itemCount } = useCart();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -164,9 +163,6 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onAdminClick }) => {
           >
             <Menu size={28} />
           </button>
-          
-          {/* Secret Admin Button (Double click logo or distinct button) */}
-          <button onClick={onAdminClick} className="hidden opacity-0 w-4 h-4 bg-red-500 absolute top-0 left-0 hover:opacity-100 z-[9999]" title="Admin Panel"></button>
         </div>
       </div>
 

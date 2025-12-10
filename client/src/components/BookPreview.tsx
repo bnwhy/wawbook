@@ -469,14 +469,14 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     {/* LEFT SIDE */}
                     <div 
                         onClick={() => { if (currentView > 0) handlePrev(); }}
-                        className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md origin-right transition-transform duration-500 ease-out hover:[transform:rotateY(5deg)] ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : 'bg-white cursor-pointer hover:bg-gray-50/10'}`}
+                        className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md origin-right transition-transform duration-500 ease-out hover:[transform:rotateY(5deg)] ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : (currentView === totalViews - 1 ? 'bg-white cursor-pointer hover:bg-gray-50/10 shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white cursor-pointer hover:bg-gray-50/10')}`}
                     >
                         {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
                     </div>
                     {/* RIGHT SIDE */}
                     <div 
                         onClick={() => { if (currentView < totalViews - 1) handleNext(); }}
-                        className={`w-1/2 h-full overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/10 transition-transform duration-500 ease-out origin-left hover:[transform:rotateY(-5deg)] ${(currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next') ? 'bg-transparent shadow-none pointer-events-none' : 'bg-white shadow-sm'}`}
+                        className={`w-1/2 h-full overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/10 transition-transform duration-500 ease-out origin-left hover:[transform:rotateY(-5deg)] ${(currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next') ? 'bg-transparent shadow-none pointer-events-none' : (currentView === 0 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white shadow-sm')}`}
                     >
                         {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
                     </div>
@@ -520,10 +520,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {/* 3. STATIC IDLE LAYER (Only when not flipping to prevent flicker) */}
                 {!isFlipping && (
                     <div className="absolute inset-0 flex w-full h-full z-10 pointer-events-none">
-                        <div className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${currentView === 0 ? 'bg-transparent border-none' : 'bg-white'}`}>
+                        <div className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${currentView === 0 ? 'bg-transparent border-none' : (currentView === totalViews - 1 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white')}`}>
                             {currentSpread.left}
                         </div>
-                        <div className={`w-1/2 h-full overflow-hidden rounded-r-md ${currentView === totalViews - 1 ? 'bg-transparent' : 'bg-white'}`}>
+                        <div className={`w-1/2 h-full overflow-hidden rounded-r-md ${currentView === totalViews - 1 ? 'bg-transparent' : (currentView === 0 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white')}`}>
                             {currentSpread.right}
                         </div>
                     </div>

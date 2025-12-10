@@ -548,7 +548,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               )}
                               <input 
                                  type="file" 
-                                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                  onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
@@ -557,7 +557,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     }
                                  }}
                               />
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                  <PenTool className="text-white" size={20} />
                               </div>
                            </div>
@@ -1233,66 +1233,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              <div key={page.id} className="flex-1 bg-white relative overflow-hidden group border-r border-gray-100 last:border-0">
                                                 
                                                 {/* 1. BASE LAYER (Background Variant) */}
-                                                <div className="absolute inset-0 bg-gray-50 flex items-center justify-center group/bg">
+                                                <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
                                                    {/* Find image for current variant & page */}
                                                    {(() => {
                                                       const bgImage = selectedBook.contentConfig.images.find(
                                                          img => img.pageIndex === page.pageNumber && 
-                                                               (img.combinationKey === selectedVariant || img.combinationKey === 'default')
+                                                               (img.combinationKey === selectedVariant || img.combinationKey === 'default') // Fallback logic
                                                       );
                                                       
+                                                      if (bgImage?.imageUrl) {
+                                                         return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background" />;
+                                                      }
                                                       return (
-                                                         <>
-                                                            {bgImage?.imageUrl ? (
-                                                               <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background" />
-                                                            ) : (
-                                                               <div className="text-center text-gray-300">
-                                                                  <ImageIcon size={48} className="mx-auto mb-2 opacity-50" />
-                                                                  <span className="text-xs font-bold block">Aucune illustration</span>
-                                                                  <span className="text-[10px]">Variante: {selectedVariant}</span>
-                                                               </div>
-                                                            )}
-                                                            
-                                                            {/* Background Upload Overlay */}
-                                                            <div className="absolute inset-0 bg-black/0 group-hover/bg:bg-black/10 transition-colors flex items-center justify-center z-10">
-                                                               <label className="cursor-pointer bg-white/90 hover:bg-white text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm opacity-0 group-hover/bg:opacity-100 transition-all transform translate-y-2 group-hover/bg:translate-y-0 flex items-center gap-2 hover:text-brand-coral">
-                                                                  <Upload size={14} />
-                                                                  {bgImage?.imageUrl ? 'Changer fond' : 'Ajouter fond'}
-                                                                  <input 
-                                                                     type="file" 
-                                                                     className="hidden" 
-                                                                     accept="image/*"
-                                                                     onChange={(e) => {
-                                                                        const file = e.target.files?.[0];
-                                                                        if (file) {
-                                                                           const url = URL.createObjectURL(file);
-                                                                           const newImages = [...selectedBook.contentConfig.images];
-                                                                           const existingIdx = newImages.findIndex(img => img.pageIndex === page.pageNumber && img.combinationKey === selectedVariant);
-                                                                           
-                                                                           if (existingIdx >= 0) {
-                                                                              newImages[existingIdx] = { ...newImages[existingIdx], imageUrl: url };
-                                                                           } else {
-                                                                              newImages.push({
-                                                                                 id: `img-${Date.now()}`,
-                                                                                 pageIndex: page.pageNumber,
-                                                                                 combinationKey: selectedVariant,
-                                                                                 imageUrl: url
-                                                                              });
-                                                                           }
-                                                                           
-                                                                           handleSaveBook({
-                                                                              ...selectedBook,
-                                                                              contentConfig: {
-                                                                                 ...selectedBook.contentConfig,
-                                                                                 images: newImages
-                                                                              }
-                                                                           });
-                                                                        }
-                                                                     }}
-                                                                  />
-                                                               </label>
-                                                            </div>
-                                                         </>
+                                                         <div className="text-center text-gray-300">
+                                                            <ImageIcon size={48} className="mx-auto mb-2 opacity-50" />
+                                                            <span className="text-xs font-bold block">Aucune illustration</span>
+                                                            <span className="text-[10px]">Variante: {selectedVariant}</span>
+                                                         </div>
                                                       );
                                                    })()}
                                                 </div>

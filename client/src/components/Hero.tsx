@@ -438,7 +438,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
            <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
               <div className="col-span-1 md:col-span-2">
                  <div className="flex items-center gap-2 mb-6 text-white">
-                    <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">WawBook</span>
+                    <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">NuageBook</span>
                  </div>
                  <p className="text-cloud-light/60 font-medium text-lg max-w-sm mb-8">
                     Nous créons des moments magiques de lecture pour les enfants du monde entier.
@@ -448,11 +448,6 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 cursor-pointer"><span className="font-black">I</span></div>
                     <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 cursor-pointer"><span className="font-black">F</span></div>
                  </div>
-
-                 {/* ADMIN LINK */}
-                 <button onClick={onAdminClick} className="mt-8 text-cloud-light/30 text-sm hover:text-white transition-colors flex items-center gap-2">
-                    <Settings size={14} /> Administration
-                 </button>
               </div>
               
               <div>
@@ -475,7 +470,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
               </div>
            </div>
            <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10 text-center text-cloud-light/40 font-bold text-sm">
-              © 2024 WawBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
+              © 2024 NuageBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
            </div>
         </footer>
      </div>

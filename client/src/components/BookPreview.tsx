@@ -127,7 +127,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         setCurrentView(c => c + 1);
         setIsFlipping(false);
         setDirection(null);
-      }, 1500); // Match CSS duration
+      }, 900); // Match CSS duration
     }
   };
 
@@ -139,7 +139,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         setCurrentView(c => c - 1);
         setIsFlipping(false);
         setDirection(null);
-      }, 1500);
+      }, 900);
     }
   };
 
@@ -616,17 +616,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         .perspective-2000 { perspective: 2000px; }
         
         @keyframes flip-next {
-            0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(-90deg) scale(1.1); }
-            100% { transform: rotateY(-180deg); }
+            0% { transform: rotateY(0deg) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
+            50% { transform: rotateY(-90deg) scale(1.1); box-shadow: -20px 10px 40px rgba(0,0,0,0.2); }
+            100% { transform: rotateY(-180deg) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
         }
         @keyframes flip-prev {
-            0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(90deg) scale(1.1); }
-            100% { transform: rotateY(180deg); }
+            0% { transform: rotateY(0deg) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
+            50% { transform: rotateY(90deg) scale(1.1); box-shadow: 20px 10px 40px rgba(0,0,0,0.2); }
+            100% { transform: rotateY(180deg) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
         }
-        .animate-flip-next { animation: flip-next 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
-        .animate-flip-prev { animation: flip-prev 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) forwards; }
+        .animate-flip-next { animation: flip-next 0.9s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; }
+        .animate-flip-prev { animation: flip-prev 0.9s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; }
         
         @keyframes drop-in {
             0% { transform: translateY(-50px) scale(0.95); opacity: 0; }

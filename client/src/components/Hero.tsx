@@ -166,7 +166,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
               <p className="text-xl text-cloud-dark/60 font-medium">Des histoires pour célébrer ceux qu'on aime</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-24 max-w-7xl mx-auto justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-7xl mx-auto justify-center">
               {familyCards.map((card, idx) => (
                 <div 
                   key={idx}
@@ -190,7 +190,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   <div className="p-5 flex flex-col flex-grow">
                      <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
                      <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
-                     <p className="text-cloud-dark/60 text-sm font-medium line-clamp-2 mb-4 leading-relaxed">
+                     <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
                         {card.description}
                      </p>
                      
@@ -241,7 +241,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   <div className="p-5 flex flex-col flex-grow">
                      <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
                      <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
-                     <p className="text-cloud-dark/60 text-sm font-medium line-clamp-2 mb-4 leading-relaxed">
+                     <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
                         {card.description}
                      </p>
                      
@@ -288,7 +288,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     <div className="p-5 flex flex-col flex-grow">
                        <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{activity.badgeText}</div>
                        <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{activity.name}</h3>
-                       <p className="text-cloud-dark/60 text-sm font-medium line-clamp-2 mb-4 leading-relaxed">
+                       <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
                           {activity.description}
                        </p>
                        
@@ -339,7 +339,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     <div className="p-5 flex flex-col flex-grow">
                        <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{occasion.badgeText}</div>
                        <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{occasion.name}</h3>
-                       <p className="text-cloud-dark/60 text-sm font-medium line-clamp-2 mb-4 leading-relaxed">
+                       <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
                           {occasion.description}
                        </p>
                        

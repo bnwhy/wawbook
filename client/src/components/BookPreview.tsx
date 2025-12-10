@@ -117,7 +117,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   const contentPages = getContentPages();
   const totalSpreads = Math.ceil(contentPages.length / 2); 
-  const totalViews = 1 + 1 + totalSpreads + 1; // Cover + Intro + StorySpreads + Back
+  // 0: Cover, 1: Intro, 2..N: Spreads, N+1: End Page, N+2: Closed Back
+  const totalViews = 1 + 1 + totalSpreads + 1 + 1;
 
   const handleNext = () => {
     if (currentView < totalViews - 1 && !isFlipping) {
@@ -261,7 +262,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
       return (
         <div className="w-full h-full bg-white p-6 flex flex-col justify-center relative shadow-inner">
-            <div className={`absolute ${isLeft ? 'right-0' : 'left-0'} top-0 bottom-0 w-6 bg-gradient-to-${isLeft ? 'l' : 'r'} from-black/10 to-transparent pointer-events-none z-10`}></div>
+            <div className={`absolute ${isLeft ? 'right-0' : 'left-0'} top-0 bottom-0 w-6 bg-gradient-to-${isLeft ? 'l' : 'r'} from-black/5 to-transparent pointer-events-none z-10`}></div>
             <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-sm bg-cloud-lightest border-4 border-white">
                 {storyPage.imageUrl ? <img src={storyPage.imageUrl} className="w-full h-full object-cover" alt="Illustration" /> : <div className="w-full h-full flex items-center justify-center text-cloud-blue/30"><Cloud size={48} /></div>}
             </div>
@@ -280,7 +281,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           <div className="w-full h-full relative flex flex-col items-center justify-center text-white p-6 text-center overflow-hidden bg-cloud-blue shadow-inner border-l-8 border-gray-100">
              {/* Spine / Binding Effect */}
              <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-200 to-white border-r border-black/5 z-30"></div>
-             <div className="absolute left-3 top-0 bottom-0 w-1 bg-black/10 z-20 mix-blend-multiply"></div>
+             <div className="absolute left-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
 
              {/* Cover Thickness (Right Edge) */}
              <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-black/20 to-transparent z-20 pointer-events-none"></div>
@@ -288,7 +289,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
              {book?.coverImage ? (
                 <>
                     <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginLeft: '12px' }}></div>
-                    <div className="absolute inset-0 bg-black/20" style={{ marginLeft: '12px' }}></div>
+                    <div className="absolute inset-0 bg-black/10" style={{ marginLeft: '12px' }}></div>
                 </>
              ) : (
                 <div className="absolute inset-0 bg-cloud-blue" style={{ marginLeft: '12px' }}>
@@ -314,7 +315,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       return {
         left: (
           <div className="w-full h-full flex items-center justify-center p-12 bg-cloud-lightest relative shadow-inner">
-             <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/10 to-transparent pointer-events-none"></div>
+             <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/5 to-transparent pointer-events-none"></div>
              <div className="text-center opacity-80">
                 <h3 className="font-hand text-2xl text-accent-melon mb-2 font-bold">Cette histoire appartient à</h3>
                 <div className="font-display text-4xl text-cloud-dark font-black my-4 border-b-2 border-cloud-dark/10 pb-2 inline-block min-w-[200px]">{config.childName}</div>
@@ -326,7 +327,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         ),
         right: (
           <div className="w-full h-full flex flex-col items-center justify-center p-12 bg-white relative shadow-inner">
-             <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/10 to-transparent pointer-events-none"></div>
+             <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/5 to-transparent pointer-events-none"></div>
              <h1 className="font-display font-black text-4xl text-cloud-dark mb-4 text-center leading-tight">{story.title}</h1>
              <div className="w-20 h-1.5 bg-accent-sun rounded-full mb-8"></div>
              <div className="text-cloud-blue font-bold text-xl">Écrit pour {config.childName}</div>
@@ -335,12 +336,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       };
     }
 
-    // N: Back Cover
-    if (index === totalViews - 1) {
+    // N-1: Back Cover (End Page)
+    if (index === totalViews - 2) {
       return {
         left: (
           <div className="w-full h-full bg-cloud-blue flex flex-col items-center justify-center text-white p-8 text-center shadow-inner">
-             <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/10 to-transparent pointer-events-none"></div>
+             <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/5 to-transparent pointer-events-none"></div>
              <h2 className="font-display font-black text-4xl mb-6">Fin</h2>
              <p className="text-white/80 text-lg mb-8">Merci d'avoir lu cette histoire !</p>
              <button onClick={onReset} className="bg-white text-cloud-blue px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
@@ -350,11 +351,45 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         ),
         right: (
           <div className="w-full h-full bg-cloud-dark flex items-center justify-center shadow-inner">
-             <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/10 to-transparent pointer-events-none"></div>
+             <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/5 to-transparent pointer-events-none"></div>
              <Cloud size={64} className="text-white/20" />
           </div>
         )
       };
+    }
+
+    // N: Closed Back Cover
+    if (index === totalViews - 1) {
+        return {
+            left: (
+                <div className="w-full h-full relative flex flex-col items-center justify-center text-white p-6 text-center overflow-hidden bg-cloud-blue shadow-inner border-r-8 border-gray-100">
+                     {/* Spine / Binding Effect */}
+                     <div className="absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-gray-200 to-white border-l border-black/5 z-30"></div>
+                     <div className="absolute right-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
+        
+                     {/* Cover Thickness (Left Edge) */}
+                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-black/20 to-transparent z-20 pointer-events-none"></div>
+        
+                     {book?.coverImage ? (
+                        <>
+                            <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginRight: '12px' }}></div>
+                            <div className="absolute inset-0 bg-black/20" style={{ marginRight: '12px' }}></div>
+                        </>
+                     ) : (
+                        <div className="absolute inset-0 bg-cloud-blue" style={{ marginRight: '12px' }}>
+                             <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
+                        </div>
+                     )}
+            
+                     <div className="relative z-10 flex flex-col items-center pr-4">
+                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6 text-4xl shadow-inner backdrop-blur-sm">☁️</div>
+                        <h3 className="font-display font-bold text-2xl mb-2 text-white/90">NuageBook</h3>
+                        <p className="text-white/60 text-sm font-medium uppercase tracking-widest">Fait avec amour</p>
+                     </div>
+                  </div>
+            ),
+            right: <div className="w-full h-full bg-transparent" />
+        };
     }
 
     // Story Spreads
@@ -386,7 +421,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       {!isModal && <Navigation onStart={onStart} />}
 
       {/* BOOK PREVIEW AREA */}
-      <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : 'py-12 mt-20 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
+      <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : 'py-12 mt-8 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
           
           {/* Stage */}
           <div className={`relative z-10 flex items-center justify-center w-full max-w-7xl perspective-[2500px] animate-drop-in ${isModal ? 'h-[600px] scale-[0.85]' : 'h-[850px]'}`}>
@@ -401,15 +436,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
             {/* BOOK OBJECT */}
             <div 
-              className={`relative w-[1080px] h-[720px] flex shadow-[0_30px_60px_rgba(0,0,0,0.4)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
+              className={`relative w-[1080px] h-[720px] flex shadow-[0_30px_60px_rgba(0,0,0,0.4)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev') || (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
               style={{ 
-                transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev') 
-                  ? 'translateX(-25%)' 
-                  : 'translateX(0%)'
+                transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev')
+                  ? 'translateX(-25%)'
+                  : (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')
+                    ? 'translateX(25%)'
+                    : 'translateX(0%)'
               }}
             >
                 {/* 3D Page Thickness Effect (Visible when book is open) */}
-                {currentView > 0 && !((currentView === 1 && direction === 'prev')) && (
+                {currentView > 0 && currentView < totalViews - 1 && !((currentView === 1 && direction === 'prev')) && !((currentView === totalViews - 2 && direction === 'next')) && (
                    <>
                       {/* Left Page Stack - More layers for rigid effect */}
                       <div className="absolute top-1 bottom-1 left-1 w-1 bg-gray-200 rounded-l-sm border-l border-gray-300" style={{ transform: 'translateX(-2px) translateZ(-1px)' }}></div>
@@ -623,12 +660,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         
         @keyframes flip-next {
             0% { transform: rotateY(0deg) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
-            50% { transform: rotateY(-90deg) scale(1.1); box-shadow: -20px 10px 40px rgba(0,0,0,0.2); }
+            50% { transform: rotateY(-90deg) scale(1.1); box-shadow: -20px 10px 40px rgba(0,0,0,0.1); }
             100% { transform: rotateY(-180deg) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
         }
         @keyframes flip-prev {
             0% { transform: rotateY(0deg) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
-            50% { transform: rotateY(90deg) scale(1.1); box-shadow: 20px 10px 40px rgba(0,0,0,0.2); }
+            50% { transform: rotateY(90deg) scale(1.1); box-shadow: 20px 10px 40px rgba(0,0,0,0.1); }
             100% { transform: rotateY(180deg) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
         }
         .animate-flip-next { animation: flip-next 0.9s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; }

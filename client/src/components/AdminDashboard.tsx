@@ -307,7 +307,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                          <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-1">
                                <h3 className="font-bold text-lg text-slate-900 truncate">{book.name}</h3>
-                               <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{book.price} €</span>
+                               <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{book.price.toFixed(2)} €</span>
                             </div>
                             <p className="text-sm text-slate-500 line-clamp-1 mb-2">{book.description}</p>
                             <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">

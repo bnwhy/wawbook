@@ -118,7 +118,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ onSelectBook }) => {
                   </p>
                   
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                    <span className="font-bold text-slate-800 text-lg">{book.price} €</span>
+                    <span className="font-bold text-slate-800 text-lg">{Number(book.price).toFixed(2)} €</span>
                     <button 
                       className="bg-brand-coral text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-500 transition-colors flex items-center gap-2 shadow-sm shadow-brand-coral/20"
                     >

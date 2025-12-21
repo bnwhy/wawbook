@@ -208,7 +208,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <span className="font-medium">Paramétrages</span>
            </button>
 
-           {selectedBookId ? (
+           {selectedBookId && (
              <>
                <div className="text-xs font-bold text-slate-500 uppercase px-4 mt-6 mb-2">Édition en cours</div>
                <div className="px-4 mb-4">

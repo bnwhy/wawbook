@@ -208,14 +208,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <span className="font-medium">Paramétrages</span>
            </button>
 
-           {selectedBookId && (
+           {selectedBookId ? (
              <>
                <div className="text-xs font-bold text-slate-500 uppercase px-4 mt-6 mb-2">Édition en cours</div>
                <div className="px-4 mb-4">
-                  <div className="bg-slate-800 rounded p-3 border border-slate-700">
+                  <div className="bg-slate-800 rounded p-3 border border-slate-700 mb-3">
                      <div className="font-bold text-white truncate">{selectedBook?.name}</div>
                      <div className="text-xs text-slate-400">{selectedBook?.id}</div>
                   </div>
+                  
+                  <button 
+                     onClick={() => handleSaveBook(selectedBook!)}
+                     className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+                  >
+                     <Save size={16} />
+                     Sauvegarder
+                  </button>
                </div>
 
                <button 

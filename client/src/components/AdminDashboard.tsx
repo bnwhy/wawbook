@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement } from '../types/admin';
@@ -128,6 +129,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const handleSaveBook = (updatedBook: BookProduct) => {
     updateBook(updatedBook);
+    // Don't exit editing mode automatically
+  };
+
+  const handleSaveAndExit = (updatedBook: BookProduct) => {
+    updateBook(updatedBook);
     setIsEditing(false);
   };
 
@@ -218,7 +224,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   </div>
                   
                   <button 
-                     onClick={() => handleSaveBook(selectedBook!)}
+                     onClick={() => {
+                        handleSaveBook(selectedBook!);
+                        toast.success("Modifications enregistrées");
+                     }}
                      className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
                   >
                      <Save size={16} />
@@ -573,7 +582,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               <p className="text-xs text-gray-500 mb-2">Format recommandé: 800x1200px (Portrait)</p>
                               {selectedBook.coverImage && (
                                  <button 
-                                    onClick={() => handleSaveBook({...selectedBook, coverImage: undefined})}
+                                    onClick={() => handleSaveBook({...selectedBook, coverImage: ''})}
                                     className="text-xs text-red-500 hover:text-red-600 font-bold"
                                  >
                                     Supprimer l'image

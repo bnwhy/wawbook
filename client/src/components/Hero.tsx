@@ -111,7 +111,7 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
 };
 
 const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
-  const { books } = useBooks();
+  const { books } = useBooks(); // Use the context to get the books
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const themeCards = books.filter(b => b.category === 'theme');

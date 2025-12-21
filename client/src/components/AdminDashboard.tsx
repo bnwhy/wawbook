@@ -23,8 +23,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
   const [expandedVariantIds, setExpandedVariantIds] = useState<Set<string>>(new Set());
 
-  // Helper to get selected book
-  const selectedBook = books.find(b => b.id === selectedBookId);
+  const contextBook = books.find(b => b.id === selectedBookId);
+  const [draftBook, setDraftBook] = useState<BookProduct | null>(null);
+
+  // Sync draft when switching books or initially loading
+  React.useEffect(() => {
+    if (contextBook && (!draftBook || draftBook.id !== contextBook.id)) {
+      setDraftBook(JSON.parse(JSON.stringify(contextBook)));
+    } else if (!contextBook) {
+      setDraftBook(null);
+    }
+  }, [contextBook?.id]); // Only sync on ID change, not every update
+
+  const selectedBook = draftBook || contextBook;
+  const hasUnsavedChanges = JSON.stringify(draftBook) !== JSON.stringify(contextBook);
 
   const currentCombinations = React.useMemo(() => {
     if (!selectedBook) return [];
@@ -128,12 +140,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const handleSaveBook = (updatedBook: BookProduct) => {
-    updateBook(updatedBook);
-    // Don't exit editing mode automatically
+    setDraftBook(updatedBook);
   };
 
   const handleSaveAndExit = (updatedBook: BookProduct) => {
     updateBook(updatedBook);
+    setDraftBook(null); // Clear draft to resync with new context
     setIsEditing(false);
   };
 
@@ -151,6 +163,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
     addBook(newBook);
     setSelectedBookId(newBook.id);
+    setDraftBook(newBook);
     setIsEditing(true);
   };
 
@@ -225,13 +238,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   
                   <button 
                      onClick={() => {
-                        handleSaveBook(selectedBook!);
-                        toast.success("Modifications enregistrées");
+                        if (draftBook) {
+                           updateBook(draftBook);
+                           toast.success("Modifications enregistrées");
+                           // We don't nullify draftBook here because we want to stay in edit mode,
+                           // but the next render will re-sync draftBook if needed, or we rely on 'hasUnsavedChanges' calculation.
+                           // Actually, updateBook updates context, causing contextBook to change.
+                           // But our useEffect only runs on ID change. So draftBook stays as is.
+                           // But contextBook now equals draftBook (mostly).
+                        }
                      }}
-                     className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded text-sm flex items-center justify-center gap-2 transition-colors shadow-sm"
+                     disabled={!hasUnsavedChanges}
+                     className={`w-full font-bold py-2 px-3 rounded text-sm flex items-center justify-center gap-2 transition-colors shadow-sm ${
+                        hasUnsavedChanges 
+                           ? 'bg-green-500 hover:bg-green-600 text-white cursor-pointer' 
+                           : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                     }`}
                   >
                      <Save size={16} />
-                     Sauvegarder
+                     {hasUnsavedChanges ? 'Sauvegarder' : 'Enregistré'}
                   </button>
                </div>
 

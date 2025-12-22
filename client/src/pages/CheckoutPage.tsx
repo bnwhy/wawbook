@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
+import { useEcommerce } from '../context/EcommerceContext';
 import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
@@ -7,9 +8,11 @@ import Footer from '../components/Footer';
 
 const CheckoutPage = () => {
   const { items, total, clearCart } = useCart();
+  const { createOrder } = useEcommerce();
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string>('');
 
   // Form states
   const [formData, setFormData] = useState({
@@ -41,8 +44,22 @@ const CheckoutPage = () => {
     
     // Simulate payment processing
     setTimeout(() => {
+      // Create Order in Ecommerce Backend
+      createOrder({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        address: {
+            street: formData.address,
+            city: formData.city,
+            zipCode: formData.zip,
+            country: formData.country
+        }
+      }, items, total);
+
       setIsLoading(false);
       setStep('confirmation');
+      setOrderNumber(Math.random().toString(36).substr(2, 9).toUpperCase());
       clearCart();
       window.scrollTo(0, 0);
     }, 2000);
@@ -69,7 +86,7 @@ const CheckoutPage = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200 max-w-md w-full mb-8 text-left">
             <div className="flex justify-between mb-2">
                 <span className="text-stone-500">Numéro de commande</span>
-                <span className="font-mono font-bold">#{Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+                <span className="font-mono font-bold">#{orderNumber}</span>
             </div>
             <div className="flex justify-between mb-2">
                 <span className="text-stone-500">Date</span>

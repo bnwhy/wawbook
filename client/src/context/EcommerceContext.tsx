@@ -171,6 +171,7 @@ interface EcommerceContextType {
   updateOrderTracking: (orderId: string, trackingNumber: string) => void;
   getCustomerById: (id: string) => Customer | undefined;
   getOrdersByCustomer: (customerId: string) => Order[];
+  createOrder: (customerData: any, cartItems: any[], totalAmount: number) => void;
 }
 
 const EcommerceContext = createContext<EcommerceContextType | undefined>(undefined);
@@ -187,6 +188,67 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     setOrders(orders.map(o => o.id === orderId ? { ...o, trackingNumber, status: 'shipped' } : o));
   };
 
+  const createOrder = (customerData: any, cartItems: any[], totalAmount: number) => {
+    // 1. Find or Create Customer
+    let customer = customers.find(c => c.email === customerData.email);
+    let customerId = customer?.id;
+
+    if (!customer) {
+      customerId = `c${Date.now()}`;
+      customer = {
+        id: customerId,
+        firstName: customerData.firstName,
+        lastName: customerData.lastName,
+        email: customerData.email,
+        phone: customerData.phone,
+        createdAt: new Date().toISOString(),
+        address: customerData.address,
+        totalSpent: 0,
+        orderCount: 0
+      };
+      setCustomers(prev => [...prev, customer!]);
+    } else {
+       // Update existing customer stats logic is handled below, but we might want to update address
+       setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, address: customerData.address } : c));
+    }
+
+    if (!customerId) return; // Should not happen
+
+    // 2. Create Order
+    const newOrder: Order = {
+      id: `ORD-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+      customerId: customerId,
+      customerName: `${customerData.firstName} ${customerData.lastName}`,
+      customerEmail: customerData.email,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      totalAmount: totalAmount,
+      shippingAddress: customerData.address,
+      items: cartItems.map(item => ({
+        id: `item-${Math.random().toString(36).substr(2, 9)}`,
+        bookId: item.config.theme, 
+        bookTitle: item.bookTitle,
+        quantity: item.quantity,
+        price: item.price,
+        configuration: item.config.characters
+      }))
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+
+    // 3. Update Customer Stats
+    setCustomers(prev => prev.map(c => {
+      if (c.id === customerId) {
+        return {
+          ...c,
+          totalSpent: c.totalSpent + totalAmount,
+          orderCount: c.orderCount + 1
+        };
+      }
+      return c;
+    }));
+  };
+
   const getCustomerById = (id: string) => customers.find(c => c.id === id);
   
   const getOrdersByCustomer = (customerId: string) => orders.filter(o => o.customerId === customerId);
@@ -198,7 +260,8 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       updateOrderStatus, 
       updateOrderTracking,
       getCustomerById,
-      getOrdersByCustomer
+      getOrdersByCustomer,
+      createOrder
     }}>
       {children}
     </EcommerceContext.Provider>

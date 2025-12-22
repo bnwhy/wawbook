@@ -1105,7 +1105,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           </div>
                                        </div>
                                     </div>
-                                 </div>
                               </div>
 
                               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

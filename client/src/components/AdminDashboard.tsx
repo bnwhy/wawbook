@@ -210,14 +210,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
            </button>
 
            <button 
-             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-slate-800 text-slate-400 hover:text-white"
+             onClick={() => { setActiveTab('customers'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'customers' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
            >
               <Users size={20} />
               <span className="font-medium">Clients</span>
            </button>
 
            <button 
-             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-slate-800 text-slate-400 hover:text-white"
+             onClick={() => { setActiveTab('orders'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'orders' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
            >
               <ShoppingBag size={20} />
               <span className="font-medium">Commandes</span>

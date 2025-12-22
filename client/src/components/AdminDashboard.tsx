@@ -2988,6 +2988,94 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          </div>
                                                       )}
 
+                                                      {/* Text Styling Options */}
+                                                      {isText && (
+                                                         <div>
+                                                            <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Style du texte</label>
+                                                            <div className="grid grid-cols-2 gap-2 mb-2">
+                                                                <div>
+                                                                    <label className="text-[9px] text-gray-400 mb-0.5 block">Taille (px)</label>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        value={(layer as any).style?.fontSize ? parseInt((layer as any).style.fontSize) : 16} 
+                                                                        onChange={(e) => updateLayer({style: {...(layer as any).style, fontSize: `${e.target.value}px`}})} 
+                                                                        className="w-full text-xs border border-gray-300 rounded px-2 py-1" 
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[9px] text-gray-400 mb-0.5 block">Couleur</label>
+                                                                    <div className="flex gap-2 items-center">
+                                                                        <input 
+                                                                            type="color" 
+                                                                            value={(layer as any).style?.color || '#000000'} 
+                                                                            onChange={(e) => updateLayer({style: {...(layer as any).style, color: e.target.value}})} 
+                                                                            className="w-8 h-7 p-0 border border-gray-300 rounded cursor-pointer" 
+                                                                        />
+                                                                        <span className="text-[10px] text-gray-500 font-mono">{(layer as any).style?.color || '#000000'}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex gap-1">
+                                                                <button 
+                                                                    onClick={() => updateLayer({style: {...(layer as any).style, fontWeight: (layer as any).style?.fontWeight === 'bold' ? 'normal' : 'bold'}})}
+                                                                    className={`flex-1 py-1.5 border rounded text-xs font-bold transition-colors ${(layer as any).style?.fontWeight === 'bold' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                                    title="Gras"
+                                                                >
+                                                                    B
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => updateLayer({style: {...(layer as any).style, fontStyle: (layer as any).style?.fontStyle === 'italic' ? 'normal' : 'italic'}})}
+                                                                    className={`flex-1 py-1.5 border rounded text-xs italic transition-colors ${(layer as any).style?.fontStyle === 'italic' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                                    title="Italique"
+                                                                >
+                                                                    I
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => updateLayer({style: {...(layer as any).style, textDecoration: (layer as any).style?.textDecoration === 'underline' ? 'none' : 'underline'}})}
+                                                                    className={`flex-1 py-1.5 border rounded text-xs underline transition-colors ${(layer as any).style?.textDecoration === 'underline' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                                    title="Souligné"
+                                                                >
+                                                                    U
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => updateLayer({style: {...(layer as any).style, textAlign: 'left'}})}
+                                                                    className={`flex-1 py-1.5 border rounded text-xs transition-colors ${(layer as any).style?.textAlign === 'left' || !(layer as any).style?.textAlign ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                                    title="Aligner à gauche"
+                                                                >
+                                                                    L
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => updateLayer({style: {...(layer as any).style, textAlign: 'center'}})}
+                                                                    className={`flex-1 py-1.5 border rounded text-xs transition-colors ${(layer as any).style?.textAlign === 'center' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                                    title="Centrer"
+                                                                >
+                                                                    C
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => updateLayer({style: {...(layer as any).style, textAlign: 'right'}})}
+                                                                    className={`flex-1 py-1.5 border rounded text-xs transition-colors ${(layer as any).style?.textAlign === 'right' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                                                                    title="Aligner à droite"
+                                                                >
+                                                                    R
+                                                                </button>
+                                                            </div>
+                                                            <div className="mt-2">
+                                                                <label className="text-[9px] text-gray-400 mb-0.5 block">Police</label>
+                                                                <select 
+                                                                    value={(layer as any).style?.fontFamily || 'Inter'} 
+                                                                    onChange={(e) => updateLayer({style: {...(layer as any).style, fontFamily: e.target.value}})}
+                                                                    className="w-full text-xs border border-gray-300 rounded px-2 py-1"
+                                                                >
+                                                                    <option value="Inter">Inter (Sans-serif)</option>
+                                                                    <option value="Merriweather">Merriweather (Serif)</option>
+                                                                    <option value="Comic Sans MS">Comic Sans (Ludique)</option>
+                                                                    <option value="Courier New">Courier (Monospace)</option>
+                                                                    <option value="Impact">Impact (Bold)</option>
+                                                                </select>
+                                                            </div>
+                                                         </div>
+                                                      )}
+
                                                       {/* Content Input */}
                                                       <div>
                                                          <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">

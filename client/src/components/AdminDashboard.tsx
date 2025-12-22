@@ -38,6 +38,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const contextBook = books.find(b => b.id === selectedBookId);
   const [draftBook, setDraftBook] = useState<BookProduct | null>(null);
+  const [activeRightTab, setActiveRightTab] = useState<'layers' | 'properties'>('layers');
 
   // SETTINGS STATE
   const [settings, setSettings] = useState({
@@ -2726,10 +2727,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                  {/* RIGHT PANEL: LAYERS & PROPERTIES */}
                                  <div className="w-80 bg-white border-l border-gray-200 flex flex-col shadow-xl z-20">
-                                    <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                                       <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                                          <Layers size={16} /> Calques
-                                       </h3>
+                                    {/* Tabs */}
+                                    <div className="flex border-b border-gray-200 bg-gray-50">
+                                        <button 
+                                            onClick={() => setActiveRightTab('layers')}
+                                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${activeRightTab === 'layers' ? 'bg-white text-brand-coral border-b-2 border-brand-coral' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            <Layers size={14} /> Calques
+                                        </button>
+                                        <button 
+                                            onClick={() => setActiveRightTab('properties')}
+                                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${activeRightTab === 'properties' ? 'bg-white text-brand-coral border-b-2 border-brand-coral' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            <Settings size={14} /> Propriétés
+                                        </button>
+                                    </div>
+                                    
+                                    {/* LAYERS TAB HEADER */}
+                                    {activeRightTab === 'layers' && (<>
+                                    <div className="p-4 border-b border-gray-100 bg-white flex justify-between items-center">
+                                       <span className="text-[10px] font-bold text-slate-400 uppercase">Ordre d'affichage</span>
                                        
                                        {/* Add Layer Menu */}
                                        <div className="flex gap-2">
@@ -2804,7 +2821,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           return allLayers.map(layer => (
                                              <div 
                                                 key={layer.id}
-                                                onClick={() => setActiveLayerId(layer.id)}
+                                                onClick={() => {
+                                                    setActiveLayerId(layer.id);
+                                                    // Optional: auto-switch to properties? Maybe better to stay on layers to manage order
+                                                    // setActiveRightTab('properties'); 
+                                                }}
                                                 className={`flex items-center gap-3 p-2 rounded border cursor-pointer group ${activeLayerId === layer.id ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
                                              >
                                                 {layer._kind === 'text' ? <Type size={14} className="text-slate-400" /> : <Image size={14} className="text-slate-400" />}
@@ -2835,14 +2856,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           ));
                                        })()}
                                     </div>
+                                    </>)}
 
-                                    {/* Properties Panel */}
-                                    {activeLayerId && (
-                                       <div className="h-1/2 border-t border-gray-200 bg-gray-50 flex flex-col">
-                                          <div className="p-3 border-b border-gray-200 bg-white font-bold text-xs uppercase text-slate-500 tracking-wider">
-                                             Propriétés
-                                          </div>
-                                          <div className="p-4 overflow-y-auto space-y-4">
+                                    {/* Properties Tab */}
+                                    {activeRightTab === 'properties' && (
+                                       <div className="flex-1 overflow-y-auto bg-gray-50 flex flex-col">
+                                          {activeLayerId ? (
+                                             <div className="p-4 space-y-4">
                                              {(() => {
                                                 const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
                                                 const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
@@ -2999,7 +3019,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    </>
                                                 );
                                              })()}
-                                          </div>
+                                             </div>
+                                          ) : (
+                                             <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                                                <Settings size={32} className="mb-2 opacity-50" />
+                                                <p className="text-sm">Sélectionnez un calque pour modifier ses propriétés</p>
+                                             </div>
+                                          )}
                                        </div>
                                     )}
 

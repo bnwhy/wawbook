@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -589,67 +589,129 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {/* --- VIEW: ORDERS --- */}
             {activeTab === 'orders' && !selectedOrderId && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                   <div>
-                      <h2 className="text-2xl font-bold text-slate-800">Commandes</h2>
-                      <p className="text-slate-500 mt-1">Gérez les commandes clients.</p>
-                   </div>
-                </div>
+              <div className="space-y-4">
+                 <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                       <h2 className="text-xl font-bold text-slate-800">Commandes</h2>
+                       <div className="flex gap-2">
+                          <button className="bg-white border border-gray-300 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50">
+                             Exporter
+                          </button>
+                          <button className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-800">
+                             Créer une commande
+                          </button>
+                       </div>
+                    </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                   <table className="w-full text-left text-sm">
-                      <thead className="bg-slate-50 border-b border-gray-200 text-slate-500 font-medium">
-                         <tr>
-                            <th className="px-6 py-4">Commande</th>
-                            <th className="px-6 py-4">Client</th>
-                            <th className="px-6 py-4">Date</th>
-                            <th className="px-6 py-4">Statut</th>
-                            <th className="px-6 py-4 text-right">Montant</th>
-                            <th className="px-6 py-4"></th>
-                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                         {orders.map(order => (
-                            <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-                               <td className="px-6 py-4 font-bold text-slate-900">{order.id}</td>
-                               <td className="px-6 py-4">
-                                  <div className="font-medium text-slate-900">{order.customerName}</div>
-                                  <div className="text-xs text-slate-500">{order.customerEmail}</div>
-                               </td>
-                               <td className="px-6 py-4 text-slate-600">
-                                  {new Date(order.createdAt).toLocaleDateString()}
-                               </td>
-                               <td className="px-6 py-4">
-                                  <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
-                                     order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                     order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                                     order.status === 'processing' ? 'bg-orange-100 text-orange-700' :
-                                     order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                     'bg-slate-100 text-slate-600'
-                                  }`}>
-                                     {order.status === 'pending' ? 'En attente' :
+                    {/* Filters & Search Bar */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
+                       <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-2 px-2">
+                          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                             <button className="px-3 py-1.5 bg-slate-100 text-slate-800 text-xs font-bold rounded-md whitespace-nowrap">Tout</button>
+                             <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Non traité</button>
+                             <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Non payé</button>
+                             <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Ouvert</button>
+                             <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Archivé</button>
+                             <button className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-md">
+                                <Plus size={14} />
+                             </button>
+                          </div>
+                          <div className="relative">
+                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                             <input 
+                                type="text" 
+                                placeholder="Rechercher..." 
+                                className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-48 outline-none focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral transition-all"
+                             />
+                          </div>
+                       </div>
+                       
+                       {/* Table */}
+                       <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                             <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-gray-100">
+                                <tr>
+                                   <th className="px-4 py-3 w-8">
+                                      <input type="checkbox" className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral" />
+                                   </th>
+                                   <th className="px-4 py-3 font-semibold">Commande</th>
+                                   <th className="px-4 py-3 font-semibold">Date</th>
+                                   <th className="px-4 py-3 font-semibold">Client</th>
+                                   <th className="px-4 py-3 font-semibold">Canal</th>
+                                   <th className="px-4 py-3 font-semibold text-right">Total</th>
+                                   <th className="px-4 py-3 font-semibold">Statut paiement</th>
+                                   <th className="px-4 py-3 font-semibold">Statut traitement</th>
+                                   <th className="px-4 py-3 font-semibold">Articles</th>
+                                   <th className="px-4 py-3 font-semibold">Livraison</th>
+                                   <th className="px-4 py-3 font-semibold">Méthode</th>
+                                </tr>
+                             </thead>
+                             <tbody className="divide-y divide-gray-50">
+                                {orders.map(order => {
+                                   // Mock statuses for the view
+                                   const isPaid = order.status !== 'pending' && order.status !== 'cancelled';
+                                   const paymentStatus = isPaid ? 'Payé' : 'En attente';
+                                   const paymentColor = isPaid ? 'bg-slate-100 text-slate-700' : 'bg-orange-100 text-orange-800';
+                                   
+                                   const fulfillmentStatus = 
+                                      order.status === 'delivered' ? 'Livré' :
+                                      order.status === 'shipped' ? 'Expédié' :
                                       order.status === 'processing' ? 'En cours' :
-                                      order.status === 'shipped' ? 'Expédiée' :
-                                      order.status === 'delivered' ? 'Livrée' : 'Annulée'}
-                                  </span>
-                               </td>
-                               <td className="px-6 py-4 text-right font-bold text-slate-900">
-                                  {order.totalAmount.toFixed(2)} €
-                               </td>
-                               <td className="px-6 py-4 text-right">
-                                  <button 
-                                    onClick={() => setSelectedOrderId(order.id)}
-                                    className="text-indigo-600 hover:text-indigo-800 font-bold text-xs"
-                                  >
-                                     Détails
-                                  </button>
-                               </td>
-                            </tr>
-                         ))}
-                      </tbody>
-                   </table>
-                </div>
+                                      order.status === 'cancelled' ? 'Annulé' : 'Non traité';
+                                      
+                                   const fulfillmentColor = 
+                                      order.status === 'delivered' ? 'bg-slate-100 text-slate-700' :
+                                      order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                      order.status === 'processing' ? 'bg-blue-50 text-blue-600' :
+                                      order.status === 'cancelled' ? 'bg-slate-100 text-slate-500' : 'bg-yellow-100 text-yellow-800';
+
+                                   return (
+                                      <tr key={order.id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => setSelectedOrderId(order.id)}>
+                                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                                            <input type="checkbox" className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral" />
+                                         </td>
+                                         <td className="px-4 py-3 font-bold text-slate-900 group-hover:underline">#{order.id.slice(0,8)}</td>
+                                         <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                                            {new Date(order.createdAt).toLocaleDateString()}
+                                            <span className="text-slate-400 ml-1 text-[10px]">{new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                         </td>
+                                         <td className="px-4 py-3">
+                                            <div className="font-medium text-slate-900">{order.customerName}</div>
+                                         </td>
+                                         <td className="px-4 py-3 text-slate-500">Boutique en ligne</td>
+                                         <td className="px-4 py-3 text-right font-medium text-slate-900">
+                                            {order.totalAmount.toFixed(2)} €
+                                         </td>
+                                         <td className="px-4 py-3">
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${paymentColor}`}>
+                                               <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isPaid ? 'bg-slate-500' : 'bg-orange-500'}`}></div>
+                                               {paymentStatus}
+                                            </span>
+                                         </td>
+                                         <td className="px-4 py-3">
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${fulfillmentColor}`}>
+                                               {fulfillmentStatus}
+                                            </span>
+                                         </td>
+                                         <td className="px-4 py-3 text-slate-500">{order.items.length} article{order.items.length > 1 ? 's' : ''}</td>
+                                         <td className="px-4 py-3">
+                                            {order.trackingNumber ? (
+                                               <span className="text-slate-900 font-medium text-[11px] border border-slate-200 px-1.5 py-0.5 rounded bg-white">
+                                                  En transit
+                                               </span>
+                                            ) : (
+                                               <span className="text-slate-400 text-[11px]">-</span>
+                                            )}
+                                         </td>
+                                         <td className="px-4 py-3 text-slate-500">Standard</td>
+                                      </tr>
+                                   );
+                                })}
+                             </tbody>
+                          </table>
+                       </div>
+                    </div>
+                 </div>
               </div>
             )}
 

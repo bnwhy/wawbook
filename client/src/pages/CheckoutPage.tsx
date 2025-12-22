@@ -14,6 +14,8 @@ const CheckoutPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string>('');
 
+  const [billingMode, setBillingMode] = useState<'same' | 'different'>('same');
+
   // Form states
   const [formData, setFormData] = useState({
     email: '',
@@ -27,7 +29,15 @@ const CheckoutPage = () => {
     phone: '',
     cardNumber: '',
     expiry: '',
-    cvc: ''
+    cvc: '',
+    // Billing Address Fields
+    billingFirstName: '',
+    billingLastName: '',
+    billingAddress: '',
+    billingApartment: '',
+    billingCity: '',
+    billingZip: '',
+    billingCountry: 'France',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -250,17 +260,57 @@ const CheckoutPage = () => {
                              <div className="border border-stone-300 rounded-lg overflow-hidden">
                                 <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-200">
                                     <div className="flex items-center gap-3">
-                                        <input type="radio" name="billing" defaultChecked className="text-cloud-blue focus:ring-cloud-blue" />
+                                        <input 
+                                            type="radio" 
+                                            name="billing" 
+                                            checked={billingMode === 'same'}
+                                            onChange={() => setBillingMode('same')}
+                                            className="text-cloud-blue focus:ring-cloud-blue" 
+                                        />
                                         <span className="text-sm font-medium text-stone-800">Identique à l'adresse de livraison</span>
                                     </div>
                                 </label>
                                 <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors">
                                     <div className="flex items-center gap-3">
-                                        <input type="radio" name="billing" className="text-cloud-blue focus:ring-cloud-blue" />
+                                        <input 
+                                            type="radio" 
+                                            name="billing" 
+                                            checked={billingMode === 'different'}
+                                            onChange={() => setBillingMode('different')}
+                                            className="text-cloud-blue focus:ring-cloud-blue" 
+                                        />
                                         <span className="text-sm font-medium text-stone-800">Utiliser une autre adresse de facturation</span>
                                     </div>
                                 </label>
                             </div>
+
+                            {/* Billing Address Form */}
+                            {billingMode === 'different' && (
+                                <div className="p-4 bg-stone-50 rounded-lg space-y-4 border border-stone-200 animate-in slide-in-from-top-2">
+                                    <div className="relative">
+                                        <select className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer" defaultValue="FR">
+                                            <option value="FR">France</option>
+                                            <option value="BE">Belgique</option>
+                                            <option value="CH">Suisse</option>
+                                            <option value="CA">Canada</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input required name="billingFirstName" value={formData.billingFirstName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Prénom" />
+                                        <input required name="billingLastName" value={formData.billingLastName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Nom" />
+                                    </div>
+
+                                    <input required name="billingAddress" value={formData.billingAddress} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Adresse" />
+                                    <input name="billingApartment" value={formData.billingApartment} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Appartement, suite, etc. (facultatif)" />
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input required name="billingZip" value={formData.billingZip} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Code postal" />
+                                        <input required name="billingCity" value={formData.billingCity} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Ville" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="border-t border-stone-100 my-6"></div>

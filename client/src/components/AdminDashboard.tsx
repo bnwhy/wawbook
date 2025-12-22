@@ -2483,6 +2483,52 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            <Layout size={18} />
                            <span>Vue Storyboard</span>
                         </div>
+                        
+                        <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
+                           <div className="flex flex-col">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Largeur (mm)</label>
+                              <input 
+                                 type="number" 
+                                 value={selectedBook.features?.dimensions?.width || 210}
+                                 onChange={(e) => {
+                                    const width = parseInt(e.target.value) || 210;
+                                    handleSaveBook({
+                                       ...selectedBook,
+                                       features: {
+                                          ...selectedBook.features,
+                                          dimensions: {
+                                             height: selectedBook.features?.dimensions?.height || 210,
+                                             width
+                                          }
+                                       }
+                                    });
+                                 }}
+                                 className="w-16 h-7 text-xs border border-gray-200 rounded px-2 font-mono focus:ring-brand-coral focus:border-brand-coral"
+                              />
+                           </div>
+                           <div className="text-gray-300 pt-3">x</div>
+                           <div className="flex flex-col">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Hauteur (mm)</label>
+                              <input 
+                                 type="number" 
+                                 value={selectedBook.features?.dimensions?.height || 210}
+                                 onChange={(e) => {
+                                    const height = parseInt(e.target.value) || 210;
+                                    handleSaveBook({
+                                       ...selectedBook,
+                                       features: {
+                                          ...selectedBook.features,
+                                          dimensions: {
+                                             width: selectedBook.features?.dimensions?.width || 210,
+                                             height
+                                          }
+                                       }
+                                    });
+                                 }}
+                                 className="w-16 h-7 text-xs border border-gray-200 rounded px-2 font-mono focus:ring-brand-coral focus:border-brand-coral"
+                              />
+                           </div>
+                        </div>
                      </div>
                      
                      <div className="flex gap-2">

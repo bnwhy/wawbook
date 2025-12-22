@@ -3081,6 +3081,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                <input type="number" value={layer.position.width || 0} onChange={(e) => updateLayer({position: {...layer.position, width: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
                                                             </div>
                                                             <div>
+                                                               <span className="text-[10px] text-gray-400 mr-1">H</span>
+                                                               <input type="number" value={layer.position.height || 0} onChange={(e) => updateLayer({position: {...layer.position, height: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                            </div>
+                                                            <div>
                                                                <span className="text-[10px] text-gray-400 mr-1">Rot</span>
                                                                <input type="number" value={layer.position.rotation || 0} onChange={(e) => updateLayer({position: {...layer.position, rotation: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
                                                             </div>

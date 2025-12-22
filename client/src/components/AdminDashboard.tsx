@@ -1043,21 +1043,39 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     <Printer size={18} className="text-indigo-600" />
                                     Production & Fichiers
                                  </h3>
-                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                 <div className="space-y-3">
+                                    {/* Cover File */}
+                                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
                                        <div className="flex items-center gap-3">
                                           <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-red-500">
                                              <FileText size={20} />
                                           </div>
                                           <div>
-                                             <div className="font-bold text-slate-800 text-sm">Fichier d'impression (PDF)</div>
-                                             <div className="text-xs text-slate-500">Généré le {new Date().toLocaleDateString()} • 24.5 MB</div>
+                                             <div className="font-bold text-slate-800 text-sm">Fichier Couverture (PDF)</div>
+                                             <div className="text-xs text-slate-500">Généré le {new Date().toLocaleDateString()} • 2.4 MB</div>
                                           </div>
                                        </div>
-                                       <button className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors">
-                                          <Download size={20} />
+                                       <button className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="Télécharger la couverture">
+                                          <Download size={18} />
                                        </button>
                                     </div>
+
+                                    {/* Interior File */}
+                                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                       <div className="flex items-center gap-3">
+                                          <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-slate-500">
+                                             <FileText size={20} />
+                                          </div>
+                                          <div>
+                                             <div className="font-bold text-slate-800 text-sm">Fichier Intérieur (PDF)</div>
+                                             <div className="text-xs text-slate-500">Généré le {new Date().toLocaleDateString()} • 22.1 MB</div>
+                                          </div>
+                                       </div>
+                                       <button className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="Télécharger l'intérieur">
+                                          <Download size={18} />
+                                       </button>
+                                    </div>
+                                 </div>
                                     
                                     <div className="grid grid-cols-2 gap-4">
                                        <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">

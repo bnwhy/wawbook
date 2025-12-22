@@ -7,6 +7,7 @@ import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { MenuItem, MenuColumn } from '../types/menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
@@ -2584,6 +2585,140 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               />
                            </div>
                         </div>
+
+                         {/* Print Settings Dialog */}
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <button className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" title="Paramètres d'impression">
+                                    <Printer size={18} />
+                                </button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Configuration Impression (Lulu / POD)</DialogTitle>
+                                    <DialogDescription>
+                                        Définissez les marges et fonds perdus pour l'export PDF.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Fonds perdus (mm)</label>
+                                            <input 
+                                                type="number" 
+                                                step="0.1"
+                                                value={selectedBook.features?.printConfig?.bleedMm || 3.175}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value);
+                                                    handleSaveBook({
+                                                        ...selectedBook,
+                                                        features: {
+                                                            ...selectedBook.features,
+                                                            printConfig: {
+                                                                bleedMm: val,
+                                                                safeMarginMm: selectedBook.features?.printConfig?.safeMarginMm || 12.7,
+                                                                paperType: selectedBook.features?.printConfig?.paperType || '80g_white',
+                                                                bindingType: selectedBook.features?.printConfig?.bindingType || 'hardcover'
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="w-full border rounded px-3 py-2 text-sm"
+                                            />
+                                            <p className="text-[10px] text-gray-500">Standard Lulu: 3.175mm (0.125")</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Marge de sécurité (mm)</label>
+                                            <input 
+                                                type="number" 
+                                                step="0.1"
+                                                value={selectedBook.features?.printConfig?.safeMarginMm || 12.7}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value);
+                                                    handleSaveBook({
+                                                        ...selectedBook,
+                                                        features: {
+                                                            ...selectedBook.features,
+                                                            printConfig: {
+                                                                bleedMm: selectedBook.features?.printConfig?.bleedMm || 3.175,
+                                                                safeMarginMm: val,
+                                                                paperType: selectedBook.features?.printConfig?.paperType || '80g_white',
+                                                                bindingType: selectedBook.features?.printConfig?.bindingType || 'hardcover'
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="w-full border rounded px-3 py-2 text-sm"
+                                            />
+                                            <p className="text-[10px] text-gray-500">Standard: 12.7mm (0.5")</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Type de papier</label>
+                                            <select 
+                                                value={selectedBook.features?.printConfig?.paperType || '80g_white'}
+                                                onChange={(e) => {
+                                                    const val = e.target.value as any;
+                                                    handleSaveBook({
+                                                        ...selectedBook,
+                                                        features: {
+                                                            ...selectedBook.features,
+                                                            printConfig: {
+                                                                bleedMm: selectedBook.features?.printConfig?.bleedMm || 3.175,
+                                                                safeMarginMm: selectedBook.features?.printConfig?.safeMarginMm || 12.7,
+                                                                paperType: val,
+                                                                bindingType: selectedBook.features?.printConfig?.bindingType || 'hardcover'
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="w-full border rounded px-3 py-2 text-sm"
+                                            >
+                                                <option value="80g_white">80g Blanc</option>
+                                                <option value="80g_cream">80g Crème</option>
+                                                <option value="100g_white">100g Blanc Premium</option>
+                                                <option value="coated_standard">Couché Standard</option>
+                                                <option value="coated_premium">Couché Premium</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium">Reliure</label>
+                                            <select 
+                                                value={selectedBook.features?.printConfig?.bindingType || 'hardcover'}
+                                                onChange={(e) => {
+                                                    const val = e.target.value as any;
+                                                    handleSaveBook({
+                                                        ...selectedBook,
+                                                        features: {
+                                                            ...selectedBook.features,
+                                                            printConfig: {
+                                                                bleedMm: selectedBook.features?.printConfig?.bleedMm || 3.175,
+                                                                safeMarginMm: selectedBook.features?.printConfig?.safeMarginMm || 12.7,
+                                                                paperType: selectedBook.features?.printConfig?.paperType || '80g_white',
+                                                                bindingType: val
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="w-full border rounded px-3 py-2 text-sm"
+                                            >
+                                                <option value="hardcover">Cartonnée (Hardcover)</option>
+                                                <option value="softcover">Souple (Softcover)</option>
+                                                <option value="saddle_stitch">Agrafée (Saddle Stitch)</option>
+                                                <option value="coil">Spirale (Coil)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded text-sm font-bold">Fermer</button>
+                                    </DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                         </Dialog>
                      </div>
                      
                      <div className="flex gap-2">
@@ -2705,6 +2840,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           return pagesToShow.map((page: any, idx) => (
                                              <div key={page.id} className="flex-1 bg-white relative overflow-hidden group border-r border-gray-100 last:border-0">
                                                 
+                                                {/* Safe Margin Guide */}
+                                                {selectedBook.features?.printConfig?.safeMarginMm && (
+                                                   <div 
+                                                      className="absolute border border-green-400 border-dashed pointer-events-none z-50 opacity-50"
+                                                      style={{
+                                                         left: `${(selectedBook.features.printConfig.safeMarginMm / bookDimensions.width) * 100}%`,
+                                                         top: `${(selectedBook.features.printConfig.safeMarginMm / bookDimensions.height) * 100}%`,
+                                                         right: `${(selectedBook.features.printConfig.safeMarginMm / bookDimensions.width) * 100}%`,
+                                                         bottom: `${(selectedBook.features.printConfig.safeMarginMm / bookDimensions.height) * 100}%`,
+                                                      }}
+                                                      title={`Marge de sécurité: ${selectedBook.features.printConfig.safeMarginMm}mm`}
+                                                   />
+                                                )}
+
                                                 {/* 1. BASE LAYER (Background Variant) */}
                                                 <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
                                                    {/* Find image for current variant & page */}

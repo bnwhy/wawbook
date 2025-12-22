@@ -19,6 +19,12 @@ export interface BookProduct {
     pages?: number;
     formats?: string[];
     dimensions?: { width: number; height: number }; // Dimensions in mm (width x height)
+    printConfig?: {
+        bleedMm: number;
+        safeMarginMm: number;
+        paperType: '80g_white' | '80g_cream' | '100g_white' | 'coated_standard' | 'coated_premium';
+        bindingType: 'hardcover' | 'softcover' | 'saddle_stitch' | 'coil';
+    };
   };
   wizardConfig: WizardConfiguration;
   contentConfig: ContentConfiguration;

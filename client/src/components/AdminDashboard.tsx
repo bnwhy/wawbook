@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package } from 'lucide-react';
+import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -493,29 +493,68 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </div>
                               </div>
 
+                              {/* Production & Files */}
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Printer size={18} className="text-indigo-600" />
+                                    Production & Fichiers
+                                 </h3>
+                                 <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                       <div className="flex items-center gap-3">
+                                          <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center text-red-500">
+                                             <FileText size={20} />
+                                          </div>
+                                          <div>
+                                             <div className="font-bold text-slate-800 text-sm">Fichier d'impression (PDF)</div>
+                                             <div className="text-xs text-slate-500">Généré le {new Date().toLocaleDateString()} • 24.5 MB</div>
+                                          </div>
+                                       </div>
+                                       <button className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors">
+                                          <Download size={20} />
+                                       </button>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                       <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                          <div className="text-xs text-slate-500 uppercase font-bold mb-1">Imprimeur</div>
+                                          <div className="font-medium text-slate-800">PrintHouse Pro</div>
+                                          <div className="text-xs text-slate-400 mt-1">ID: #PRT-8829</div>
+                                       </div>
+                                       <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                          <div className="text-xs text-slate-500 uppercase font-bold mb-1">Statut Production</div>
+                                          <div className="font-medium text-green-600 flex items-center gap-1">
+                                             <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                             Prêt à imprimer
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+
                               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                  <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                                     <Truck size={18} className="text-indigo-600" />
                                     Livraison
                                  </h3>
-                                 <div className="grid grid-cols-2 gap-4">
+                                 <div className="grid grid-cols-2 gap-6">
                                     <div>
-                                       <div className="text-xs text-slate-500 uppercase font-bold mb-1">Adresse</div>
-                                       <div className="text-sm text-slate-700">
+                                       <div className="text-xs text-slate-500 uppercase font-bold mb-2">Adresse de livraison</div>
+                                       <div className="text-sm text-slate-700 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                          <div className="font-bold text-slate-900 mb-1">{order.customerName}</div>
                                           {order.shippingAddress.street}<br/>
                                           {order.shippingAddress.zipCode} {order.shippingAddress.city}<br/>
                                           {order.shippingAddress.country}
                                        </div>
                                     </div>
+                                    
                                     <div>
-                                       <div className="text-xs text-slate-500 uppercase font-bold mb-1">Suivi</div>
-                                       {order.trackingNumber ? (
-                                          <div className="text-sm font-mono bg-slate-100 px-2 py-1 rounded inline-block">
-                                             {order.trackingNumber}
-                                          </div>
-                                       ) : (
-                                          <div className="text-sm text-slate-400 italic">Non expédié</div>
-                                       )}
+                                       <div className="text-xs text-slate-500 uppercase font-bold mb-2">Étiquette d'expédition</div>
+                                       <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 bg-white flex flex-col items-center justify-center text-center gap-2 hover:border-indigo-300 hover:bg-indigo-50/10 transition-colors cursor-pointer group">
+                                          <Barcode size={32} className="text-slate-300 group-hover:text-indigo-400" />
+                                          <div className="text-xs font-bold text-slate-500 group-hover:text-indigo-600">Générer l'étiquette</div>
+                                          <div className="text-[10px] text-slate-400">Format: 10x15cm (PDF)</div>
+                                       </div>
                                     </div>
                                  </div>
                               </div>
@@ -548,18 +587,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                  <h3 className="font-bold text-slate-800 mb-4">Tracking</h3>
                                  <div className="space-y-3">
-                                    <input 
-                                       type="text" 
-                                       placeholder="Numéro de suivi"
-                                       defaultValue={order.trackingNumber}
-                                       className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-                                       onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                             updateOrderTracking(order.id, e.currentTarget.value);
-                                             toast.success("Numéro de suivi mis à jour");
-                                          }
-                                       }}
-                                    />
+                                    <div>
+                                       <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Transporteur</label>
+                                       <select className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                          <option>Colissimo</option>
+                                          <option>Mondial Relay</option>
+                                          <option>Chronopost</option>
+                                          <option>DHL</option>
+                                       </select>
+                                    </div>
+                                    <div>
+                                       <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Numéro de suivi</label>
+                                       <input 
+                                          type="text" 
+                                          placeholder="Ex: 6A000..."
+                                          defaultValue={order.trackingNumber}
+                                          className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                          onKeyDown={(e) => {
+                                             if (e.key === 'Enter') {
+                                                updateOrderTracking(order.id, e.currentTarget.value);
+                                                toast.success("Numéro de suivi mis à jour");
+                                             }
+                                          }}
+                                       />
+                                    </div>
                                     <p className="text-xs text-slate-400">Appuyez sur Entrée pour valider.</p>
                                  </div>
                               </div>

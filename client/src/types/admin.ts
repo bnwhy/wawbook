@@ -110,3 +110,11 @@ export interface ImageVariant {
   combinationKey: string; // e.g., "gender:boy|style:A"
   imageUrl: string;
 }
+
+export interface Printer {
+  id: string;
+  name: string;
+  contactEmail?: string;
+  countryCodes: string[]; // List of ISO country codes handled by this printer (e.g., ['FR', 'BE'])
+  productionDelayDays?: number;
+}

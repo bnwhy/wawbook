@@ -2593,17 +2593,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     <Printer size={18} />
                                 </button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="bg-white sm:max-w-[600px]">
                                 <DialogHeader>
-                                    <DialogTitle>Configuration Impression (Lulu / POD)</DialogTitle>
-                                    <DialogDescription>
+                                    <DialogTitle className="text-slate-900 text-lg">Configuration Impression (Lulu / POD)</DialogTitle>
+                                    <DialogDescription className="text-slate-500">
                                         Définissez les marges et fonds perdus pour l'export PDF.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="grid gap-4 py-4">
+                                <div className="grid gap-6 py-6">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Fonds perdus (mm)</label>
+                                            <label className="text-sm font-semibold text-slate-900">Fonds perdus (mm)</label>
                                             <input 
                                                 type="number" 
                                                 step="0.1"
@@ -2623,12 +2623,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         }
                                                     });
                                                 }}
-                                                className="w-full border rounded px-3 py-2 text-sm"
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-coral/50 focus:border-brand-coral"
                                             />
                                             <p className="text-[10px] text-gray-500">Standard Lulu: 3.175mm (0.125")</p>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Marge de sécurité (mm)</label>
+                                            <label className="text-sm font-semibold text-slate-900">Marge de sécurité (mm)</label>
                                             <input 
                                                 type="number" 
                                                 step="0.1"
@@ -2648,7 +2648,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         }
                                                     });
                                                 }}
-                                                className="w-full border rounded px-3 py-2 text-sm"
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-coral/50 focus:border-brand-coral"
                                             />
                                             <p className="text-[10px] text-gray-500">Standard: 12.7mm (0.5")</p>
                                         </div>
@@ -2656,7 +2656,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Type de papier</label>
+                                            <label className="text-sm font-semibold text-slate-900">Type de papier</label>
                                             <select 
                                                 value={selectedBook.features?.printConfig?.paperType || '80g_white'}
                                                 onChange={(e) => {
@@ -2674,7 +2674,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         }
                                                     });
                                                 }}
-                                                className="w-full border rounded px-3 py-2 text-sm"
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-coral/50 focus:border-brand-coral"
                                             >
                                                 <option value="80g_white">80g Blanc</option>
                                                 <option value="80g_cream">80g Crème</option>
@@ -2684,7 +2684,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium">Reliure</label>
+                                            <label className="text-sm font-semibold text-slate-900">Reliure</label>
                                             <select 
                                                 value={selectedBook.features?.printConfig?.bindingType || 'hardcover'}
                                                 onChange={(e) => {
@@ -2702,7 +2702,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         }
                                                     });
                                                 }}
-                                                className="w-full border rounded px-3 py-2 text-sm"
+                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-coral/50 focus:border-brand-coral"
                                             >
                                                 <option value="hardcover">Cartonnée (Hardcover)</option>
                                                 <option value="softcover">Souple (Softcover)</option>
@@ -2714,7 +2714,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                                 <DialogFooter>
                                     <DialogClose asChild>
-                                        <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded text-sm font-bold">Fermer</button>
+                                        <button className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-sm font-bold transition-colors">Enregistrer & Fermer</button>
                                     </DialogClose>
                                 </DialogFooter>
                             </DialogContent>

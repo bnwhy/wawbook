@@ -186,41 +186,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   };
 
-  if (activeTab === 'home' && !selectedBookId && !selectedOrderId) {
-     // ... home view logic ...
-  }
-  
   // Calculate aspect ratio style
   const bookDimensions = selectedBook?.features?.dimensions || { width: 210, height: 210 }; // Default square 21x21
   const aspectRatio = bookDimensions.width / bookDimensions.height;
-
-     // Helper for cartesian product of objects
-     const cartesian = (args: any[]) => {
-        const r: any[] = [];
-        const max = args.length - 1;
-        function helper(arr: any[], i: number) {
-           for (let j = 0, l = args[i].length; j < l; j++) {
-              const a = arr.slice(0); // clone arr
-              a.push(args[i][j]);
-              if (i === max) r.push(a);
-              else helper(a, i + 1);
-           }
-        }
-        helper([], 0);
-        return r;
-     };
-
-     const variantsOptions = relevantVariants.map(v => v.options);
-     const combos = cartesian(variantsOptions); // Array of arrays of options
-
-     return combos.map(combo => {
-        // Sort IDs for consistent key
-        const ids = combo.map((o: any) => o.id).sort();
-        const key = ids.join('_');
-        const label = combo.map((o: any) => o.label).join(' + ');
-        return { key, label, parts: combo };
-     });
-  };
 
   const handleSaveBook = (updatedBook: BookProduct) => {
     setDraftBook(updatedBook);

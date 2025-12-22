@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
-import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -20,9 +20,11 @@ const CheckoutPage = () => {
     firstName: '',
     lastName: '',
     address: '',
+    apartment: '',
     city: '',
     zip: '',
     country: 'France',
+    phone: '',
     cardNumber: '',
     expiry: '',
     cvc: ''
@@ -127,49 +129,111 @@ const CheckoutPage = () => {
             {/* Main Form Area */}
             <div className="lg:col-span-2">
                 {step === 'details' ? (
-                    <form onSubmit={handleDetailsSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6">
-                        <h2 className="font-display font-black text-2xl text-stone-800 flex items-center gap-3">
-                            <Truck className="text-cloud-blue" /> Adresse de livraison
-                        </h2>
-                        
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-stone-600">Prénom</label>
-                                <input required name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" className="w-full p-3 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none" placeholder="Jean" />
+                   <>
+                        {/* --- EXPRESS CHECKOUT --- */}
+                        <div className="mb-8">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="h-px bg-stone-200 flex-1"></div>
+                                <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Paiement Express</span>
+                                <div className="h-px bg-stone-200 flex-1"></div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-stone-600">Nom</label>
-                                <input required name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" className="w-full p-3 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none" placeholder="Dupont" />
+                            <div className="grid grid-cols-3 gap-3">
+                                <button type="button" className="bg-[#5A31F4] hover:bg-[#4c29d3] text-white py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors">
+                                    <span className="italic font-black">Shop</span> Pay
+                                </button>
+                                <button type="button" className="bg-[#FFC439] hover:bg-[#f4bb34] text-black py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors">
+                                    PayPal
+                                </button>
+                                <button type="button" className="bg-black hover:bg-stone-800 text-white py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors">
+                                    GPay
+                                </button>
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-stone-600">Email</label>
-                            <input required name="email" value={formData.email} onChange={handleInputChange} type="email" className="w-full p-3 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none" placeholder="jean.dupont@email.com" />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-stone-600">Adresse</label>
-                            <input required name="address" value={formData.address} onChange={handleInputChange} type="text" className="w-full p-3 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none" placeholder="123 Rue des Lilas" />
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-stone-600">Ville</label>
-                                <input required name="city" value={formData.city} onChange={handleInputChange} type="text" className="w-full p-3 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none" placeholder="Paris" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-stone-600">Code Postal</label>
-                                <input required name="zip" value={formData.zip} onChange={handleInputChange} type="text" className="w-full p-3 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none" placeholder="75001" />
+                            <div className="flex items-center gap-4 mt-6">
+                                <div className="h-px bg-stone-200 flex-1"></div>
+                                <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">OU</span>
+                                <div className="h-px bg-stone-200 flex-1"></div>
                             </div>
                         </div>
 
-                        <div className="pt-4">
-                            <button type="submit" className="w-full bg-cloud-blue text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-deep hover:scale-[1.01] active:scale-[0.99] transition-all">
-                                Continuer vers le paiement
-                            </button>
-                        </div>
-                    </form>
+                        <form onSubmit={handleDetailsSubmit} className="space-y-8">
+                            {/* Contact Section */}
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="font-bold text-lg text-stone-800">Contact</h2>
+                                    <div className="text-sm text-stone-600">
+                                        Déjà un compte ? <a href="#" className="text-cloud-blue hover:underline">Se connecter</a>
+                                    </div>
+                                </div>
+                                <input required name="email" value={formData.email} onChange={handleInputChange} type="email" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow" placeholder="Email" />
+                                <div className="flex items-center gap-2">
+                                    <input type="checkbox" id="newsletter" className="rounded border-stone-300 text-cloud-blue focus:ring-cloud-blue" />
+                                    <label htmlFor="newsletter" className="text-sm text-stone-600 cursor-pointer">M'envoyer les actualités et offres par e-mail</label>
+                                </div>
+                            </div>
+
+                            {/* Delivery Section */}
+                            <div className="space-y-4">
+                                <h2 className="font-bold text-lg text-stone-800">Livraison</h2>
+                                
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <select className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer" defaultValue="FR">
+                                            <option value="FR">France</option>
+                                            <option value="BE">Belgique</option>
+                                            <option value="CH">Suisse</option>
+                                            <option value="CA">Canada</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input required name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Prénom" />
+                                        <input required name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Nom" />
+                                    </div>
+
+                                    <input required name="address" value={formData.address} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Adresse" />
+                                    <input name="apartment" type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Appartement, suite, etc. (facultatif)" />
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input required name="zip" value={formData.zip} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Code postal" />
+                                        <input required name="city" value={formData.city} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Ville" />
+                                    </div>
+                                    
+                                    <input name="phone" type="tel" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Téléphone" />
+                                </div>
+                            </div>
+
+                            {/* Shipping Method */}
+                            <div className="space-y-4">
+                                <h2 className="font-bold text-lg text-stone-800">Mode d'expédition</h2>
+                                <div className="border border-stone-300 rounded-lg overflow-hidden">
+                                    <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-200">
+                                        <div className="flex items-center gap-3">
+                                            <input type="radio" name="shipping" defaultChecked className="text-cloud-blue focus:ring-cloud-blue" />
+                                            <span className="text-sm font-medium text-stone-800">Standard (3-5 jours)</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-stone-800">Gratuit</span>
+                                    </label>
+                                    <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <input type="radio" name="shipping" className="text-cloud-blue focus:ring-cloud-blue" />
+                                            <span className="text-sm font-medium text-stone-800">Express (24-48h)</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-stone-800">9.90 €</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="pt-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+                                <a href="/cart" className="flex items-center gap-2 text-cloud-blue hover:text-cloud-deep text-sm font-medium transition-colors">
+                                    <ArrowLeft size={16} /> Retour au panier
+                                </a>
+                                <button type="submit" className="w-full sm:w-auto bg-cloud-blue text-white font-bold text-lg py-4 px-8 rounded-xl shadow-lg hover:bg-cloud-deep hover:scale-[1.01] active:scale-[0.99] transition-all">
+                                    Continuer vers le paiement
+                                </button>
+                            </div>
+                        </form>
+                   </>
                 ) : (
                     <form onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6">
                          <div className="flex items-center gap-2 mb-6 cursor-pointer text-stone-500 hover:text-stone-800 transition-colors" onClick={() => setStep('details')}>
@@ -179,6 +243,27 @@ const CheckoutPage = () => {
                         <h2 className="font-display font-black text-2xl text-stone-800 flex items-center gap-3">
                             <CreditCard className="text-cloud-blue" /> Paiement sécurisé
                         </h2>
+                        
+                        {/* Billing Address Toggle */}
+                        <div className="space-y-4">
+                             <h3 className="font-bold text-lg text-stone-800">Adresse de facturation</h3>
+                             <div className="border border-stone-300 rounded-lg overflow-hidden">
+                                <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-200">
+                                    <div className="flex items-center gap-3">
+                                        <input type="radio" name="billing" defaultChecked className="text-cloud-blue focus:ring-cloud-blue" />
+                                        <span className="text-sm font-medium text-stone-800">Identique à l'adresse de livraison</span>
+                                    </div>
+                                </label>
+                                <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <input type="radio" name="billing" className="text-cloud-blue focus:ring-cloud-blue" />
+                                        <span className="text-sm font-medium text-stone-800">Utiliser une autre adresse de facturation</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-stone-100 my-6"></div>
 
                         <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3 text-sm text-blue-800">
                             <Lock size={16} className="mt-0.5 flex-shrink-0" />

@@ -12,6 +12,7 @@ export interface BookProduct {
   badgeText?: string;
   associatedPaths?: string[]; // List of paths where this book should appear
   oldPrice?: number;
+  isHidden?: boolean;
   features?: {
     languages?: string[];
     customization?: string[];

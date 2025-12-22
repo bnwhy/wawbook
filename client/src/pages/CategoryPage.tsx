@@ -15,8 +15,10 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ onSelectBook }) => {
 
   // Filter books based on current path (menu association)
   const displayBooks = React.useMemo(() => {
+    const visibleBooks = books.filter(b => !b.isHidden);
+
     // 1. Try to find books explicitly linked to this menu path
-    const linkedBooks = books.filter(b => b.associatedPaths?.includes(location));
+    const linkedBooks = visibleBooks.filter(b => b.associatedPaths?.includes(location));
     
     if (linkedBooks.length > 0) return linkedBooks;
 
@@ -33,10 +35,10 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ onSelectBook }) => {
     const targetType = categoryMap[urlSection];
 
     if (targetType) {
-       return books.filter(b => b.category === targetType);
+       return visibleBooks.filter(b => b.category === targetType);
     }
 
-    return books;
+    return visibleBooks;
   }, [books, location]);
 
   const handleBookClick = (title: string) => {

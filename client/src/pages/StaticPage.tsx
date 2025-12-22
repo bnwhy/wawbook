@@ -19,7 +19,7 @@ const StaticPage: React.FC<StaticPageProps> = ({ title, category }) => {
 
   // Find associated books
   const associatedBooks = React.useMemo(() => {
-    return books.filter(b => b.associatedPaths?.includes(location));
+    return books.filter(b => !b.isHidden && b.associatedPaths?.includes(location));
   }, [books, location]);
 
   const handleBookClick = (title: string) => {

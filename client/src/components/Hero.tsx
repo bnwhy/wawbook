@@ -114,10 +114,11 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   const { books } = useBooks(); // Use the context to get the books
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const themeCards = books.filter(b => b.category === 'theme');
-  const activityCards = books.filter(b => b.category === 'activity');
-  const familyCards = books.filter(b => b.category === 'family');
-  const occasionCards = books.filter(b => b.category === 'occasion');
+  const visibleBooks = books.filter(b => !b.isHidden);
+  const themeCards = visibleBooks.filter(b => b.category === 'theme');
+  const activityCards = visibleBooks.filter(b => b.category === 'activity');
+  const familyCards = visibleBooks.filter(b => b.category === 'family');
+  const occasionCards = visibleBooks.filter(b => b.category === 'occasion');
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);

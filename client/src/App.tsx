@@ -15,6 +15,7 @@ import NotFound from './pages/NotFound';
 import { BooksProvider } from './context/BooksContext';
 import { MenuProvider } from './context/MenuContext';
 import { CartProvider } from './context/CartContext';
+import { EcommerceProvider } from './context/EcommerceContext';
 import ScrollToTop from './components/ScrollToTop';
 
 const App: React.FC = () => {
@@ -89,9 +90,10 @@ const App: React.FC = () => {
     <BooksProvider>
       <MenuProvider>
         <CartProvider>
-          <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
-            <ScrollToTop />
-            <Switch>
+          <EcommerceProvider>
+            <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
+              <ScrollToTop />
+              <Switch>
           {/* Main Application Flow (SPA-like at root) */}
           <Route path="/">
             {appState === 'HOME' && <Hero onStart={startCreation} />}
@@ -189,6 +191,7 @@ const App: React.FC = () => {
         </div>
       )}
       </div>
+          </EcommerceProvider>
         </CartProvider>
       </MenuProvider>
     </BooksProvider>

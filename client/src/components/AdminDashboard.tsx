@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool } from 'lucide-react';
+import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
+import { useEcommerce } from '../context/EcommerceContext';
 import { MenuItem, MenuColumn } from '../types/menu';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
+  const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer } = useEcommerce();
   
-  const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'settings'>('books');
+  const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'settings'>('books');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   
   // Content Editor State
   const [selectedVariant, setSelectedVariant] = useState<string>('default'); // Used for previewing specific combinations
@@ -371,6 +375,387 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     ))}
                  </div>
               </div>
+            )}
+
+            {/* --- VIEW: ORDERS --- */}
+            {activeTab === 'orders' && !selectedOrderId && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                   <div>
+                      <h2 className="text-2xl font-bold text-slate-800">Commandes</h2>
+                      <p className="text-slate-500 mt-1">Gérez les commandes clients.</p>
+                   </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                   <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 border-b border-gray-200 text-slate-500 font-medium">
+                         <tr>
+                            <th className="px-6 py-4">Commande</th>
+                            <th className="px-6 py-4">Client</th>
+                            <th className="px-6 py-4">Date</th>
+                            <th className="px-6 py-4">Statut</th>
+                            <th className="px-6 py-4 text-right">Montant</th>
+                            <th className="px-6 py-4"></th>
+                         </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                         {orders.map(order => (
+                            <tr key={order.id} className="hover:bg-slate-50 transition-colors">
+                               <td className="px-6 py-4 font-bold text-slate-900">{order.id}</td>
+                               <td className="px-6 py-4">
+                                  <div className="font-medium text-slate-900">{order.customerName}</div>
+                                  <div className="text-xs text-slate-500">{order.customerEmail}</div>
+                               </td>
+                               <td className="px-6 py-4 text-slate-600">
+                                  {new Date(order.createdAt).toLocaleDateString()}
+                               </td>
+                               <td className="px-6 py-4">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
+                                     order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                     order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                                     order.status === 'processing' ? 'bg-orange-100 text-orange-700' :
+                                     order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                     'bg-slate-100 text-slate-600'
+                                  }`}>
+                                     {order.status === 'pending' ? 'En attente' :
+                                      order.status === 'processing' ? 'En cours' :
+                                      order.status === 'shipped' ? 'Expédiée' :
+                                      order.status === 'delivered' ? 'Livrée' : 'Annulée'}
+                                  </span>
+                               </td>
+                               <td className="px-6 py-4 text-right font-bold text-slate-900">
+                                  {order.totalAmount.toFixed(2)} €
+                               </td>
+                               <td className="px-6 py-4 text-right">
+                                  <button 
+                                    onClick={() => setSelectedOrderId(order.id)}
+                                    className="text-indigo-600 hover:text-indigo-800 font-bold text-xs"
+                                  >
+                                     Détails
+                                  </button>
+                               </td>
+                            </tr>
+                         ))}
+                      </tbody>
+                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* --- VIEW: ORDER DETAIL --- */}
+            {activeTab === 'orders' && selectedOrderId && (
+               <div className="max-w-4xl mx-auto space-y-6">
+                  <div className="flex items-center gap-4 mb-4">
+                     <button onClick={() => setSelectedOrderId(null)} className="text-slate-400 hover:text-slate-600">
+                        <ArrowUp className="-rotate-90" size={20} />
+                     </button>
+                     <h2 className="text-2xl font-bold text-slate-800">Commande {selectedOrderId}</h2>
+                  </div>
+
+                  {(() => {
+                     const order = orders.find(o => o.id === selectedOrderId);
+                     if (!order) return <div>Commande introuvable</div>;
+                     
+                     return (
+                        <div className="grid grid-cols-3 gap-6">
+                           {/* Main Info */}
+                           <div className="col-span-2 space-y-6">
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <ShoppingBag size={18} className="text-indigo-600" />
+                                    Articles
+                                 </h3>
+                                 <div className="space-y-4">
+                                    {order.items.map(item => (
+                                       <div key={item.id} className="flex gap-4 border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+                                             <Book size={24} className="text-slate-300" />
+                                          </div>
+                                          <div className="flex-1">
+                                             <div className="flex justify-between">
+                                                <h4 className="font-bold text-slate-900">{item.bookTitle}</h4>
+                                                <span className="font-bold">{item.price.toFixed(2)} €</span>
+                                             </div>
+                                             <p className="text-sm text-slate-500 mb-1">Quantité: {item.quantity}</p>
+                                             <div className="text-xs text-slate-400 bg-slate-50 p-2 rounded inline-block">
+                                                {JSON.stringify(item.configuration, null, 2)}
+                                             </div>
+                                          </div>
+                                       </div>
+                                    ))}
+                                 </div>
+                                 <div className="mt-6 pt-6 border-t border-gray-100 flex justify-between items-center">
+                                    <span className="font-medium text-slate-500">Total</span>
+                                    <span className="text-2xl font-bold text-slate-900">{order.totalAmount.toFixed(2)} €</span>
+                                 </div>
+                              </div>
+
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Truck size={18} className="text-indigo-600" />
+                                    Livraison
+                                 </h3>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                       <div className="text-xs text-slate-500 uppercase font-bold mb-1">Adresse</div>
+                                       <div className="text-sm text-slate-700">
+                                          {order.shippingAddress.street}<br/>
+                                          {order.shippingAddress.zipCode} {order.shippingAddress.city}<br/>
+                                          {order.shippingAddress.country}
+                                       </div>
+                                    </div>
+                                    <div>
+                                       <div className="text-xs text-slate-500 uppercase font-bold mb-1">Suivi</div>
+                                       {order.trackingNumber ? (
+                                          <div className="text-sm font-mono bg-slate-100 px-2 py-1 rounded inline-block">
+                                             {order.trackingNumber}
+                                          </div>
+                                       ) : (
+                                          <div className="text-sm text-slate-400 italic">Non expédié</div>
+                                       )}
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+
+                           {/* Sidebar Actions */}
+                           <div className="space-y-6">
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                 <h3 className="font-bold text-slate-800 mb-4">Statut</h3>
+                                 <div className="space-y-2">
+                                    {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
+                                       <button
+                                          key={status}
+                                          onClick={() => updateOrderStatus(order.id, status as any)}
+                                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                             order.status === status 
+                                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
+                                                : 'text-slate-600 hover:bg-slate-50'
+                                          }`}
+                                       >
+                                          {status === 'pending' ? 'En attente' :
+                                           status === 'processing' ? 'En cours de production' :
+                                           status === 'shipped' ? 'Expédiée' :
+                                           status === 'delivered' ? 'Livrée' : 'Annulée'}
+                                       </button>
+                                    ))}
+                                 </div>
+                              </div>
+
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                 <h3 className="font-bold text-slate-800 mb-4">Tracking</h3>
+                                 <div className="space-y-3">
+                                    <input 
+                                       type="text" 
+                                       placeholder="Numéro de suivi"
+                                       defaultValue={order.trackingNumber}
+                                       className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                                       onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                             updateOrderTracking(order.id, e.currentTarget.value);
+                                             toast.success("Numéro de suivi mis à jour");
+                                          }
+                                       }}
+                                    />
+                                    <p className="text-xs text-slate-400">Appuyez sur Entrée pour valider.</p>
+                                 </div>
+                              </div>
+
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                 <h3 className="font-bold text-slate-800 mb-4">Client</h3>
+                                 <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
+                                       {order.customerName.charAt(0)}
+                                    </div>
+                                    <div>
+                                       <div className="font-bold text-sm text-slate-900">{order.customerName}</div>
+                                       <div className="text-xs text-slate-500">{order.customerEmail}</div>
+                                    </div>
+                                 </div>
+                                 <button 
+                                    onClick={() => {
+                                       setActiveTab('customers');
+                                       setSelectedCustomerId(order.customerId);
+                                       setSelectedOrderId(null);
+                                    }}
+                                    className="text-xs text-indigo-600 font-bold hover:underline"
+                                 >
+                                    Voir le profil client
+                                 </button>
+                              </div>
+                           </div>
+                        </div>
+                     );
+                  })()}
+               </div>
+            )}
+
+            {/* --- VIEW: CUSTOMERS --- */}
+            {activeTab === 'customers' && !selectedCustomerId && (
+               <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                     <div>
+                        <h2 className="text-2xl font-bold text-slate-800">Clients</h2>
+                        <p className="text-slate-500 mt-1">Base de données clients.</p>
+                     </div>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                     <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50 border-b border-gray-200 text-slate-500 font-medium">
+                           <tr>
+                              <th className="px-6 py-4">Nom</th>
+                              <th className="px-6 py-4">Contact</th>
+                              <th className="px-6 py-4">Ville</th>
+                              <th className="px-6 py-4 text-center">Commandes</th>
+                              <th className="px-6 py-4 text-right">Total dépensé</th>
+                              <th className="px-6 py-4"></th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                           {customers.map(customer => (
+                              <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
+                                 <td className="px-6 py-4">
+                                    <div className="font-bold text-slate-900">{customer.firstName} {customer.lastName}</div>
+                                    <div className="text-xs text-slate-400">Inscrit le {new Date(customer.createdAt).toLocaleDateString()}</div>
+                                 </td>
+                                 <td className="px-6 py-4">
+                                    <div className="text-slate-600">{customer.email}</div>
+                                    <div className="text-xs text-slate-400">{customer.phone || '-'}</div>
+                                 </td>
+                                 <td className="px-6 py-4 text-slate-600">
+                                    {customer.address?.city || '-'}
+                                 </td>
+                                 <td className="px-6 py-4 text-center font-medium text-slate-900">
+                                    {customer.orderCount}
+                                 </td>
+                                 <td className="px-6 py-4 text-right font-bold text-slate-900">
+                                    {customer.totalSpent.toFixed(2)} €
+                                 </td>
+                                 <td className="px-6 py-4 text-right">
+                                    <button 
+                                      onClick={() => setSelectedCustomerId(customer.id)}
+                                      className="text-indigo-600 hover:text-indigo-800 font-bold text-xs"
+                                    >
+                                       Voir
+                                    </button>
+                                 </td>
+                              </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+               </div>
+            )}
+
+            {/* --- VIEW: CUSTOMER DETAIL --- */}
+            {activeTab === 'customers' && selectedCustomerId && (
+               <div className="max-w-4xl mx-auto space-y-6">
+                  <div className="flex items-center gap-4 mb-4">
+                     <button onClick={() => setSelectedCustomerId(null)} className="text-slate-400 hover:text-slate-600">
+                        <ArrowUp className="-rotate-90" size={20} />
+                     </button>
+                     <h2 className="text-2xl font-bold text-slate-800">Fiche Client</h2>
+                  </div>
+
+                  {(() => {
+                     const customer = customers.find(c => c.id === selectedCustomerId);
+                     if (!customer) return <div>Client introuvable</div>;
+                     const customerOrders = getOrdersByCustomer(customer.id);
+
+                     return (
+                        <div className="grid grid-cols-3 gap-6">
+                           {/* Profile Info */}
+                           <div className="col-span-1 space-y-6">
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                                 <div className="w-24 h-24 rounded-full bg-slate-100 mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-slate-400">
+                                    {customer.firstName.charAt(0)}
+                                 </div>
+                                 <h3 className="text-xl font-bold text-slate-900">{customer.firstName} {customer.lastName}</h3>
+                                 <p className="text-slate-500 text-sm mb-4">Client depuis {new Date(customer.createdAt).toLocaleDateString()}</p>
+                                 
+                                 <div className="border-t border-gray-100 pt-4 text-left space-y-3">
+                                    <div>
+                                       <label className="text-xs font-bold text-slate-400 uppercase">Email</label>
+                                       <div className="text-sm font-medium text-slate-700 break-all">{customer.email}</div>
+                                    </div>
+                                    <div>
+                                       <label className="text-xs font-bold text-slate-400 uppercase">Téléphone</label>
+                                       <div className="text-sm font-medium text-slate-700">{customer.phone || '-'}</div>
+                                    </div>
+                                    <div>
+                                       <label className="text-xs font-bold text-slate-400 uppercase">Adresse</label>
+                                       <div className="text-sm font-medium text-slate-700">
+                                          {customer.address?.street}<br/>
+                                          {customer.address?.zipCode} {customer.address?.city}<br/>
+                                          {customer.address?.country}
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                              
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                 <h3 className="font-bold text-slate-800 mb-4">Statistiques</h3>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="text-center p-3 bg-slate-50 rounded-lg">
+                                       <div className="text-2xl font-bold text-indigo-600">{customer.orderCount}</div>
+                                       <div className="text-xs text-slate-500">Commandes</div>
+                                    </div>
+                                    <div className="text-center p-3 bg-slate-50 rounded-lg">
+                                       <div className="text-xl font-bold text-green-600">{customer.totalSpent.toFixed(0)}€</div>
+                                       <div className="text-xs text-slate-500">Dépensé</div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+
+                           {/* Order History */}
+                           <div className="col-span-2 space-y-6">
+                              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Package size={18} className="text-indigo-600" />
+                                    Historique des commandes
+                                 </h3>
+                                 <div className="space-y-4">
+                                    {customerOrders.length > 0 ? customerOrders.map(order => (
+                                       <div key={order.id} className="border border-gray-100 rounded-lg p-4 hover:border-indigo-100 hover:bg-indigo-50/20 transition-colors cursor-pointer" onClick={() => {
+                                          setActiveTab('orders');
+                                          setSelectedOrderId(order.id);
+                                          setSelectedCustomerId(null);
+                                       }}>
+                                          <div className="flex justify-between items-start mb-2">
+                                             <div>
+                                                <div className="font-bold text-slate-900">{order.id}</div>
+                                                <div className="text-xs text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</div>
+                                             </div>
+                                             <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
+                                                order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                                                order.status === 'processing' ? 'bg-orange-100 text-orange-700' :
+                                                order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                'bg-slate-100 text-slate-600'
+                                             }`}>
+                                                {order.status}
+                                             </span>
+                                          </div>
+                                          <div className="flex justify-between items-end">
+                                             <div className="text-sm text-slate-600">
+                                                {order.items.length} article(s) : {order.items.map(i => i.bookTitle).join(', ')}
+                                             </div>
+                                             <div className="font-bold text-slate-900">{order.totalAmount.toFixed(2)} €</div>
+                                          </div>
+                                       </div>
+                                    )) : (
+                                       <div className="text-center py-8 text-slate-400 italic">Aucune commande trouvée</div>
+                                    )}
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     );
+                  })()}
+               </div>
             )}
 
             {/* --- VIEW: MENUS --- */}

@@ -40,6 +40,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [draftBook, setDraftBook] = useState<BookProduct | null>(null);
   const [activeRightTab, setActiveRightTab] = useState<'layers' | 'properties'>('layers');
 
+  // Drag & Drop State
+  const canvasRef = React.useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState<{x: number, y: number} | null>(null);
+  const [dragStartElementPos, setDragStartElementPos] = useState<{x: number, y: number} | null>(null);
+
+
   // SETTINGS STATE
   const [settings, setSettings] = useState({
     general: {
@@ -78,6 +85,53 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [contextBook?.id]); // Only sync on ID change, not every update
 
   const selectedBook = draftBook || contextBook;
+
+  // Drag Logic Effect
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+        if (!isDragging || !activeLayerId || !dragStartPos || !dragStartElementPos || !canvasRef.current || !selectedBook) return;
+        
+        const canvasRect = canvasRef.current.getBoundingClientRect();
+        const deltaX = e.clientX - dragStartPos.x;
+        const deltaY = e.clientY - dragStartPos.y;
+        
+        // Convert delta to percentage
+        const deltaXPercent = (deltaX / canvasRect.width) * 100;
+        const deltaYPercent = (deltaY / canvasRect.height) * 100;
+        
+        const newX = dragStartElementPos.x + deltaXPercent;
+        const newY = dragStartElementPos.y + deltaYPercent;
+        
+        // Update Layer
+        const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
+        const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
+        
+        if (textLayer) {
+             const newTexts = selectedBook.contentConfig.texts.map(t => t.id === activeLayerId ? {...t, position: {...t.position, x: newX, y: newY}} : t);
+             // We don't save to history on every move to avoid performance issues, just update draft
+             handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+        } else if (imgLayer) {
+             const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => i.id === activeLayerId ? {...i, position: {...i.position, x: newX, y: newY}} : i);
+             handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+        }
+    };
+    
+    const handleMouseUp = () => {
+        setIsDragging(false);
+        setDragStartPos(null);
+        setDragStartElementPos(null);
+    };
+
+    if (isDragging) {
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, activeLayerId, dragStartPos, dragStartElementPos, selectedBook]);
   const hasUnsavedChanges = JSON.stringify(draftBook) !== JSON.stringify(contextBook);
 
   const currentCombinations = React.useMemo(() => {
@@ -2628,11 +2682,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  <div className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative">
                                     {/* Page Container */}
                                     <div 
+                                       ref={canvasRef}
                                        className="transition-all duration-300 flex gap-0 shadow-2xl bg-white"
                                        style={{
                                           aspectRatio: viewMode === 'spread' ? `${aspectRatio * 2}/1` : `${aspectRatio}/1`,
                                           width: viewMode === 'spread' ? '90%' : 'auto',
-                                          height: viewMode === 'spread' ? 'auto' : '90%'
+                                          height: viewMode === 'spread' ? 'auto' : '90%',
+                                          maxWidth: '100%',
+                                          maxHeight: '100%'
                                        }}
                                     >
                                        
@@ -2676,7 +2733,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    .map(el => (
                                                       <div
                                                          key={el.id}
-                                                         onClick={(e) => { e.stopPropagation(); setActiveLayerId(el.id); }}
+                                                         onMouseDown={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            setActiveLayerId(el.id);
+                                                            setIsDragging(true);
+                                                            setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                            setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
+                                                         }}
                                                          className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
                                                          style={{
                                                             left: `${el.position.x}%`,
@@ -2703,7 +2767,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    .map(text => (
                                                       <div 
                                                          key={text.id}
-                                                         onClick={(e) => { e.stopPropagation(); setActiveLayerId(text.id); }}
+                                                         onMouseDown={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            setActiveLayerId(text.id);
+                                                            setIsDragging(true);
+                                                            setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                            setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
+                                                         }}
                                                          className={`absolute p-2 cursor-move border-2 transition-all ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                          style={{
                                                             left: `${text.position.x}%`,

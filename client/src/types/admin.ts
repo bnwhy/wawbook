@@ -18,6 +18,7 @@ export interface BookProduct {
     customization?: string[];
     pages?: number;
     formats?: string[];
+    dimensions?: { width: number; height: number }; // Dimensions in mm (width x height)
   };
   wizardConfig: WizardConfiguration;
   contentConfig: ContentConfiguration;

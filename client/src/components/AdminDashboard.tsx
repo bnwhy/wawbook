@@ -151,6 +151,48 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
      const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
      
      if (relevantVariants.length === 0) return [];
+     
+    // Recursively generate combinations for this specific tab
+    const variants = relevantVariants;
+    const variantOptions = variants.map(v => v.options);
+    
+    const cartesian = (args: any[]) => {
+        const r: any[] = [];
+        const max = args.length - 1;
+        function helper(arr: any[], i: number) {
+            for (let j = 0, l = args[i].length; j < l; j++) {
+                const a = arr.slice(0);
+                a.push(args[i][j]);
+                if (i === max) r.push(a);
+                else helper(a, i + 1);
+            }
+        }
+        helper([], 0);
+        return r;
+    };
+
+    const combinations = cartesian(variantOptions);
+    
+    return combinations.map(combo => {
+       const parts = combo.map((opt: any) => ({
+          label: opt.label,
+          id: opt.id
+       }));
+       
+       // Key is sorted combination of option IDs
+       const key = parts.map((p: any) => p.id).sort().join('_');
+       
+       return { key, parts };
+    });
+  };
+
+  if (activeTab === 'home' && !selectedBookId && !selectedOrderId) {
+     // ... home view logic ...
+  }
+  
+  // Calculate aspect ratio style
+  const bookDimensions = selectedBook?.features?.dimensions || { width: 210, height: 210 }; // Default square 21x21
+  const aspectRatio = bookDimensions.width / bookDimensions.height;
 
      // Helper for cartesian product of objects
      const cartesian = (args: any[]) => {
@@ -2570,7 +2612,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  {/* CANVAS AREA */}
                                  <div className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative">
                                     {/* Page Container */}
-                                    <div className={`transition-all duration-300 flex gap-0 shadow-2xl ${viewMode === 'spread' ? 'aspect-[3/2] w-[90%]' : 'aspect-[3/4] h-[90%]'}`}>
+                                    <div 
+                                       className="transition-all duration-300 flex gap-0 shadow-2xl bg-white"
+                                       style={{
+                                          aspectRatio: viewMode === 'spread' ? `${aspectRatio * 2}/1` : `${aspectRatio}/1`,
+                                          width: viewMode === 'spread' ? '90%' : 'auto',
+                                          height: viewMode === 'spread' ? 'auto' : '90%'
+                                       }}
+                                    >
                                        
                                        {/* PAGE RENDERER */}
                                        {(() => {

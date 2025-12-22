@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Globe } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -13,7 +13,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
   const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer } = useEcommerce();
   
-  const [activeTab, setActiveTab] = useState<'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings'>('books');
+  const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -199,63 +199,92 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
            <span className="font-bold text-white text-lg tracking-tight">WawBook Admin</span>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2">
-           <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-2">Gestion</div>
+        <nav className="flex-1 p-4 space-y-1">
            <button 
-             onClick={() => { setActiveTab('books'); setSelectedBookId(null); setIsEditing(false); }}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'books' && !selectedBookId ? 'bg-brand-coral text-white shadow-lg' : 'hover:bg-slate-800'}`}
+             onClick={() => { setActiveTab('home'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'home' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
            >
-              <Book size={20} />
-              <span className="font-medium">Produits</span>
+              <Home size={18} />
+              <span>Accueil</span>
            </button>
 
+           <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Commandes</div>
+           
            <button 
-             onClick={() => { setActiveTab('menus'); setSelectedBookId(null); setIsEditing(false); }}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'menus' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
+             onClick={() => { setActiveTab('orders'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'orders' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
            >
-              <Menu size={20} />
-              <span className="font-medium">Menus</span>
+              <ShoppingBag size={18} />
+              <span>Commandes</span>
            </button>
 
            <button 
              onClick={() => { setActiveTab('customers'); setSelectedBookId(null); setIsEditing(false); }}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'customers' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
+             className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'customers' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
            >
-              <Users size={20} />
-              <span className="font-medium">Clients</span>
+              <Users size={18} />
+              <span>Clients</span>
+           </button>
+
+           <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Produits</div>
+
+           <button 
+             onClick={() => { setActiveTab('books'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'books' && !selectedBookId ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+           >
+              <Book size={18} />
+              <span>Livres</span>
            </button>
 
            <button 
-             onClick={() => { setActiveTab('orders'); setSelectedBookId(null); setIsEditing(false); }}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'orders' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
+             onClick={() => { setActiveTab('menus'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'menus' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
            >
-              <ShoppingBag size={20} />
-              <span className="font-medium">Commandes</span>
+              <Menu size={18} />
+              <span>Menus & Navigation</span>
            </button>
+
+           <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logistique</div>
 
            <button 
              onClick={() => { setActiveTab('printers'); setSelectedBookId(null); setIsEditing(false); }}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'printers' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
+             className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'printers' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
            >
-              <Printer size={20} />
-              <span className="font-medium">Imprimeurs</span>
+              <Printer size={18} />
+              <span>Imprimeurs</span>
+           </button>
+           
+           <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Boutique</div>
+
+           <button 
+             onClick={() => { setActiveTab('analytics'); setSelectedBookId(null); setIsEditing(false); }}
+             className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'analytics' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+           >
+              <BarChart3 size={18} />
+              <span>Analyses</span>
            </button>
 
            <button 
              onClick={() => { setActiveTab('settings'); setSelectedBookId(null); setIsEditing(false); }}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'settings' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-400 hover:text-white'}`}
+             className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'settings' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
            >
-              <Settings size={20} />
-              <span className="font-medium">Paramétrages</span>
+              <Settings size={18} />
+              <span>Paramètres</span>
            </button>
 
            {selectedBookId && (
-             <>
-               <div className="text-xs font-bold text-slate-500 uppercase px-4 mt-6 mb-2">Édition en cours</div>
+             <div className="mt-6 pt-6 border-t border-slate-800">
+               <div className="px-4 mb-3 flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-brand-coral uppercase tracking-wider">Mode Édition</span>
+                  <button onClick={() => { setSelectedBookId(null); setIsEditing(false); setActiveTab('books'); }} className="text-slate-500 hover:text-white">
+                    <X size={14} />
+                  </button>
+               </div>
+               
                <div className="px-4 mb-4">
                   <div className="bg-slate-800 rounded p-3 border border-slate-700 mb-3">
-                     <div className="font-bold text-white truncate">{selectedBook?.name}</div>
-                     <div className="text-xs text-slate-400">{selectedBook?.id}</div>
+                     <div className="font-bold text-white truncate text-sm">{selectedBook?.name}</div>
+                     <div className="text-[10px] text-slate-400 font-mono">{selectedBook?.id}</div>
                   </div>
                   
                   <button 
@@ -263,63 +292,60 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         if (draftBook) {
                            updateBook(draftBook);
                            toast.success("Modifications enregistrées");
-                           // We don't nullify draftBook here because we want to stay in edit mode,
-                           // but the next render will re-sync draftBook if needed, or we rely on 'hasUnsavedChanges' calculation.
-                           // Actually, updateBook updates context, causing contextBook to change.
-                           // But our useEffect only runs on ID change. So draftBook stays as is.
-                           // But contextBook now equals draftBook (mostly).
                         }
                      }}
                      disabled={!hasUnsavedChanges}
-                     className={`w-full font-bold py-2 px-3 rounded text-sm flex items-center justify-center gap-2 transition-colors shadow-sm ${
+                     className={`w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm ${
                         hasUnsavedChanges 
-                           ? 'bg-green-500 hover:bg-green-600 text-white cursor-pointer' 
-                           : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                           ? 'bg-brand-coral hover:bg-red-500 text-white cursor-pointer' 
+                           : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                      }`}
                   >
-                     <Save size={16} />
+                     <Save size={14} />
                      {hasUnsavedChanges ? 'Sauvegarder' : 'Enregistré'}
                   </button>
                </div>
 
-               <button 
-                 onClick={() => setActiveTab('books')}
-                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'books' && selectedBookId ? 'bg-slate-800 text-white' : 'hover:bg-slate-800'}`}
-               >
-                  <Settings size={20} />
-                  <span className="font-medium">Général</span>
-               </button>
-               
-               <button 
-                 onClick={() => setActiveTab('wizard')}
-                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'wizard' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800'}`}
-               >
-                  <User size={20} />
-                  <span className="font-medium">Wizard</span>
-               </button>
+               <div className="space-y-1">
+                 <button 
+                   onClick={() => setActiveTab('books')}
+                   className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'books' && selectedBookId ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+                 >
+                    <Settings size={16} />
+                    <span>Général</span>
+                 </button>
+                 
+                 <button 
+                   onClick={() => setActiveTab('wizard')}
+                   className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'wizard' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+                 >
+                    <User size={16} />
+                    <span>Wizard</span>
+                 </button>
 
-               <button 
-                 onClick={() => setActiveTab('avatars')}
-                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'avatars' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800'}`}
-               >
-                  <Eye size={20} />
-                  <span className="font-medium">Prévisualisations</span>
-               </button>
+                 <button 
+                   onClick={() => setActiveTab('avatars')}
+                   className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'avatars' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+                 >
+                    <Eye size={16} />
+                    <span>Prévisualisations</span>
+                 </button>
 
-               <button 
-                 onClick={() => setActiveTab('content')}
-                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800'}`}
-               >
-                  <Layers size={20} />
-                  <span className="font-medium">Contenu & Storyboard</span>
-               </button>
-             </>
+                 <button 
+                   onClick={() => setActiveTab('content')}
+                   className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'content' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+                 >
+                    <Layers size={16} />
+                    <span>Contenu</span>
+                 </button>
+               </div>
+             </div>
            )}
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-           <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors">
-              <ChevronRight size={16} className="rotate-180" />
+           <button onClick={onBack} className="flex items-center gap-2 text-xs text-slate-500 hover:text-white transition-colors">
+              <ChevronRight size={14} className="rotate-180" />
               Retour au site
            </button>
         </div>
@@ -328,16 +354,29 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
          {/* Header */}
-         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm shrink-0">
+         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm shrink-0 z-10">
             <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                {selectedBookId ? (
                  <>
-                   <span className="text-slate-400 font-normal">Édition :</span>
+                   <span className="text-slate-400 font-normal text-lg">Produits /</span>
                    {selectedBook?.name}
                  </>
-               ) : 'Gestion du Catalogue'}
+               ) : (
+                  activeTab === 'home' ? 'Tableau de bord' :
+                  activeTab === 'books' ? 'Produits' :
+                  activeTab === 'orders' ? 'Commandes' :
+                  activeTab === 'customers' ? 'Clients' :
+                  activeTab === 'menus' ? 'Menus' :
+                  activeTab === 'printers' ? 'Imprimeurs' :
+                  activeTab === 'settings' ? 'Paramètres' : 
+                  activeTab === 'analytics' ? 'Analyses' : 'Admin'
+               )}
             </h1>
             <div className="flex items-center gap-4">
+               <div className="text-right hidden sm:block">
+                  <div className="text-sm font-bold text-slate-900">Admin User</div>
+                  <div className="text-xs text-slate-500">admin@wawbook.com</div>
+               </div>
                <div className="w-10 h-10 rounded-full bg-brand-coral text-white flex items-center justify-center font-bold shadow-md">
                   A
                </div>
@@ -347,6 +386,159 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
          {/* Scrollable Content */}
          <main className="flex-1 overflow-y-auto p-8">
             
+            {/* --- VIEW: HOME (DASHBOARD) --- */}
+            {activeTab === 'home' && (
+               <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Ventes Totales</h3>
+                           <div className="text-green-500 bg-green-50 px-2 py-1 rounded text-xs font-bold">+12%</div>
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900 mb-1">
+                           {orders.reduce((acc, order) => acc + order.totalAmount, 0).toFixed(2)} €
+                        </div>
+                        <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
+                     </div>
+
+                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Commandes</h3>
+                           <div className="text-green-500 bg-green-50 px-2 py-1 rounded text-xs font-bold">+5%</div>
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900 mb-1">
+                           {orders.length}
+                        </div>
+                        <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
+                     </div>
+
+                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Panier Moyen</h3>
+                           <div className="text-red-500 bg-red-50 px-2 py-1 rounded text-xs font-bold">-2%</div>
+                        </div>
+                        <div className="text-3xl font-bold text-slate-900 mb-1">
+                           {orders.length > 0 ? (orders.reduce((acc, order) => acc + order.totalAmount, 0) / orders.length).toFixed(2) : '0.00'} €
+                        </div>
+                        <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                     <div className="lg:col-span-2 space-y-6">
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                           <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                              <h3 className="font-bold text-slate-800">Dernières commandes</h3>
+                              <button onClick={() => setActiveTab('orders')} className="text-indigo-600 text-sm font-bold hover:underline">Tout voir</button>
+                           </div>
+                           <table className="w-full text-left text-sm">
+                              <thead className="bg-slate-50 text-slate-500 font-medium">
+                                 <tr>
+                                    <th className="px-6 py-3">Commande</th>
+                                    <th className="px-6 py-3">Client</th>
+                                    <th className="px-6 py-3">Statut</th>
+                                    <th className="px-6 py-3 text-right">Total</th>
+                                 </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                 {orders.slice(0, 5).map(order => (
+                                    <tr key={order.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => { setActiveTab('orders'); setSelectedOrderId(order.id); }}>
+                                       <td className="px-6 py-4 font-bold text-slate-900">{order.id}</td>
+                                       <td className="px-6 py-4">{order.customerName}</td>
+                                       <td className="px-6 py-4">
+                                          <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
+                                             order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                             order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                                             order.status === 'processing' ? 'bg-orange-100 text-orange-700' :
+                                             order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                             'bg-slate-100 text-slate-600'
+                                          }`}>
+                                             {order.status === 'pending' ? 'En attente' :
+                                              order.status === 'processing' ? 'En cours' :
+                                              order.status === 'shipped' ? 'Expédiée' :
+                                              order.status === 'delivered' ? 'Livrée' : 'Annulée'}
+                                          </span>
+                                       </td>
+                                       <td className="px-6 py-4 text-right font-bold">{order.totalAmount.toFixed(2)} €</td>
+                                    </tr>
+                                 ))}
+                                 {orders.length === 0 && (
+                                    <tr>
+                                       <td colSpan={4} className="px-6 py-8 text-center text-slate-500">Aucune commande récente</td>
+                                    </tr>
+                                 )}
+                              </tbody>
+                           </table>
+                        </div>
+                     </div>
+
+                     <div className="space-y-6">
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                           <h3 className="font-bold text-slate-800 mb-4">À faire</h3>
+                           <div className="space-y-3">
+                              <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100 text-orange-800">
+                                 <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></div>
+                                 <span className="text-sm font-medium">{orders.filter(o => o.status === 'pending').length} commandes à traiter</span>
+                                 <ChevronRight size={16} className="ml-auto opacity-50" />
+                              </div>
+                              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100 text-blue-800">
+                                 <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></div>
+                                 <span className="text-sm font-medium">{orders.filter(o => o.status === 'processing').length} en cours de production</span>
+                                 <ChevronRight size={16} className="ml-auto opacity-50" />
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                           <h3 className="font-bold text-slate-800 mb-4">Top Produits</h3>
+                           <div className="space-y-4">
+                              {books.slice(0, 3).map((book, i) => (
+                                 <div key={book.id} className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
+                                       {i + 1}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                       <div className="text-sm font-medium text-slate-900 truncate">{book.name}</div>
+                                       <div className="text-xs text-slate-500">{book.wizardConfig.tabs.length} options</div>
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-700">{book.price} €</div>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            )}
+
+            {/* --- VIEW: ANALYTICS --- */}
+            {activeTab === 'analytics' && (
+               <div className="space-y-8">
+                  <div className="bg-slate-900 text-white p-8 rounded-xl shadow-lg relative overflow-hidden">
+                     <div className="relative z-10">
+                        <h2 className="text-3xl font-bold mb-2">Performances</h2>
+                        <p className="text-slate-400 max-w-xl">
+                           Analysez vos ventes, le comportement de vos clients et la performance de vos produits pour optimiser votre boutique.
+                        </p>
+                     </div>
+                     <BarChart3 className="absolute right-8 top-8 text-slate-800 opacity-20 w-64 h-64 -rotate-12" />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-64 flex flex-col items-center justify-center text-center">
+                        <BarChart3 size={48} className="text-slate-300 mb-4" />
+                        <h3 className="font-bold text-slate-800">Graphique des ventes</h3>
+                        <p className="text-sm text-slate-500 mt-2">Données simulées pour la démo.</p>
+                     </div>
+                     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-64 flex flex-col items-center justify-center text-center">
+                        <Globe size={48} className="text-slate-300 mb-4" />
+                        <h3 className="font-bold text-slate-800">Ventes par région</h3>
+                        <p className="text-sm text-slate-500 mt-2">Données simulées pour la démo.</p>
+                     </div>
+                  </div>
+               </div>
+            )}
+
             {/* --- VIEW: ALL BOOKS --- */}
             {activeTab === 'books' && !selectedBookId && (
               <div className="space-y-6">

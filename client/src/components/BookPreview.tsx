@@ -181,6 +181,18 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       if (book?.contentConfig?.pages) {
           const pageDef = book.contentConfig.pages.find(p => p.pageNumber === pageIndex);
           
+          // --- MARGIN GUIDES LOGIC ---
+          const isCover = pageIndex === 0 || pageIndex === book.contentConfig.pages.length - 1; // Simplistic check, might need refinement
+          const printConfig = isCover 
+            ? book.features?.printConfig?.cover 
+            : book.features?.printConfig?.interior;
+            
+          const pageWidth = book.features?.dimensions?.width || 210;
+          const pageHeight = book.features?.dimensions?.height || 210;
+          const bleedMm = printConfig?.bleedMm || 0;
+          const safeMarginMm = printConfig?.safeMarginMm || 0;
+          // ---------------------------
+
           if (!pageDef) {
              return <div className="w-full h-full flex items-center justify-center text-cloud-dark/20">Page vide</div>;
           }
@@ -199,6 +211,33 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
           return (
             <div className="w-full h-full relative overflow-hidden bg-white">
+                {/* --- MARGIN GUIDES OVERLAY --- */}
+                {/* Bleed (Trim) - Red */}
+                {bleedMm > 0 && (
+                    <div 
+                        className="absolute border border-red-400 border-dashed pointer-events-none z-50 opacity-40"
+                        style={{
+                            left: `${(bleedMm / pageWidth) * 100}%`,
+                            top: `${(bleedMm / pageHeight) * 100}%`,
+                            right: `${(bleedMm / pageWidth) * 100}%`,
+                            bottom: `${(bleedMm / pageHeight) * 100}%`,
+                        }}
+                    />
+                )}
+                {/* Safe Margin - Green */}
+                {safeMarginMm > 0 && (
+                    <div 
+                        className="absolute border border-green-500 border-dashed pointer-events-none z-50 opacity-40"
+                        style={{
+                            left: `${((bleedMm + safeMarginMm) / pageWidth) * 100}%`,
+                            top: `${((bleedMm + safeMarginMm) / pageHeight) * 100}%`,
+                            right: `${((bleedMm + safeMarginMm) / pageWidth) * 100}%`,
+                            bottom: `${((bleedMm + safeMarginMm) / pageHeight) * 100}%`,
+                        }}
+                    />
+                )}
+                {/* ----------------------------- */}
+
                 {/* Background */}
                 {bgImage?.imageUrl ? (
                     <img src={bgImage.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Background" />

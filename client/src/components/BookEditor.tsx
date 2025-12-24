@@ -436,19 +436,46 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                                       </div>
                                    )}
 
-                                   {/* Safe Margin Guide */}
-                                   {safeMarginMm && (
-                                      <div 
-                                         className="absolute border border-green-400 border-dashed pointer-events-none z-50 opacity-50"
-                                         style={{
-                                            left: `${(safeMarginMm / (selectedBook.features?.dimensions?.width || 210)) * 100}%`,
-                                            top: `${(safeMarginMm / (selectedBook.features?.dimensions?.height || 210)) * 100}%`,
-                                            right: `${(safeMarginMm / (selectedBook.features?.dimensions?.width || 210)) * 100}%`,
-                                            bottom: `${(safeMarginMm / (selectedBook.features?.dimensions?.height || 210)) * 100}%`,
-                                         }}
-                                         title={`Marge de sécurité: ${safeMarginMm}mm`}
-                                      />
-                                   )}
+                                   {/* Guides Overlay */}
+                                   {(() => {
+                                      const pageWidth = selectedBook.features?.dimensions?.width || 210;
+                                      const pageHeight = selectedBook.features?.dimensions?.height || 210;
+                                      
+                                      const bleedMm = config?.bleedMm || 0;
+                                      const safeMarginMm = config?.safeMarginMm || 0;
+
+                                      return (
+                                        <>
+                                            {/* Bleed Guide (Trim Line) - Red */}
+                                            {bleedMm > 0 && (
+                                                <div 
+                                                    className="absolute border border-red-400 border-dashed pointer-events-none z-50 opacity-60"
+                                                    style={{
+                                                        left: `${(bleedMm / pageWidth) * 100}%`,
+                                                        top: `${(bleedMm / pageHeight) * 100}%`,
+                                                        right: `${(bleedMm / pageWidth) * 100}%`,
+                                                        bottom: `${(bleedMm / pageHeight) * 100}%`,
+                                                    }}
+                                                    title={`Bleed / Coupe: ${bleedMm}mm`}
+                                                />
+                                            )}
+
+                                            {/* Safe Margin Guide - Green */}
+                                            {safeMarginMm > 0 && (
+                                                <div 
+                                                    className="absolute border border-green-500 border-dashed pointer-events-none z-50 opacity-60"
+                                                    style={{
+                                                        left: `${((bleedMm + safeMarginMm) / pageWidth) * 100}%`,
+                                                        top: `${((bleedMm + safeMarginMm) / pageHeight) * 100}%`,
+                                                        right: `${((bleedMm + safeMarginMm) / pageWidth) * 100}%`,
+                                                        bottom: `${((bleedMm + safeMarginMm) / pageHeight) * 100}%`,
+                                                    }}
+                                                    title={`Marge de sécurité: ${safeMarginMm}mm (+${bleedMm}mm bleed)`}
+                                                />
+                                            )}
+                                        </>
+                                      );
+                                   })()}
 
                                    {/* 1. BASE LAYER (Background Variant) */}
                                    <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">

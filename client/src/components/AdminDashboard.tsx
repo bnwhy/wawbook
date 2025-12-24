@@ -3166,10 +3166,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </div>
                               </div>
 
-                              {/* Canvas & Sidebar Container */}
-                              <div className="flex-1 flex overflow-hidden">
+                              {/* Canvas & Sidebar Container - Main Column */}
+                              <div className="flex-1 flex flex-col overflow-hidden">
                                  
-                                 {/* CANVAS AREA */}
+                                 {/* CANVAS AREA - Flex 1 to take all space */}
                                  <div className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative">
                                     {/* Page Container */}
                                     <div 
@@ -3357,8 +3357,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                  </div>
 
-                                 {/* RIGHT PANEL: LAYERS & PROPERTIES */}
-                                 <div className="w-80 bg-white border-l border-gray-200 flex flex-col shadow-xl z-20">
+                                 {/* BOTTOM PANEL: LAYERS & PROPERTIES */}
+                                 <div className="h-72 w-full bg-white border-t border-gray-200 flex flex-col shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 shrink-0">
                                     {/* Tabs */}
                                     <div className="flex border-b border-gray-200 bg-gray-50 h-10 shrink-0">
                                         <button 

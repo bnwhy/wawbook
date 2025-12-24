@@ -391,15 +391,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            toast.success("Modifications enregistrées");
                         }
                      }}
-                     disabled={!hasUnsavedChanges}
+                     disabled={!draftBook}
                      className={`w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm ${
-                        hasUnsavedChanges 
+                        draftBook 
                            ? 'bg-brand-coral hover:bg-red-500 text-white cursor-pointer' 
                            : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                      }`}
                   >
                      <Save size={14} />
-                     {hasUnsavedChanges ? 'Sauvegarder' : 'Enregistré'}
+                     {draftBook ? 'Sauvegarder' : 'Enregistré'}
                   </button>
                </div>
 

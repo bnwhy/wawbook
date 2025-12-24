@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -3204,9 +3204,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           let pagesToShow = [];
 
                                           if (viewMode === 'spread' && isCoverPage) {
-                                              // Cover Spread: Treat as a single page (Front Cover Only as per user request)
-                                              const frontCover = selectedBook.contentConfig.pages[0];
-                                              pagesToShow = [frontCover].filter(Boolean);
+                                              // Cover Spread: Treat as a single page view, BUT combine back and front cover data
+                                              // We will render a single container that spans both pages.
+                                              // We use a dummy object that we'll catch in the map loop
+                                              pagesToShow = [{ id: 'cover-spread', isSpread: true }];
                                           } else if (viewMode === 'spread') {
                                              // Interior Spreads Logic: Group by pairs (1-2, 3-4, etc.)
                                              // Index 1 (Page 1) & Index 2 (Page 2) -> Pair starting at 1
@@ -3231,6 +3232,125 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           }
 
                                           return pagesToShow.map((page: any, idx) => {
+                                             // SPECIAL COVER SPREAD RENDERING
+                                             if (page.id === 'cover-spread') {
+                                                 const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
+                                                 const frontCover = selectedBook.contentConfig.pages[0];
+                                                 
+                                                 const renderPageContent = (targetPage: any, label: string) => {
+                                                     if (!targetPage) return <div className="w-1/2 bg-gray-100 flex items-center justify-center text-gray-400">Page manquante</div>;
+
+                                                     return (
+                                                     <div 
+                                                         className="w-1/2 h-full relative border-r border-dashed border-gray-300 last:border-0 overflow-hidden group/subpage"
+                                                         onClick={(e) => {
+                                                             e.stopPropagation();
+                                                             setSelectedPageId(targetPage.id);
+                                                         }}
+                                                     >
+                                                         {/* Label */}
+                                                         <div className="absolute top-2 left-2 z-50 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none">
+                                                            {label}
+                                                         </div>
+                                                         
+                                                         {/* Selection Ring */}
+                                                         {selectedPageId === targetPage.id && (
+                                                            <div className="absolute inset-0 border-2 border-brand-coral z-40 pointer-events-none"></div>
+                                                         )}
+
+                                                         {/* 1. BASE LAYER */}
+                                                         <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+                                                            {(() => {
+                                                               const bgImage = selectedBook.contentConfig.images.find(
+                                                                  img => img.pageIndex === targetPage.pageNumber && 
+                                                                        (img.combinationKey === selectedVariant || img.combinationKey === 'default')
+                                                               );
+                                                               if (bgImage?.imageUrl) return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background" />;
+                                                               return (
+                                                                  <div className="text-center text-gray-300">
+                                                                     <ImageIcon size={48} className="mx-auto mb-2 opacity-50" />
+                                                                     <span className="text-xs font-bold block">{label}</span>
+                                                                  </div>
+                                                               );
+                                                            })()}
+                                                         </div>
+
+                                                         {/* 2. IMAGE LAYERS */}
+                                                         {(selectedBook.contentConfig.imageElements || [])
+                                                            .filter(el => el.position.pageIndex === targetPage.pageNumber)
+                                                            .map(el => (
+                                                               <div
+                                                                  key={el.id}
+                                                                  onMouseDown={(e) => {
+                                                                     e.stopPropagation();
+                                                                     e.preventDefault();
+                                                                     setActiveLayerId(el.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
+                                                                  }}
+                                                                  className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
+                                                                  style={{
+                                                                     left: `${el.position.x}%`,
+                                                                     top: `${el.position.y}%`,
+                                                                     width: `${el.position.width}%`,
+                                                                     height: el.position.height ? `${el.position.height}%` : 'auto',
+                                                                     transform: `rotate(${el.position.rotation || 0}deg)`
+                                                                  }}
+                                                               >
+                                                                  {el.type === 'static' && el.url ? (
+                                                                     <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
+                                                                  ) : (
+                                                                     <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
+                                                                        {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
+                                                                     </div>
+                                                                  )}
+                                                               </div>
+                                                            ))
+                                                         }
+
+                                                         {/* 3. TEXT LAYERS */}
+                                                         {selectedBook.contentConfig.texts
+                                                            .filter(t => t.position.pageIndex === targetPage.pageNumber)
+                                                            .map(text => (
+                                                               <div 
+                                                                  key={text.id}
+                                                                  onMouseDown={(e) => {
+                                                                     e.stopPropagation();
+                                                                     e.preventDefault();
+                                                                     setActiveLayerId(text.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
+                                                                  }}
+                                                                  className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                  style={{
+                                                                     left: `${text.position.x}%`,
+                                                                     top: `${text.position.y}%`,
+                                                                     width: `${text.position.width || 30}%`,
+                                                                     height: text.position.height ? `${text.position.height}%` : 'auto',
+                                                                     transform: `rotate(${text.position.rotation || 0}deg)`,
+                                                                     ...text.style
+                                                                  }}
+                                                               >
+                                                                  <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
+                                                                     {text.content}
+                                                                  </div>
+                                                               </div>
+                                                            ))
+                                                         }
+                                                     </div>
+                                                     );
+                                                 };
+
+                                                 return (
+                                                     <div key="cover-spread" className="flex-1 bg-white relative overflow-hidden flex shadow-lg ring-1 ring-gray-200">
+                                                         {renderPageContent(backCover, 'Dos / Arrière')}
+                                                         {renderPageContent(frontCover, 'Face Avant')}
+                                                     </div>
+                                                 );
+                                             }
+
                                              // Determine margin config for this specific page
                                              const pIdx = selectedBook.contentConfig.pages.findIndex(p => p.id === page.id);
                                              const isThisPageCover = pIdx === 0 || pIdx === selectedBook.contentConfig.pages.length - 1;

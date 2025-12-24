@@ -9,6 +9,8 @@ import { useEcommerce } from '../context/EcommerceContext';
 import { MenuItem, MenuColumn } from '../types/menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 
+import { generateCoverPDF, generateInteriorPDF } from '../utils/pdfGenerator';
+
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -1060,7 +1062,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        <button 
                                           onClick={() => {
                                              toast.promise(
-                                                new Promise((resolve) => setTimeout(resolve, 2000)),
+                                                new Promise(async (resolve, reject) => {
+                                                   try {
+                                                      const blob = generateCoverPDF(order);
+                                                      const url = URL.createObjectURL(blob);
+                                                      const a = document.createElement('a');
+                                                      a.href = url;
+                                                      a.download = `cover-${order.id}.pdf`;
+                                                      document.body.appendChild(a);
+                                                      a.click();
+                                                      document.body.removeChild(a);
+                                                      URL.revokeObjectURL(url);
+                                                      resolve(true);
+                                                   } catch (e) {
+                                                      reject(e);
+                                                   }
+                                                }),
                                                 {
                                                    loading: 'Génération du PDF de couverture...',
                                                    success: `Couverture pour la commande #${order.id} téléchargée !`,
@@ -1091,7 +1108,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        <button 
                                           onClick={() => {
                                              toast.promise(
-                                                new Promise((resolve) => setTimeout(resolve, 3000)),
+                                                new Promise(async (resolve, reject) => {
+                                                   try {
+                                                      const blob = generateInteriorPDF(order);
+                                                      const url = URL.createObjectURL(blob);
+                                                      const a = document.createElement('a');
+                                                      a.href = url;
+                                                      a.download = `interior-${order.id}.pdf`;
+                                                      document.body.appendChild(a);
+                                                      a.click();
+                                                      document.body.removeChild(a);
+                                                      URL.revokeObjectURL(url);
+                                                      resolve(true);
+                                                   } catch (e) {
+                                                      reject(e);
+                                                   }
+                                                }),
                                                 {
                                                    loading: 'Génération du PDF intérieur (Haute Qualité)...',
                                                    success: `Intérieur pour la commande #${order.id} téléchargé !`,

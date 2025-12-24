@@ -827,6 +827,51 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </div>
                      </div>
                   </div>
+
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                     <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
+                        <div>
+                           <h3 className="font-bold text-slate-800 text-lg">Notifications</h3>
+                           <p className="text-sm text-slate-500">Emails transactionnels</p>
+                        </div>
+                        <button 
+                           onClick={() => handleSaveSettings('Notifications')}
+                           className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+                        >
+                           <Save size={16} /> Sauvegarder
+                        </button>
+                     </div>
+                     <div className="p-6 space-y-4">
+                        <div className="flex items-start gap-4">
+                           <div className="pt-1">
+                              <input 
+                                 type="checkbox" 
+                                 checked={settings.notifications.orderConfirmation}
+                                 onChange={(e) => setSettings({...settings, notifications: {...settings.notifications, orderConfirmation: e.target.checked}})}
+                                 className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4"
+                              />
+                           </div>
+                           <div className="flex-1">
+                              <h4 className="font-bold text-slate-700">Confirmation de commande</h4>
+                              <p className="text-sm text-slate-500">Envoyer un email au client lors de la commande.</p>
+                           </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                           <div className="pt-1">
+                              <input 
+                                 type="checkbox" 
+                                 checked={settings.notifications.shippingUpdate}
+                                 onChange={(e) => setSettings({...settings, notifications: {...settings.notifications, shippingUpdate: e.target.checked}})}
+                                 className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4"
+                              />
+                           </div>
+                           <div className="flex-1">
+                              <h4 className="font-bold text-slate-700">Mise à jour d'expédition</h4>
+                              <p className="text-sm text-slate-500">Envoyer un email au client lors de l'expédition.</p>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
                </div>
             )}
 

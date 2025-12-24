@@ -2979,19 +2979,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <button 
                            onClick={() => {
                               const pages = selectedBook.contentConfig.pages || [];
+                              let currentPages = [...pages];
                               
-                              // Safety check: if pages are missing or too few, don't break
-                              if (pages.length < 2) {
-                                  console.error("Not enough pages to insert interior page");
-                                  return;
+                              // Ensure minimal structure (Front + Back) exists if missing
+                              if (currentPages.length === 0) {
+                                  currentPages = [
+                                      { id: `cover-front-${Date.now()}`, pageNumber: 0, label: 'Couverture Avant' },
+                                      { id: `cover-back-${Date.now()}`, pageNumber: 999, label: 'Couverture Arrière' }
+                                  ];
+                              } else if (currentPages.length === 1) {
+                                  // We have 1 page, assume it's Front, add Back
+                                  currentPages.push({ id: `cover-back-${Date.now()}`, pageNumber: 999, label: 'Couverture Arrière' });
                               }
 
-                              const backCover = pages[pages.length - 1];
-                              const frontCover = pages[0];
+                              const frontCover = currentPages[0];
+                              const backCover = currentPages[currentPages.length - 1];
                               
-                              // Insert new page before the last page (Back Cover)
-                              const interiorPagesCount = Math.max(0, pages.length - 2); // Total - Front - Back
-                              const newPageNum = interiorPagesCount + 1;
+                              // Calculate new page number (interior pages start at 1)
+                              const interiorPages = currentPages.slice(1, -1);
+                              const newPageNum = interiorPages.length + 1;
                               
                               const newPage: PageDefinition = { 
                                  id: Date.now().toString(), 
@@ -3002,10 +3008,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               // Construct new array: [Front, ...Interior, NewPage, Back]
                               const newPages = [
                                  frontCover,
-                                 ...pages.slice(1, -1),
+                                 ...interiorPages,
                                  newPage,
                                  backCover
-                              ].filter(Boolean); // Filter out any undefineds just in case
+                              ];
 
                               handleSaveBook({
                                  ...selectedBook, 

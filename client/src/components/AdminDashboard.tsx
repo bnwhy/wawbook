@@ -3241,7 +3241,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              const safeMarginMm = config?.safeMarginMm;
 
                                              return (
-                                             <div key={page.id} className="flex-1 bg-white relative overflow-hidden group border-r border-gray-100 last:border-0">
+                                             <div 
+                                                key={page.id} 
+                                                onClick={(e) => {
+                                                   e.stopPropagation();
+                                                   setSelectedPageId(page.id);
+                                                }}
+                                                className={`flex-1 bg-white relative overflow-hidden group border-r border-gray-100 last:border-0 transition-shadow duration-200 ${selectedPageId === page.id ? 'ring-2 ring-brand-coral ring-inset z-10' : 'hover:ring-1 hover:ring-gray-300 ring-inset'}`}
+                                             >
                                                 
                                                 {/* Label Overlay for Cover Spread */}
                                                 {viewMode === 'spread' && isCoverPage && (

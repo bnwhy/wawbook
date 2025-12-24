@@ -3192,7 +3192,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   pagesToShow = [backCover, frontCover].filter(Boolean);
                                               }
                                           } else if (viewMode === 'spread') {
-                                             pagesToShow = [currentPage, selectedBook.contentConfig.pages[pageIndex + 1]].filter(Boolean);
+                                             // Interior Spreads Logic: Group by pairs (1-2, 3-4, etc.)
+                                             // Index 1 (Page 1) & Index 2 (Page 2) -> Pair starting at 1
+                                             // Index 3 (Page 3) & Index 4 (Page 4) -> Pair starting at 3
+                                             
+                                             const startIdx = pageIndex % 2 !== 0 ? pageIndex : pageIndex - 1;
+                                             
+                                             const leftPage = selectedBook.contentConfig.pages[startIdx];
+                                             const rightPage = selectedBook.contentConfig.pages[startIdx + 1];
+                                             
+                                             // Ensure we don't include the Back Cover in an interior spread
+                                             const isRightBackCover = (startIdx + 1) === (selectedBook.contentConfig.pages.length - 1);
+                                             
+                                             pagesToShow = [leftPage];
+                                             if (rightPage && !isRightBackCover) {
+                                                 pagesToShow.push(rightPage);
+                                             }
+                                             
+                                             pagesToShow = pagesToShow.filter(Boolean);
                                           } else {
                                              pagesToShow = [currentPage].filter(Boolean);
                                           }

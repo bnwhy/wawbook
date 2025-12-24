@@ -485,7 +485,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
          </header>
 
          {/* Scrollable Content */}
-         <main className="flex-1 overflow-y-auto p-8">
+         <main className={`flex-1 flex flex-col ${activeTab === 'content' ? 'overflow-hidden p-0' : 'overflow-y-auto p-8'}`}>
             
             {/* --- VIEW: HOME (DASHBOARD) --- */}
             {activeTab === 'home' && (
@@ -2771,10 +2771,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
             {activeTab === 'content' && selectedBookId && selectedBook && (
-               <div className="flex flex-col h-[calc(100vh-200px)] min-h-[500px] bg-slate-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+               <div className="flex flex-col flex-1 bg-slate-50 border-t border-gray-200 overflow-hidden">
                   
                   {/* --- TOP BAR --- */}
-                  <div className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between shrink-0 z-20">
+                  <div className="h-14 bg-white border-b border-gray-200 px-4 flex items-center justify-between shrink-0 z-20">
                      <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3 text-slate-800 font-bold text-lg">
                            <div className="w-8 h-8 rounded bg-brand-coral/10 text-brand-coral flex items-center justify-center">

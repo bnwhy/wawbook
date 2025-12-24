@@ -6,8 +6,8 @@ import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
 import Navigation from './Navigation';
-import hardcoverIcon from '@assets/generated_images/simple_hardcover_book_icon.png';
-import softcoverIcon from '@assets/generated_images/simple_softcover_book_icon.png';
+import hardcoverIcon from '@assets/generated_images/hardcover_book_corner_illustration.png';
+import softcoverIcon from '@assets/generated_images/softcover_book_corner_illustration.png';
 
 import Footer from './Footer';
 

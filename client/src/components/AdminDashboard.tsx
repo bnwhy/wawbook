@@ -386,20 +386,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   
                   <button 
                      onClick={() => {
-                        if (draftBook) {
-                           updateBook(draftBook);
+                        const bookToSave = draftBook || selectedBook;
+                        if (bookToSave) {
+                           updateBook(bookToSave);
                            toast.success("Modifications enregistrées");
                         }
                      }}
-                     disabled={!draftBook}
+                     disabled={!selectedBook}
                      className={`w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm ${
-                        draftBook 
+                        hasUnsavedChanges || !draftBook
                            ? 'bg-brand-coral hover:bg-red-500 text-white cursor-pointer' 
-                           : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                           : 'bg-slate-700 hover:bg-slate-600 text-slate-200 cursor-pointer'
                      }`}
                   >
                      <Save size={14} />
-                     {draftBook ? 'Sauvegarder' : 'Enregistré'}
+                     {hasUnsavedChanges ? 'Sauvegarder' : 'Sauvegarder'}
                   </button>
                </div>
 

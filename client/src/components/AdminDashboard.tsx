@@ -51,30 +51,59 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
 
   // SETTINGS STATE
-  const [settings, setSettings] = useState({
-    general: {
-        storeName: 'NuageBook',
-        supportEmail: 'contact@nuagebook.com',
-        currency: 'EUR',
-        language: 'fr'
-    },
-    payment: {
-        stripeEnabled: true,
-        stripeKey: 'pk_test_sample_key_12345',
-        paypalEnabled: false
-    },
-    shipping: {
-        freeShippingThreshold: 50,
-        standardRate: 4.90,
-        expressRate: 9.90
-    },
-    notifications: {
-        orderConfirmation: true,
-        shippingUpdate: true
+  const [settings, setSettings] = useState(() => {
+    try {
+        const saved = localStorage.getItem('admin_settings');
+        return saved ? JSON.parse(saved) : {
+            general: {
+                storeName: 'NuageBook',
+                supportEmail: 'contact@nuagebook.com',
+                currency: 'EUR',
+                language: 'fr'
+            },
+            payment: {
+                stripeEnabled: true,
+                stripeKey: 'pk_test_sample_key_12345',
+                paypalEnabled: false
+            },
+            shipping: {
+                freeShippingThreshold: 50,
+                standardRate: 4.90,
+                expressRate: 9.90
+            },
+            notifications: {
+                orderConfirmation: true,
+                shippingUpdate: true
+            }
+        };
+    } catch (e) {
+        return {
+            general: {
+                storeName: 'NuageBook',
+                supportEmail: 'contact@nuagebook.com',
+                currency: 'EUR',
+                language: 'fr'
+            },
+            payment: {
+                stripeEnabled: true,
+                stripeKey: 'pk_test_sample_key_12345',
+                paypalEnabled: false
+            },
+            shipping: {
+                freeShippingThreshold: 50,
+                standardRate: 4.90,
+                expressRate: 9.90
+            },
+            notifications: {
+                orderConfirmation: true,
+                shippingUpdate: true
+            }
+        };
     }
   });
 
   const handleSaveSettings = (section: string) => {
+      localStorage.setItem('admin_settings', JSON.stringify(settings));
       toast.success(`Réglages "${section}" sauvegardés avec succès`);
   };
 

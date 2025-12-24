@@ -2829,7 +2829,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            <select 
                               value={selectedVariant}
                               onChange={(e) => setSelectedVariant(e.target.value)}
-                              className="h-7 text-xs border border-gray-200 rounded px-2 font-medium bg-white focus:ring-brand-coral focus:border-brand-coral min-w-[100px]"
+                              className="h-7 text-xs border border-gray-200 rounded px-2 font-medium bg-white focus:ring-brand-coral focus:border-brand-coral w-48 max-w-[200px]"
+                              title={selectedVariant}
                            >
                               {currentCombinations.map(c => (
                                  <option key={c} value={c}>{c}</option>

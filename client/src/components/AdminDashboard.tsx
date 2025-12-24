@@ -3191,8 +3191,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                           if (viewMode === 'spread' && isCoverPage) {
                                               // Special Cover Spread: Back Cover (Left) + Front Cover (Right)
-                                              const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
-                                              const frontCover = selectedBook.contentConfig.pages[0];
+                                              const pages = selectedBook.contentConfig.pages || [];
+                                              const backCover = pages[pages.length - 1];
+                                              const frontCover = pages[0];
                                               // Only show if they are different (avoid duplicate if only 1 page total)
                                               if (backCover?.id === frontCover?.id) {
                                                   pagesToShow = [frontCover].filter(Boolean);
@@ -3201,16 +3202,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               }
                                           } else if (viewMode === 'spread') {
                                              // Interior Spreads Logic: Group by pairs (1-2, 3-4, etc.)
-                                             // Index 1 (Page 1) & Index 2 (Page 2) -> Pair starting at 1
-                                             // Index 3 (Page 3) & Index 4 (Page 4) -> Pair starting at 3
                                              
-                                             const startIdx = pageIndex % 2 !== 0 ? pageIndex : pageIndex - 1;
+                                             // Ensure index is valid for interior pages (must be > 0)
+                                             const validPageIndex = Math.max(1, pageIndex);
                                              
-                                             const leftPage = selectedBook.contentConfig.pages[startIdx];
-                                             const rightPage = selectedBook.contentConfig.pages[startIdx + 1];
+                                             const startIdx = validPageIndex % 2 !== 0 ? validPageIndex : validPageIndex - 1;
+                                             
+                                             const pages = selectedBook.contentConfig.pages || [];
+                                             const leftPage = pages[startIdx];
+                                             const rightPage = pages[startIdx + 1];
                                              
                                              // Ensure we don't include the Back Cover in an interior spread
-                                             const isRightBackCover = (startIdx + 1) === (selectedBook.contentConfig.pages.length - 1);
+                                             const isRightBackCover = (startIdx + 1) === (pages.length - 1);
                                              
                                              pagesToShow = [leftPage];
                                              if (rightPage && !isRightBackCover) {
@@ -3224,8 +3227,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                           return pagesToShow.map((page: any, idx) => {
                                              // Determine margin config for this specific page
-                                             const pIdx = selectedBook.contentConfig.pages.findIndex(p => p.id === page.id);
-                                             const isThisPageCover = pIdx === 0 || pIdx === selectedBook.contentConfig.pages.length - 1;
+                                             const pages = selectedBook.contentConfig.pages || [];
+                                             const pIdx = pages.findIndex(p => p.id === page.id);
+                                             const isThisPageCover = pIdx === 0 || pIdx === pages.length - 1;
                                              
                                              const config = isThisPageCover 
                                                 ? selectedBook.features?.printConfig?.cover 
@@ -3261,7 +3265,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
                                                    {/* Find image for current variant & page */}
                                                    {(() => {
-                                                      const bgImage = selectedBook.contentConfig.images.find(
+                                                      const bgImage = (selectedBook.contentConfig.images || []).find(
                                                          img => img.pageIndex === page.pageNumber && 
                                                                (img.combinationKey === selectedVariant || img.combinationKey === 'default') // Fallback logic
                                                       );
@@ -3314,7 +3318,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 }
 
                                                 {/* 3. TEXT LAYERS */}
-                                                {selectedBook.contentConfig.texts
+                                                {(selectedBook.contentConfig.texts || [])
                                                    .filter(t => t.position.pageIndex === page.pageNumber)
                                                    .map(text => (
                                                       <div 
@@ -3756,17 +3760,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               <p className="text-lg font-medium">Sélectionnez une page à gauche pour l'éditer</p>
                            </div>
                         )}
+                           </div>
+                        </div>
                      </div>
-
-                  </div>
-
+                     </div>
+                  )}
+                  </main>
                </div>
-            )}
-
-         </main>
       </div>
-    </div>
-  );
+   );
 };
 
 export default AdminDashboard;

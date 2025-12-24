@@ -3054,11 +3054,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      
                      {/* --- LEFT SIDEBAR: PAGES LIST --- */}
                      <div className="w-64 bg-white border-r border-gray-200 flex flex-col z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
-                        <div className="h-14 px-4 border-b border-gray-100 flex items-center justify-between shrink-0">
-                           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Structure</h3>
-                           <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 font-bold">{selectedBook.contentConfig.pages.length} pages</span>
+                        <div className="h-14 px-5 border-b border-gray-100 flex items-center justify-between shrink-0 bg-slate-50/30">
+                           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Structure</h3>
+                           <span className="text-[10px] bg-white border border-gray-200 px-1.5 py-0.5 rounded text-slate-500 font-bold">{selectedBook.contentConfig.pages.length}</span>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                        <div className="flex-1 overflow-y-auto p-3 space-y-1">
                            {/* 1. COUVERTURE (Combined Front & Back) */}
                            {(() => {
                               const pages = selectedBook.contentConfig?.pages || [];
@@ -3074,13 +3074,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        setSelectedPageId(frontCover.id);
                                        setViewMode('spread'); // Force spread view for full cover
                                     }}
-                                    className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 group ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-transparent hover:bg-slate-50'}`}
+                                    className={`relative px-3 py-2.5 rounded-lg border cursor-pointer transition-all flex items-center gap-3 group ${isCoverSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm z-10' : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
                                  >
-                                    <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors ${isCoverSelected ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm'}`}>
+                                    {isCoverSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-l-lg"></div>}
+                                    
+                                    <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors shadow-sm border ${isCoverSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-slate-300'}`}>
                                        C
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                       <div className={`font-bold text-sm truncate transition-colors ${isCoverSelected ? 'text-brand-coral' : 'text-slate-700'}`}>
+                                       <div className={`font-bold text-sm truncate transition-colors ${isCoverSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
                                           Couverture
                                        </div>
                                        <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
@@ -3090,9 +3092,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            })()}
 
                            {/* 2. INTERIOR PAGES (Skip first and last) */}
-                           <div className="py-2 px-1">
-                               <div className="h-px bg-gray-100 mb-2"></div>
-                               <div className="text-[10px] font-bold text-gray-400 uppercase px-2">Pages Intérieures</div>
+                           <div className="py-4 px-2">
+                               <div className="flex items-center gap-3">
+                                   <div className="h-px bg-gray-200 flex-1"></div>
+                                   <div className="text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap">Pages Intérieures</div>
+                                   <div className="h-px bg-gray-200 flex-1"></div>
+                               </div>
                            </div>
                            
                            {selectedBook.contentConfig.pages.slice(1, -1).map((page, index) => (
@@ -3103,13 +3108,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     // Force single view mode for interior pages as requested
                                     setViewMode('single'); 
                                  }}
-                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 group ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-transparent hover:bg-slate-50'}`}
+                                 className={`relative px-3 py-2.5 rounded-lg border cursor-pointer transition-all flex items-center gap-3 group ${selectedPageId === page.id ? 'bg-indigo-50 border-indigo-200 shadow-sm z-10' : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
                               >
-                                 <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors ${selectedPageId === page.id ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm'}`}>
+                                 {selectedPageId === page.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-l-lg"></div>}
+                                 
+                                 <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors shadow-sm border ${selectedPageId === page.id ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-slate-300'}`}>
                                     {index + 1}
                                  </div>
                                  <div className="flex-1 min-w-0">
-                                    <div className={`font-bold text-sm truncate transition-colors ${selectedPageId === page.id ? 'text-brand-coral' : 'text-slate-700'}`}>
+                                    <div className={`font-bold text-sm truncate transition-colors ${selectedPageId === page.id ? 'text-indigo-700' : 'text-slate-700'}`}>
                                        Page {index + 1}
                                     </div>
                                     <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>

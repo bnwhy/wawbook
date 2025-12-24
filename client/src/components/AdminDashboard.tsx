@@ -3004,8 +3004,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      <div className="w-64 overflow-y-auto bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2 shrink-0">
                         {/* 1. COUVERTURE (Combined Front & Back) */}
                         {(() => {
-                           const frontCover = selectedBook.contentConfig.pages[0];
-                           const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
+                           const pages = selectedBook.contentConfig?.pages || [];
+                           if (pages.length < 2) return null;
+
+                           const frontCover = pages[0];
+                           const backCover = pages[pages.length - 1];
                            const isCoverSelected = selectedPageId === frontCover.id || selectedPageId === backCover.id;
 
                            return (

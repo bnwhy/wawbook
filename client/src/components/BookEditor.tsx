@@ -108,17 +108,17 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                     Paramètres d'impression
                 </button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] bg-white text-slate-900 border-slate-200">
                 <DialogHeader>
-                    <DialogTitle>Configuration Impression</DialogTitle>
+                    <DialogTitle className="text-slate-900">Configuration Impression</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
                     {/* Cover Settings */}
                     <div className="space-y-4">
-                        <h4 className="font-bold text-sm text-slate-900 border-b pb-2">Couverture</h4>
+                        <h4 className="font-bold text-sm text-slate-900 border-b border-gray-200 pb-2">Couverture</h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase">Bleed (mm)</label>
+                                <label className="text-xs font-bold text-slate-700 uppercase">Bleed (mm)</label>
                                 <input 
                                     type="number" 
                                     value={selectedBook.features?.printConfig?.cover?.bleedMm || 3}
@@ -132,11 +132,11 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                                             } as any
                                         }
                                     })}
-                                    className="w-full text-sm border-gray-300 rounded mt-1"
+                                    className="w-full text-sm border-gray-300 rounded mt-1 bg-white text-slate-900 focus:ring-brand-coral focus:border-brand-coral"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase">Marge Sécu (mm)</label>
+                                <label className="text-xs font-bold text-slate-700 uppercase">Marge Sécu (mm)</label>
                                 <input 
                                     type="number" 
                                     value={selectedBook.features?.printConfig?.cover?.safeMarginMm || 10}
@@ -150,7 +150,7 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                                             } as any
                                         }
                                     })}
-                                    className="w-full text-sm border-gray-300 rounded mt-1"
+                                    className="w-full text-sm border-gray-300 rounded mt-1 bg-white text-slate-900 focus:ring-brand-coral focus:border-brand-coral"
                                 />
                             </div>
                         </div>
@@ -158,10 +158,10 @@ export const BookEditor: React.FC<BookEditorProps> = ({
 
                     {/* Interior Settings */}
                     <div className="space-y-4">
-                        <h4 className="font-bold text-sm text-slate-900 border-b pb-2">Intérieur</h4>
+                        <h4 className="font-bold text-sm text-slate-900 border-b border-gray-200 pb-2">Intérieur</h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase">Bleed (mm)</label>
+                                <label className="text-xs font-bold text-slate-700 uppercase">Bleed (mm)</label>
                                 <input 
                                     type="number" 
                                     value={selectedBook.features?.printConfig?.interior?.bleedMm || 3}
@@ -175,11 +175,11 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                                             } as any
                                         }
                                     })}
-                                    className="w-full text-sm border-gray-300 rounded mt-1"
+                                    className="w-full text-sm border-gray-300 rounded mt-1 bg-white text-slate-900 focus:ring-brand-coral focus:border-brand-coral"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase">Marge Sécu (mm)</label>
+                                <label className="text-xs font-bold text-slate-700 uppercase">Marge Sécu (mm)</label>
                                 <input 
                                     type="number" 
                                     value={selectedBook.features?.printConfig?.interior?.safeMarginMm || 10}
@@ -193,12 +193,12 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                                             } as any
                                         }
                                     })}
-                                    className="w-full text-sm border-gray-300 rounded mt-1"
+                                    className="w-full text-sm border-gray-300 rounded mt-1 bg-white text-slate-900 focus:ring-brand-coral focus:border-brand-coral"
                                 />
                             </div>
                         </div>
                         <div>
-                             <label className="text-xs font-bold text-slate-500 uppercase">Type de papier</label>
+                             <label className="text-xs font-bold text-slate-700 uppercase">Type de papier</label>
                              <select 
                                 value={selectedBook.features?.printConfig?.interior?.paperType || '80g_white'}
                                 onChange={(e) => handleSaveBook({
@@ -211,7 +211,7 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                                         } as any
                                     }
                                 })}
-                                className="w-full text-sm border-gray-300 rounded mt-1"
+                                className="w-full text-sm border-gray-300 rounded mt-1 bg-white text-slate-900 focus:ring-brand-coral focus:border-brand-coral"
                              >
                                 <option value="80g_white">80g Blanc Standard</option>
                                 <option value="80g_cream">80g Crème</option>

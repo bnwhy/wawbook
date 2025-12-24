@@ -196,7 +196,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         // Create a readable label from option labels
         const labels = combo.map((o: any) => o.label).join(' / ');
         // If label is too long, truncate it
-        const finalLabel = labels.length > 50 ? labels.substring(0, 50) + '...' : labels;
+        const finalLabel = labels.length > 40 ? labels.substring(0, 40) + '...' : labels;
         return { key: ids.join('_'), label: finalLabel };
     });
 
@@ -2833,12 +2833,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                      <div className="flex items-center gap-4">
                         {/* Variant Selector - Global for ease of preview */}
-                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border border-gray-200 pr-3">
-                           <div className="px-2 py-1 bg-white rounded shadow-sm text-[10px] font-bold text-slate-500 uppercase border border-gray-100">Variante</div>
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border border-gray-200 pr-3 max-w-[300px]">
+                           <div className="px-2 py-1 bg-white rounded shadow-sm text-[10px] font-bold text-slate-500 uppercase border border-gray-100 shrink-0">Variante</div>
                            <select 
                               value={selectedVariant}
                               onChange={(e) => setSelectedVariant(e.target.value)}
-                              className="bg-transparent text-sm font-semibold text-slate-700 border-none p-0 focus:ring-0 cursor-pointer min-w-[80px] outline-none"
+                              className="bg-transparent text-sm font-semibold text-slate-700 border-none p-0 focus:ring-0 cursor-pointer min-w-[80px] max-w-full truncate outline-none"
                            >
                               {currentCombinations.map((c: any) => <option key={c.key} value={c.key}>{c.label}</option>)}
                            </select>

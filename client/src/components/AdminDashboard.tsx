@@ -2978,11 +2978,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      <div className="flex gap-2">
                         <button 
                            onClick={() => {
-                              const pages = selectedBook.contentConfig.pages;
+                              const pages = selectedBook.contentConfig.pages || [];
+                              
+                              // Safety check: if pages are missing or too few, don't break
+                              if (pages.length < 2) {
+                                  console.error("Not enough pages to insert interior page");
+                                  return;
+                              }
+
                               const backCover = pages[pages.length - 1];
                               const frontCover = pages[0];
+                              
                               // Insert new page before the last page (Back Cover)
-                              const interiorPagesCount = pages.length - 2; // Total - Front - Back
+                              const interiorPagesCount = Math.max(0, pages.length - 2); // Total - Front - Back
                               const newPageNum = interiorPagesCount + 1;
                               
                               const newPage: PageDefinition = { 
@@ -2997,7 +3005,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  ...pages.slice(1, -1),
                                  newPage,
                                  backCover
-                              ];
+                              ].filter(Boolean); // Filter out any undefineds just in case
 
                               handleSaveBook({
                                  ...selectedBook, 
@@ -3160,15 +3168,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
                                               const frontCover = selectedBook.contentConfig.pages[0];
                                               // Only show if they are different (avoid duplicate if only 1 page total)
-                                              if (backCover.id === frontCover.id) {
-                                                  pagesToShow = [frontCover];
+                                              if (backCover?.id === frontCover?.id) {
+                                                  pagesToShow = [frontCover].filter(Boolean);
                                               } else {
-                                                  pagesToShow = [backCover, frontCover];
+                                                  pagesToShow = [backCover, frontCover].filter(Boolean);
                                               }
                                           } else if (viewMode === 'spread') {
                                              pagesToShow = [currentPage, selectedBook.contentConfig.pages[pageIndex + 1]].filter(Boolean);
                                           } else {
-                                             pagesToShow = [currentPage];
+                                             pagesToShow = [currentPage].filter(Boolean);
                                           }
 
                                           return pagesToShow.map((page: any, idx) => {

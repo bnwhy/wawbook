@@ -3749,7 +3749,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </div>
 
                               </div>
-                           </div>
+                           </>
                         ) : (
                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
                               <Layers size={64} className="mb-4 opacity-50" />

@@ -269,28 +269,37 @@ export const BookEditor: React.FC<BookEditorProps> = ({
              
              <div className="flex-1 p-2 space-y-2">
                 {pages.map((page, index) => {
-                    const isCover = index === 0 || index === pages.length - 1;
+                    const isFrontCover = index === 0;
+                    const isBackCover = index === pages.length - 1;
+                    
+                    // Don't show back cover as separate item
+                    if (isBackCover) return null;
+
                     return (
                    <div 
                       key={page.id} 
                       onClick={() => {
                          setSelectedPageId(page.id);
-                         setViewMode('single'); 
+                         if (isFrontCover) {
+                             setViewMode('spread');
+                         } else {
+                             setViewMode('single'); 
+                         }
                       }}
                       className={`group relative p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
                    >
                       <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${selectedPageId === page.id ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500'}`}>
-                         {index + 1}
+                         {isFrontCover ? 'C' : index}
                       </div>
                       <div className="flex-1 min-w-0">
                          <div className={`font-bold text-sm truncate ${selectedPageId === page.id ? 'text-brand-coral' : 'text-slate-700'}`}>
-                            {index === 0 ? 'Couverture Avant' : index === pages.length - 1 ? 'Couverture Arrière' : `Page ${index + 1}`}
+                            {isFrontCover ? 'Couverture (À plat)' : `Page ${index}`}
                          </div>
                          <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
                       </div>
                       
                       {/* Delete Page Button */}
-                      {!isCover && (
+                      {!isFrontCover && !isBackCover && (
                           <button
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -324,9 +333,9 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                       <div className="font-bold text-slate-700">
                          {(() => {
                             const index = pages.findIndex(p => p.id === selectedPageId);
-                            if (index === 0) return 'Couverture Avant';
+                            if (index === 0) return 'Couverture intégrale (Dos + Face)';
                             if (index === pages.length - 1) return 'Couverture Arrière';
-                            return `Page ${index + 1}`;
+                            return `Page ${index}`;
                          })()}
                       </div>
                       

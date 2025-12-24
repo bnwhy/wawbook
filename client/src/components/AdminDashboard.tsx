@@ -2827,17 +2827,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      
                      {/* Pages List (Sidebar) */}
                      <div className="w-64 overflow-y-auto bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2 shrink-0">
-                        {selectedBook.contentConfig.pages.map((page) => (
+                        {selectedBook.contentConfig.pages.map((page, index) => (
                            <div 
                               key={page.id} 
                               onClick={() => setSelectedPageId(page.id)}
                               className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                            >
                               <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
-                                 {page.pageNumber}
+                                 {index === 0 ? 'COUV' : index === selectedBook.contentConfig.pages.length - 1 ? 'DOS' : page.pageNumber}
                               </div>
                               <div className="flex-1 min-w-0">
-                                 <div className="font-bold text-sm text-slate-800 truncate">{page.label}</div>
+                                 <div className="font-bold text-sm text-slate-800 truncate">
+                                    {index === 0 ? 'Couverture Avant' : index === selectedBook.contentConfig.pages.length - 1 ? 'Couverture Arrière' : page.label}
+                                 </div>
                                  <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
                               </div>
                               <ChevronRight size={14} className={`text-gray-300 ${selectedPageId === page.id ? 'text-brand-coral' : ''}`} />
@@ -2854,7 +2856,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0">
                                  <div className="flex items-center gap-4">
                                     <h2 className="font-bold text-slate-800">
-                                       {selectedBook.contentConfig.pages.find(p => p.id === selectedPageId)?.label}
+                                       {(() => {
+                                          const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
+                                          const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
+                                          if (!page) return '';
+                                          if (index === 0) return 'Couverture Avant';
+                                          if (index === selectedBook.contentConfig.pages.length - 1) return 'Couverture Arrière';
+                                          return page.label;
+                                       })()}
                                     </h2>
                                     <div className="h-6 w-px bg-gray-200"></div>
                                     <div className="flex bg-gray-100 rounded-lg p-1">

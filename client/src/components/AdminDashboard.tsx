@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, BookOpen, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -143,7 +143,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     // 1. Find all "character" tabs
     const charTabs = selectedBook.wizardConfig.tabs.filter(t => t.type === 'character');
     
-    if (charTabs.length === 0) return [{ key: 'default', label: 'Défaut' }];
+    if (charTabs.length === 0) return ['Défaut'];
 
     // 2. Find all "options" variants within those tabs
     const allOptionSets: { label: string, options: any[] }[] = [];
@@ -159,7 +159,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         });
     });
 
-    if (allOptionSets.length === 0) return [{ key: 'default', label: 'Défaut' }];
+    if (allOptionSets.length === 0) return ['Défaut'];
 
     // 3. Cartesian Product with LIMIT
     const cartesian = (args: any[]) => {
@@ -190,18 +190,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const optionsLists = allOptionSets.map(s => s.options);
     const combinations = cartesian(optionsLists);
 
-    // 4. Map to objects { key, label }
+    // 4. Map to strings (keys)
     const results = combinations.map(combo => {
         const ids = combo.map((o: any) => o.id).sort();
-        // Create a readable label from option labels
-        const labels = combo.map((o: any) => o.label).join(' / ');
-        // If label is too long, truncate it
-        const finalLabel = labels.length > 40 ? labels.substring(0, 40) + '...' : labels;
-        return { key: ids.join('_'), label: finalLabel };
+        return ids.join('_');
     });
 
     if (results.length >= 2000) {
-        results.push({ key: 'truncated', label: '... (Liste tronquée pour la performance)' });
+        results.push('... (Liste tronquée pour la performance)');
     }
     
     return results;
@@ -485,7 +481,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
          </header>
 
          {/* Scrollable Content */}
-         <main className={`flex-1 flex flex-col ${activeTab === 'content' ? 'overflow-hidden p-0' : 'overflow-y-auto p-8'}`}>
+         <main className="flex-1 overflow-y-auto p-8">
             
             {/* --- VIEW: HOME (DASHBOARD) --- */}
             {activeTab === 'home' && (
@@ -2771,23 +2767,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
             {activeTab === 'content' && selectedBookId && selectedBook && (
-               <div className="flex flex-col flex-1 bg-slate-50 border-t border-gray-200 overflow-hidden">
+               <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
                   
-                  {/* --- TOP BAR --- */}
-                  <div className="h-14 bg-white border-b border-gray-200 px-4 flex items-center justify-between shrink-0 z-20">
-                     <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-3 text-slate-800 font-bold text-lg">
-                           <div className="w-8 h-8 rounded bg-brand-coral/10 text-brand-coral flex items-center justify-center">
-                              <BookOpen size={18} />
-                           </div>
-                           <span>Éditeur</span>
+                  {/* Toolbar */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex justify-between items-center shrink-0">
+                     <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-slate-600 font-bold">
+                           <Layout size={18} />
+                           <span>Vue Storyboard</span>
                         </div>
                         
-                        <div className="h-8 w-px bg-gray-200"></div>
-                        
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
                            <div className="flex flex-col">
-                              <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Largeur</label>
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Largeur (mm)</label>
                               <input 
                                  type="number" 
                                  value={selectedBook.features?.dimensions?.width || 210}
@@ -2831,28 +2823,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            </div>
                         </div>
 
-                     <div className="flex items-center gap-4">
-                        {/* Variant Selector - Global for ease of preview */}
-                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border border-gray-200 pr-3 max-w-[300px]">
-                           <div className="px-2 py-1 bg-white rounded shadow-sm text-[10px] font-bold text-slate-500 uppercase border border-gray-100 shrink-0">Variante</div>
-                           <select 
-                              value={selectedVariant}
-                              onChange={(e) => setSelectedVariant(e.target.value)}
-                              className="bg-transparent text-sm font-semibold text-slate-700 border-none p-0 focus:ring-0 cursor-pointer min-w-[80px] max-w-full truncate outline-none"
-                           >
-                              {currentCombinations.map((c: any) => <option key={c.key} value={c.key}>{c.label}</option>)}
-                           </select>
-                        </div>
-
-                        <div className="h-8 w-px bg-gray-200"></div>
-
-                        {/* Print Settings Dialog */}
+                         {/* Print Settings Dialog */}
                          <Dialog>
                             <DialogTrigger asChild>
-                              <button className="flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-slate-50 border border-gray-200 text-slate-600 rounded-lg text-sm font-medium transition-colors shadow-sm" title="Paramètres d'impression">
-                                 <Printer size={16} />
-                                 <span className="hidden sm:inline">Impression</span>
-                              </button>
+                                <button className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" title="Paramètres d'impression">
+                                    <Printer size={18} />
+                                </button>
                             </DialogTrigger>
                             <DialogContent className="bg-white sm:max-w-[600px]">
                                 <DialogHeader>
@@ -2997,8 +2973,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </DialogFooter>
                             </DialogContent>
                          </Dialog>
-
-                         <button 
+                     </div>
+                     
+                     <div className="flex gap-2">
+                        <button 
                            onClick={() => {
                               const pages = selectedBook.contentConfig.pages || [];
                               let currentPages = [...pages];
@@ -3043,127 +3021,134 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  }
                               });
                            }}
-                           className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
+                           className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
                         >
-                           <Plus size={16} /> <span className="hidden sm:inline">Nouvelle Page</span>
+                           <Plus size={16} /> Nouvelle Page
                         </button>
                      </div>
                   </div>
 
-                  <div className="flex flex-1 overflow-hidden">
+                  <div className="flex gap-6 flex-1 overflow-hidden">
                      
-                     {/* --- LEFT SIDEBAR: PAGES LIST --- */}
-                     <div className="w-64 bg-white border-r border-gray-200 flex flex-col z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
-                        <div className="h-14 px-5 border-b border-gray-100 flex items-center justify-between shrink-0 bg-slate-50/30">
-                           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Structure</h3>
-                           <span className="text-[10px] bg-white border border-gray-200 px-1.5 py-0.5 rounded text-slate-500 font-bold">{selectedBook.contentConfig.pages.length}</span>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-1">
-                           {/* 1. COUVERTURE (Combined Front & Back) */}
-                           {(() => {
-                              const pages = selectedBook.contentConfig?.pages || [];
-                              if (pages.length < 2) return null;
+                     {/* Pages List (Sidebar) */}
+                     <div className="w-64 overflow-y-auto bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2 shrink-0">
+                        {/* 1. COUVERTURE (Combined Front & Back) */}
+                        {(() => {
+                           const pages = selectedBook.contentConfig?.pages || [];
+                           if (pages.length < 2) return null;
 
-                              const frontCover = pages[0];
-                              const backCover = pages[pages.length - 1];
-                              const isCoverSelected = selectedPageId === frontCover.id || selectedPageId === backCover.id;
+                           const frontCover = pages[0];
+                           const backCover = pages[pages.length - 1];
+                           const isCoverSelected = selectedPageId === frontCover.id || selectedPageId === backCover.id;
 
-                              return (
-                                 <div 
-                                    onClick={() => {
-                                       setSelectedPageId(frontCover.id);
-                                       setViewMode('spread'); // Force spread view for full cover
-                                    }}
-                                    className={`relative px-3 py-2.5 rounded-lg border-l-4 cursor-pointer transition-all flex items-center gap-3 group ${isCoverSelected ? 'bg-indigo-50 border-indigo-500 border-y border-r border-indigo-100 shadow-sm z-10' : 'bg-white border-l-transparent border-y border-r border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
-                                 >
-                                    <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors shadow-sm border ${isCoverSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-slate-300'}`}>
-                                       C
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                       <div className={`font-bold text-sm truncate transition-colors ${isCoverSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
-                                          Couverture
-                                       </div>
-                                       <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
-                                    </div>
-                                 </div>
-                              );
-                           })()}
-
-                           {/* 2. INTERIOR PAGES (Skip first and last) */}
-                           <div className="py-4 px-2">
-                               <div className="flex items-center gap-3">
-                                   <div className="h-px bg-gray-200 flex-1"></div>
-                                   <div className="text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap">Pages Intérieures</div>
-                                   <div className="h-px bg-gray-200 flex-1"></div>
-                               </div>
-                           </div>
-                           
-                           {selectedBook.contentConfig.pages.slice(1, -1).map((page, index) => (
+                           return (
                               <div 
-                                 key={page.id} 
                                  onClick={() => {
-                                    setSelectedPageId(page.id);
-                                    // Force single view mode for interior pages as requested
-                                    setViewMode('single'); 
+                                    setSelectedPageId(frontCover.id);
+                                    setViewMode('spread'); // Force spread view for full cover
                                  }}
-                                 className={`relative px-3 py-2.5 rounded-lg border-l-4 cursor-pointer transition-all flex items-center gap-3 group ${selectedPageId === page.id ? 'bg-indigo-50 border-indigo-500 border-y border-r border-indigo-100 shadow-sm z-10' : 'bg-white border-l-transparent border-y border-r border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
+                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                               >
-                                 <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors shadow-sm border ${selectedPageId === page.id ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-slate-300'}`}>
-                                    {index + 1}
+                                 <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
+                                    COUV
                                  </div>
                                  <div className="flex-1 min-w-0">
-                                    <div className={`font-bold text-sm truncate transition-colors ${selectedPageId === page.id ? 'text-indigo-700' : 'text-slate-700'}`}>
-                                       Page {index + 1}
+                                    <div className="font-bold text-sm text-slate-800 truncate">
+                                       Couverture Complète
                                     </div>
-                                    <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
+                                    <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
                                  </div>
+                                 <ChevronRight size={14} className={`text-gray-300 ${isCoverSelected ? 'text-brand-coral' : ''}`} />
                               </div>
-                           ))}
-                        </div>
+                           );
+                        })()}
+
+                        {/* 2. INTERIOR PAGES (Skip first and last) */}
+                        {selectedBook.contentConfig.pages.slice(1, -1).map((page, index) => (
+                           <div 
+                              key={page.id} 
+                              onClick={() => {
+                                 setSelectedPageId(page.id);
+                                 // Force single view mode for interior pages as requested
+                                 setViewMode('single'); 
+                              }}
+                              className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                           >
+                              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
+                                 {index + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <div className="font-bold text-sm text-slate-800 truncate">
+                                    Page {index + 1}
+                                 </div>
+                                 <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
+                              </div>
+                              <ChevronRight size={14} className={`text-gray-300 ${selectedPageId === page.id ? 'text-brand-coral' : ''}`} />
+                           </div>
+                        ))}
                      </div>
 
                      {/* Main Editor Area */}
-                     <div className="flex-1 bg-slate-200/50 flex flex-col relative overflow-hidden">
+                     <div className="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col relative">
                         {selectedPageId ? (
-                           <>
-                              {/* Canvas Context Bar (Static) */}
-                              <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 z-10">
-                                 <div className="font-bold text-slate-700">
+                           <div className="flex-1 flex flex-col h-full">
+                              
+                              {/* Editor Toolbar */}
+                              <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0">
+                                 <div className="flex items-center gap-4">
+                                    <h2 className="font-bold text-slate-800">
+                                       {(() => {
+                                          const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
+                                          const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
+                                          if (!page) return '';
+                                          if (index === 0) return 'Couverture Avant';
+                                          if (index === selectedBook.contentConfig.pages.length - 1) return 'Couverture Arrière';
+                                          return page.label;
+                                       })()}
+                                    </h2>
+                                    <div className="h-6 w-px bg-gray-200"></div>
+                                    
+                                    {/* Show View Mode Toggle ONLY for interior pages (not cover) */}
                                     {(() => {
-                                       const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
                                        const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
-                                       if (!page) return '';
-                                       if (index === 0) return 'Couverture Avant';
-                                       if (index === selectedBook.contentConfig.pages.length - 1) return 'Couverture Arrière';
-                                       return page.label;
+                                       const isCover = index === 0 || index === selectedBook.contentConfig.pages.length - 1;
+                                       
+                                       if (!isCover) {
+                                          return (
+                                             <div className="flex bg-gray-100 rounded-lg p-1">
+                                                <button 
+                                                   onClick={() => setViewMode('single')}
+                                                   className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'single' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                >
+                                                   Page unique
+                                                </button>
+                                                <button 
+                                                   onClick={() => setViewMode('spread')}
+                                                   className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'spread' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                >
+                                                   Double page
+                                                </button>
+                                             </div>
+                                          );
+                                       }
+                                       return null;
                                     })()}
                                  </div>
                                  
-                                 {/* Show View Mode Toggle ONLY for interior pages (not cover) */}
-                                 {(() => {
-                                    const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
-                                    const isCover = index === 0 || index === selectedBook.contentConfig.pages.length - 1;
-                                    
-                                    if (!isCover) {
-                                       return (
-                                          <div className="flex bg-slate-100 rounded-lg p-1 border border-gray-200/50">
-                                             <button 
-                                                onClick={() => setViewMode('single')}
-                                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${viewMode === 'single' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                                             >
-                                                Page unique
-                                             </button>
-                                             <button 
-                                                onClick={() => setViewMode('spread')}
-                                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${viewMode === 'spread' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                                             >
-                                                Double page
-                                             </button>
-                                          </div>
-                                       );
-                                    }
-                                    return null;
-                                 })()}
+                                 <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                       <span className="text-xs font-bold text-gray-400 uppercase">Aperçu Variante:</span>
+                                       <select 
+                                          value={selectedVariant}
+                                          onChange={(e) => setSelectedVariant(e.target.value)}
+                                          className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral"
+                                       >
+                                          {currentCombinations.map(c => (
+                                             <option key={c} value={c}>{c}</option>
+                                          ))}
+                                       </select>
+                                    </div>
+                                 </div>
                               </div>
 
                               {/* Canvas & Sidebar Container */}
@@ -3198,9 +3183,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                           if (viewMode === 'spread' && isCoverPage) {
                                               // Special Cover Spread: Back Cover (Left) + Front Cover (Right)
-                                              const pages = selectedBook.contentConfig.pages || [];
-                                              const backCover = pages[pages.length - 1];
-                                              const frontCover = pages[0];
+                                              const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
+                                              const frontCover = selectedBook.contentConfig.pages[0];
                                               // Only show if they are different (avoid duplicate if only 1 page total)
                                               if (backCover?.id === frontCover?.id) {
                                                   pagesToShow = [frontCover].filter(Boolean);
@@ -3209,18 +3193,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               }
                                           } else if (viewMode === 'spread') {
                                              // Interior Spreads Logic: Group by pairs (1-2, 3-4, etc.)
+                                             // Index 1 (Page 1) & Index 2 (Page 2) -> Pair starting at 1
+                                             // Index 3 (Page 3) & Index 4 (Page 4) -> Pair starting at 3
                                              
-                                             // Ensure index is valid for interior pages (must be > 0)
-                                             const validPageIndex = Math.max(1, pageIndex);
+                                             const startIdx = pageIndex % 2 !== 0 ? pageIndex : pageIndex - 1;
                                              
-                                             const startIdx = validPageIndex % 2 !== 0 ? validPageIndex : validPageIndex - 1;
-                                             
-                                             const pages = selectedBook.contentConfig.pages || [];
-                                             const leftPage = pages[startIdx];
-                                             const rightPage = pages[startIdx + 1];
+                                             const leftPage = selectedBook.contentConfig.pages[startIdx];
+                                             const rightPage = selectedBook.contentConfig.pages[startIdx + 1];
                                              
                                              // Ensure we don't include the Back Cover in an interior spread
-                                             const isRightBackCover = (startIdx + 1) === (pages.length - 1);
+                                             const isRightBackCover = (startIdx + 1) === (selectedBook.contentConfig.pages.length - 1);
                                              
                                              pagesToShow = [leftPage];
                                              if (rightPage && !isRightBackCover) {
@@ -3234,9 +3216,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                           return pagesToShow.map((page: any, idx) => {
                                              // Determine margin config for this specific page
-                                             const pages = selectedBook.contentConfig.pages || [];
-                                             const pIdx = pages.findIndex(p => p.id === page.id);
-                                             const isThisPageCover = pIdx === 0 || pIdx === pages.length - 1;
+                                             const pIdx = selectedBook.contentConfig.pages.findIndex(p => p.id === page.id);
+                                             const isThisPageCover = pIdx === 0 || pIdx === selectedBook.contentConfig.pages.length - 1;
                                              
                                              const config = isThisPageCover 
                                                 ? selectedBook.features?.printConfig?.cover 
@@ -3272,7 +3253,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
                                                    {/* Find image for current variant & page */}
                                                    {(() => {
-                                                      const bgImage = (selectedBook.contentConfig.images || []).find(
+                                                      const bgImage = selectedBook.contentConfig.images.find(
                                                          img => img.pageIndex === page.pageNumber && 
                                                                (img.combinationKey === selectedVariant || img.combinationKey === 'default') // Fallback logic
                                                       );
@@ -3325,7 +3306,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 }
 
                                                 {/* 3. TEXT LAYERS */}
-                                                {(selectedBook.contentConfig.texts || [])
+                                                {selectedBook.contentConfig.texts
                                                    .filter(t => t.position.pageIndex === page.pageNumber)
                                                    .map(text => (
                                                       <div 
@@ -3760,22 +3741,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </div>
 
                               </div>
-                           </>
+                           </div>
                         ) : (
                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
                               <Layers size={64} className="mb-4 opacity-50" />
                               <p className="text-lg font-medium">Sélectionnez une page à gauche pour l'éditer</p>
                            </div>
                         )}
-                           </div>
-                        </div>
                      </div>
-                     </div>
-                  )}
-                  </main>
+
+                  </div>
+
                </div>
+            )}
+
+         </main>
       </div>
-   );
+    </div>
+  );
 };
 
 export default AdminDashboard;

@@ -389,18 +389,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         const bookToSave = draftBook || selectedBook;
                         if (bookToSave) {
                            updateBook(bookToSave);
+                           // Force refresh draft from context after save to reset "unsaved" state cleanly
+                           // But keep it as separate object to allow new edits
+                           setDraftBook(JSON.parse(JSON.stringify(bookToSave)));
                            toast.success("Modifications enregistrées");
                         }
                      }}
                      disabled={!selectedBook}
                      className={`w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm ${
-                        hasUnsavedChanges || !draftBook
+                        hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook))
                            ? 'bg-brand-coral hover:bg-red-500 text-white cursor-pointer' 
-                           : 'bg-slate-700 hover:bg-slate-600 text-slate-200 cursor-pointer'
+                           : 'bg-slate-800 text-slate-500 hover:bg-slate-700 cursor-pointer'
                      }`}
                   >
                      <Save size={14} />
-                     {hasUnsavedChanges ? 'Sauvegarder' : 'Sauvegarder'}
+                     {hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook)) ? 'Sauvegarder' : 'Enregistré'}
                   </button>
                </div>
 

@@ -3357,6 +3357,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                  </div>
 
+                              </div>
+
                                  {/* BOTTOM PANEL: LAYERS & PROPERTIES */}
                                  <div className="h-72 w-full bg-white border-t border-gray-200 flex flex-col shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 shrink-0">
                                     {/* Tabs */}
@@ -3755,7 +3757,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                  </div>
 
-                              </div>
                            </div>
                         ) : (
                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">

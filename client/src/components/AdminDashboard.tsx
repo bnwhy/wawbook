@@ -2771,7 +2771,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
             {activeTab === 'content' && selectedBookId && selectedBook && (
-               <div className="flex flex-col h-[calc(100vh-180px)] bg-slate-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+               <div className="flex flex-col h-[calc(100vh-200px)] min-h-[500px] bg-slate-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                   
                   {/* --- TOP BAR --- */}
                   <div className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between shrink-0 z-20">
@@ -3123,11 +3123,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      </div>
 
                      {/* Main Editor Area */}
-                     <div className="flex-1 bg-slate-200/50 overflow-hidden flex flex-col relative">
+                     <div className="flex-1 bg-slate-200/50 flex flex-col relative overflow-hidden">
                         {selectedPageId ? (
                            <>
-                              {/* Canvas Context Bar (Floating) */}
-                              <div className="absolute top-0 left-0 right-0 h-14 bg-white/80 backdrop-blur border-b border-gray-200/50 flex items-center justify-between px-6 z-10">
+                              {/* Canvas Context Bar (Static) */}
+                              <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 z-10">
                                  <div className="font-bold text-slate-700">
                                     {(() => {
                                        const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);

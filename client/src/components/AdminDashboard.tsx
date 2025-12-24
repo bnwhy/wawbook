@@ -143,7 +143,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     // 1. Find all "character" tabs
     const charTabs = selectedBook.wizardConfig.tabs.filter(t => t.type === 'character');
     
-    if (charTabs.length === 0) return ['Défaut'];
+    if (charTabs.length === 0) return [{ key: 'default', label: 'Défaut' }];
 
     // 2. Find all "options" variants within those tabs
     const allOptionSets: { label: string, options: any[] }[] = [];
@@ -159,7 +159,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         });
     });
 
-    if (allOptionSets.length === 0) return ['Défaut'];
+    if (allOptionSets.length === 0) return [{ key: 'default', label: 'Défaut' }];
 
     // 3. Cartesian Product with LIMIT
     const cartesian = (args: any[]) => {
@@ -190,14 +190,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const optionsLists = allOptionSets.map(s => s.options);
     const combinations = cartesian(optionsLists);
 
-    // 4. Map to strings (keys)
+    // 4. Map to objects { key, label }
     const results = combinations.map(combo => {
         const ids = combo.map((o: any) => o.id).sort();
-        return ids.join('_');
+        // Create a readable label from option labels
+        const labels = combo.map((o: any) => o.label).join(' / ');
+        // If label is too long, truncate it
+        const finalLabel = labels.length > 50 ? labels.substring(0, 50) + '...' : labels;
+        return { key: ids.join('_'), label: finalLabel };
     });
 
     if (results.length >= 2000) {
-        results.push('... (Liste tronquée pour la performance)');
+        results.push({ key: 'truncated', label: '... (Liste tronquée pour la performance)' });
     }
     
     return results;
@@ -2836,7 +2840,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               onChange={(e) => setSelectedVariant(e.target.value)}
                               className="bg-transparent text-sm font-semibold text-slate-700 border-none p-0 focus:ring-0 cursor-pointer min-w-[80px] outline-none"
                            >
-                              {currentCombinations.map(c => <option key={c} value={c}>{c}</option>)}
+                              {currentCombinations.map((c: any) => <option key={c.key} value={c.key}>{c.label}</option>)}
                            </select>
                         </div>
 

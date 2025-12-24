@@ -2978,16 +2978,32 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      <div className="flex gap-2">
                         <button 
                            onClick={() => {
+                              const pages = selectedBook.contentConfig.pages;
+                              const backCover = pages[pages.length - 1];
+                              const frontCover = pages[0];
+                              // Insert new page before the last page (Back Cover)
+                              const interiorPagesCount = pages.length - 2; // Total - Front - Back
+                              const newPageNum = interiorPagesCount + 1;
+                              
                               const newPage: PageDefinition = { 
                                  id: Date.now().toString(), 
-                                 pageNumber: selectedBook.contentConfig.pages.length + 1, 
-                                 label: `Page ${selectedBook.contentConfig.pages.length + 1}` 
+                                 pageNumber: newPageNum, 
+                                 label: `Page ${newPageNum}` 
                               };
+                              
+                              // Construct new array: [Front, ...Interior, NewPage, Back]
+                              const newPages = [
+                                 frontCover,
+                                 ...pages.slice(1, -1),
+                                 newPage,
+                                 backCover
+                              ];
+
                               handleSaveBook({
                                  ...selectedBook, 
                                  contentConfig: {
                                     ...selectedBook.contentConfig, 
-                                    pages: [...selectedBook.contentConfig.pages, newPage]
+                                    pages: newPages
                                  }
                               });
                            }}
@@ -3045,11 +3061,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                            >
                               <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
-                                 {page.pageNumber}
+                                 {index + 1}
                               </div>
                               <div className="flex-1 min-w-0">
                                  <div className="font-bold text-sm text-slate-800 truncate">
-                                    {page.label}
+                                    Page {index + 1}
                                  </div>
                                  <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
                               </div>

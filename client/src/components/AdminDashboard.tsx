@@ -3176,9 +3176,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        ref={canvasRef}
                                        className="transition-all duration-300 flex gap-0 shadow-2xl bg-white"
                                        style={{
-                                          aspectRatio: viewMode === 'spread' ? `${aspectRatio * 2}/1` : `${aspectRatio}/1`,
-                                          width: viewMode === 'spread' ? '90%' : 'auto',
-                                          height: viewMode === 'spread' ? 'auto' : '90%',
+                                          // Force single aspect ratio if viewing cover (since we now treat cover as single page)
+                                          aspectRatio: (viewMode === 'spread' && !selectedBook.contentConfig.pages.some(p => p.id === selectedPageId && (p.pageNumber === 0 || p.pageNumber === selectedBook.contentConfig.pages.length - 1))) 
+                                             ? `${aspectRatio * 2}/1` 
+                                             : `${aspectRatio}/1`,
+                                          width: (viewMode === 'spread' && !selectedBook.contentConfig.pages.some(p => p.id === selectedPageId && (p.pageNumber === 0 || p.pageNumber === selectedBook.contentConfig.pages.length - 1))) 
+                                             ? '90%' 
+                                             : 'auto',
+                                          height: (viewMode === 'spread' && !selectedBook.contentConfig.pages.some(p => p.id === selectedPageId && (p.pageNumber === 0 || p.pageNumber === selectedBook.contentConfig.pages.length - 1))) 
+                                             ? 'auto' 
+                                             : '90%',
                                           maxWidth: '100%',
                                           maxHeight: '100%'
                                        }}
@@ -3197,15 +3204,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           let pagesToShow = [];
 
                                           if (viewMode === 'spread' && isCoverPage) {
-                                              // Special Cover Spread: Back Cover (Left) + Front Cover (Right)
-                                              const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
+                                              // Cover Spread: Treat as a single page (Front Cover Only as per user request)
                                               const frontCover = selectedBook.contentConfig.pages[0];
-                                              // Only show if they are different (avoid duplicate if only 1 page total)
-                                              if (backCover?.id === frontCover?.id) {
-                                                  pagesToShow = [frontCover].filter(Boolean);
-                                              } else {
-                                                  pagesToShow = [backCover, frontCover].filter(Boolean);
-                                              }
+                                              pagesToShow = [frontCover].filter(Boolean);
                                           } else if (viewMode === 'spread') {
                                              // Interior Spreads Logic: Group by pairs (1-2, 3-4, etc.)
                                              // Index 1 (Page 1) & Index 2 (Page 2) -> Pair starting at 1

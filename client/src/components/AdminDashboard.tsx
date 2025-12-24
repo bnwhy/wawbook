@@ -2823,6 +2823,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            </div>
                         </div>
 
+                        {/* Variant Selector */}
+                        <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
+                           <label className="text-[10px] font-bold text-gray-400 uppercase">Variante</label>
+                           <select 
+                              value={selectedVariant}
+                              onChange={(e) => setSelectedVariant(e.target.value)}
+                              className="h-7 text-xs border border-gray-200 rounded px-2 font-medium bg-white focus:ring-brand-coral focus:border-brand-coral min-w-[100px]"
+                           >
+                              {currentCombinations.map(c => (
+                                 <option key={c} value={c}>{c}</option>
+                              ))}
+                           </select>
+                        </div>
+
                          {/* Print Settings Dialog */}
                          <Dialog>
                             <DialogTrigger asChild>

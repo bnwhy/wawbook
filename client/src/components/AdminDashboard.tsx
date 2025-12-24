@@ -3107,20 +3107,32 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        })()}
                                     </h2>
                                     <div className="h-6 w-px bg-gray-200"></div>
-                                    <div className="flex bg-gray-100 rounded-lg p-1">
-                                       <button 
-                                          onClick={() => setViewMode('single')}
-                                          className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'single' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                                       >
-                                          Page unique
-                                       </button>
-                                       <button 
-                                          onClick={() => setViewMode('spread')}
-                                          className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'spread' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                                       >
-                                          Double page
-                                       </button>
-                                    </div>
+                                    
+                                    {/* Show View Mode Toggle ONLY for interior pages (not cover) */}
+                                    {(() => {
+                                       const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
+                                       const isCover = index === 0 || index === selectedBook.contentConfig.pages.length - 1;
+                                       
+                                       if (!isCover) {
+                                          return (
+                                             <div className="flex bg-gray-100 rounded-lg p-1">
+                                                <button 
+                                                   onClick={() => setViewMode('single')}
+                                                   className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'single' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                >
+                                                   Page unique
+                                                </button>
+                                                <button 
+                                                   onClick={() => setViewMode('spread')}
+                                                   className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'spread' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                >
+                                                   Double page
+                                                </button>
+                                             </div>
+                                          );
+                                       }
+                                       return null;
+                                    })()}
                                  </div>
                                  
                                  <div className="flex items-center gap-3">

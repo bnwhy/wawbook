@@ -2767,19 +2767,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
             {activeTab === 'content' && selectedBookId && selectedBook && (
-               <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
+               <div className="flex flex-col h-[calc(100vh-140px)] bg-slate-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                   
-                  {/* Toolbar */}
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex justify-between items-center shrink-0">
-                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-slate-600 font-bold">
-                           <Layout size={18} />
-                           <span>Vue Storyboard</span>
+                  {/* --- TOP BAR --- */}
+                  <div className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between shrink-0 z-20">
+                     <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-3 text-slate-800 font-bold text-lg">
+                           <div className="w-8 h-8 rounded bg-brand-coral/10 text-brand-coral flex items-center justify-center">
+                              <BookOpen size={18} />
+                           </div>
+                           <span>Éditeur</span>
                         </div>
                         
-                        <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
+                        <div className="h-8 w-px bg-gray-200"></div>
+                        
+                        <div className="flex items-center gap-3">
                            <div className="flex flex-col">
-                              <label className="text-[10px] font-bold text-gray-400 uppercase">Largeur (mm)</label>
+                              <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Largeur</label>
                               <input 
                                  type="number" 
                                  value={selectedBook.features?.dimensions?.width || 210}
@@ -2823,12 +2827,28 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            </div>
                         </div>
 
-                         {/* Print Settings Dialog */}
+                     <div className="flex items-center gap-4">
+                        {/* Variant Selector - Global for ease of preview */}
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-1 border border-gray-200 pr-3">
+                           <div className="px-2 py-1 bg-white rounded shadow-sm text-[10px] font-bold text-slate-500 uppercase border border-gray-100">Variante</div>
+                           <select 
+                              value={selectedVariant}
+                              onChange={(e) => setSelectedVariant(e.target.value)}
+                              className="bg-transparent text-sm font-semibold text-slate-700 border-none p-0 focus:ring-0 cursor-pointer min-w-[80px] outline-none"
+                           >
+                              {currentCombinations.map(c => <option key={c} value={c}>{c}</option>)}
+                           </select>
+                        </div>
+
+                        <div className="h-8 w-px bg-gray-200"></div>
+
+                        {/* Print Settings Dialog */}
                          <Dialog>
                             <DialogTrigger asChild>
-                                <button className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" title="Paramètres d'impression">
-                                    <Printer size={18} />
-                                </button>
+                              <button className="flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-slate-50 border border-gray-200 text-slate-600 rounded-lg text-sm font-medium transition-colors shadow-sm" title="Paramètres d'impression">
+                                 <Printer size={16} />
+                                 <span className="hidden sm:inline">Impression</span>
+                              </button>
                             </DialogTrigger>
                             <DialogContent className="bg-white sm:max-w-[600px]">
                                 <DialogHeader>
@@ -2973,10 +2993,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </DialogFooter>
                             </DialogContent>
                          </Dialog>
-                     </div>
-                     
-                     <div className="flex gap-2">
-                        <button 
+
+                         <button 
                            onClick={() => {
                               const pages = selectedBook.contentConfig.pages || [];
                               let currentPages = [...pages];
@@ -3021,134 +3039,124 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  }
                               });
                            }}
-                           className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+                           className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
                         >
-                           <Plus size={16} /> Nouvelle Page
+                           <Plus size={16} /> <span className="hidden sm:inline">Nouvelle Page</span>
                         </button>
                      </div>
                   </div>
 
-                  <div className="flex gap-6 flex-1 overflow-hidden">
+                  <div className="flex flex-1 overflow-hidden">
                      
-                     {/* Pages List (Sidebar) */}
-                     <div className="w-64 overflow-y-auto bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2 shrink-0">
-                        {/* 1. COUVERTURE (Combined Front & Back) */}
-                        {(() => {
-                           const pages = selectedBook.contentConfig?.pages || [];
-                           if (pages.length < 2) return null;
+                     {/* --- LEFT SIDEBAR: PAGES LIST --- */}
+                     <div className="w-64 bg-white border-r border-gray-200 flex flex-col z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Structure</h3>
+                           <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 font-bold">{selectedBook.contentConfig.pages.length} pages</span>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                           {/* 1. COUVERTURE (Combined Front & Back) */}
+                           {(() => {
+                              const pages = selectedBook.contentConfig?.pages || [];
+                              if (pages.length < 2) return null;
 
-                           const frontCover = pages[0];
-                           const backCover = pages[pages.length - 1];
-                           const isCoverSelected = selectedPageId === frontCover.id || selectedPageId === backCover.id;
+                              const frontCover = pages[0];
+                              const backCover = pages[pages.length - 1];
+                              const isCoverSelected = selectedPageId === frontCover.id || selectedPageId === backCover.id;
 
-                           return (
+                              return (
+                                 <div 
+                                    onClick={() => {
+                                       setSelectedPageId(frontCover.id);
+                                       setViewMode('spread'); // Force spread view for full cover
+                                    }}
+                                    className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+                                 >
+                                    <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${isCoverSelected ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                       C
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                       <div className={`font-bold text-sm truncate ${isCoverSelected ? 'text-brand-coral' : 'text-slate-700'}`}>
+                                          Couverture
+                                       </div>
+                                       <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
+                                    </div>
+                                 </div>
+                              );
+                           })()}
+
+                           {/* 2. INTERIOR PAGES (Skip first and last) */}
+                           <div className="pt-2 pb-1 px-1">
+                               <div className="h-px bg-gray-100 mb-2"></div>
+                               <div className="text-[10px] font-bold text-gray-400 uppercase px-2 mb-2">Pages Intérieures</div>
+                           </div>
+                           
+                           {selectedBook.contentConfig.pages.slice(1, -1).map((page, index) => (
                               <div 
+                                 key={page.id} 
                                  onClick={() => {
-                                    setSelectedPageId(frontCover.id);
-                                    setViewMode('spread'); // Force spread view for full cover
+                                    setSelectedPageId(page.id);
+                                    // Force single view mode for interior pages as requested
+                                    setViewMode('single'); 
                                  }}
-                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
                               >
-                                 <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
-                                    COUV
+                                 <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${selectedPageId === page.id ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                    {index + 1}
                                  </div>
                                  <div className="flex-1 min-w-0">
-                                    <div className="font-bold text-sm text-slate-800 truncate">
-                                       Couverture Complète
+                                    <div className={`font-bold text-sm truncate ${selectedPageId === page.id ? 'text-brand-coral' : 'text-slate-700'}`}>
+                                       Page {index + 1}
                                     </div>
-                                    <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
+                                    <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
                                  </div>
-                                 <ChevronRight size={14} className={`text-gray-300 ${isCoverSelected ? 'text-brand-coral' : ''}`} />
                               </div>
-                           );
-                        })()}
-
-                        {/* 2. INTERIOR PAGES (Skip first and last) */}
-                        {selectedBook.contentConfig.pages.slice(1, -1).map((page, index) => (
-                           <div 
-                              key={page.id} 
-                              onClick={() => {
-                                 setSelectedPageId(page.id);
-                                 // Force single view mode for interior pages as requested
-                                 setViewMode('single'); 
-                              }}
-                              className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
-                           >
-                              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
-                                 {index + 1}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                 <div className="font-bold text-sm text-slate-800 truncate">
-                                    Page {index + 1}
-                                 </div>
-                                 <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
-                              </div>
-                              <ChevronRight size={14} className={`text-gray-300 ${selectedPageId === page.id ? 'text-brand-coral' : ''}`} />
-                           </div>
-                        ))}
+                           ))}
+                        </div>
                      </div>
 
                      {/* Main Editor Area */}
-                     <div className="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col relative">
+                     <div className="flex-1 bg-slate-200/50 overflow-hidden flex flex-col relative">
                         {selectedPageId ? (
-                           <div className="flex-1 flex flex-col h-full">
-                              
-                              {/* Editor Toolbar */}
-                              <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0">
-                                 <div className="flex items-center gap-4">
-                                    <h2 className="font-bold text-slate-800">
-                                       {(() => {
-                                          const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
-                                          const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
-                                          if (!page) return '';
-                                          if (index === 0) return 'Couverture Avant';
-                                          if (index === selectedBook.contentConfig.pages.length - 1) return 'Couverture Arrière';
-                                          return page.label;
-                                       })()}
-                                    </h2>
-                                    <div className="h-6 w-px bg-gray-200"></div>
-                                    
-                                    {/* Show View Mode Toggle ONLY for interior pages (not cover) */}
+                           <>
+                              {/* Canvas Context Bar (Floating) */}
+                              <div className="absolute top-0 left-0 right-0 h-14 bg-white/80 backdrop-blur border-b border-gray-200/50 flex items-center justify-between px-6 z-10">
+                                 <div className="font-bold text-slate-700">
                                     {(() => {
+                                       const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
                                        const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
-                                       const isCover = index === 0 || index === selectedBook.contentConfig.pages.length - 1;
-                                       
-                                       if (!isCover) {
-                                          return (
-                                             <div className="flex bg-gray-100 rounded-lg p-1">
-                                                <button 
-                                                   onClick={() => setViewMode('single')}
-                                                   className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'single' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                   Page unique
-                                                </button>
-                                                <button 
-                                                   onClick={() => setViewMode('spread')}
-                                                   className={`px-3 py-1 text-xs font-bold rounded ${viewMode === 'spread' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                                                >
-                                                   Double page
-                                                </button>
-                                             </div>
-                                          );
-                                       }
-                                       return null;
+                                       if (!page) return '';
+                                       if (index === 0) return 'Couverture Avant';
+                                       if (index === selectedBook.contentConfig.pages.length - 1) return 'Couverture Arrière';
+                                       return page.label;
                                     })()}
                                  </div>
                                  
-                                 <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2">
-                                       <span className="text-xs font-bold text-gray-400 uppercase">Aperçu Variante:</span>
-                                       <select 
-                                          value={selectedVariant}
-                                          onChange={(e) => setSelectedVariant(e.target.value)}
-                                          className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral"
-                                       >
-                                          {currentCombinations.map(c => (
-                                             <option key={c} value={c}>{c}</option>
-                                          ))}
-                                       </select>
-                                    </div>
-                                 </div>
+                                 {/* Show View Mode Toggle ONLY for interior pages (not cover) */}
+                                 {(() => {
+                                    const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
+                                    const isCover = index === 0 || index === selectedBook.contentConfig.pages.length - 1;
+                                    
+                                    if (!isCover) {
+                                       return (
+                                          <div className="flex bg-slate-100 rounded-lg p-1 border border-gray-200/50">
+                                             <button 
+                                                onClick={() => setViewMode('single')}
+                                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${viewMode === 'single' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                             >
+                                                Page unique
+                                             </button>
+                                             <button 
+                                                onClick={() => setViewMode('spread')}
+                                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${viewMode === 'spread' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                             >
+                                                Double page
+                                             </button>
+                                          </div>
+                                       );
+                                    }
+                                    return null;
+                                 })()}
                               </div>
 
                               {/* Canvas & Sidebar Container */}

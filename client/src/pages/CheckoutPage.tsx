@@ -340,7 +340,7 @@ const CheckoutPage = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button type="submit" disabled={isLoading} className="w-full bg-brand-coral text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-orange-600 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait">
+                            <button type="submit" disabled={isLoading} className="w-full bg-cloud-blue text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-deep hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait">
                                 {isLoading ? (
                                     <>Traitement en cours...</>
                                 ) : (

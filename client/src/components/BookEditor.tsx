@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { BookOpen, Layers, Settings, Type, Image, Trash2, Plus, ArrowUp, ArrowDown, Move, Image as ImageIcon } from 'lucide-react';
+import { BookOpen, Layers, Settings, Type, Image, Trash2, Plus, ArrowUp, ArrowDown, Move, Image as ImageIcon, Printer } from 'lucide-react';
 import { BookProduct, TextElement, ImageElement } from '../types/admin';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from './ui/dialog';
 
 interface BookEditorProps {
   selectedBook: BookProduct;
@@ -38,6 +39,7 @@ export const BookEditor: React.FC<BookEditorProps> = ({
   setDragStartElementPos
 }) => {
   const [selectedVariant, setSelectedVariant] = useState<string>('default');
+  const [showPrintConfig, setShowPrintConfig] = useState(false);
 
   const bookDimensions = selectedBook.features?.dimensions || { width: 210, height: 210 };
   const aspectRatio = bookDimensions.width / bookDimensions.height;
@@ -98,6 +100,137 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                 </div>
              </div>
           </div>
+
+          <Dialog open={showPrintConfig} onOpenChange={setShowPrintConfig}>
+            <DialogTrigger asChild>
+                <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50">
+                    <Printer size={16} />
+                    Paramètres d'impression
+                </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                    <DialogTitle>Configuration Impression</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                    {/* Cover Settings */}
+                    <div className="space-y-4">
+                        <h4 className="font-bold text-sm text-slate-900 border-b pb-2">Couverture</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase">Bleed (mm)</label>
+                                <input 
+                                    type="number" 
+                                    value={selectedBook.features?.printConfig?.cover?.bleedMm || 3}
+                                    onChange={(e) => handleSaveBook({
+                                        ...selectedBook,
+                                        features: {
+                                            ...selectedBook.features,
+                                            printConfig: {
+                                                ...selectedBook.features?.printConfig,
+                                                cover: { ...selectedBook.features?.printConfig?.cover, bleedMm: parseFloat(e.target.value) }
+                                            } as any
+                                        }
+                                    })}
+                                    className="w-full text-sm border-gray-300 rounded mt-1"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase">Marge Sécu (mm)</label>
+                                <input 
+                                    type="number" 
+                                    value={selectedBook.features?.printConfig?.cover?.safeMarginMm || 10}
+                                    onChange={(e) => handleSaveBook({
+                                        ...selectedBook,
+                                        features: {
+                                            ...selectedBook.features,
+                                            printConfig: {
+                                                ...selectedBook.features?.printConfig,
+                                                cover: { ...selectedBook.features?.printConfig?.cover, safeMarginMm: parseFloat(e.target.value) }
+                                            } as any
+                                        }
+                                    })}
+                                    className="w-full text-sm border-gray-300 rounded mt-1"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Interior Settings */}
+                    <div className="space-y-4">
+                        <h4 className="font-bold text-sm text-slate-900 border-b pb-2">Intérieur</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase">Bleed (mm)</label>
+                                <input 
+                                    type="number" 
+                                    value={selectedBook.features?.printConfig?.interior?.bleedMm || 3}
+                                    onChange={(e) => handleSaveBook({
+                                        ...selectedBook,
+                                        features: {
+                                            ...selectedBook.features,
+                                            printConfig: {
+                                                ...selectedBook.features?.printConfig,
+                                                interior: { ...selectedBook.features?.printConfig?.interior, bleedMm: parseFloat(e.target.value) }
+                                            } as any
+                                        }
+                                    })}
+                                    className="w-full text-sm border-gray-300 rounded mt-1"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase">Marge Sécu (mm)</label>
+                                <input 
+                                    type="number" 
+                                    value={selectedBook.features?.printConfig?.interior?.safeMarginMm || 10}
+                                    onChange={(e) => handleSaveBook({
+                                        ...selectedBook,
+                                        features: {
+                                            ...selectedBook.features,
+                                            printConfig: {
+                                                ...selectedBook.features?.printConfig,
+                                                interior: { ...selectedBook.features?.printConfig?.interior, safeMarginMm: parseFloat(e.target.value) }
+                                            } as any
+                                        }
+                                    })}
+                                    className="w-full text-sm border-gray-300 rounded mt-1"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                             <label className="text-xs font-bold text-slate-500 uppercase">Type de papier</label>
+                             <select 
+                                value={selectedBook.features?.printConfig?.interior?.paperType || '80g_white'}
+                                onChange={(e) => handleSaveBook({
+                                    ...selectedBook,
+                                    features: {
+                                        ...selectedBook.features,
+                                        printConfig: {
+                                            ...selectedBook.features?.printConfig,
+                                            interior: { ...selectedBook.features?.printConfig?.interior, paperType: e.target.value }
+                                        } as any
+                                    }
+                                })}
+                                className="w-full text-sm border-gray-300 rounded mt-1"
+                             >
+                                <option value="80g_white">80g Blanc Standard</option>
+                                <option value="80g_cream">80g Crème</option>
+                                <option value="100g_white">100g Blanc Premium</option>
+                                <option value="coated_standard">Couché Standard</option>
+                                <option value="coated_premium">Couché Premium</option>
+                             </select>
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800">
+                            Fermer
+                        </button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+          </Dialog>
        </div>
 
        {/* --- MAIN EDITOR AREA --- */}
@@ -135,14 +268,16 @@ export const BookEditor: React.FC<BookEditorProps> = ({
              </div>
              
              <div className="flex-1 p-2 space-y-2">
-                {pages.map((page, index) => (
+                {pages.map((page, index) => {
+                    const isCover = index === 0 || index === pages.length - 1;
+                    return (
                    <div 
                       key={page.id} 
                       onClick={() => {
                          setSelectedPageId(page.id);
                          setViewMode('single'); 
                       }}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+                      className={`group relative p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
                    >
                       <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${selectedPageId === page.id ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500'}`}>
                          {index + 1}
@@ -153,8 +288,30 @@ export const BookEditor: React.FC<BookEditorProps> = ({
                          </div>
                          <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
                       </div>
+                      
+                      {/* Delete Page Button */}
+                      {!isCover && (
+                          <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const newPages = pages.filter(p => p.id !== page.id).map((p, i) => ({...p, pageNumber: i})); // Re-index
+                                handleSaveBook({
+                                    ...selectedBook,
+                                    contentConfig: {
+                                        ...selectedBook.contentConfig,
+                                        pages: newPages
+                                    }
+                                });
+                                if (selectedPageId === page.id) setSelectedPageId(null);
+                            }}
+                            className="absolute right-2 opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-500 hover:bg-white rounded shadow-sm transition-all"
+                            title="Supprimer la page"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                      )}
                    </div>
-                ))}
+                )})}
              </div>
           </div>
 

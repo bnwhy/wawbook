@@ -3039,8 +3039,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               key={page.id} 
                               onClick={() => {
                                  setSelectedPageId(page.id);
-                                 // Optional: Reset to single view if desired, or keep user preference
-                                 // setViewMode('single'); 
+                                 // Force single view mode for interior pages as requested
+                                 setViewMode('single'); 
                               }}
                               className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                            >

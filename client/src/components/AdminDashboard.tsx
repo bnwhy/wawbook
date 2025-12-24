@@ -1052,10 +1052,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           </div>
                                           <div>
                                              <div className="font-bold text-slate-800 text-sm">Fichier Couverture (PDF)</div>
-                                             <div className="text-xs text-slate-500">Généré le {new Date().toLocaleDateString()} • 2.4 MB</div>
+                                             <div className="text-xs text-slate-500">
+                                                {order.status === 'pending' ? 'En attente de génération' : `Généré le ${new Date(order.createdAt).toLocaleDateString()} • 2.4 MB`}
+                                             </div>
                                           </div>
                                        </div>
-                                       <button className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="Télécharger la couverture">
+                                       <button 
+                                          onClick={() => {
+                                             toast.promise(
+                                                new Promise((resolve) => setTimeout(resolve, 2000)),
+                                                {
+                                                   loading: 'Génération du PDF de couverture...',
+                                                   success: `Couverture pour la commande #${order.id} téléchargée !`,
+                                                   error: 'Erreur lors du téléchargement'
+                                                }
+                                             );
+                                          }}
+                                          className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors" 
+                                          title="Télécharger la couverture"
+                                       >
                                           <Download size={18} />
                                        </button>
                                     </div>
@@ -1068,10 +1083,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           </div>
                                           <div>
                                              <div className="font-bold text-slate-800 text-sm">Fichier Intérieur (PDF)</div>
-                                             <div className="text-xs text-slate-500">Généré le {new Date().toLocaleDateString()} • 22.1 MB</div>
+                                             <div className="text-xs text-slate-500">
+                                                {order.status === 'pending' ? 'En attente de génération' : `Généré le ${new Date(order.createdAt).toLocaleDateString()} • 22.1 MB`}
+                                             </div>
                                           </div>
                                        </div>
-                                       <button className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors" title="Télécharger l'intérieur">
+                                       <button 
+                                          onClick={() => {
+                                             toast.promise(
+                                                new Promise((resolve) => setTimeout(resolve, 3000)),
+                                                {
+                                                   loading: 'Génération du PDF intérieur (Haute Qualité)...',
+                                                   success: `Intérieur pour la commande #${order.id} téléchargé !`,
+                                                   error: 'Erreur lors du téléchargement'
+                                                }
+                                             );
+                                          }}
+                                          className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors" 
+                                          title="Télécharger l'intérieur"
+                                       >
                                           <Download size={18} />
                                        </button>
                                     </div>

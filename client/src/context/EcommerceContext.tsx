@@ -177,8 +177,25 @@ interface EcommerceContextType {
 const EcommerceContext = createContext<EcommerceContextType | undefined>(undefined);
 
 export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [customers, setCustomers] = useState<Customer[]>(MOCK_CUSTOMERS);
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  // Load initial state from localStorage if available, otherwise use MOCK data
+  const [customers, setCustomers] = useState<Customer[]>(() => {
+    const saved = localStorage.getItem('ecommerce_customers');
+    return saved ? JSON.parse(saved) : MOCK_CUSTOMERS;
+  });
+  
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const saved = localStorage.getItem('ecommerce_orders');
+    return saved ? JSON.parse(saved) : MOCK_ORDERS;
+  });
+
+  // Persist to localStorage whenever state changes
+  React.useEffect(() => {
+    localStorage.setItem('ecommerce_customers', JSON.stringify(customers));
+  }, [customers]);
+
+  React.useEffect(() => {
+    localStorage.setItem('ecommerce_orders', JSON.stringify(orders));
+  }, [orders]);
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
     setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));

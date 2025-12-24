@@ -3054,11 +3054,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      
                      {/* --- LEFT SIDEBAR: PAGES LIST --- */}
                      <div className="w-64 bg-white border-r border-gray-200 flex flex-col z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
-                        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                        <div className="h-14 px-4 border-b border-gray-100 flex items-center justify-between shrink-0">
                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Structure</h3>
                            <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 font-bold">{selectedBook.contentConfig.pages.length} pages</span>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                        <div className="flex-1 overflow-y-auto p-3 space-y-2">
                            {/* 1. COUVERTURE (Combined Front & Back) */}
                            {(() => {
                               const pages = selectedBook.contentConfig?.pages || [];
@@ -3074,13 +3074,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        setSelectedPageId(frontCover.id);
                                        setViewMode('spread'); // Force spread view for full cover
                                     }}
-                                    className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+                                    className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 group ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-transparent hover:bg-slate-50'}`}
                                  >
-                                    <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${isCoverSelected ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                    <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors ${isCoverSelected ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm'}`}>
                                        C
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                       <div className={`font-bold text-sm truncate ${isCoverSelected ? 'text-brand-coral' : 'text-slate-700'}`}>
+                                       <div className={`font-bold text-sm truncate transition-colors ${isCoverSelected ? 'text-brand-coral' : 'text-slate-700'}`}>
                                           Couverture
                                        </div>
                                        <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
@@ -3090,9 +3090,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            })()}
 
                            {/* 2. INTERIOR PAGES (Skip first and last) */}
-                           <div className="pt-2 pb-1 px-1">
+                           <div className="py-2 px-1">
                                <div className="h-px bg-gray-100 mb-2"></div>
-                               <div className="text-[10px] font-bold text-gray-400 uppercase px-2 mb-2">Pages Intérieures</div>
+                               <div className="text-[10px] font-bold text-gray-400 uppercase px-2">Pages Intérieures</div>
                            </div>
                            
                            {selectedBook.contentConfig.pages.slice(1, -1).map((page, index) => (
@@ -3103,13 +3103,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     // Force single view mode for interior pages as requested
                                     setViewMode('single'); 
                                  }}
-                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 group ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral shadow-sm' : 'border-transparent hover:bg-slate-50'}`}
                               >
-                                 <div className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${selectedPageId === page.id ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                 <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors ${selectedPageId === page.id ? 'bg-brand-coral text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white group-hover:shadow-sm'}`}>
                                     {index + 1}
                                  </div>
                                  <div className="flex-1 min-w-0">
-                                    <div className={`font-bold text-sm truncate ${selectedPageId === page.id ? 'text-brand-coral' : 'text-slate-700'}`}>
+                                    <div className={`font-bold text-sm truncate transition-colors ${selectedPageId === page.id ? 'text-brand-coral' : 'text-slate-700'}`}>
                                        Page {index + 1}
                                     </div>
                                     <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>

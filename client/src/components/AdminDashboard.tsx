@@ -3002,18 +3002,51 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      
                      {/* Pages List (Sidebar) */}
                      <div className="w-64 overflow-y-auto bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2 shrink-0">
-                        {selectedBook.contentConfig.pages.map((page, index) => (
+                        {/* 1. COUVERTURE (Combined Front & Back) */}
+                        {(() => {
+                           const frontCover = selectedBook.contentConfig.pages[0];
+                           const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
+                           const isCoverSelected = selectedPageId === frontCover.id || selectedPageId === backCover.id;
+
+                           return (
+                              <div 
+                                 onClick={() => {
+                                    setSelectedPageId(frontCover.id);
+                                    setViewMode('spread'); // Force spread view for full cover
+                                 }}
+                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                              >
+                                 <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
+                                    COUV
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                    <div className="font-bold text-sm text-slate-800 truncate">
+                                       Couverture Complète
+                                    </div>
+                                    <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
+                                 </div>
+                                 <ChevronRight size={14} className={`text-gray-300 ${isCoverSelected ? 'text-brand-coral' : ''}`} />
+                              </div>
+                           );
+                        })()}
+
+                        {/* 2. INTERIOR PAGES (Skip first and last) */}
+                        {selectedBook.contentConfig.pages.slice(1, -1).map((page, index) => (
                            <div 
                               key={page.id} 
-                              onClick={() => setSelectedPageId(page.id)}
+                              onClick={() => {
+                                 setSelectedPageId(page.id);
+                                 // Optional: Reset to single view if desired, or keep user preference
+                                 // setViewMode('single'); 
+                              }}
                               className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                            >
                               <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
-                                 {index === 0 ? 'COUV' : index === selectedBook.contentConfig.pages.length - 1 ? 'DOS' : page.pageNumber}
+                                 {page.pageNumber}
                               </div>
                               <div className="flex-1 min-w-0">
                                  <div className="font-bold text-sm text-slate-800 truncate">
-                                    {index === 0 ? 'Couverture Avant' : index === selectedBook.contentConfig.pages.length - 1 ? 'Couverture Arrière' : page.label}
+                                    {page.label}
                                  </div>
                                  <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
                               </div>

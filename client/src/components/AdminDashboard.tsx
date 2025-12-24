@@ -2860,9 +2860,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         {/* Cover Dimensions */}
                                         <div className="space-y-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
                                             <h5 className="text-xs font-bold text-slate-600 uppercase mb-2">Dimensions (à plat)</h5>
+                                            
+                                            <div className="space-y-1 mb-3">
+                                                <label className="text-[10px] text-gray-500">Hauteur (mm)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={selectedBook.features?.dimensions?.height || 210}
+                                                    onChange={(e) => {
+                                                        handleSaveBook({
+                                                            ...selectedBook,
+                                                            features: {
+                                                                ...selectedBook.features,
+                                                                dimensions: {
+                                                                    ...selectedBook.features?.dimensions,
+                                                                    height: parseInt(e.target.value) || 210
+                                                                }
+                                                            } as any
+                                                        });
+                                                    }}
+                                                    className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
+                                                />
+                                            </div>
+
                                             <div className="flex items-end gap-2">
                                                 <div className="flex-1 space-y-1">
-                                                    <label className="text-[10px] text-gray-500">Arrière (mm)</label>
+                                                    <label className="text-[10px] text-gray-500">Arrière (Larg.)</label>
                                                     <input 
                                                         type="number" 
                                                         value={selectedBook.features?.dimensions?.width || 210}
@@ -2882,7 +2904,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     />
                                                 </div>
                                                 <div className="flex-1 space-y-1">
-                                                    <label className="text-[10px] text-gray-500">Tranche (mm)</label>
+                                                    <label className="text-[10px] text-gray-500">Tranche (Larg.)</label>
                                                     <input 
                                                         type="number" 
                                                         step="0.1"
@@ -2903,7 +2925,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     />
                                                 </div>
                                                 <div className="flex-1 space-y-1">
-                                                    <label className="text-[10px] text-gray-500">Avant (mm)</label>
+                                                    <label className="text-[10px] text-gray-500">Avant (Larg.)</label>
                                                     <input 
                                                         type="number" 
                                                         value={selectedBook.features?.dimensions?.width || 210}

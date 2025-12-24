@@ -2099,6 +2099,164 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            />
                         </div>
                      </div>
+
+                     {/* PRINT CONFIGURATION */}
+                     <div className="mt-8 border-t border-gray-100 pt-6">
+                        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <Printer size={18} className="text-indigo-600" />
+                            Configuration Impression
+                        </h3>
+                        
+                        <div className="bg-slate-50 rounded-xl p-6 border border-gray-200 space-y-6">
+                            {/* Binding */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Reliure</label>
+                                <div className="flex gap-2">
+                                    {['hardcover', 'softcover', 'saddle_stitch', 'coil'].map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => handleSaveBook({
+                                                ...selectedBook,
+                                                features: {
+                                                    ...selectedBook.features,
+                                                    printConfig: {
+                                                        ...selectedBook.features?.printConfig,
+                                                        bindingType: type as any,
+                                                        cover: selectedBook.features?.printConfig?.cover || { bleedMm: 3, safeMarginMm: 10 },
+                                                        interior: selectedBook.features?.printConfig?.interior || { bleedMm: 3, safeMarginMm: 10, paperType: '100g_white' }
+                                                    }
+                                                }
+                                            })}
+                                            className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${selectedBook.features?.printConfig?.bindingType === type ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-gray-300 hover:border-indigo-400'}`}
+                                        >
+                                            {type === 'hardcover' ? 'Relié (Cartonné)' : type === 'softcover' ? 'Broché (Souple)' : type === 'saddle_stitch' ? 'Piqûre à cheval' : 'Spirale'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* COVER CONFIG */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                                        <div className="w-2 h-2 rounded-full bg-brand-coral"></div>
+                                        <h4 className="font-bold text-slate-700">Couverture</h4>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs text-slate-500 mb-1">Fond Perdu (Bleed) mm</label>
+                                            <input 
+                                                type="number" 
+                                                step="0.1"
+                                                value={selectedBook.features?.printConfig?.cover?.bleedMm || 3.175}
+                                                onChange={(e) => handleSaveBook({
+                                                    ...selectedBook,
+                                                    features: {
+                                                        ...selectedBook.features,
+                                                        printConfig: {
+                                                            ...selectedBook.features?.printConfig,
+                                                            cover: { ...selectedBook.features?.printConfig?.cover, bleedMm: parseFloat(e.target.value) }
+                                                        } as any
+                                                    }
+                                                })}
+                                                className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-500 mb-1">Marge Sécurité mm</label>
+                                            <input 
+                                                type="number" 
+                                                step="0.1"
+                                                value={selectedBook.features?.printConfig?.cover?.safeMarginMm || 10}
+                                                onChange={(e) => handleSaveBook({
+                                                    ...selectedBook,
+                                                    features: {
+                                                        ...selectedBook.features,
+                                                        printConfig: {
+                                                            ...selectedBook.features?.printConfig,
+                                                            cover: { ...selectedBook.features?.printConfig?.cover, safeMarginMm: parseFloat(e.target.value) }
+                                                        } as any
+                                                    }
+                                                })}
+                                                className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* INTERIOR CONFIG */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                                        <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                                        <h4 className="font-bold text-slate-700">Intérieur</h4>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs text-slate-500 mb-1">Fond Perdu (Bleed) mm</label>
+                                            <input 
+                                                type="number" 
+                                                step="0.1"
+                                                value={selectedBook.features?.printConfig?.interior?.bleedMm || 3.175}
+                                                onChange={(e) => handleSaveBook({
+                                                    ...selectedBook,
+                                                    features: {
+                                                        ...selectedBook.features,
+                                                        printConfig: {
+                                                            ...selectedBook.features?.printConfig,
+                                                            interior: { ...selectedBook.features?.printConfig?.interior, bleedMm: parseFloat(e.target.value) }
+                                                        } as any
+                                                    }
+                                                })}
+                                                className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-500 mb-1">Marge Sécurité mm</label>
+                                            <input 
+                                                type="number" 
+                                                step="0.1"
+                                                value={selectedBook.features?.printConfig?.interior?.safeMarginMm || 10}
+                                                onChange={(e) => handleSaveBook({
+                                                    ...selectedBook,
+                                                    features: {
+                                                        ...selectedBook.features,
+                                                        printConfig: {
+                                                            ...selectedBook.features?.printConfig,
+                                                            interior: { ...selectedBook.features?.printConfig?.interior, safeMarginMm: parseFloat(e.target.value) }
+                                                        } as any
+                                                    }
+                                                })}
+                                                className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="block text-xs text-slate-500 mb-1">Papier</label>
+                                            <select 
+                                                value={selectedBook.features?.printConfig?.interior?.paperType || '100g_white'}
+                                                onChange={(e) => handleSaveBook({
+                                                    ...selectedBook,
+                                                    features: {
+                                                        ...selectedBook.features,
+                                                        printConfig: {
+                                                            ...selectedBook.features?.printConfig,
+                                                            interior: { ...selectedBook.features?.printConfig?.interior, paperType: e.target.value }
+                                                        } as any
+                                                    }
+                                                })}
+                                                className="w-full text-sm border-gray-300 rounded px-2 py-1.5 bg-white"
+                                            >
+                                                <option value="80g_white">80g Blanc Standard</option>
+                                                <option value="80g_cream">80g Crème</option>
+                                                <option value="100g_white">100g Blanc Premium</option>
+                                                <option value="coated_standard">Couché Standard</option>
+                                                <option value="coated_premium">Couché Premium</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
                   </div>
                   
                   {/* Menu Association */}
@@ -2680,114 +2838,131 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-6 py-6">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-slate-900">Fonds perdus (mm)</label>
-                                            <input 
-                                                type="number" 
-                                                step="0.1"
-                                                value={selectedBook.features?.printConfig?.bleedMm || 3.175}
-                                                onChange={(e) => {
-                                                    const val = parseFloat(e.target.value);
-                                                    handleSaveBook({
-                                                        ...selectedBook,
-                                                        features: {
-                                                            ...selectedBook.features,
-                                                            printConfig: {
-                                                                bleedMm: val,
-                                                                safeMarginMm: selectedBook.features?.printConfig?.safeMarginMm || 12.7,
-                                                                paperType: selectedBook.features?.printConfig?.paperType || '80g_white',
-                                                                bindingType: selectedBook.features?.printConfig?.bindingType || 'hardcover'
+                                    {/* Cover Settings */}
+                                    <div className="space-y-4 border-b border-gray-100 pb-4">
+                                        <h4 className="font-bold text-sm text-slate-700">Couverture</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-semibold text-slate-900">Fonds perdus (mm)</label>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.1"
+                                                    value={selectedBook.features?.printConfig?.cover?.bleedMm || 3.175}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        handleSaveBook({
+                                                            ...selectedBook,
+                                                            features: {
+                                                                ...selectedBook.features,
+                                                                printConfig: {
+                                                                    ...selectedBook.features?.printConfig,
+                                                                    cover: { ...selectedBook.features?.printConfig?.cover, bleedMm: val }
+                                                                } as any
                                                             }
-                                                        }
-                                                    });
-                                                }}
-                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-coral/50 focus:border-brand-coral"
-                                            />
-                                            <p className="text-[10px] text-gray-500">Standard Lulu: 3.175mm (0.125")</p>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-slate-900">Marge de sécurité (mm)</label>
-                                            <input 
-                                                type="number" 
-                                                step="0.1"
-                                                value={selectedBook.features?.printConfig?.safeMarginMm || 12.7}
-                                                onChange={(e) => {
-                                                    const val = parseFloat(e.target.value);
-                                                    handleSaveBook({
-                                                        ...selectedBook,
-                                                        features: {
-                                                            ...selectedBook.features,
-                                                            printConfig: {
-                                                                bleedMm: selectedBook.features?.printConfig?.bleedMm || 3.175,
-                                                                safeMarginMm: val,
-                                                                paperType: selectedBook.features?.printConfig?.paperType || '80g_white',
-                                                                bindingType: selectedBook.features?.printConfig?.bindingType || 'hardcover'
+                                                        });
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-semibold text-slate-900">Marge de sécurité (mm)</label>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.1"
+                                                    value={selectedBook.features?.printConfig?.cover?.safeMarginMm || 10}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        handleSaveBook({
+                                                            ...selectedBook,
+                                                            features: {
+                                                                ...selectedBook.features,
+                                                                printConfig: {
+                                                                    ...selectedBook.features?.printConfig,
+                                                                    cover: { ...selectedBook.features?.printConfig?.cover, safeMarginMm: val }
+                                                                } as any
                                                             }
-                                                        }
-                                                    });
-                                                }}
-                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-coral/50 focus:border-brand-coral"
-                                            />
-                                            <p className="text-[10px] text-gray-500">Standard: 12.7mm (0.5")</p>
+                                                        });
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-slate-900">Type de papier</label>
-                                            <select 
-                                                value={selectedBook.features?.printConfig?.paperType || '80g_white'}
-                                                onChange={(e) => {
-                                                    const val = e.target.value as any;
-                                                    handleSaveBook({
-                                                        ...selectedBook,
-                                                        features: {
-                                                            ...selectedBook.features,
-                                                            printConfig: {
-                                                                bleedMm: selectedBook.features?.printConfig?.bleedMm || 3.175,
-                                                                safeMarginMm: selectedBook.features?.printConfig?.safeMarginMm || 12.7,
-                                                                paperType: val,
-                                                                bindingType: selectedBook.features?.printConfig?.bindingType || 'hardcover'
+                                    {/* Interior Settings */}
+                                    <div className="space-y-4">
+                                        <h4 className="font-bold text-sm text-slate-700">Intérieur</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-semibold text-slate-900">Fonds perdus (mm)</label>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.1"
+                                                    value={selectedBook.features?.printConfig?.interior?.bleedMm || 3.175}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        handleSaveBook({
+                                                            ...selectedBook,
+                                                            features: {
+                                                                ...selectedBook.features,
+                                                                printConfig: {
+                                                                    ...selectedBook.features?.printConfig,
+                                                                    interior: { ...selectedBook.features?.printConfig?.interior, bleedMm: val }
+                                                                } as any
                                                             }
-                                                        }
-                                                    });
-                                                }}
-                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-coral/50 focus:border-brand-coral"
-                                            >
-                                                <option value="80g_white">80g Blanc</option>
-                                                <option value="80g_cream">80g Crème</option>
-                                                <option value="100g_white">100g Blanc Premium</option>
-                                                <option value="coated_standard">Couché Standard</option>
-                                                <option value="coated_premium">Couché Premium</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-slate-900">Reliure</label>
-                                            <select 
-                                                value={selectedBook.features?.printConfig?.bindingType || 'hardcover'}
-                                                onChange={(e) => {
-                                                    const val = e.target.value as any;
-                                                    handleSaveBook({
-                                                        ...selectedBook,
-                                                        features: {
-                                                            ...selectedBook.features,
-                                                            printConfig: {
-                                                                bleedMm: selectedBook.features?.printConfig?.bleedMm || 3.175,
-                                                                safeMarginMm: selectedBook.features?.printConfig?.safeMarginMm || 12.7,
-                                                                paperType: selectedBook.features?.printConfig?.paperType || '80g_white',
-                                                                bindingType: val
+                                                        });
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-semibold text-slate-900">Marge de sécurité (mm)</label>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.1"
+                                                    value={selectedBook.features?.printConfig?.interior?.safeMarginMm || 10}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value);
+                                                        handleSaveBook({
+                                                            ...selectedBook,
+                                                            features: {
+                                                                ...selectedBook.features,
+                                                                printConfig: {
+                                                                    ...selectedBook.features?.printConfig,
+                                                                    interior: { ...selectedBook.features?.printConfig?.interior, safeMarginMm: val }
+                                                                } as any
                                                             }
-                                                        }
-                                                    });
-                                                }}
-                                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-coral/50 focus:border-brand-coral"
-                                            >
-                                                <option value="hardcover">Cartonnée (Hardcover)</option>
-                                                <option value="softcover">Souple (Softcover)</option>
-                                                <option value="saddle_stitch">Agrafée (Saddle Stitch)</option>
-                                                <option value="coil">Spirale (Coil)</option>
-                                            </select>
+                                                        });
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
+                                                />
+                                            </div>
+                                            <div className="space-y-2 col-span-2">
+                                                <label className="text-xs font-semibold text-slate-900">Type de papier</label>
+                                                <select 
+                                                    value={selectedBook.features?.printConfig?.interior?.paperType || '80g_white'}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value as any;
+                                                        handleSaveBook({
+                                                            ...selectedBook,
+                                                            features: {
+                                                                ...selectedBook.features,
+                                                                printConfig: {
+                                                                    ...selectedBook.features?.printConfig,
+                                                                    interior: { ...selectedBook.features?.printConfig?.interior, paperType: val }
+                                                                } as any
+                                                            }
+                                                        });
+                                                    }}
+                                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
+                                                >
+                                                    <option value="80g_white">80g Blanc</option>
+                                                    <option value="80g_cream">80g Crème</option>
+                                                    <option value="100g_white">100g Blanc Premium</option>
+                                                    <option value="coated_standard">Couché Standard</option>
+                                                    <option value="coated_premium">Couché Premium</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2921,24 +3096,61 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           const currentPage = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
                                           if (!currentPage) return null;
                                           
-                                          const pagesToShow = viewMode === 'spread' 
-                                             ? [currentPage, selectedBook.contentConfig.pages.find(p => p.pageNumber === currentPage.pageNumber + 1)].filter(Boolean)
-                                             : [currentPage];
+                                          const pageIndex = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
+                                          const isFrontCover = pageIndex === 0;
+                                          const isBackCover = pageIndex === selectedBook.contentConfig.pages.length - 1;
+                                          const isCoverPage = isFrontCover || isBackCover;
 
-                                          return pagesToShow.map((page: any, idx) => (
+                                          let pagesToShow = [];
+
+                                          if (viewMode === 'spread' && isCoverPage) {
+                                              // Special Cover Spread: Back Cover (Left) + Front Cover (Right)
+                                              const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
+                                              const frontCover = selectedBook.contentConfig.pages[0];
+                                              // Only show if they are different (avoid duplicate if only 1 page total)
+                                              if (backCover.id === frontCover.id) {
+                                                  pagesToShow = [frontCover];
+                                              } else {
+                                                  pagesToShow = [backCover, frontCover];
+                                              }
+                                          } else if (viewMode === 'spread') {
+                                             pagesToShow = [currentPage, selectedBook.contentConfig.pages[pageIndex + 1]].filter(Boolean);
+                                          } else {
+                                             pagesToShow = [currentPage];
+                                          }
+
+                                          return pagesToShow.map((page: any, idx) => {
+                                             // Determine margin config for this specific page
+                                             const pIdx = selectedBook.contentConfig.pages.findIndex(p => p.id === page.id);
+                                             const isThisPageCover = pIdx === 0 || pIdx === selectedBook.contentConfig.pages.length - 1;
+                                             
+                                             const config = isThisPageCover 
+                                                ? selectedBook.features?.printConfig?.cover 
+                                                : selectedBook.features?.printConfig?.interior;
+                                                
+                                             const safeMarginMm = config?.safeMarginMm || selectedBook.features?.printConfig?.safeMarginMm;
+
+                                             return (
                                              <div key={page.id} className="flex-1 bg-white relative overflow-hidden group border-r border-gray-100 last:border-0">
                                                 
+                                                {/* Label Overlay for Cover Spread */}
+                                                {viewMode === 'spread' && isCoverPage && (
+                                                   <div className="absolute top-2 left-2 z-50 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none">
+                                                      {pIdx === 0 ? 'Face Avant' : 'Dos / Arrière'}
+                                                   </div>
+                                                )}
+
                                                 {/* Safe Margin Guide */}
-                                                {selectedBook.features?.printConfig?.safeMarginMm && (
+                                                {safeMarginMm && (
                                                    <div 
                                                       className="absolute border border-green-400 border-dashed pointer-events-none z-50 opacity-50"
                                                       style={{
-                                                         left: `${(selectedBook.features.printConfig.safeMarginMm / bookDimensions.width) * 100}%`,
-                                                         top: `${(selectedBook.features.printConfig.safeMarginMm / bookDimensions.height) * 100}%`,
-                                                         right: `${(selectedBook.features.printConfig.safeMarginMm / bookDimensions.width) * 100}%`,
-                                                         bottom: `${(selectedBook.features.printConfig.safeMarginMm / bookDimensions.height) * 100}%`,
+                                                         left: `${(safeMarginMm / bookDimensions.width) * 100}%`,
+                                                         top: `${(safeMarginMm / bookDimensions.height) * 100}%`,
+                                                         right: `${(safeMarginMm / bookDimensions.width) * 100}%`,
+                                                         bottom: `${(safeMarginMm / bookDimensions.height) * 100}%`,
                                                       }}
-                                                      title={`Marge de sécurité: ${selectedBook.features.printConfig.safeMarginMm}mm`}
+                                                      title={`Marge de sécurité: ${safeMarginMm}mm`}
                                                    />
                                                 )}
 

@@ -20,10 +20,17 @@ export interface BookProduct {
     formats?: string[];
     dimensions?: { width: number; height: number }; // Dimensions in mm (width x height)
     printConfig?: {
-        bleedMm: number;
-        safeMarginMm: number;
-        paperType: '80g_white' | '80g_cream' | '100g_white' | 'coated_standard' | 'coated_premium';
         bindingType: 'hardcover' | 'softcover' | 'saddle_stitch' | 'coil';
+        cover: {
+            bleedMm: number;
+            safeMarginMm: number;
+            paperType?: 'coated_standard' | 'coated_premium';
+        };
+        interior: {
+            bleedMm: number;
+            safeMarginMm: number;
+            paperType: '80g_white' | '80g_cream' | '100g_white' | 'coated_standard' | 'coated_premium';
+        };
     };
   };
   wizardConfig: WizardConfiguration;

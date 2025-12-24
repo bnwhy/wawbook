@@ -3128,7 +3128,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 ? selectedBook.features?.printConfig?.cover 
                                                 : selectedBook.features?.printConfig?.interior;
                                                 
-                                             const safeMarginMm = config?.safeMarginMm || selectedBook.features?.printConfig?.safeMarginMm;
+                                             const safeMarginMm = config?.safeMarginMm;
 
                                              return (
                                              <div key={page.id} className="flex-1 bg-white relative overflow-hidden group border-r border-gray-100 last:border-0">
@@ -3241,8 +3241,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    ))
                                                 }
                                              </div>
-                                          ));
-                                       })()}
+                                          );
+                                       });
+                                    })()}
                                     </div>
                                  </div>
 

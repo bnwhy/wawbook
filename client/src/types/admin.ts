@@ -97,6 +97,7 @@ export interface TextElement {
     x?: number; // Percentage 0-100
     y?: number; // Percentage 0-100
     width?: number; // Percentage
+    height?: number; // Percentage
     rotation?: number;
   };
 }

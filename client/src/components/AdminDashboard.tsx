@@ -2856,6 +2856,75 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     {/* Cover Settings */}
                                     <div className="space-y-4 border-b border-gray-100 pb-4">
                                         <h4 className="font-bold text-sm text-slate-700">Couverture</h4>
+                                        
+                                        {/* Cover Dimensions */}
+                                        <div className="space-y-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                            <h5 className="text-xs font-bold text-slate-600 uppercase mb-2">Dimensions (à plat)</h5>
+                                            <div className="flex items-end gap-2">
+                                                <div className="flex-1 space-y-1">
+                                                    <label className="text-[10px] text-gray-500">Arrière (mm)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={selectedBook.features?.dimensions?.width || 210}
+                                                        onChange={(e) => {
+                                                            handleSaveBook({
+                                                                ...selectedBook,
+                                                                features: {
+                                                                    ...selectedBook.features,
+                                                                    dimensions: {
+                                                                        ...selectedBook.features?.dimensions,
+                                                                        width: parseInt(e.target.value) || 210
+                                                                    }
+                                                                } as any
+                                                            });
+                                                        }}
+                                                        className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 space-y-1">
+                                                    <label className="text-[10px] text-gray-500">Tranche (mm)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        step="0.1"
+                                                        value={selectedBook.features?.printConfig?.cover?.spineWidthMm || 5}
+                                                        onChange={(e) => {
+                                                            handleSaveBook({
+                                                                ...selectedBook,
+                                                                features: {
+                                                                    ...selectedBook.features,
+                                                                    printConfig: {
+                                                                        ...selectedBook.features?.printConfig,
+                                                                        cover: { ...selectedBook.features?.printConfig?.cover, spineWidthMm: parseFloat(e.target.value) || 0 }
+                                                                    } as any
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 space-y-1">
+                                                    <label className="text-[10px] text-gray-500">Avant (mm)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={selectedBook.features?.dimensions?.width || 210}
+                                                        onChange={(e) => {
+                                                            handleSaveBook({
+                                                                ...selectedBook,
+                                                                features: {
+                                                                    ...selectedBook.features,
+                                                                    dimensions: {
+                                                                        ...selectedBook.features?.dimensions,
+                                                                        width: parseInt(e.target.value) || 210
+                                                                    }
+                                                                } as any
+                                                            });
+                                                        }}
+                                                        className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-semibold text-slate-900">Fonds perdus (mm)</label>
@@ -2907,6 +2976,54 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     {/* Interior Settings */}
                                     <div className="space-y-4">
                                         <h4 className="font-bold text-sm text-slate-700">Intérieur</h4>
+                                        
+                                        {/* Interior Dimensions */}
+                                        <div className="space-y-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                            <h5 className="text-xs font-bold text-slate-600 uppercase mb-2">Dimensions Page</h5>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500">Largeur (mm)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={selectedBook.features?.dimensions?.width || 210}
+                                                        onChange={(e) => {
+                                                            handleSaveBook({
+                                                                ...selectedBook,
+                                                                features: {
+                                                                    ...selectedBook.features,
+                                                                    dimensions: {
+                                                                        ...selectedBook.features?.dimensions,
+                                                                        width: parseInt(e.target.value) || 210
+                                                                    }
+                                                                } as any
+                                                            });
+                                                        }}
+                                                        className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500">Hauteur (mm)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={selectedBook.features?.dimensions?.height || 210}
+                                                        onChange={(e) => {
+                                                            handleSaveBook({
+                                                                ...selectedBook,
+                                                                features: {
+                                                                    ...selectedBook.features,
+                                                                    dimensions: {
+                                                                        ...selectedBook.features?.dimensions,
+                                                                        height: parseInt(e.target.value) || 210
+                                                                    }
+                                                                } as any
+                                                            });
+                                                        }}
+                                                        className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-semibold text-slate-900">Fonds perdus (mm)</label>

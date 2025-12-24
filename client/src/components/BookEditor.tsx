@@ -103,7 +103,7 @@ export const BookEditor: React.FC<BookEditorProps> = ({
 
           <Dialog open={showPrintConfig} onOpenChange={setShowPrintConfig}>
             <DialogTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50">
+                <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-bold shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 transition-all">
                     <Printer size={16} />
                     Paramètres d'impression
                 </button>

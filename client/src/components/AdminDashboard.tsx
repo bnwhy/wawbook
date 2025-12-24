@@ -2771,7 +2771,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
             {activeTab === 'content' && selectedBookId && selectedBook && (
-               <div className="flex flex-col h-[calc(100vh-160px)] bg-slate-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+               <div className="flex flex-col h-[calc(100vh-180px)] bg-slate-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                   
                   {/* --- TOP BAR --- */}
                   <div className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between shrink-0 z-20">
@@ -3074,10 +3074,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        setSelectedPageId(frontCover.id);
                                        setViewMode('spread'); // Force spread view for full cover
                                     }}
-                                    className={`relative px-3 py-2.5 rounded-lg border cursor-pointer transition-all flex items-center gap-3 group ${isCoverSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm z-10' : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
+                                    className={`relative px-3 py-2.5 rounded-lg border-l-4 cursor-pointer transition-all flex items-center gap-3 group ${isCoverSelected ? 'bg-indigo-50 border-indigo-500 border-y border-r border-indigo-100 shadow-sm z-10' : 'bg-white border-l-transparent border-y border-r border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
                                  >
-                                    {isCoverSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-l-lg"></div>}
-                                    
                                     <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors shadow-sm border ${isCoverSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-slate-300'}`}>
                                        C
                                     </div>
@@ -3108,10 +3106,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     // Force single view mode for interior pages as requested
                                     setViewMode('single'); 
                                  }}
-                                 className={`relative px-3 py-2.5 rounded-lg border cursor-pointer transition-all flex items-center gap-3 group ${selectedPageId === page.id ? 'bg-indigo-50 border-indigo-200 shadow-sm z-10' : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
+                                 className={`relative px-3 py-2.5 rounded-lg border-l-4 cursor-pointer transition-all flex items-center gap-3 group ${selectedPageId === page.id ? 'bg-indigo-50 border-indigo-500 border-y border-r border-indigo-100 shadow-sm z-10' : 'bg-white border-l-transparent border-y border-r border-transparent hover:bg-slate-50 hover:border-slate-200'}`}
                               >
-                                 {selectedPageId === page.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-l-lg"></div>}
-                                 
                                  <div className={`w-8 h-8 rounded flex shrink-0 items-center justify-center text-xs font-bold transition-colors shadow-sm border ${selectedPageId === page.id ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-slate-300'}`}>
                                     {index + 1}
                                  </div>

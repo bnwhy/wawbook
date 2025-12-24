@@ -3166,10 +3166,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </div>
                               </div>
 
-                              {/* Canvas & Sidebar Container - Main Column */}
+                              {/* Canvas & Sidebar Container */}
                               <div className="flex-1 flex flex-col overflow-hidden">
                                  
-                                 {/* CANVAS AREA - Flex 1 to take all space */}
+                                 {/* CANVAS AREA */}
                                  <div className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative">
                                     {/* Page Container */}
                                     <div 
@@ -3357,10 +3357,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                  </div>
 
-                              </div>
-
-                                 {/* BOTTOM PANEL: LAYERS & PROPERTIES */}
-                                 <div className="h-72 w-full bg-white border-t border-gray-200 flex flex-col shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20 shrink-0">
+                                 {/* RIGHT PANEL: LAYERS & PROPERTIES */}
+                                 <div className="h-72 w-full bg-white border-t border-gray-200 flex flex-col shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
                                     {/* Tabs */}
                                     <div className="flex border-b border-gray-200 bg-gray-50 h-10 shrink-0">
                                         <button 
@@ -3757,6 +3755,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                  </div>
 
+                              </div>
                            </div>
                         ) : (
                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">

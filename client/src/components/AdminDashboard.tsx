@@ -3253,7 +3253,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 {/* Safe Margin Guide */}
                                                 {safeMarginMm && (
                                                    <div 
-                                                      className="absolute border border-green-400 border-dashed pointer-events-none z-50 opacity-50"
+                                                      className="absolute border-2 border-red-400 border-dashed pointer-events-none z-50 shadow-sm"
                                                       style={{
                                                          left: `${(safeMarginMm / bookDimensions.width) * 100}%`,
                                                          top: `${(safeMarginMm / bookDimensions.height) * 100}%`,
@@ -3261,7 +3261,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          bottom: `${(safeMarginMm / bookDimensions.height) * 100}%`,
                                                       }}
                                                       title={`Marge de sécurité: ${safeMarginMm}mm`}
-                                                   />
+                                                   >
+                                                      <div className="absolute top-0 right-0 bg-red-400 text-white text-[8px] px-1 font-bold rounded-bl opacity-70">
+                                                         MARGE
+                                                      </div>
+                                                   </div>
                                                 )}
 
                                                 {/* 1. BASE LAYER (Background Variant) */}

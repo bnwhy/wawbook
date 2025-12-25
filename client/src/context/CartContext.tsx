@@ -27,21 +27,23 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('nuagebook_cart');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error('Error parsing cart data', e);
-        }
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('nuagebook_cart');
+        return saved ? JSON.parse(saved) : [];
       }
+    } catch (e) {
+      console.error('Error parsing cart data', e);
     }
     return [];
   });
 
   useEffect(() => {
-    localStorage.setItem('nuagebook_cart', JSON.stringify(items));
+    try {
+      localStorage.setItem('nuagebook_cart', JSON.stringify(items));
+    } catch (e) {
+      console.error('Error saving cart data', e);
+    }
   }, [items]);
 
   const addToCart = (newItem: Omit<CartItem, 'id'>) => {

@@ -74,7 +74,23 @@ interface MenuContextType {
 }
 
 export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [mainMenu, setMainMenu] = useState<MenuItem[]>(INITIAL_MENU);
+  const [mainMenu, setMainMenu] = useState<MenuItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('admin_menus');
+      return saved ? JSON.parse(saved) : INITIAL_MENU;
+    } catch (e) {
+      console.error('Error parsing menu data', e);
+      return INITIAL_MENU;
+    }
+  });
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('admin_menus', JSON.stringify(mainMenu));
+    } catch (e) {
+      console.error('Error saving menu data', e);
+    }
+  }, [mainMenu]);
 
   const updateMenuItem = (index: number, item: MenuItem) => {
     const newMenu = [...mainMenu];

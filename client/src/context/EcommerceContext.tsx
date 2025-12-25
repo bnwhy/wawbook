@@ -179,22 +179,40 @@ const EcommerceContext = createContext<EcommerceContextType | undefined>(undefin
 export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Load initial state from localStorage if available, otherwise use MOCK data
   const [customers, setCustomers] = useState<Customer[]>(() => {
-    const saved = localStorage.getItem('ecommerce_customers');
-    return saved ? JSON.parse(saved) : MOCK_CUSTOMERS;
+    try {
+      const saved = localStorage.getItem('ecommerce_customers');
+      return saved ? JSON.parse(saved) : MOCK_CUSTOMERS;
+    } catch (e) {
+      console.error('Error parsing customers data', e);
+      return MOCK_CUSTOMERS;
+    }
   });
   
   const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('ecommerce_orders');
-    return saved ? JSON.parse(saved) : MOCK_ORDERS;
+    try {
+      const saved = localStorage.getItem('ecommerce_orders');
+      return saved ? JSON.parse(saved) : MOCK_ORDERS;
+    } catch (e) {
+      console.error('Error parsing orders data', e);
+      return MOCK_ORDERS;
+    }
   });
 
   // Persist to localStorage whenever state changes
   React.useEffect(() => {
-    localStorage.setItem('ecommerce_customers', JSON.stringify(customers));
+    try {
+      localStorage.setItem('ecommerce_customers', JSON.stringify(customers));
+    } catch (e) {
+      console.error('Error saving customers data', e);
+    }
   }, [customers]);
 
   React.useEffect(() => {
-    localStorage.setItem('ecommerce_orders', JSON.stringify(orders));
+    try {
+      localStorage.setItem('ecommerce_orders', JSON.stringify(orders));
+    } catch (e) {
+      console.error('Error saving orders data', e);
+    }
   }, [orders]);
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {

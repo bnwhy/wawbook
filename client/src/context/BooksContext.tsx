@@ -13,18 +13,35 @@ interface BooksContextType {
 const BooksContext = createContext<BooksContextType | undefined>(undefined);
 
 export const BooksProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<BookProduct[]>(INITIAL_BOOKS);
+  const [books, setBooks] = useState<BookProduct[]>(() => {
+    try {
+      const savedBooks = localStorage.getItem('admin_books');
+      return savedBooks ? JSON.parse(savedBooks) : INITIAL_BOOKS;
+    } catch (error) {
+      console.error('Failed to load books from localStorage:', error);
+      return INITIAL_BOOKS;
+    }
+  });
+
+  // Persist to localStorage whenever books change
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('admin_books', JSON.stringify(books));
+    } catch (error) {
+      console.error('Failed to save books to localStorage:', error);
+    }
+  }, [books]);
 
   const addBook = (book: BookProduct) => {
-    setBooks([...books, book]);
+    setBooks(prev => [...prev, book]);
   };
 
   const updateBook = (updatedBook: BookProduct) => {
-    setBooks(books.map(b => b.id === updatedBook.id ? updatedBook : b));
+    setBooks(prev => prev.map(b => b.id === updatedBook.id ? updatedBook : b));
   };
 
   const deleteBook = (bookId: string) => {
-    setBooks(books.filter(b => b.id !== bookId));
+    setBooks(prev => prev.filter(b => b.id !== bookId));
   };
 
   const getBookById = (id: string) => {

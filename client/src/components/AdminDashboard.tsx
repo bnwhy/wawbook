@@ -24,11 +24,33 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [showFulfillment, setShowFulfillment] = useState(false);
 
   // Printers State
-  const [printers, setPrinters] = useState<PrinterType[]>([
-    { id: 'PRT-001', name: 'PrintHouse Pro', countryCodes: ['FR', 'BE', 'LU'], contactEmail: 'print@printhouse.com', productionDelayDays: 3 },
-    { id: 'PRT-002', name: 'SwissPrint', countryCodes: ['CH'], contactEmail: 'orders@swissprint.ch', productionDelayDays: 2 },
-    { id: 'PRT-003', name: 'Maple Press', countryCodes: ['CA'], contactEmail: 'hello@maplepress.ca', productionDelayDays: 5 }
-  ]);
+  const [printers, setPrinters] = useState<PrinterType[]>(() => {
+    try {
+        const saved = localStorage.getItem('admin_printers');
+        return saved ? JSON.parse(saved) : [
+            { id: 'PRT-001', name: 'PrintHouse Pro', countryCodes: ['FR', 'BE', 'LU'], contactEmail: 'print@printhouse.com', productionDelayDays: 3 },
+            { id: 'PRT-002', name: 'SwissPrint', countryCodes: ['CH'], contactEmail: 'orders@swissprint.ch', productionDelayDays: 2 },
+            { id: 'PRT-003', name: 'Maple Press', countryCodes: ['CA'], contactEmail: 'hello@maplepress.ca', productionDelayDays: 5 }
+        ];
+    } catch (e) {
+        console.error('Error loading printers', e);
+        return [
+            { id: 'PRT-001', name: 'PrintHouse Pro', countryCodes: ['FR', 'BE', 'LU'], contactEmail: 'print@printhouse.com', productionDelayDays: 3 },
+            { id: 'PRT-002', name: 'SwissPrint', countryCodes: ['CH'], contactEmail: 'orders@swissprint.ch', productionDelayDays: 2 },
+            { id: 'PRT-003', name: 'Maple Press', countryCodes: ['CA'], contactEmail: 'hello@maplepress.ca', productionDelayDays: 5 }
+        ];
+    }
+  });
+
+  // Persist printers
+  React.useEffect(() => {
+    try {
+        localStorage.setItem('admin_printers', JSON.stringify(printers));
+    } catch (e) {
+        console.error('Error saving printers', e);
+    }
+  }, [printers]);
+
   const [editingPrinterId, setEditingPrinterId] = useState<string | null>(null);
   
   // Content Editor State

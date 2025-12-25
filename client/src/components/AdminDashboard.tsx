@@ -2531,7 +2531,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             newTabs[idx].id = e.target.value;
                                             handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                          }}
-                                         className="bg-gray-100 text-[10px] font-mono text-slate-500 border-none rounded px-1.5 py-0.5 focus:ring-1 focus:ring-indigo-500 w-32"
+                                         onBlur={(e) => {
+                                            const val = e.target.value.trim();
+                                            if (!val) return;
+                                            const newTabs = [...selectedBook.wizardConfig.tabs];
+                                            const otherIds = newTabs.filter((_, i) => i !== idx).map(t => t.id);
+                                            
+                                            let uniqueId = val;
+                                            let counter = 2;
+                                            while (otherIds.includes(uniqueId)) {
+                                                uniqueId = `${val}_${counter}`;
+                                                counter++;
+                                            }
+                                            
+                                            if (uniqueId !== val) {
+                                                newTabs[idx].id = uniqueId;
+                                                handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                toast.info(`ID corrigé pour l'unicité: ${uniqueId}`);
+                                            }
+                                         }}
+                                         className={`bg-gray-100 text-[10px] font-mono text-slate-500 border-none rounded px-1.5 py-0.5 focus:ring-1 focus:ring-indigo-500 w-32 ${selectedBook.wizardConfig.tabs.filter((_, i) => i !== idx).some(t => t.id === tab.id) ? 'ring-2 ring-red-500 bg-red-50' : ''}`}
                                          placeholder="ID unique"
                                       />
                                    </div>
@@ -2664,7 +2683,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          newTabs[idx].variants[vIdx].id = e.target.value;
                                                          handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                       }}
-                                                      className="bg-transparent text-[9px] font-mono text-gray-400 border-none p-0 focus:ring-0 w-24 hover:bg-gray-50 rounded px-1"
+                                                      onBlur={(e) => {
+                                                         const val = e.target.value.trim();
+                                                         if (!val) return;
+                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                         const otherIds = newTabs[idx].variants.filter((_, i) => i !== vIdx).map(v => v.id);
+                                                         
+                                                         let uniqueId = val;
+                                                         let counter = 2;
+                                                         while (otherIds.includes(uniqueId)) {
+                                                             uniqueId = `${val}_${counter}`;
+                                                             counter++;
+                                                         }
+                                                         
+                                                         if (uniqueId !== val) {
+                                                             newTabs[idx].variants[vIdx].id = uniqueId;
+                                                             handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                             toast.info(`ID corrigé pour l'unicité: ${uniqueId}`);
+                                                         }
+                                                      }}
+                                                      className={`bg-transparent text-[9px] font-mono text-gray-400 border-none p-0 focus:ring-0 w-24 hover:bg-gray-50 rounded px-1 ${tab.variants.filter((_, i) => i !== vIdx).some(v => v.id === variant.id) ? 'text-red-500 font-bold bg-red-50' : ''}`}
                                                       placeholder="ID variant"
                                                    />
                                                 </div>
@@ -2834,7 +2872,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                         newTabs[idx].variants[vIdx].options[oIdx].id = e.target.value;
                                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                                      }}
-                                                                     className="bg-transparent border-none p-0 w-20 text-[10px] focus:ring-0 font-mono text-slate-600"
+                                                                     onBlur={(e) => {
+                                                                        const val = e.target.value.trim();
+                                                                        if (!val) return;
+                                                                        const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                        const otherIds = newTabs[idx].variants[vIdx].options.filter((_, i) => i !== oIdx).map(o => o.id);
+                                                                        
+                                                                        let uniqueId = val;
+                                                                        let counter = 2;
+                                                                        while (otherIds.includes(uniqueId)) {
+                                                                            uniqueId = `${val}_${counter}`;
+                                                                            counter++;
+                                                                        }
+                                                                        
+                                                                        if (uniqueId !== val) {
+                                                                            newTabs[idx].variants[vIdx].options[oIdx].id = uniqueId;
+                                                                            handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                                            toast.info(`ID corrigé pour l'unicité: ${uniqueId}`);
+                                                                        }
+                                                                     }}
+                                                                     className={`bg-transparent border-none p-0 w-20 text-[10px] focus:ring-0 font-mono text-slate-600 ${variant.options?.filter((_, i) => i !== oIdx).some(o => o.id === option.id) ? 'text-red-500 font-bold bg-red-50' : ''}`}
                                                                      placeholder="ID option"
                                                                   />
                                                                </span>

@@ -4561,6 +4561,28 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          </div>
                                                       </div>
 
+                                                      {/* Delete Layer Button */}
+                                                      <div className="pt-4 mt-4 border-t border-gray-200">
+                                                         <button
+                                                            onClick={() => {
+                                                               if (!confirm('Voulez-vous vraiment supprimer ce calque ?')) return;
+                                                               
+                                                               if (isText) {
+                                                                  const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== layer.id);
+                                                                  handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                               } else {
+                                                                  const newImgs = (selectedBook.contentConfig.imageElements || []).filter(i => i.id !== layer.id);
+                                                                  handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+                                                               }
+                                                               setActiveLayerId(null);
+                                                            }}
+                                                            className="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors"
+                                                         >
+                                                            <Trash2 size={16} />
+                                                            Supprimer ce calque
+                                                         </button>
+                                                      </div>
+
                                                    </>
                                                 );
                                              })()}

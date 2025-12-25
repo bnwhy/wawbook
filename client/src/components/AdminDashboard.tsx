@@ -3835,7 +3835,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                          {/* 2. IMAGE LAYERS */}
                                                          {(selectedBook.contentConfig.imageElements || [])
-                                                            .filter(el => el.position.pageIndex === targetPage.pageNumber && (el.combinationKey === selectedVariant || el.combinationKey === 'default' || !el.combinationKey))
+                                                            .filter(el => el.position.pageIndex === targetPage.pageNumber && el.combinationKey === selectedVariant)
                                                             .map(el => (
                                                                <div
                                                                   key={el.id}
@@ -3869,7 +3869,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                          {/* 3. TEXT LAYERS */}
                                                          {selectedBook.contentConfig.texts
-                                                            .filter(t => t.position.pageIndex === targetPage.pageNumber && (t.combinationKey === selectedVariant || t.combinationKey === 'default' || !t.combinationKey))
+                                                            .filter(t => t.position.pageIndex === targetPage.pageNumber && t.combinationKey === selectedVariant)
                                                             .map(text => (
                                                                <div 
                                                                   key={text.id}
@@ -3960,7 +3960,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    {(() => {
                                                       const bgImage = selectedBook.contentConfig.images.find(
                                                          img => img.pageIndex === page.pageNumber && 
-                                                               (img.combinationKey === selectedVariant || img.combinationKey === 'default') // Fallback logic
+                                                               img.combinationKey === selectedVariant
                                                       );
                                                       
                                                       if (bgImage?.imageUrl) {
@@ -3978,7 +3978,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                 {/* 2. IMAGE LAYERS (Stickers/Overlays) */}
                                                 {(selectedBook.contentConfig.imageElements || [])
-                                                   .filter(el => el.position.pageIndex === page.pageNumber && (el.combinationKey === selectedVariant || el.combinationKey === 'default' || !el.combinationKey))
+                                                   .filter(el => el.position.pageIndex === page.pageNumber && el.combinationKey === selectedVariant)
                                                    .map(el => (
                                                       <div
                                                          key={el.id}
@@ -4012,7 +4012,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                 {/* 3. TEXT LAYERS */}
                                                 {selectedBook.contentConfig.texts
-                                                   .filter(t => t.position.pageIndex === page.pageNumber && (t.combinationKey === selectedVariant || t.combinationKey === 'default' || !t.combinationKey))
+                                                   .filter(t => t.position.pageIndex === page.pageNumber && t.combinationKey === selectedVariant)
                                                    .map(text => (
                                                       <div 
                                                          key={text.id}
@@ -4098,7 +4098,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    label: 'Nouveau Texte',
                                                    type: 'fixed',
                                                    content: 'Texte ici...',
-                                                   combinationKey: (selectedVariant === 'default' || selectedVariant === 'Défaut') ? undefined : selectedVariant, // Bind to current variant
+                                                   combinationKey: selectedVariant, // Strictly bind to current variant
                                                    position: { pageIndex: currentPage.pageNumber, zoneId: 'body', x: 10, y: 10, width: 30 }
                                                 };
                                                 const newTexts = [...selectedBook.contentConfig.texts, newText];
@@ -4119,7 +4119,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    id: `img-${Date.now()}`,
                                                    label: 'Nouvelle Image',
                                                    type: 'static',
-                                                   combinationKey: (selectedVariant === 'default' || selectedVariant === 'Défaut') ? undefined : selectedVariant, // Bind to current variant
+                                                   combinationKey: selectedVariant, // Strictly bind to current variant
                                                    position: { pageIndex: currentPage.pageNumber, x: 20, y: 20, width: 20, height: 20 }
                                                 };
                                                 // Handle optional imageElements array
@@ -4239,22 +4239,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       <div>
                                                          <label className="text-[10px] font-bold text-gray-500 uppercase">Variante Assignée</label>
                                                          <select 
-                                                            value={layer.combinationKey || 'default'}
-                                                            onChange={(e) => {
-                                                               const val = e.target.value;
-                                                               updateLayer({combinationKey: (val === 'default' || val === 'Défaut') ? undefined : val});
-                                                            }}
+                                                            value={layer.combinationKey || selectedVariant} // Fallback to current selected if missing
+                                                            onChange={(e) => updateLayer({combinationKey: e.target.value})}
                                                             className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1 bg-white"
                                                          >
-                                                            <option value="default">Par défaut (Toutes variantes)</option>
-                                                            {currentCombinations.filter(c => c !== 'Défaut').map(c => (
+                                                            {currentCombinations.map(c => (
                                                                <option key={c} value={c}>{c}</option>
                                                             ))}
                                                          </select>
                                                          <div className="text-[9px] text-gray-400 mt-1">
-                                                            {layer.combinationKey 
-                                                               ? "Visible uniquement pour cette variante." 
-                                                               : "Visible sur toutes les variantes qui n'ont pas de contenu spécifique."}
+                                                            Visible uniquement pour cette variante.
                                                          </div>
                                                       </div>
 

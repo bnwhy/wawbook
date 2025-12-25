@@ -362,6 +362,66 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setExpandedVariantIds(newSet);
   };
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleExportContent = () => {
+    if (!selectedBook) return;
+
+    const exportData = {
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      bookId: selectedBook.id,
+      wizardConfig: selectedBook.wizardConfig,
+      contentConfig: selectedBook.contentConfig
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${slugify(selectedBook.name || 'book')}_content_export_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Configuration exportée avec succès');
+  };
+
+  const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedBook) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const importedData = JSON.parse(content);
+
+        // Basic validation
+        if (!importedData.wizardConfig || !importedData.contentConfig) {
+          toast.error('Format de fichier invalide');
+          return;
+        }
+
+        if (confirm('Attention : Cette action va remplacer la configuration actuelle des variantes et du contenu. Voulez-vous continuer ?')) {
+          handleSaveBook({
+            ...selectedBook,
+            wizardConfig: importedData.wizardConfig,
+            contentConfig: importedData.contentConfig
+          });
+          toast.success('Configuration importée avec succès');
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+        toast.error('Erreur lors de l\'import du fichier');
+      }
+      
+      // Reset input
+      if (event.target) event.target.value = '';
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       
@@ -3450,6 +3510,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </DialogFooter>
                             </DialogContent>
                          </Dialog>
+
+                        {/* Export/Import Actions */}
+                        <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
+                            <button 
+                                onClick={handleExportContent}
+                                className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                title="Exporter la configuration (JSON)"
+                            >
+                                <Download size={18} />
+                            </button>
+                            <button 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                title="Importer la configuration (JSON)"
+                            >
+                                <Upload size={18} />
+                            </button>
+                            <input 
+                                type="file" 
+                                ref={fileInputRef}
+                                onChange={handleImportContent}
+                                accept=".json"
+                                className="hidden"
+                            />
+                        </div>
                      </div>
                      
                      <div className="flex gap-2">

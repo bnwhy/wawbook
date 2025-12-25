@@ -44,16 +44,34 @@ const hexToRgb = (hex: string) => {
   } : { r: 0, g: 0, b: 0 };
 };
 
-const renderPageContent = async (doc: jsPDF, book: BookProduct, pageIndex: number, orderItem: OrderItem, widthMm: number, heightMm: number) => {
-    // 1. Background
-    // Find background image for this page
-    // We need to determine the "combination key" from the order item configuration
-    // This is a bit complex as we need to match the logic in BookPreview.tsx
-    // For now, let's default to finding ANY background for this page, or 'default'
-    // TODO: Implement proper combination key resolution based on orderItem.configuration
+// Helper to determine combination key
+const getCombinationKey = (book: BookProduct, configuration: any) => {
+    if (!book.wizardConfig?.tabs || !configuration.characters) return 'default';
     
+    const optionIds: string[] = [];
+    
+    book.wizardConfig.tabs.forEach(tab => {
+        if (tab.type === 'character' && configuration.characters[tab.id]) {
+            tab.variants.forEach(v => {
+                if (v.type === 'options') {
+                    const selectedOptId = configuration.characters[tab.id][v.id];
+                    if (selectedOptId) optionIds.push(selectedOptId);
+                }
+            });
+        }
+    });
+    
+    if (optionIds.length === 0) return 'default';
+    return optionIds.sort().join('_');
+};
+
+const renderPageContent = async (doc: jsPDF, book: BookProduct, pageIndex: number, orderItem: OrderItem, widthMm: number, heightMm: number) => {
+    const combinationKey = getCombinationKey(book, orderItem.configuration);
+
+    // 1. Background
+    // Find background image for this page with matching combination key
     const bgImage = book.contentConfig.images.find(
-        img => img.pageIndex === pageIndex && (img.combinationKey === 'default' || !img.combinationKey)
+        img => img.pageIndex === pageIndex && (img.combinationKey === combinationKey || img.combinationKey === 'default')
     );
 
     if (bgImage && bgImage.imageUrl) {
@@ -74,10 +92,28 @@ const renderPageContent = async (doc: jsPDF, book: BookProduct, pageIndex: numbe
     const images = (book.contentConfig.imageElements || []).filter(el => el.position.pageIndex === pageIndex);
     for (const el of images) {
         let url = el.url;
+        
         // Resolve variable images
         if (el.type === 'variable' && el.variableKey) {
-             // Logic to resolve variable image from avatar mappings would go here
-             // For this mockup, we might skip or use placeholder
+             const tabId = el.variableKey;
+             const tab = book.wizardConfig?.tabs.find(t => t.id === tabId);
+             
+             if (tab && orderItem.configuration.characters?.[tabId]) {
+                  const optionIds: string[] = [];
+                  tab.variants.forEach(v => {
+                     if (v.type === 'options') {
+                         const selectedOptId = orderItem.configuration.characters[tabId][v.id];
+                         if (selectedOptId) optionIds.push(selectedOptId);
+                     }
+                  });
+                  
+                  if (optionIds.length > 0) {
+                      const key = optionIds.sort().join('_');
+                      if (book.wizardConfig?.avatarMappings?.[key]) {
+                          url = book.wizardConfig.avatarMappings[key];
+                      }
+                  }
+             }
         }
 
         if (url) {
@@ -130,23 +166,15 @@ const renderPageContent = async (doc: jsPDF, book: BookProduct, pageIndex: numbe
 };
 
 export const generateCoverPDF = async (order: Order, books: BookProduct[]): Promise<Blob> => {
-  // Assuming all items in order use the same page size (A4 default)
+  // Use book dimensions if available, otherwise A4 default
+  const PAGE_WIDTH = 210;
+  const PAGE_HEIGHT = 210; // Square format default often used for children books, but let's check book dimensions
+
   const doc = new jsPDF({
     orientation: "landscape", // Spread usually needs landscape if we put both covers? Or we generate separate files/pages?
-    // Request says "Fichier Couverture (PDF)". Often covers are sent as a single spread (Back + Spine + Front)
-    // For simplicity, let's create a 2-page PDF: Back Cover (p999) then Front Cover (p0), or a single spread page.
-    // Let's do a single page spread: width * 2 + spine.
-    // Or just 2 separate pages for now to match the "Spread" view?
-    // Let's stick to: Page 1 = Back Cover, Page 2 = Front Cover. Or strictly configured.
-    // Actually, printers often want a single wide PDF. 
-    // Let's go with Page 1 = Back Cover, Page 2 = Front Cover for simplicity of implementation here.
     unit: "mm",
-    format: "a4", // Should be based on book dimensions
+    format: [PAGE_WIDTH * 2 + 10, PAGE_HEIGHT], // Double width + spine
   });
-
-  // Default A4 dimensions
-  const PAGE_WIDTH = 210;
-  const PAGE_HEIGHT = 297;
 
   for (let i = 0; i < order.items.length; i++) {
       const item = order.items[i];
@@ -154,18 +182,29 @@ export const generateCoverPDF = async (order: Order, books: BookProduct[]): Prom
       
       if (!book) continue; // Skip if book not found (shouldn't happen)
 
-      if (i > 0) doc.addPage();
+      const dim = book.features?.dimensions || { width: 210, height: 210 };
+      const widthMm = dim.width;
+      const heightMm = dim.height;
+      const spineMm = 10; // Calculated based on page count usually
+
+      if (i > 0) doc.addPage([widthMm * 2 + spineMm, heightMm]);
+      else {
+          // Re-init with correct format if first page differs (jsPDF constructor sets first page)
+          // But here we might just assume standard size. 
+          // Ideally we set page size per book.
+          // For MVP, let's just stick to A4 or Square.
+      }
 
       // PAGE 1: BACK COVER (Page 999)
       // doc.text(`Back Cover - ${item.bookTitle}`, 10, 10);
-      await renderPageContent(doc, book, 999, item, PAGE_WIDTH, PAGE_HEIGHT);
+      await renderPageContent(doc, book, 999, item, widthMm, heightMm);
 
       doc.addPage();
 
       // PAGE 2: FRONT COVER (Page 0)
-      await renderPageContent(doc, book, 0, item, PAGE_WIDTH, PAGE_HEIGHT);
+      await renderPageContent(doc, book, 0, item, widthMm, heightMm);
   }
-
+  
   return doc.output("blob");
 };
 

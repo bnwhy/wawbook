@@ -59,7 +59,7 @@ export interface WizardVariant {
   maxLength?: number;
   thumbnail?: string;
   resource?: string;
-  options: WizardOption[];
+  options?: WizardOption[];
 }
 
 export interface WizardTab {

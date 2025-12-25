@@ -46,15 +46,19 @@ const hexToRgb = (hex: string) => {
 
 // Helper to determine combination key
 const getCombinationKey = (book: BookProduct, configuration: any) => {
-    if (!book.wizardConfig?.tabs || !configuration.characters) return 'default';
+    if (!book.wizardConfig?.tabs || !configuration) return 'default';
     
+    // configuration in OrderItem is the characters map itself (from createOrder: item.config.characters)
+    // But we also support if it's passed with a 'characters' wrapper
+    const characters = configuration.characters || configuration;
+
     const optionIds: string[] = [];
     
     book.wizardConfig.tabs.forEach(tab => {
-        if (tab.type === 'character' && configuration.characters[tab.id]) {
+        if (tab.type === 'character' && characters[tab.id]) {
             tab.variants.forEach(v => {
                 if (v.type === 'options') {
-                    const selectedOptId = configuration.characters[tab.id][v.id];
+                    const selectedOptId = characters[tab.id][v.id];
                     if (selectedOptId) optionIds.push(selectedOptId);
                 }
             });
@@ -65,8 +69,32 @@ const getCombinationKey = (book: BookProduct, configuration: any) => {
     return optionIds.sort().join('_');
 };
 
+// Helper to resolve variables
+const resolveVariables = (text: string, orderItem: OrderItem, book: BookProduct) => {
+  if (!text) return "";
+  
+  const characters = orderItem.configuration.characters || orderItem.configuration;
+
+  return text.replace(/\{([^}]+)\}/g, (match, key) => {
+    if (key === 'childName') return characters.childName || orderItem.configuration.childName || "L'enfant";
+    
+    // Handle {tabId.variantId} - e.g. {123.456}
+    const [tabId, variantId] = key.split('.');
+    if (tabId && variantId && characters[tabId]) {
+         const selectedOptionId = characters[tabId][variantId];
+         // We returns the ID. If we wanted the LABEL, we would need to look it up in book.wizardConfig
+         // For now, returning the ID or Value stored.
+         return selectedOptionId || match;
+    }
+    return match;
+  });
+};
+
 const renderPageContent = async (doc: jsPDF, book: BookProduct, pageIndex: number, orderItem: OrderItem, widthMm: number, heightMm: number) => {
     const combinationKey = getCombinationKey(book, orderItem.configuration);
+    const characters = orderItem.configuration.characters || orderItem.configuration;
+
+    console.log(`Generating Page ${pageIndex} with key: ${combinationKey}`);
 
     // 1. Background
     // Find background image for this page with matching combination key
@@ -98,11 +126,11 @@ const renderPageContent = async (doc: jsPDF, book: BookProduct, pageIndex: numbe
              const tabId = el.variableKey;
              const tab = book.wizardConfig?.tabs.find(t => t.id === tabId);
              
-             if (tab && orderItem.configuration.characters?.[tabId]) {
+             if (tab && characters[tabId]) {
                   const optionIds: string[] = [];
                   tab.variants.forEach(v => {
                      if (v.type === 'options') {
-                         const selectedOptId = orderItem.configuration.characters[tabId][v.id];
+                         const selectedOptId = characters[tabId][v.id];
                          if (selectedOptId) optionIds.push(selectedOptId);
                      }
                   });
@@ -136,6 +164,7 @@ const renderPageContent = async (doc: jsPDF, book: BookProduct, pageIndex: numbe
             }
         }
     }
+
 
     // 3. Texts
     const texts = book.contentConfig.texts.filter(t => t.position.pageIndex === pageIndex);

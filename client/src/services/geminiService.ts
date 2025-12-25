@@ -1,7 +1,7 @@
 import { BookConfig, Story, Theme, Activity } from "../types";
 
 // --- ACTIVITÉ INTROS ---
-export const ACTIVITY_INTROS: Record<Activity, string> = {
+const ACTIVITY_INTROS: Record<Activity, string> = {
   Sport: "{name} venait de finir sa séance de sport et débordait d'énergie.",
   Danse: "{name} esquissait quelques pas de danse joyeux dans sa chambre.",
   Theatre: "{name} s'amusait à imiter ses personnages préférés devant le miroir.",
@@ -14,7 +14,7 @@ export const ACTIVITY_INTROS: Record<Activity, string> = {
 };
 
 // --- IMAGES STATIQUES PAR THEME (Unsplash IDs) ---
-export const THEME_IMAGES: Record<Theme, string[]> = {
+const THEME_IMAGES: Record<Theme, string[]> = {
   [Theme.Adventure]: [
     "https://images.unsplash.com/photo-1596395819057-d372232333cc?auto=format&fit=crop&w=1000&q=80", // Map/Room
     "https://images.unsplash.com/photo-1590001006509-06484675715e?auto=format&fit=crop&w=1000&q=80", // Jungle
@@ -66,7 +66,7 @@ export const THEME_IMAGES: Record<Theme, string[]> = {
 };
 
 // --- TEMPLATES DES HISTOIRES ---
-export const STORY_TEMPLATES: Record<Theme, Story> = {
+const STORY_TEMPLATES: Record<Theme, Story> = {
   [Theme.Adventure]: {
     title: "Le Secret de la Jungle Perdue",
     pages: [

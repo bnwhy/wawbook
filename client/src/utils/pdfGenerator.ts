@@ -1,8 +1,6 @@
 import { jsPDF } from "jspdf";
 import { Order, OrderItem } from "../types/ecommerce";
 import { BookProduct, TextElement, ImageElement } from "../types/admin";
-import { STORY_TEMPLATES, ACTIVITY_INTROS, THEME_IMAGES } from "../services/geminiService";
-import { Theme, Activity } from "../types";
 
 // Helper to load image
 const loadImage = (url: string): Promise<HTMLImageElement> => {
@@ -158,65 +156,14 @@ export const generateCoverPDF = async (order: Order, books: BookProduct[]): Prom
 
       if (i > 0) doc.addPage();
 
-      // Check if we have configured content for covers
-      const hasCustomFront = book.contentConfig.texts.some(t => t.position.pageIndex === 0) || 
-                             (book.contentConfig.imageElements || []).some(el => el.position.pageIndex === 0) ||
-                             book.contentConfig.images.some(img => img.pageIndex === 0);
-
-      const hasCustomBack = book.contentConfig.texts.some(t => t.position.pageIndex === 999) || 
-                            (book.contentConfig.imageElements || []).some(el => el.position.pageIndex === 999) ||
-                            book.contentConfig.images.some(img => img.pageIndex === 999);
-
       // PAGE 1: BACK COVER (Page 999)
-      if (hasCustomBack) {
-           await renderPageContent(doc, book, 999, item, PAGE_WIDTH, PAGE_HEIGHT);
-      } else {
-           // Fallback Back Cover
-           doc.setFillColor(79, 70, 229); // Indigo 600 default
-           doc.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, 'F');
-           doc.setFontSize(24);
-           doc.setTextColor(255, 255, 255);
-           doc.text("Fin", PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: "center" });
-           
-           doc.setFontSize(12);
-           doc.text("Merci d'avoir lu cette histoire !", PAGE_WIDTH / 2, PAGE_HEIGHT / 2 + 15, { align: "center" });
-      }
+      // doc.text(`Back Cover - ${item.bookTitle}`, 10, 10);
+      await renderPageContent(doc, book, 999, item, PAGE_WIDTH, PAGE_HEIGHT);
 
       doc.addPage();
 
       // PAGE 2: FRONT COVER (Page 0)
-      if (hasCustomFront) {
-          await renderPageContent(doc, book, 0, item, PAGE_WIDTH, PAGE_HEIGHT);
-      } else {
-          // Fallback Front Cover
-          if (book.coverImage) {
-              try {
-                  const img = await loadImage(book.coverImage);
-                  doc.addImage(img, 'PNG', 0, 0, PAGE_WIDTH, PAGE_HEIGHT);
-                  
-                  // Add overlay for text readability
-                  doc.setFillColor(0, 0, 0);
-                  doc.setGState(new doc.GState({ opacity: 0.3 }));
-                  doc.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, 'F');
-                  doc.setGState(new doc.GState({ opacity: 1 }));
-              } catch (e) {
-                   doc.setFillColor(79, 70, 229); 
-                   doc.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, 'F');
-              }
-          } else {
-               doc.setFillColor(79, 70, 229); 
-               doc.rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT, 'F');
-          }
-          
-          doc.setFontSize(32);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(255, 255, 255);
-          doc.text(item.bookTitle, PAGE_WIDTH / 2, PAGE_HEIGHT / 3, { align: "center", maxWidth: PAGE_WIDTH - 40 });
-          
-          doc.setFontSize(18);
-          doc.setFont("helvetica", "normal");
-          doc.text(`Une aventure de ${item.configuration.childName || "L'enfant"}`, PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: "center" });
-      }
+      await renderPageContent(doc, book, 0, item, PAGE_WIDTH, PAGE_HEIGHT);
   }
 
   return doc.output("blob");
@@ -246,72 +193,21 @@ export const generateInteriorPDF = async (order: Order, books: BookProduct[]): P
         .filter(p => p.pageNumber > 0 && p.pageNumber < 900)
         .sort((a, b) => a.pageNumber - b.pageNumber);
         
-      if (pages.length > 0) {
-          for (let j = 0; j < pages.length; j++) {
-              const page = pages[j];
-              if (j > 0) doc.addPage();
-              
-              await renderPageContent(doc, book, page.pageNumber, item, PAGE_WIDTH, PAGE_HEIGHT);
-              
-              // Add page number at bottom if interior
-              doc.setFontSize(8);
-              doc.setTextColor(150, 150, 150);
-              doc.text(`${page.pageNumber}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 5, { align: "center" });
-          }
-      } else {
-          // Fallback: Use Template Story
-          const template = STORY_TEMPLATES[book.theme];
-          if (template) {
-              const activityIntro = ACTIVITY_INTROS[item.configuration.appearance?.activity as Activity] || ACTIVITY_INTROS['Aucune'];
-              const childName = item.configuration.childName || "L'enfant";
-              
-              for (let j = 0; j < template.pages.length; j++) {
-                  if (j > 0) doc.addPage();
-                  const page = template.pages[j];
-                  
-                  // Render Image
-                  const themeImages = THEME_IMAGES[book.theme];
-                  if (themeImages && themeImages[j % themeImages.length]) {
-                      try {
-                          const imgUrl = themeImages[j % themeImages.length];
-                          const img = await loadImage(imgUrl);
-                          // Render image at top half
-                          const imgHeight = (PAGE_HEIGHT * 0.6); // 60% height
-                          // Center image
-                          const imgRatio = img.width / img.height;
-                          let drawW = PAGE_WIDTH;
-                          let drawH = PAGE_WIDTH / imgRatio;
-                          
-                          if (drawH > imgHeight) {
-                              drawH = imgHeight;
-                              drawW = imgHeight * imgRatio;
-                          }
-                          
-                          const imgX = (PAGE_WIDTH - drawW) / 2;
-                          doc.addImage(img, 'JPEG', imgX, 20, drawW, drawH);
-                      } catch (e) {
-                          console.error("Failed to load template image", e);
-                      }
-                  }
-                  
-                  // Render Text
-                  const text = page.text.replace(/{name}/g, childName).replace(/{activityIntro}/g, activityIntro);
-                  doc.setFontSize(14);
-                  doc.setFont("helvetica", "normal");
-                  doc.setTextColor(0, 0, 0);
-                  
-                  // Text Area
-                  const textY = (PAGE_HEIGHT * 0.65);
-                  doc.text(text, 20, textY, { maxWidth: PAGE_WIDTH - 40, align: "center" });
-                  
-                  // Page Number
-                  doc.setFontSize(8);
-                  doc.setTextColor(150, 150, 150);
-                  doc.text(`${j + 1}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 5, { align: "center" });
-              }
-          } else {
-              doc.text("Configuration manquante et aucun modèle disponible.", 20, 20);
-          }
+      for (let j = 0; j < pages.length; j++) {
+          const page = pages[j];
+          if (j > 0) doc.addPage();
+          
+          await renderPageContent(doc, book, page.pageNumber, item, PAGE_WIDTH, PAGE_HEIGHT);
+          
+          // Add page number at bottom if interior
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(`${page.pageNumber}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 5, { align: "center" });
+      }
+      
+      if (pages.length === 0) {
+          // Fallback if no pages configured
+          doc.text("No pages configured for this book.", 20, 20);
       }
   }
 

@@ -18,18 +18,18 @@ export type Outfit = 'Salopette' | 'TShirt' | 'Robe' | 'Chemise' | 'Sweat' | 'Sp
 export type Activity = 'Sport' | 'Danse' | 'Theatre' | 'Musique' | 'Peinture' | 'Lecture' | 'Jardinage' | 'Cuisine' | 'Aucune';
 
 export interface CharacterAppearance {
-  hairColor: string;
-  eyeColor: string;
-  skinTone: string;
-  hairStyle: HairStyle;
-  beard?: string; // Added beard optional field
-  outfit: Outfit;
-  activity: Activity;
-  glasses: boolean;
+  hairColor?: string;
+  eyeColor?: string;
+  skinTone?: string;
+  hairStyle?: HairStyle;
+  beard?: string;
+  outfit?: Outfit;
+  activity?: Activity;
+  glasses?: boolean;
   glassesStyle?: 'Round' | 'Square' | 'None';
   hearingAid?: 'None' | 'Beige' | 'Black' | 'Blue' | 'Green' | 'Gray';
   grayHair?: boolean;
-  distinctiveFeatures?: string; // Kept for backward compatibility or extra details
+  distinctiveFeatures?: string;
 }
 
 export interface BookConfig {

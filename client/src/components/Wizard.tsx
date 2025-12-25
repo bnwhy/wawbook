@@ -296,22 +296,22 @@ const Wizard: React.FC<WizardProps> = (props) => {
     // For now, we map "child" tab to legacy fields if possible for compatibility
     const childTab = selections['child'] || {};
     
+    // Only map values that actually exist in the selections
+    const appearance: any = {};
+    if (childTab['hairColor']) appearance.hairColor = childTab['hairColor'];
+    if (childTab['skinTone']) appearance.skinTone = childTab['skinTone'];
+    if (childTab['hairStyle']) appearance.hairStyle = childTab['hairStyle'];
+    if (childTab['glasses']) {
+       appearance.glasses = childTab['glasses'] !== 'None';
+       appearance.glassesStyle = childTab['glasses'] === 'None' ? 'None' : childTab['glasses'];
+    }
+
     const config: BookConfig = {
-      childName: childTab['name'] || 'Enfant',
-      age: 5, // Default
-      gender: childTab['gender'] === 'girl' ? Gender.Girl : Gender.Boy,
+      childName: childTab['name'] || '', // Empty string if not provided
+      age: 5, // Default age still 5 as it's number
+      gender: childTab['gender'] === 'girl' ? Gender.Girl : (childTab['gender'] === 'boy' ? Gender.Boy : Gender.Neutral),
       theme: book.theme,
-      appearance: {
-        hairColor: childTab['hairColor'] || 'Brun',
-        eyeColor: 'Marrons', // Default
-        skinTone: childTab['skinTone'] || 'Claire',
-        hairStyle: childTab['hairStyle'] || 'Court',
-        outfit: 'Salopette', // Default
-        activity: 'Aucune',
-        glasses: childTab['glasses'] !== 'None',
-        glassesStyle: childTab['glasses'] === 'None' ? 'None' : childTab['glasses'],
-        grayHair: false,
-      },
+      appearance: appearance,
       dedication: '',
       characters: selections // Store full dynamic data here
     };

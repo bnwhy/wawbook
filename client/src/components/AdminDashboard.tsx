@@ -4235,6 +4235,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          />
                                                       </div>
 
+                                                      {/* Variant Assignment */}
+                                                      <div>
+                                                         <label className="text-[10px] font-bold text-gray-500 uppercase">Variante Assignée</label>
+                                                         <select 
+                                                            value={layer.combinationKey || 'default'}
+                                                            onChange={(e) => updateLayer({combinationKey: e.target.value === 'default' ? undefined : e.target.value})}
+                                                            className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1 bg-white"
+                                                         >
+                                                            <option value="default">Par défaut (Toutes variantes)</option>
+                                                            {currentCombinations.map(c => (
+                                                               <option key={c} value={c}>{c}</option>
+                                                            ))}
+                                                         </select>
+                                                         <div className="text-[9px] text-gray-400 mt-1">
+                                                            {layer.combinationKey 
+                                                               ? "Visible uniquement pour cette variante." 
+                                                               : "Visible sur toutes les variantes qui n'ont pas de contenu spécifique."}
+                                                         </div>
+                                                      </div>
+
                                                       {/* Type Selector (Fixed vs Variable) - Only for images */}
                                                       {!isText && (
                                                          <div>

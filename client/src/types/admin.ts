@@ -90,6 +90,7 @@ export interface TextElement {
   label: string; // Internal label
   type: 'fixed' | 'variable';
   content: string; // Default content or variable key
+  combinationKey?: string; // Optional: restrict to specific variant
   style?: React.CSSProperties;
   position: {
     pageIndex: number;
@@ -109,6 +110,7 @@ export interface ImageElement {
   type: 'static' | 'variable';
   url?: string;
   variableKey?: string;
+  combinationKey?: string; // Optional: restrict to specific variant
   position: {
     pageIndex: number;
     layer?: number;

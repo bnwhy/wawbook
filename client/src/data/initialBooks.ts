@@ -208,10 +208,26 @@ const FAMILY_WIZARD_CONFIG = {
   ]
 };
 
+const SIMPLE_CHILD_TAB = {
+  id: 'child',
+  label: 'Enfant',
+  type: 'character' as const,
+  options: [],
+  variants: [
+    {
+      id: 'name',
+      label: 'Prénom',
+      type: 'text' as const,
+      minLength: 2,
+      maxLength: 20
+    }
+  ]
+};
+
 const DEFAULT_WIZARD_CONFIG = {
   avatarStyle: 'watercolor' as const,
   avatarMappings: SHARED_AVATAR_MAPPINGS,
-  tabs: [SHARED_CHILD_TAB]
+  tabs: [SIMPLE_CHILD_TAB]
 };
 
 const DEFAULT_CONTENT_CONFIG = {

@@ -307,14 +307,22 @@ const Wizard: React.FC<WizardProps> = (props) => {
     }
 
     const config: BookConfig = {
-      childName: childTab['name'] || '', // Empty string if not provided
-      age: 5, // Default age still 5 as it's number
-      gender: childTab['gender'] === 'girl' ? Gender.Girl : (childTab['gender'] === 'boy' ? Gender.Boy : Gender.Neutral),
+      childName: childTab['name'] || '',
       theme: book.theme,
       appearance: appearance,
       dedication: '',
       characters: selections // Store full dynamic data here
     };
+
+    if (childTab['age']) {
+      config.age = parseInt(childTab['age']);
+    }
+
+    if (childTab['gender']) {
+      if (childTab['gender'] === 'girl') config.gender = Gender.Girl;
+      else if (childTab['gender'] === 'boy') config.gender = Gender.Boy;
+      else config.gender = Gender.Neutral;
+    }
     
     onComplete(config);
   };

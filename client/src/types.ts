@@ -34,8 +34,8 @@ export interface CharacterAppearance {
 
 export interface BookConfig {
   childName: string;
-  age: number;
-  gender: Gender;
+  age?: number;
+  gender?: Gender;
   theme: Theme;
   appearance: CharacterAppearance;
   dedication?: string;

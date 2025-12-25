@@ -256,11 +256,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         </div>
                     </div>
                 ))}
-
-                {/* Page Number */}
-                <div className={`absolute bottom-6 ${isLeft ? 'left-8' : 'right-8'} text-cloud-dark/40 font-bold text-xs z-30`}>
-                    Page {pageIndex}
-                </div>
             </div>
           );
       }
@@ -277,7 +272,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {storyPage.imageUrl ? <img src={storyPage.imageUrl} className="w-full h-full object-cover" alt="Illustration" /> : <div className="w-full h-full flex items-center justify-center text-cloud-blue/30"><Cloud size={48} /></div>}
             </div>
             <div className="mt-6 font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center">{storyPage.text}</div>
-            <div className={`absolute bottom-6 ${isLeft ? 'left-8' : 'right-8'} text-cloud-dark/20 font-bold text-xs`}>Page {pageIndex}</div>
         </div>
       );
   };

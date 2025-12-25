@@ -275,6 +275,13 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const getSpreadContent = (index: number) => {
     // 0: Cover
     if (index === 0) {
+      // Find configured cover elements if available
+      const coverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [];
+      const coverImages = book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 0) || [];
+
+      // Check if we have a custom cover configuration from Admin
+      const hasCustomCover = coverTexts.length > 0 || coverImages.length > 0;
+
       return {
         left: <div className="w-full h-full bg-transparent" />, // Empty space left of cover
         right: (
@@ -286,7 +293,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
              {/* Cover Thickness (Right Edge) */}
              <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-black/20 to-transparent z-20 pointer-events-none"></div>
 
-             {book?.coverImage ? (
+             {book?.coverImage && !hasCustomCover ? (
                 <>
                     <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginLeft: '12px' }}></div>
                     <div className="absolute inset-0 bg-black/10" style={{ marginLeft: '12px' }}></div>
@@ -297,14 +304,59 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 </div>
              )}
     
-             <div className="relative z-10 flex flex-col items-center pl-4">
-                <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 text-6xl shadow-xl">✨</div>
-                <h1 className="font-display font-black text-4xl md:text-5xl mb-4 drop-shadow-md text-white leading-tight">{story.title}</h1>
-                <div className="bg-white/20 px-6 py-2 rounded-full text-lg font-bold backdrop-blur-sm border border-white/30">
-                    Une aventure de {config.childName}
+             {hasCustomCover ? (
+                /* RENDER CUSTOM ADMIN CONTENT FOR COVER */
+                <div className="absolute inset-0 z-10" style={{ marginLeft: '12px' }}>
+                    {/* Stickers */}
+                    {coverImages.map(el => {
+                        const imageUrl = resolveImageUrl(el);
+                        return (
+                            <div 
+                                key={el.id}
+                                className="absolute z-10"
+                                style={{
+                                    left: `${el.position.x}%`,
+                                    top: `${el.position.y}%`,
+                                    width: `${el.position.width}%`,
+                                    height: el.position.height ? `${el.position.height}%` : 'auto',
+                                    transform: `rotate(${el.position.rotation || 0}deg)`
+                                }}
+                            >
+                                {imageUrl && <img src={imageUrl} className="w-full h-full object-contain" alt={el.label} />}
+                            </div>
+                        );
+                    })}
+
+                    {/* Texts */}
+                    {coverTexts.map(text => (
+                        <div 
+                            key={text.id}
+                            className="absolute z-20"
+                            style={{
+                                left: `${text.position.x}%`,
+                                top: `${text.position.y}%`,
+                                width: `${text.position.width || 30}%`,
+                                transform: `rotate(${text.position.rotation || 0}deg)`,
+                                ...text.style
+                            }}
+                        >
+                            <div className="font-display font-medium text-lg leading-relaxed text-balance text-center" style={{ color: text.style?.color || 'white', fontSize: text.style?.fontSize ? `${text.style.fontSize}px` : undefined }}>
+                                {resolveTextVariable(text.content)}
+                            </div>
+                        </div>
+                    ))}
                 </div>
-                <div className="mt-12 animate-pulse text-white/80 font-bold uppercase tracking-widest text-sm">Ouvrir le livre</div>
-             </div>
+             ) : (
+                /* FALLBACK DEFAULT COVER */
+                <div className="relative z-10 flex flex-col items-center pl-4">
+                    <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 text-6xl shadow-xl">✨</div>
+                    <h1 className="font-display font-black text-4xl md:text-5xl mb-4 drop-shadow-md text-white leading-tight">{story.title}</h1>
+                    <div className="bg-white/20 px-6 py-2 rounded-full text-lg font-bold backdrop-blur-sm border border-white/30">
+                        Une aventure de {config.childName}
+                    </div>
+                    <div className="mt-12 animate-pulse text-white/80 font-bold uppercase tracking-widest text-sm">Ouvrir le livre</div>
+                </div>
+             )}
           </div>
         )
       };

@@ -11,6 +11,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 
 import { generateCoverPDF, generateInteriorPDF } from '../utils/pdfGenerator';
 
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '_')
+    .replace(/[^\w-]+/g, '')
+    .replace(/__+/g, '_');
+};
+
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -2503,9 +2515,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     <button 
                                        onClick={() => {
                                           const newTabs = [...selectedBook.wizardConfig.tabs];
+                                          const baseLabel = 'Nouvel Attribut';
+                                          const baseId = slugify(baseLabel);
+                                          
+                                          // Ensure unique ID
+                                          const otherIds = newTabs[idx].variants.map(v => v.id);
+                                          let uniqueId = baseId;
+                                          let counter = 2;
+                                          while (otherIds.includes(uniqueId)) {
+                                              uniqueId = `${baseId}_${counter}`;
+                                              counter++;
+                                          }
+
                                           newTabs[idx].variants.push({
-                                             id: Date.now().toString(),
-                                             label: 'Nouvel Attribut',
+                                             id: uniqueId,
+                                             label: baseLabel,
                                              type: 'options',
                                              options: []
                                           });
@@ -2555,8 +2579,37 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    type="text" 
                                                    value={variant.label}
                                                    onChange={(e) => {
+                                                      const newLabel = e.target.value;
                                                       const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                      newTabs[idx].variants[vIdx].label = e.target.value;
+                                                      const currentVariant = newTabs[idx].variants[vIdx];
+                                                      
+                                                      // Auto-update ID logic
+                                                      // Check if ID is default-like (numeric or matches old slug) or empty
+                                                      const oldSlug = slugify(currentVariant.label);
+                                                      const currentId = currentVariant.id;
+                                                      
+                                                      // Check if ID matches slug of old label OR is strictly numeric (old default) OR starts with 'nouvel_attribut' (new default)
+                                                      const isDefaultId = /^\d+$/.test(currentId) || currentId.startsWith('nouvel_attribut');
+                                                      const isSyncedId = currentId === oldSlug;
+                                                      
+                                                      newTabs[idx].variants[vIdx].label = newLabel;
+                                                      
+                                                      if ((isDefaultId || isSyncedId || currentId === '') && newLabel.trim() !== '') {
+                                                          const baseId = slugify(newLabel);
+                                                          // Ensure unique in this tab, excluding self
+                                                          const otherIds = newTabs[idx].variants
+                                                              .filter((_, i) => i !== vIdx)
+                                                              .map(v => v.id);
+                                                          
+                                                          let uniqueId = baseId;
+                                                          let counter = 2;
+                                                          while (otherIds.includes(uniqueId)) {
+                                                              uniqueId = `${baseId}_${counter}`;
+                                                              counter++;
+                                                          }
+                                                          newTabs[idx].variants[vIdx].id = uniqueId;
+                                                      }
+
                                                       handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                    }}
                                                    className="w-full bg-transparent font-medium text-slate-700 border-none p-0 focus:ring-0 text-sm"

@@ -192,7 +192,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           const pageDef = book.contentConfig.pages.find(p => p.pageNumber === pageIndex);
           
           if (!pageDef) {
-             return <div className="w-full h-full flex items-center justify-center text-cloud-dark/20">Page vide</div>;
+             return <div className="w-full h-full bg-white"></div>;
           }
 
           // Background Image
@@ -213,8 +213,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {bgImage?.imageUrl ? (
                     <img src={bgImage.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Background" />
                 ) : (
-                    <div className="absolute inset-0 bg-gray-50 flex items-center justify-center text-gray-300">
-                        <Cloud size={48} className="opacity-20" />
+                    <div className="absolute inset-0 bg-white">
                     </div>
                 )}
 
@@ -263,13 +262,13 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       // 2. Fallback to Simple Story (Legacy)
       const storyPage = story.pages[pageIndex - 1]; // story.pages is 0-indexed, pageIndex is 1-indexed (starts after intro)
       
-      if (!storyPage) return <div className="w-full h-full flex items-center justify-center text-cloud-dark/20">Page vide</div>;
+      if (!storyPage) return <div className="w-full h-full bg-white"></div>;
 
       return (
         <div className="w-full h-full bg-white p-6 flex flex-col justify-center relative shadow-inner">
             <div className={`absolute ${isLeft ? 'right-0' : 'left-0'} top-0 bottom-0 w-6 bg-gradient-to-${isLeft ? 'l' : 'r'} from-black/5 to-transparent pointer-events-none z-10`}></div>
             <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-sm bg-cloud-lightest border-4 border-white">
-                {storyPage.imageUrl ? <img src={storyPage.imageUrl} className="w-full h-full object-cover" alt="Illustration" /> : <div className="w-full h-full flex items-center justify-center text-cloud-blue/30"><Cloud size={48} /></div>}
+                {storyPage.imageUrl ? <img src={storyPage.imageUrl} className="w-full h-full object-cover" alt="Illustration" /> : <div className="w-full h-full bg-cloud-lightest"></div>}
             </div>
             <div className="mt-6 font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center">{storyPage.text}</div>
         </div>

@@ -2470,6 +2470,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       className="w-full bg-transparent font-bold text-slate-700 border-none p-0 focus:ring-0 text-base"
                                       placeholder="Nom du personnage (ex: Héros)"
                                    />
+                                   <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-[10px] text-gray-400 uppercase font-bold">ID:</span>
+                                      <input 
+                                         type="text" 
+                                         value={tab.id}
+                                         onChange={(e) => {
+                                            const newTabs = [...selectedBook.wizardConfig.tabs];
+                                            newTabs[idx].id = e.target.value;
+                                            handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                         }}
+                                         className="bg-gray-100 text-[10px] font-mono text-slate-500 border-none rounded px-1.5 py-0.5 focus:ring-1 focus:ring-indigo-500 w-32"
+                                         placeholder="ID unique"
+                                      />
+                                   </div>
                                  </div>
                                  <button 
                                    onClick={() => {
@@ -2548,6 +2562,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    className="w-full bg-transparent font-medium text-slate-700 border-none p-0 focus:ring-0 text-sm"
                                                    placeholder="Nom de l'attribut"
                                                 />
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                   <span className="text-[9px] text-gray-300 uppercase font-bold">ID:</span>
+                                                   <input 
+                                                      type="text" 
+                                                      value={variant.id}
+                                                      onChange={(e) => {
+                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                         newTabs[idx].variants[vIdx].id = e.target.value;
+                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                      }}
+                                                      className="bg-transparent text-[9px] font-mono text-gray-400 border-none p-0 focus:ring-0 w-24 hover:bg-gray-50 rounded px-1"
+                                                      placeholder="ID variant"
+                                                   />
+                                                </div>
                                              </div>
 
                                              <div className="w-48">
@@ -2704,7 +2732,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                placeholder="Nom de l'option"
                                                             />
                                                             <div className="text-[10px] text-gray-400 font-mono flex items-center gap-2">
-                                                               <span className="bg-gray-100 px-1.5 py-0.5 rounded">ID: {option.id}</span>
+                                                               <span className="bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                  ID: 
+                                                                  <input 
+                                                                     type="text" 
+                                                                     value={option.id}
+                                                                     onChange={(e) => {
+                                                                        const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                        newTabs[idx].variants[vIdx].options[oIdx].id = e.target.value;
+                                                                        handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                                     }}
+                                                                     className="bg-transparent border-none p-0 w-20 text-[10px] focus:ring-0 font-mono text-slate-600"
+                                                                     placeholder="ID option"
+                                                                  />
+                                                               </span>
                                                             </div>
                                                          </div>
 

@@ -3536,7 +3536,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  // Force single view mode for interior pages as requested
                                  setViewMode('single'); 
                               }}
-                              className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                              className={`group p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${selectedPageId === page.id ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                            >
                               <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
                                  {index + 1}
@@ -3547,6 +3547,58 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  </div>
                                  <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
                               </div>
+                              
+                              <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if(!confirm('Voulez-vous vraiment supprimer cette page ?')) return;
+
+                                    const deletedPageIndex = selectedBook.contentConfig.pages.findIndex(p => p.id === page.id);
+                                    if (deletedPageIndex === -1) return;
+
+                                    // Deep copy relevant parts
+                                    const newPages = [...selectedBook.contentConfig.pages];
+                                    let newTexts = [...(selectedBook.contentConfig.texts || [])];
+                                    let newImages = [...(selectedBook.contentConfig.images || [])];
+                                    let newImageElements = [...(selectedBook.contentConfig.imageElements || [])];
+
+                                    // 1. Remove Page
+                                    newPages.splice(deletedPageIndex, 1);
+
+                                    // 2. Remove content on deleted page
+                                    newTexts = newTexts.filter(t => t.position.pageIndex !== deletedPageIndex);
+                                    newImages = newImages.filter(img => img.pageIndex !== deletedPageIndex);
+                                    newImageElements = newImageElements.filter(el => el.position.pageIndex !== deletedPageIndex);
+
+                                    // 3. Shift content on subsequent pages
+                                    newTexts.forEach(t => { if(t.position.pageIndex > deletedPageIndex) t.position.pageIndex--; });
+                                    newImages.forEach(img => { if(img.pageIndex > deletedPageIndex) img.pageIndex--; });
+                                    newImageElements.forEach(el => { if(el.position.pageIndex > deletedPageIndex) el.position.pageIndex--; });
+
+                                    // 4. Re-index pages (pageNumber)
+                                    newPages.forEach((p, i) => p.pageNumber = i);
+
+                                    handleSaveBook({
+                                        ...selectedBook,
+                                        contentConfig: {
+                                            ...selectedBook.contentConfig,
+                                            pages: newPages,
+                                            texts: newTexts,
+                                            images: newImages,
+                                            imageElements: newImageElements
+                                        }
+                                    });
+
+                                    if (selectedPageId === page.id) {
+                                        setSelectedPageId(newPages[Math.max(0, deletedPageIndex - 1)].id);
+                                    }
+                                }}
+                                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Supprimer la page"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+
                               <ChevronRight size={14} className={`text-gray-300 ${selectedPageId === page.id ? 'text-brand-coral' : ''}`} />
                            </div>
                         ))}

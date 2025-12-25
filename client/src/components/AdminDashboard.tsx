@@ -4110,6 +4110,28 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   className="w-full text-xs border border-gray-300 rounded px-2 py-1 h-24 font-mono leading-relaxed"
                                                                   placeholder="Écrivez votre texte ici... Utilisez {tab.variable} pour insérer des données dynamiques."
                                                                />
+                                                               {/* Variable Preview */}
+                                                               <div className="mt-1 p-2 bg-indigo-50 border border-indigo-100 rounded text-[10px] text-indigo-800">
+                                                                  <span className="font-bold block mb-0.5">Aperçu lisible :</span>
+                                                                  {(() => {
+                                                                     const text = (layer as any).content || '';
+                                                                     return text.replace(/\{([^}]+)\}/g, (match: string, key: string) => {
+                                                                        if (key === 'childName') return '{Prénom}';
+                                                                        
+                                                                        const [tabId, variantId] = key.split('.');
+                                                                        if (tabId && variantId) {
+                                                                            const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
+                                                                            if (tab) {
+                                                                                const variant = tab.variants.find(v => v.id === variantId);
+                                                                                if (variant) {
+                                                                                    return `{${tab.label}: ${variant.label}}`;
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        return match;
+                                                                     });
+                                                                  })()}
+                                                               </div>
                                                             </div>
                                                          ) : (
                                                             layer.type === 'variable' ? (

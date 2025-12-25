@@ -2473,7 +2473,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                      <div className="space-y-4">
                         {selectedBook.wizardConfig.tabs.map((tab, idx) => (
-                           <div key={tab.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
+                           <div key={idx} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
                               {/* Tab Header */}
                               <div className="bg-gray-50 border-b border-gray-100 p-4 flex items-center gap-4">
                                  <button className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -2582,7 +2582,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                  <div className="space-y-4">
                                     {tab.variants.map((variant, vIdx) => (
-                                       <div key={variant.id} className="relative group bg-white border border-gray-100 rounded-lg shadow-sm">
+                                       <div key={vIdx} className="relative group bg-white border border-gray-100 rounded-lg shadow-sm">
                                           {/* Variant Row */}
                                           <div className="flex items-center gap-4 py-3 px-3">
                                              <button 
@@ -2754,7 +2754,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                 <div className="flex flex-col gap-2">
                                                    {(variant.options || []).map((option, oIdx) => (
-                                                      <div key={option.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center gap-4 group/option">
+                                                      <div key={oIdx} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center gap-4 group/option">
                                                          
                                                          {/* Uploads */}
                                                          <div className="flex gap-3">

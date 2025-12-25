@@ -3522,6 +3522,63 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                     <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
                                  </div>
+                                 
+                                 <button
+                                    onClick={(e) => {
+                                       e.stopPropagation();
+                                       if(!confirm('Attention: Voulez-vous supprimer la couverture (Face Avant ET Dos) ?\nLes pages intérieures deviendront la nouvelle couverture.')) return;
+
+                                       // Deep copy
+                                       let newPages = [...selectedBook.contentConfig.pages];
+                                       let newTexts = [...(selectedBook.contentConfig.texts || [])];
+                                       let newImages = [...(selectedBook.contentConfig.images || [])];
+                                       let newImageElements = [...(selectedBook.contentConfig.imageElements || [])];
+
+                                       if (newPages.length < 2) return;
+
+                                       const frontIdx = 0;
+                                       const backIdx = newPages.length - 1;
+
+                                       // 1. Remove Pages (filter out first and last)
+                                       // We use the original length to identify the last index
+                                       newPages = newPages.filter((_, i) => i !== frontIdx && i !== backIdx);
+
+                                       // 2. Remove content on deleted pages
+                                       newTexts = newTexts.filter(t => t.position.pageIndex !== frontIdx && t.position.pageIndex !== backIdx);
+                                       newImages = newImages.filter(img => img.pageIndex !== frontIdx && img.pageIndex !== backIdx);
+                                       newImageElements = newImageElements.filter(el => el.position.pageIndex !== frontIdx && el.position.pageIndex !== backIdx);
+
+                                       // 3. Shift content indices (decrement by 1 because page 0 was removed)
+                                       newTexts.forEach(t => t.position.pageIndex = Math.max(0, t.position.pageIndex - 1));
+                                       newImages.forEach(img => img.pageIndex = Math.max(0, img.pageIndex - 1));
+                                       newImageElements.forEach(el => el.position.pageIndex = Math.max(0, el.position.pageIndex - 1));
+
+                                       // 4. Re-index pages array
+                                       newPages.forEach((p, i) => p.pageNumber = i);
+
+                                       handleSaveBook({
+                                          ...selectedBook,
+                                          contentConfig: {
+                                             ...selectedBook.contentConfig,
+                                             pages: newPages,
+                                             texts: newTexts,
+                                             images: newImages,
+                                             imageElements: newImageElements
+                                          }
+                                       });
+
+                                       if (newPages.length > 0) {
+                                          setSelectedPageId(newPages[0].id);
+                                       } else {
+                                          setSelectedPageId(null);
+                                       }
+                                    }}
+                                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Supprimer la couverture"
+                                 >
+                                    <Trash2 size={14} />
+                                 </button>
+
                                  <ChevronRight size={14} className={`text-gray-300 ${isCoverSelected ? 'text-brand-coral' : ''}`} />
                               </div>
                            );

@@ -265,7 +265,7 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
         bookTitle: item.bookTitle,
         quantity: item.quantity,
         price: item.price,
-        configuration: item.config.characters
+        configuration: item.config // Store full config including characters and childName
       }))
     };
 

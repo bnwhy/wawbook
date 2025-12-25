@@ -38,92 +38,96 @@ import beardMustache from '@assets/generated_images/mustache_beard_icon.png';
 import beardGoatee from '@assets/generated_images/goatee_beard_icon.png';
 import beardFull from '@assets/generated_images/full_beard_icon.png';
 
-const FAMILY_WIZARD_CONFIG = {
-  avatarStyle: 'watercolor' as const,
-  avatarMappings: {
-    'Blond_Claire_Court_None_boy': boyBlondLightAvatar,
-    'Blond_Claire_Court_Round_boy': boyBlondRoundGlassesAvatar,
-    'Blond_Claire_Court_Square_boy': boyBlondSquareGlassesAvatar,
-    'Blond_Claire_Hérissé_None_boy': boyBlondSpikyAvatar,
-    'Blond_Claire_Hérissé_Round_boy': boyBlondSpikyRoundGlassesAvatar
-  },
-  tabs: [
+const SHARED_AVATAR_MAPPINGS = {
+  'Blond_Claire_Court_None_boy': boyBlondLightAvatar,
+  'Blond_Claire_Court_Round_boy': boyBlondRoundGlassesAvatar,
+  'Blond_Claire_Court_Square_boy': boyBlondSquareGlassesAvatar,
+  'Blond_Claire_Hérissé_None_boy': boyBlondSpikyAvatar,
+  'Blond_Claire_Hérissé_Round_boy': boyBlondSpikyRoundGlassesAvatar
+};
+
+const SHARED_CHILD_TAB = {
+  id: 'child',
+  label: 'Enfant',
+  type: 'character' as const,
+  options: [],
+  variants: [
     {
-      id: 'child',
-      label: 'Enfant',
-      type: 'character' as const,
-      options: [],
-      variants: [
-        {
-          id: 'gender',
-          label: 'Genre',
-          type: 'options' as const,
-          options: [
-            { id: 'boy', label: 'Garçon' },
-            { id: 'girl', label: 'Fille' }
-          ]
-        },
-        {
-          id: 'name',
-          label: 'Prénom',
-          type: 'text' as const,
-          minLength: 2,
-          maxLength: 20
-        },
-        {
-          id: 'skinTone',
-          label: 'Peau',
-          type: 'options' as const,
-          options: [
-            { id: 'Claire', label: 'Claire', resource: '#f6d6c8' },
-            { id: 'Beige', label: 'Beige', resource: '#f9cca4' },
-            { id: 'Muscade', label: 'Muscade', resource: '#edb17f' },
-            { id: 'Marron', label: 'Marron', resource: '#d19f79' },
-            { id: 'MarronFonce', label: 'Marron foncé', resource: '#ae836c' },
-            { id: 'Noir', label: 'Noir', resource: '#6a4730' }
-          ]
-        },
-        {
-          id: 'hairColor',
-          label: 'Cheveux',
-          type: 'options' as const,
-          options: [
-            { id: 'Blond', label: 'Blond', resource: '#f7e48c' },
-            { id: 'BlondFonce', label: 'Blond foncé', resource: '#ba9a0d' },
-            { id: 'Chatain', label: 'Châtain', resource: '#a76635' },
-            { id: 'Noir', label: 'Noir', resource: '#302e34' },
-            { id: 'Roux', label: 'Roux', resource: '#ef6c2a' },
-            { id: 'Gris', label: 'Gris', resource: '#b9b9bd' },
-            { id: 'Blanc', label: 'Blanc', resource: '#fefefe' }
-          ]
-        },
-        {
-          id: 'hairStyle',
-          label: 'Coiffure',
-          type: 'options' as const,
-          options: [
-            { id: 'Court', label: 'Court' },
-            { id: 'Hérissé', label: 'Hérissé' },
-            { id: 'Carré', label: 'Carré' },
-            { id: 'Long', label: 'Long' },
-            { id: 'Chignon', label: 'Chignon' },
-            { id: 'Nattes', label: 'Nattes' },
-            { id: 'Bouclé', label: 'Bouclé' },
-            { id: 'QueueCheval', label: 'Queue' }
-          ]
-        },
-        {
-          id: 'glasses',
-          label: 'Lunettes',
-          type: 'options' as const,
-          options: [
-            { id: 'None', label: 'Aucune' },
-            { id: 'Round', label: 'Rondes' },
-            { id: 'Square', label: 'Carrées' }
-          ]
-        }
+      id: 'gender',
+      label: 'Genre',
+      type: 'options' as const,
+      options: [
+        { id: 'boy', label: 'Garçon' },
+        { id: 'girl', label: 'Fille' }
       ]
     },
+    {
+      id: 'name',
+      label: 'Prénom',
+      type: 'text' as const,
+      minLength: 2,
+      maxLength: 20
+    },
+    {
+      id: 'skinTone',
+      label: 'Peau',
+      type: 'options' as const,
+      options: [
+        { id: 'Claire', label: 'Claire', resource: '#f6d6c8' },
+        { id: 'Beige', label: 'Beige', resource: '#f9cca4' },
+        { id: 'Muscade', label: 'Muscade', resource: '#edb17f' },
+        { id: 'Marron', label: 'Marron', resource: '#d19f79' },
+        { id: 'MarronFonce', label: 'Marron foncé', resource: '#ae836c' },
+        { id: 'Noir', label: 'Noir', resource: '#6a4730' }
+      ]
+    },
+    {
+      id: 'hairColor',
+      label: 'Cheveux',
+      type: 'options' as const,
+      options: [
+        { id: 'Blond', label: 'Blond', resource: '#f7e48c' },
+        { id: 'BlondFonce', label: 'Blond foncé', resource: '#ba9a0d' },
+        { id: 'Chatain', label: 'Châtain', resource: '#a76635' },
+        { id: 'Noir', label: 'Noir', resource: '#302e34' },
+        { id: 'Roux', label: 'Roux', resource: '#ef6c2a' },
+        { id: 'Gris', label: 'Gris', resource: '#b9b9bd' },
+        { id: 'Blanc', label: 'Blanc', resource: '#fefefe' }
+      ]
+    },
+    {
+      id: 'hairStyle',
+      label: 'Coiffure',
+      type: 'options' as const,
+      options: [
+        { id: 'Court', label: 'Court' },
+        { id: 'Hérissé', label: 'Hérissé' },
+        { id: 'Carré', label: 'Carré' },
+        { id: 'Long', label: 'Long' },
+        { id: 'Chignon', label: 'Chignon' },
+        { id: 'Nattes', label: 'Nattes' },
+        { id: 'Bouclé', label: 'Bouclé' },
+        { id: 'QueueCheval', label: 'Queue' }
+      ]
+    },
+    {
+      id: 'glasses',
+      label: 'Lunettes',
+      type: 'options' as const,
+      options: [
+        { id: 'None', label: 'Aucune' },
+        { id: 'Round', label: 'Rondes' },
+        { id: 'Square', label: 'Carrées' }
+      ]
+    }
+  ]
+};
+
+const FAMILY_WIZARD_CONFIG = {
+  avatarStyle: 'watercolor' as const,
+  avatarMappings: SHARED_AVATAR_MAPPINGS,
+  tabs: [
+    SHARED_CHILD_TAB,
     {
       id: 'adult',
       label: 'Adulte',
@@ -206,7 +210,8 @@ const FAMILY_WIZARD_CONFIG = {
 
 const DEFAULT_WIZARD_CONFIG = {
   avatarStyle: 'watercolor' as const,
-  tabs: []
+  avatarMappings: SHARED_AVATAR_MAPPINGS,
+  tabs: [SHARED_CHILD_TAB]
 };
 
 const DEFAULT_CONTENT_CONFIG = {

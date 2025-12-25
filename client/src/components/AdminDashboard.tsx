@@ -2450,7 +2450,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </h2>
                         <button 
                           onClick={() => {
-                             const newTab: WizardTab = { id: Date.now().toString(), label: 'Nouveau Perso', type: 'character', options: [], variants: [] };
+                             const baseLabel = 'Nouveau Perso';
+                             const baseId = slugify(baseLabel);
+                             
+                             // Ensure unique ID
+                             const otherIds = selectedBook.wizardConfig.tabs.map(t => t.id);
+                             let uniqueId = baseId;
+                             let counter = 2;
+                             while (otherIds.includes(uniqueId)) {
+                                 uniqueId = `${baseId}_${counter}`;
+                                 counter++;
+                             }
+
+                             const newTab: WizardTab = { id: uniqueId, label: baseLabel, type: 'character', options: [], variants: [] };
                              handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: [...selectedBook.wizardConfig.tabs, newTab]}});
                           }}
                           className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm"
@@ -2475,8 +2487,35 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       type="text" 
                                       value={tab.label}
                                       onChange={(e) => {
+                                         const newLabel = e.target.value;
                                          const newTabs = [...selectedBook.wizardConfig.tabs];
-                                         newTabs[idx].label = e.target.value;
+                                         const currentTab = newTabs[idx];
+
+                                         // Auto-update ID logic
+                                         const oldSlug = slugify(currentTab.label);
+                                         const currentId = currentTab.id;
+                                         
+                                         // Check if ID is default-like or empty
+                                         const isDefaultId = /^\d+$/.test(currentId) || currentId.startsWith('nouveau_perso');
+                                         const isSyncedId = currentId === oldSlug;
+
+                                         newTabs[idx].label = newLabel;
+
+                                         if ((isDefaultId || isSyncedId || currentId === '') && newLabel.trim() !== '') {
+                                             const baseId = slugify(newLabel);
+                                             const otherIds = newTabs
+                                                .filter((_, i) => i !== idx)
+                                                .map(t => t.id);
+                                             
+                                             let uniqueId = baseId;
+                                             let counter = 2;
+                                             while (otherIds.includes(uniqueId)) {
+                                                 uniqueId = `${baseId}_${counter}`;
+                                                 counter++;
+                                             }
+                                             newTabs[idx].id = uniqueId;
+                                         }
+                                         
                                          handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                       }}
                                       className="w-full bg-transparent font-bold text-slate-700 border-none p-0 focus:ring-0 text-base"

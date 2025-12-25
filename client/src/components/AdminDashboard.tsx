@@ -200,6 +200,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [isDragging, activeLayerId, dragStartPos, dragStartElementPos, selectedBook]);
   const hasUnsavedChanges = JSON.stringify(draftBook) !== JSON.stringify(contextBook);
 
+  // Sync active layer with selected variant visibility
+  React.useEffect(() => {
+     if (!activeLayerId || !selectedBook) return;
+
+     const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
+     const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
+     const layer = textLayer || imgLayer;
+
+     if (layer && layer.combinationKey && layer.combinationKey !== selectedVariant) {
+        setActiveLayerId(null);
+     }
+  }, [selectedVariant, selectedBook, activeLayerId]);
+
   const currentCombinations = React.useMemo(() => {
     if (!selectedBook) return [];
     

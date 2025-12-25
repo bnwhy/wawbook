@@ -124,10 +124,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   // 0: Cover
   // 1: Intro (ONLY if !hasCustomContent)
   // [Offset]: Spreads
-  // N+1: End Page
+  // N+1: End Page (ONLY if !hasCustomContent)
   // N+2: Closed Back
   const introViewCount = hasCustomContent ? 0 : 1;
-  const totalViews = 1 + introViewCount + totalSpreads + 1 + 1;
+  const endViewCount = hasCustomContent ? 0 : 1;
+  const totalViews = 1 + introViewCount + totalSpreads + endViewCount + 1;
 
   const handleNext = () => {
     if (currentView < totalViews - 1 && !isFlipping) {
@@ -412,8 +413,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       };
     }
 
-    // N-1: Back Cover (End Page)
-    if (index === totalViews - 2) {
+    // N-1: Back Cover (End Page) - Legacy only
+    if (!hasCustomContent && index === totalViews - 2) {
       return {
         left: (
           <div className="w-full h-full bg-cloud-blue flex flex-col items-center justify-center text-white p-8 text-center shadow-inner">

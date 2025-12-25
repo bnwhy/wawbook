@@ -116,7 +116,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   const contentPages = getContentPages();
-  const totalSpreads = Math.ceil(contentPages.length / 2); 
+  let pageCount = contentPages.length;
+
+  if (book?.contentConfig?.pages?.length) {
+      // If using admin config, find the highest page number (excluding back cover 999)
+      const validPages = book.contentConfig.pages.filter(p => p.pageNumber < 900);
+      if (validPages.length > 0) {
+          pageCount = Math.max(...validPages.map(p => p.pageNumber));
+      }
+  }
+
+  const totalSpreads = Math.ceil(pageCount / 2); 
   
   // Check if we have custom content to decide on Intro spread visibility
   const hasCustomContent = !!book?.contentConfig?.pages?.length;

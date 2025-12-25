@@ -3511,7 +3511,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     setSelectedPageId(frontCover.id);
                                     setViewMode('spread'); // Force spread view for full cover
                                  }}
-                                 className={`p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                                 className={`group p-3 rounded-lg border cursor-pointer transition-all flex items-center gap-3 ${isCoverSelected ? 'border-brand-coral bg-red-50 ring-1 ring-brand-coral' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                               >
                                  <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center text-xs font-bold text-gray-500">
                                     COUV

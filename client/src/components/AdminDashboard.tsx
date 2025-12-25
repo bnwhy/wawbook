@@ -4149,11 +4149,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           if (!currentPage) return null;
 
                                           const textLayers = selectedBook.contentConfig.texts
-                                             .filter(t => t.position.pageIndex === currentPage.pageNumber && (t.combinationKey === selectedVariant || t.combinationKey === 'default' || !t.combinationKey))
+                                             .filter(t => t.position.pageIndex === currentPage.pageNumber && t.combinationKey === selectedVariant)
                                              .map(t => ({...t, _kind: 'text'}));
                                           
                                           const imgLayers = (selectedBook.contentConfig.imageElements || [])
-                                             .filter(i => i.position.pageIndex === currentPage.pageNumber && (i.combinationKey === selectedVariant || i.combinationKey === 'default' || !i.combinationKey))
+                                             .filter(i => i.position.pageIndex === currentPage.pageNumber && i.combinationKey === selectedVariant)
                                              .map(i => ({...i, _kind: 'image'}));
                                           
                                           const allLayers = [...textLayers, ...imgLayers]; // Should sort by z-index ideally

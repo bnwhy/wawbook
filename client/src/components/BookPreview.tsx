@@ -460,11 +460,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         <>
                              {coverBg ? (
                                 <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${coverBg.imageUrl})`, marginRight: '12px' }}></div>
-                             ) : book?.coverImage ? (
-                                <>
-                                    <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginRight: '12px' }}></div>
-                                    <div className="absolute inset-0 bg-black/20" style={{ marginRight: '12px' }}></div>
-                                </>
                              ) : null}
                         </>
                      ) : (

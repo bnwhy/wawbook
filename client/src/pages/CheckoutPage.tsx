@@ -111,7 +111,7 @@ const CheckoutPage = () => {
             </div>
           </div>
           <button 
-            onClick={() => setLocation('/')}
+            onClick={() => window.location.href = '/'}
             className="bg-cloud-blue text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-cloud-deep transition-colors"
           >
             Retour à l'accueil

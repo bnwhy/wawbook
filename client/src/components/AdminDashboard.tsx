@@ -3708,20 +3708,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       >
                                                          <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
                                                             {(() => {
-                                                                if (text.type !== 'variable') return text.content;
-                                                                
-                                                                // Helper to resolve variable names to friendly labels
-                                                                return text.content.replace(/\{([^}]+)\}/g, (match, key) => {
-                                                                    if (key === 'childName') return '{Prénom}';
-                                                                    
+                                                                // Always try to replace variable placeholders, regardless of text type
+                                                                // Use [Friendly Name] format for readability in admin
+                                                                const content = text.content || '';
+                                                                let processed = content.replace(/\{childName\}/g, '[Prénom]');
+                                                                return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
                                                                     const [tabId, variantId] = key.split('.');
-                                                                    if (tabId && variantId) {
-                                                                        const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
-                                                                        if (tab) {
-                                                                            const variant = tab.variants.find(v => v.id === variantId);
-                                                                            if (variant) {
-                                                                                return `{${tab.label}: ${variant.label}}`;
-                                                                            }
+                                                                    const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
+                                                                    if (tab) {
+                                                                        const variant = tab.variants.find(v => v.id === variantId);
+                                                                        if (variant) {
+                                                                            return `[${tab.label}: ${variant.label}]`;
                                                                         }
                                                                     }
                                                                     return match;

@@ -437,9 +437,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
     // N: Closed Back Cover
     if (index === totalViews - 1) {
+        // Find configured cover background to ensure back cover matches front cover
+        const coverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
+
         return {
             left: (
-                <div className="w-full h-full relative flex flex-col items-center justify-center text-white p-6 text-center overflow-hidden bg-cloud-blue shadow-inner border-r-8 border-gray-100">
+                <div className="w-full h-full relative flex flex-col items-center justify-center text-white p-6 text-center overflow-hidden bg-white shadow-inner border-r-8 border-gray-100">
                      {/* Spine / Binding Effect */}
                      <div className="absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-gray-200 to-white border-l border-black/5 z-30"></div>
                      <div className="absolute right-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
@@ -447,7 +450,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                      {/* Cover Thickness (Left Edge) */}
                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-black/20 to-transparent z-20 pointer-events-none"></div>
         
-                     {book?.coverImage ? (
+                     {coverBg ? (
+                        /* Custom Admin Cover Background */
+                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${coverBg.imageUrl})`, marginRight: '12px' }}></div>
+                     ) : book?.coverImage ? (
                         <>
                             <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginRight: '12px' }}></div>
                             <div className="absolute inset-0 bg-black/20" style={{ marginRight: '12px' }}></div>

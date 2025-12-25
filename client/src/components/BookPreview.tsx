@@ -431,17 +431,28 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
     // N: Closed Back Cover
     if (index === totalViews - 1) {
-        // Find configured cover elements to check for custom configuration
-        const coverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [];
-        const coverImages = book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 0) || [];
-        const coverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
+        // Find configured BACK cover elements (Page 999)
+        const backCoverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 999) || [];
+        const backCoverImages = book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 999) || [];
+        const backCoverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 999 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
         
-        // Check if we have a custom cover configuration from Admin
-        const hasCustomCover = coverTexts.length > 0 || coverImages.length > 0 || !!coverBg;
+        // Also check Front Cover for fallback logic (Page 0) - to determine if we are in "custom mode"
+        const frontCoverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [];
+        const frontCoverImages = book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 0) || [];
+        const frontCoverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
+
+        // Check if we have a custom BACK cover configuration
+        const hasCustomBackCover = backCoverTexts.length > 0 || backCoverImages.length > 0 || !!backCoverBg;
+        
+        // Check if we have a custom FRONT cover
+        const hasCustomFrontCover = frontCoverTexts.length > 0 || frontCoverImages.length > 0 || !!frontCoverBg;
+
+        const showCustomBack = hasCustomBackCover;
+        const showCleanBack = !hasCustomBackCover && hasCustomFrontCover;
 
         return {
             left: (
-                <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-r-8 border-gray-100 ${!hasCustomCover ? 'bg-cloud-blue text-white' : 'bg-white'}`}>
+                <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-r-8 border-gray-100 ${showCustomBack || showCleanBack ? 'bg-white' : 'bg-cloud-blue text-white'}`}>
                      {/* Spine / Binding Effect */}
                      <div className="absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-gray-200 to-white border-l border-black/5 z-30"></div>
                      <div className="absolute right-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
@@ -449,13 +460,58 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                      {/* Cover Thickness (Left Edge) */}
                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-black/20 to-transparent z-20 pointer-events-none"></div>
         
-                     {hasCustomCover ? (
-                        /* Custom Admin Cover Background */
+                     {showCustomBack ? (
+                        /* Custom Admin Back Cover Content */
                         <>
-                             {coverBg ? (
-                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${coverBg.imageUrl})`, marginRight: '12px' }}></div>
+                             {/* Background */}
+                             {backCoverBg ? (
+                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${backCoverBg.imageUrl})`, marginRight: '12px' }}></div>
                              ) : null}
+
+                             <div className="absolute inset-0 z-10" style={{ marginRight: '12px' }}>
+                                {/* Stickers */}
+                                {backCoverImages.map(el => {
+                                    const imageUrl = resolveImageUrl(el);
+                                    return (
+                                        <div 
+                                            key={el.id}
+                                            className="absolute z-10"
+                                            style={{
+                                                left: `${el.position.x}%`,
+                                                top: `${el.position.y}%`,
+                                                width: `${el.position.width}%`,
+                                                height: el.position.height ? `${el.position.height}%` : 'auto',
+                                                transform: `rotate(${el.position.rotation || 0}deg)`
+                                            }}
+                                        >
+                                            {imageUrl && <img src={imageUrl} className="w-full h-full object-contain" alt={el.label} />}
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Texts */}
+                                {backCoverTexts.map(text => (
+                                    <div 
+                                        key={text.id}
+                                        className="absolute z-20"
+                                        style={{
+                                            left: `${text.position.x}%`,
+                                            top: `${text.position.y}%`,
+                                            width: `${text.position.width || 30}%`,
+                                            transform: `rotate(${text.position.rotation || 0}deg)`,
+                                            ...text.style
+                                        }}
+                                    >
+                                        <div className="font-display font-medium text-lg leading-relaxed text-balance text-center" style={{ color: text.style?.color || 'inherit', fontSize: text.style?.fontSize ? `${text.style.fontSize}px` : undefined }}>
+                                            {resolveTextVariable(text.content)}
+                                        </div>
+                                    </div>
+                                ))}
+                             </div>
                         </>
+                     ) : showCleanBack ? (
+                        /* Clean White Back (when front is custom but back is empty) */
+                         null
                      ) : (
                         /* Default / Legacy Mode */
                         <>

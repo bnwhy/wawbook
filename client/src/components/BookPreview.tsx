@@ -117,8 +117,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   const contentPages = getContentPages();
   const totalSpreads = Math.ceil(contentPages.length / 2); 
-  // 0: Cover, 1: Intro, 2..N: Spreads, N+1: End Page, N+2: Closed Back
-  const totalViews = 1 + 1 + totalSpreads + 1 + 1;
+  
+  // Check if we have custom content to decide on Intro spread visibility
+  const hasCustomContent = !!book?.contentConfig?.pages?.length;
+  
+  // 0: Cover
+  // 1: Intro (ONLY if !hasCustomContent)
+  // [Offset]: Spreads
+  // N+1: End Page
+  // N+2: Closed Back
+  const introViewCount = hasCustomContent ? 0 : 1;
+  const totalViews = 1 + introViewCount + totalSpreads + 1 + 1;
 
   const handleNext = () => {
     if (currentView < totalViews - 1 && !isFlipping) {
@@ -377,8 +386,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       };
     }
 
-    // 1: Intro
-    if (index === 1) {
+    // 1: Intro - Only show if NO custom content is configured (legacy mode)
+    if (index === 1 && !hasCustomContent) {
       return {
         left: (
           <div className="w-full h-full flex items-center justify-center p-12 bg-cloud-lightest relative shadow-inner">
@@ -464,7 +473,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     // page 1 is at index 2 (left) if we want spread view
     // But page numbers in book are 1, 2, 3...
     // Spread 1: Page 1 (Left), Page 2 (Right)
-    const spreadIndex = index - 2;
+    const spreadOffset = hasCustomContent ? 1 : 2;
+    const spreadIndex = index - spreadOffset;
     const leftPageNum = spreadIndex * 2 + 1;
     const rightPageNum = spreadIndex * 2 + 2;
 

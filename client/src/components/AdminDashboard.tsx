@@ -3978,7 +3978,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                 {/* 2. IMAGE LAYERS (Stickers/Overlays) */}
                                                 {(selectedBook.contentConfig.imageElements || [])
-                                                   .filter(el => el.position.pageIndex === page.pageNumber)
+                                                   .filter(el => el.position.pageIndex === page.pageNumber && (el.combinationKey === selectedVariant || el.combinationKey === 'default' || !el.combinationKey))
                                                    .map(el => (
                                                       <div
                                                          key={el.id}
@@ -4012,7 +4012,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                 {/* 3. TEXT LAYERS */}
                                                 {selectedBook.contentConfig.texts
-                                                   .filter(t => t.position.pageIndex === page.pageNumber)
+                                                   .filter(t => t.position.pageIndex === page.pageNumber && (t.combinationKey === selectedVariant || t.combinationKey === 'default' || !t.combinationKey))
                                                    .map(text => (
                                                       <div 
                                                          key={text.id}
@@ -4098,6 +4098,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    label: 'Nouveau Texte',
                                                    type: 'fixed',
                                                    content: 'Texte ici...',
+                                                   combinationKey: selectedVariant, // Bind to current variant
                                                    position: { pageIndex: currentPage.pageNumber, zoneId: 'body', x: 10, y: 10, width: 30 }
                                                 };
                                                 const newTexts = [...selectedBook.contentConfig.texts, newText];
@@ -4118,6 +4119,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    id: `img-${Date.now()}`,
                                                    label: 'Nouvelle Image',
                                                    type: 'static',
+                                                   combinationKey: selectedVariant, // Bind to current variant
                                                    position: { pageIndex: currentPage.pageNumber, x: 20, y: 20, width: 20, height: 20 }
                                                 };
                                                 // Handle optional imageElements array
@@ -4147,11 +4149,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           if (!currentPage) return null;
 
                                           const textLayers = selectedBook.contentConfig.texts
-                                             .filter(t => t.position.pageIndex === currentPage.pageNumber)
+                                             .filter(t => t.position.pageIndex === currentPage.pageNumber && (t.combinationKey === selectedVariant || t.combinationKey === 'default' || !t.combinationKey))
                                              .map(t => ({...t, _kind: 'text'}));
                                           
                                           const imgLayers = (selectedBook.contentConfig.imageElements || [])
-                                             .filter(i => i.position.pageIndex === currentPage.pageNumber)
+                                             .filter(i => i.position.pageIndex === currentPage.pageNumber && (i.combinationKey === selectedVariant || i.combinationKey === 'default' || !i.combinationKey))
                                              .map(i => ({...i, _kind: 'image'}));
                                           
                                           const allLayers = [...textLayers, ...imgLayers]; // Should sort by z-index ideally

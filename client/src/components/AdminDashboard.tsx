@@ -4111,14 +4111,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   ))}
                                                                </select>
                                                             ) : (
-                                                               <div className="flex gap-2">
+                                                               <div className="flex flex-col gap-2">
                                                                   <input 
                                                                      type="text" 
                                                                      placeholder="URL de l'image"
                                                                      value={(layer as any).url || ''}
                                                                      onChange={(e) => updateLayer({url: e.target.value})}
-                                                                     className="flex-1 text-xs border border-gray-300 rounded px-2 py-1"
+                                                                     className="w-full text-xs border border-gray-300 rounded px-2 py-1"
                                                                   />
+                                                                  <div className="relative">
+                                                                    <input 
+                                                                       type="file" 
+                                                                       accept="image/*"
+                                                                       onChange={(e) => {
+                                                                          const file = e.target.files?.[0];
+                                                                          if (file) {
+                                                                              const reader = new FileReader();
+                                                                              reader.onloadend = () => {
+                                                                                  updateLayer({url: reader.result as string});
+                                                                              };
+                                                                              reader.readAsDataURL(file);
+                                                                          }
+                                                                       }}
+                                                                       className="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                                                    />
+                                                                  </div>
                                                                </div>
                                                             )
                                                          )}

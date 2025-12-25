@@ -3735,13 +3735,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                        className="transition-all duration-300 flex gap-0 shadow-2xl bg-white"
                                        style={{
                                           // Force single aspect ratio if viewing cover (since we now treat cover as single page)
-                                          aspectRatio: (viewMode === 'spread' && !selectedBook.contentConfig.pages.some(p => p.id === selectedPageId && (p.pageNumber === 0 || p.pageNumber === selectedBook.contentConfig.pages.length - 1))) 
+                                          aspectRatio: (viewMode === 'spread') 
                                              ? `${aspectRatio * 2}/1` 
                                              : `${aspectRatio}/1`,
-                                          width: (viewMode === 'spread' && !selectedBook.contentConfig.pages.some(p => p.id === selectedPageId && (p.pageNumber === 0 || p.pageNumber === selectedBook.contentConfig.pages.length - 1))) 
+                                          width: (viewMode === 'spread') 
                                              ? '90%' 
                                              : 'auto',
-                                          height: (viewMode === 'spread' && !selectedBook.contentConfig.pages.some(p => p.id === selectedPageId && (p.pageNumber === 0 || p.pageNumber === selectedBook.contentConfig.pages.length - 1))) 
+                                          height: (viewMode === 'spread') 
                                              ? 'auto' 
                                              : '90%',
                                           maxWidth: '100%',

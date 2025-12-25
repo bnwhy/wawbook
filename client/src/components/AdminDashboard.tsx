@@ -3820,7 +3820,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             {(() => {
                                                                const bgImage = selectedBook.contentConfig.images.find(
                                                                   img => img.pageIndex === targetPage.pageNumber && 
-                                                                        (img.combinationKey === selectedVariant || img.combinationKey === 'default')
+                                                                        img.combinationKey === selectedVariant
                                                                );
                                                                if (bgImage?.imageUrl) return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background" />;
                                                                return (

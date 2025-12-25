@@ -458,10 +458,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         </div>
                      )}
             
+                     {/* Branding removed as per strict config requirement */}
                      <div className="relative z-10 flex flex-col items-center pr-4">
-                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-6 text-4xl shadow-inner backdrop-blur-sm">☁️</div>
-                        <h3 className="font-display font-bold text-2xl mb-2 text-white/90">NuageBook</h3>
-                        <p className="text-white/60 text-sm font-medium uppercase tracking-widest">Fait avec amour</p>
                      </div>
                   </div>
             ),

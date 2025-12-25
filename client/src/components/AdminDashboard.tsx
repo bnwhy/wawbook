@@ -3515,14 +3515,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
                             <button 
                                 onClick={handleExportContent}
-                                className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
                                 title="Exporter la configuration (JSON)"
                             >
                                 <Download size={18} />
                             </button>
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
                                 title="Importer la configuration (JSON)"
                             >
                                 <Upload size={18} />
@@ -3537,7 +3537,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </div>
                      </div>
                      
-                     <div className="flex gap-2">
+                     {/* Move "Nouvelle Page" button to its own container if needed, but flex-wrap on parent helps */}
+                     <div className="flex gap-2 shrink-0">
                         <button 
                            onClick={() => {
                               const pages = selectedBook.contentConfig.pages || [];

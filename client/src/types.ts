@@ -33,11 +33,11 @@ export interface CharacterAppearance {
 }
 
 export interface BookConfig {
-  childName: string;
+  childName?: string;
   age?: number;
   gender?: Gender;
-  theme: Theme;
-  appearance: CharacterAppearance;
+  theme?: Theme;
+  appearance?: CharacterAppearance;
   dedication?: string;
   // New dynamic structure
   characters?: Record<string, any>;

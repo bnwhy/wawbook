@@ -307,12 +307,20 @@ const Wizard: React.FC<WizardProps> = (props) => {
     }
 
     const config: BookConfig = {
-      childName: childTab['name'] || '',
-      theme: book.theme,
-      appearance: appearance,
-      dedication: '',
       characters: selections // Store full dynamic data here
     };
+
+    if (childTab['name']) {
+        config.childName = childTab['name'];
+    }
+
+    if (Object.keys(appearance).length > 0) {
+        config.appearance = appearance;
+    }
+
+    if (book.theme) {
+        config.theme = book.theme;
+    }
 
     if (childTab['age']) {
       config.age = parseInt(childTab['age']);

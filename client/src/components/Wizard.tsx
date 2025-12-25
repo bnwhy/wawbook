@@ -318,19 +318,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
         config.appearance = appearance;
     }
 
-    if (book.theme) {
-        config.theme = book.theme;
-    }
-
-    if (childTab['age']) {
-      config.age = parseInt(childTab['age']);
-    }
-
-    if (childTab['gender']) {
-      if (childTab['gender'] === 'girl') config.gender = Gender.Girl;
-      else if (childTab['gender'] === 'boy') config.gender = Gender.Boy;
-      else config.gender = Gender.Neutral;
-    }
+    // REMOVED: theme, age, gender - ONLY include explicitly entered data
     
     onComplete(config);
   };

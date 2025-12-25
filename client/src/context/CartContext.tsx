@@ -3,6 +3,7 @@ import { BookConfig } from '../types';
 
 export interface CartItem {
   id: string;
+  productId?: string; // Add productId
   bookTitle: string;
   config: BookConfig;
   dedication?: string;

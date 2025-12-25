@@ -73,6 +73,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const handleAddToCart = () => {
     // Add to cart functionality
     const itemData = {
+      productId: book?.id,
       bookTitle: story.title,
       config,
       dedication,

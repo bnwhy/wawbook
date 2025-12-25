@@ -261,7 +261,7 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       shippingAddress: customerData.address,
       items: cartItems.map(item => ({
         id: `item-${Math.random().toString(36).substr(2, 9)}`,
-        bookId: item.config.theme, 
+        bookId: item.productId || item.config.theme || 'unknown', 
         bookTitle: item.bookTitle,
         quantity: item.quantity,
         price: item.price,

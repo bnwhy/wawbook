@@ -1164,7 +1164,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              toast.promise(
                                                 new Promise(async (resolve, reject) => {
                                                    try {
-                                                      const blob = generateCoverPDF(order);
+                                                      const blob = await generateCoverPDF(order, books);
                                                       const url = URL.createObjectURL(blob);
                                                       const a = document.createElement('a');
                                                       a.href = url;
@@ -1210,7 +1210,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              toast.promise(
                                                 new Promise(async (resolve, reject) => {
                                                    try {
-                                                      const blob = generateInteriorPDF(order);
+                                                      const blob = await generateInteriorPDF(order, books);
                                                       const url = URL.createObjectURL(blob);
                                                       const a = document.createElement('a');
                                                       a.href = url;

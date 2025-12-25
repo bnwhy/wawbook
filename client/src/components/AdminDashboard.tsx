@@ -3708,20 +3708,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     })()}
                                  </div>
                                  
-                                 <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2">
-                                       <span className="text-xs font-bold text-gray-400 uppercase">Aperçu Variante:</span>
-                                       <select 
-                                          value={selectedVariant}
-                                          onChange={(e) => setSelectedVariant(e.target.value)}
-                                          className="text-xs border-gray-200 rounded py-1 pl-2 pr-8 bg-white font-medium focus:ring-brand-coral focus:border-brand-coral"
-                                       >
-                                          {currentCombinations.map(c => (
-                                             <option key={c} value={c}>{c}</option>
-                                          ))}
-                                       </select>
-                                    </div>
-                                 </div>
                               </div>
 
                               {/* Canvas & Sidebar Container */}
@@ -4202,6 +4188,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     {activeRightTab === 'properties' && (
                                        <div className="flex-1 overflow-y-auto bg-gray-50 flex flex-col">
                                           {activeLayerId ? (
+                                             <>
                                              <div className="p-4 space-y-4">
                                              {(() => {
                                                 const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
@@ -4590,6 +4577,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    Supprimer ce calque
                                                 </button>
                                              </div>
+                                             </>
                                           ) : (
                                              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
                                                 <Settings size={32} className="mb-2 opacity-50" />

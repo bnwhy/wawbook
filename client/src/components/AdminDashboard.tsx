@@ -4098,7 +4098,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    label: 'Nouveau Texte',
                                                    type: 'fixed',
                                                    content: 'Texte ici...',
-                                                   combinationKey: selectedVariant, // Bind to current variant
+                                                   combinationKey: (selectedVariant === 'default' || selectedVariant === 'Défaut') ? undefined : selectedVariant, // Bind to current variant
                                                    position: { pageIndex: currentPage.pageNumber, zoneId: 'body', x: 10, y: 10, width: 30 }
                                                 };
                                                 const newTexts = [...selectedBook.contentConfig.texts, newText];
@@ -4119,7 +4119,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    id: `img-${Date.now()}`,
                                                    label: 'Nouvelle Image',
                                                    type: 'static',
-                                                   combinationKey: selectedVariant, // Bind to current variant
+                                                   combinationKey: (selectedVariant === 'default' || selectedVariant === 'Défaut') ? undefined : selectedVariant, // Bind to current variant
                                                    position: { pageIndex: currentPage.pageNumber, x: 20, y: 20, width: 20, height: 20 }
                                                 };
                                                 // Handle optional imageElements array
@@ -4240,11 +4240,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                          <label className="text-[10px] font-bold text-gray-500 uppercase">Variante Assignée</label>
                                                          <select 
                                                             value={layer.combinationKey || 'default'}
-                                                            onChange={(e) => updateLayer({combinationKey: e.target.value === 'default' ? undefined : e.target.value})}
+                                                            onChange={(e) => {
+                                                               const val = e.target.value;
+                                                               updateLayer({combinationKey: (val === 'default' || val === 'Défaut') ? undefined : val});
+                                                            }}
                                                             className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1 bg-white"
                                                          >
                                                             <option value="default">Par défaut (Toutes variantes)</option>
-                                                            {currentCombinations.map(c => (
+                                                            {currentCombinations.filter(c => c !== 'Défaut').map(c => (
                                                                <option key={c} value={c}>{c}</option>
                                                             ))}
                                                          </select>

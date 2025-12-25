@@ -9,7 +9,7 @@ import previewBackground from '@assets/generated_images/watercolor_paper_backgro
 import Footer from './Footer';
 
 interface WizardProps {
-  onComplete: (config: BookConfig) => void;
+  onComplete: (config: BookConfig, context?: { theme?: Theme, productId?: string }) => void;
   onCancel: () => void;
   initialTheme?: Theme;
   initialActivity?: Activity;
@@ -320,7 +320,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
     // REMOVED: theme, age, gender - ONLY include explicitly entered data
     
-    onComplete(config);
+    onComplete(config, { theme: book.theme, productId: book.id });
   };
 
   // Helper to get current colors for SVG defs (just taking first available for now as example)

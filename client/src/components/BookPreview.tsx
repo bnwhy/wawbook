@@ -36,7 +36,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   // --- HELPER: Resolve Variables ---
   const resolveTextVariable = (text: string) => {
     return text.replace(/\{([^}]+)\}/g, (match, key) => {
-        if (key === 'childName') return config.childName;
+        if (key === 'childName') return config.childName || "l'enfant";
         
         // Handle {tabId.variantId}
         const [tabId, variantId] = key.split('.');

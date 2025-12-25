@@ -59,13 +59,14 @@ const App: React.FC = () => {
     // editingCartItemId is reset above if it was set
   };
 
-  const handleConfigComplete = async (finalConfig: BookConfig) => {
+  const handleConfigComplete = async (finalConfig: BookConfig, context?: { theme?: Theme, productId?: string }) => {
     setConfig(finalConfig);
     setAppState('GENERATING');
     
     try {
       // 1. Get Template Story (Instantaneous now)
-      const generatedStory = await generateStoryText(finalConfig, selectedBookTitle);
+      // Pass the theme from context if available, as it's not in config anymore
+      const generatedStory = await generateStoryText(finalConfig, selectedBookTitle, context?.theme);
       
       // 2. Set Story directly
       setStory(generatedStory);

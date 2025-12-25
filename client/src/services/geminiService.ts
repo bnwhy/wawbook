@@ -246,26 +246,36 @@ const STORY_TEMPLATES: Record<Theme, Story> = {
 /**
  * Génère l'histoire complète avec texte et images (Statiques)
  */
-export async function generateStoryText(config: BookConfig, bookTitle?: string): Promise<Story> {
-  const template = STORY_TEMPLATES[config.theme];
-  if (!template) throw new Error(`Aucun template trouvé pour le thème ${config.theme}`);
+export async function generateStoryText(config: BookConfig, bookTitle?: string, theme?: Theme): Promise<Story> {
+  const effectiveTheme = config.theme || theme;
+  
+  if (!effectiveTheme) {
+      console.warn("No theme provided for story generation, defaulting to Adventure");
+  }
+  
+  const template = STORY_TEMPLATES[effectiveTheme || Theme.Adventure];
+  if (!template) throw new Error(`Aucun template trouvé pour le thème ${effectiveTheme}`);
 
-  const activityIntro = ACTIVITY_INTROS[config.appearance.activity] || ACTIVITY_INTROS['Aucune'];
+  const activity = config.appearance?.activity || 'Aucune';
+  const activityIntro = ACTIVITY_INTROS[activity] || ACTIVITY_INTROS['Aucune'];
 
   const newStory: Story = JSON.parse(JSON.stringify(template));
   
-  // Override title if provided (to match the selected book in Admin/Wizard)
+  // Override title if provided
   if (bookTitle) {
     newStory.title = bookTitle;
   }
 
+  // Use a fallback for name in PREVIEW only if missing
+  const childName = config.childName || "l'enfant";
+
   newStory.pages = newStory.pages.map((page, index) => {
     // Remplacement du texte
-    const text = page.text.replace(/{name}/g, config.childName).replace(/{activityIntro}/g, activityIntro);
+    const text = page.text.replace(/{name}/g, childName).replace(/{activityIntro}/g, activityIntro);
     
     // Sélection image statique
-    const images = THEME_IMAGES[config.theme];
-    const imageUrl = images[index % images.length];
+    const images = THEME_IMAGES[effectiveTheme || Theme.Adventure] || [];
+    const imageUrl = images[index % images.length] || "";
 
     return {
       ...page,

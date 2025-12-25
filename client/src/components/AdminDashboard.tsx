@@ -2674,37 +2674,39 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    placeholder="Nom de l'attribut"
                                                 />
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                   <span className="text-[9px] text-gray-300 uppercase font-bold">ID:</span>
-                                                   <input 
-                                                      type="text" 
-                                                      value={variant.id}
-                                                      onChange={(e) => {
-                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                         newTabs[idx].variants[vIdx].id = e.target.value;
-                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                                      }}
-                                                      onBlur={(e) => {
-                                                         const val = e.target.value.trim();
-                                                         if (!val) return;
-                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                         const otherIds = newTabs[idx].variants.filter((_, i) => i !== vIdx).map(v => v.id);
-                                                         
-                                                         let uniqueId = val;
-                                                         let counter = 2;
-                                                         while (otherIds.includes(uniqueId)) {
-                                                             uniqueId = `${val}_${counter}`;
-                                                             counter++;
-                                                         }
-                                                         
-                                                         if (uniqueId !== val) {
-                                                             newTabs[idx].variants[vIdx].id = uniqueId;
-                                                             handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                                             toast.info(`ID corrigé pour l'unicité: ${uniqueId}`);
-                                                         }
-                                                      }}
-                                                      className={`bg-transparent text-[9px] font-mono text-gray-400 border-none p-0 focus:ring-0 w-24 hover:bg-gray-50 rounded px-1 ${tab.variants.filter((_, i) => i !== vIdx).some(v => v.id === variant.id) ? 'text-red-500 font-bold bg-red-50' : ''}`}
-                                                      placeholder="ID variant"
-                                                   />
+                                                   <span className="bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                      <span className="text-[9px] text-gray-400 uppercase font-bold">ID:</span>
+                                                      <input 
+                                                         type="text" 
+                                                         value={variant.id}
+                                                         onChange={(e) => {
+                                                            const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                            newTabs[idx].variants[vIdx].id = e.target.value;
+                                                            handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                         }}
+                                                         onBlur={(e) => {
+                                                            const val = e.target.value.trim();
+                                                            if (!val) return;
+                                                            const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                            const otherIds = newTabs[idx].variants.filter((_, i) => i !== vIdx).map(v => v.id);
+                                                            
+                                                            let uniqueId = val;
+                                                            let counter = 2;
+                                                            while (otherIds.includes(uniqueId)) {
+                                                                  uniqueId = `${val}_${counter}`;
+                                                                  counter++;
+                                                            }
+                                                            
+                                                            if (uniqueId !== val) {
+                                                                  newTabs[idx].variants[vIdx].id = uniqueId;
+                                                                  handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                                  toast.info(`ID corrigé pour l'unicité: ${uniqueId}`);
+                                                            }
+                                                         }}
+                                                         className={`bg-transparent text-[9px] font-mono text-slate-500 border-none p-0 focus:ring-0 w-24 hover:bg-gray-50 rounded px-1 ${tab.variants.filter((_, i) => i !== vIdx).some(v => v.id === variant.id) ? 'text-red-500 font-bold bg-red-50' : ''}`}
+                                                         placeholder="ID variant"
+                                                      />
+                                                   </span>
                                                 </div>
                                              </div>
 
@@ -2854,8 +2856,35 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                type="text" 
                                                                value={option.label}
                                                                onChange={(e) => {
+                                                                  const newLabel = e.target.value;
                                                                   const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                  newTabs[idx].variants[vIdx].options[oIdx].label = e.target.value;
+                                                                  const currentOption = newTabs[idx].variants[vIdx].options[oIdx];
+
+                                                                  // Auto-update ID logic
+                                                                  const oldSlug = slugify(currentOption.label);
+                                                                  const currentId = currentOption.id;
+
+                                                                  // Check if ID is default-like or empty
+                                                                  const isDefaultId = /^\d+$/.test(currentId) || currentId.startsWith('opt_') || currentId.startsWith('nouvelle_option');
+                                                                  const isSyncedId = currentId === oldSlug;
+
+                                                                  newTabs[idx].variants[vIdx].options[oIdx].label = newLabel;
+
+                                                                  if ((isDefaultId || isSyncedId || currentId === '') && newLabel.trim() !== '') {
+                                                                      const baseId = slugify(newLabel);
+                                                                      const otherIds = newTabs[idx].variants[vIdx].options
+                                                                         .filter((_, i) => i !== oIdx)
+                                                                         .map(o => o.id);
+                                                                      
+                                                                      let uniqueId = baseId;
+                                                                      let counter = 2;
+                                                                      while (otherIds.includes(uniqueId)) {
+                                                                          uniqueId = `${baseId}_${counter}`;
+                                                                          counter++;
+                                                                      }
+                                                                      newTabs[idx].variants[vIdx].options[oIdx].id = uniqueId;
+                                                                  }
+
                                                                   handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                                }}
                                                                className="w-full text-sm font-medium text-slate-700 border-none p-0 focus:ring-0 bg-transparent mb-1"

@@ -25,6 +25,7 @@ export interface BookProduct {
             bleedMm: number;
             safeMarginMm: number;
             paperType?: 'coated_standard' | 'coated_premium';
+            spineWidthMm?: number;
         };
         interior: {
             bleedMm: number;

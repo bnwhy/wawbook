@@ -13,28 +13,6 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
   });
 };
 
-// Helper to resolve variables
-const resolveVariables = (text: string, orderItem: OrderItem, book: BookProduct) => {
-  if (!text) return "";
-  
-  return text.replace(/\{([^}]+)\}/g, (match, key) => {
-    if (key === 'childName') return orderItem.configuration.childName || "L'enfant";
-    
-    // Handle {tabId.variantId} - e.g. {123.456}
-    const [tabId, variantId] = key.split('.');
-    if (tabId && variantId && orderItem.configuration.characters?.[tabId]) {
-         const selectedOptionId = orderItem.configuration.characters[tabId][variantId];
-         // We might need to map this ID back to a label if the variable expects text
-         // But usually variables in text are simple strings.
-         // If the variable represents a character option, we might return the option label?
-         // For now, let's assume simple text replacement isn't fully supported for complex character traits in this PDF generator yet,
-         // or return the value from config if it exists.
-         return orderItem.configuration.characters[tabId][variantId] || match;
-    }
-    return match;
-  });
-};
-
 const hexToRgb = (hex: string) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {

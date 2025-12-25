@@ -4105,33 +4105,41 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                </div>
 
                                                                <textarea 
-                                                                  value={(layer as any).content}
-                                                                  onChange={(e) => updateLayer({content: e.target.value})}
-                                                                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 h-24 font-mono leading-relaxed"
-                                                                  placeholder="Écrivez votre texte ici... Utilisez {tab.variable} pour insérer des données dynamiques."
-                                                               />
-                                                               {/* Variable Preview */}
-                                                               <div className="mt-1 p-2 bg-indigo-50 border border-indigo-100 rounded text-[10px] text-indigo-800">
-                                                                  <span className="font-bold block mb-0.5">Aperçu lisible :</span>
-                                                                  {(() => {
+                                                                  value={(() => {
+                                                                     // HYDRATE: ID -> Friendly Label
                                                                      const text = (layer as any).content || '';
-                                                                     return text.replace(/\{([^}]+)\}/g, (match: string, key: string) => {
-                                                                        if (key === 'childName') return '{Prénom}';
-                                                                        
+                                                                     let processed = text.replace(/\{childName\}/g, '[Prénom]');
+                                                                     return processed.replace(/\{(\d+\.\d+)\}/g, (match: string, key: string) => {
                                                                         const [tabId, variantId] = key.split('.');
-                                                                        if (tabId && variantId) {
-                                                                            const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
-                                                                            if (tab) {
-                                                                                const variant = tab.variants.find(v => v.id === variantId);
-                                                                                if (variant) {
-                                                                                    return `{${tab.label}: ${variant.label}}`;
-                                                                                }
+                                                                        const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
+                                                                        if (tab) {
+                                                                            const variant = tab.variants.find(v => v.id === variantId);
+                                                                            if (variant) {
+                                                                                return `[${tab.label}: ${variant.label}]`;
                                                                             }
                                                                         }
                                                                         return match;
                                                                      });
                                                                   })()}
-                                                               </div>
+                                                                  onChange={(e) => {
+                                                                     // DEHYDRATE: Friendly Label -> ID
+                                                                     let val = e.target.value;
+                                                                     val = val.replace(/\[Prénom\]/g, '{childName}');
+                                                                     val = val.replace(/\[([^:]+): ([^\]]+)\]/g, (match, tabLabel, varLabel) => {
+                                                                        const tab = selectedBook.wizardConfig.tabs.find(t => t.label === tabLabel);
+                                                                        if (tab) {
+                                                                             const variant = tab.variants.find(v => v.label === varLabel);
+                                                                             if (variant) {
+                                                                                 return `{${tab.id}.${variant.id}}`;
+                                                                             }
+                                                                        }
+                                                                        return match;
+                                                                     });
+                                                                     updateLayer({content: val});
+                                                                  }}
+                                                                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 h-24 font-mono leading-relaxed"
+                                                                  placeholder="Écrivez votre texte ici... Utilisez [Tab: Variante] pour les variables."
+                                                               />
                                                             </div>
                                                          ) : (
                                                             layer.type === 'variable' ? (

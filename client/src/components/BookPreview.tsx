@@ -437,12 +437,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
     // N: Closed Back Cover
     if (index === totalViews - 1) {
-        // Find configured cover background to ensure back cover matches front cover
+        // Find configured cover elements to check for custom configuration
+        const coverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [];
+        const coverImages = book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 0) || [];
         const coverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
+        
+        // Check if we have a custom cover configuration from Admin
+        const hasCustomCover = coverTexts.length > 0 || coverImages.length > 0 || !!coverBg;
 
         return {
             left: (
-                <div className="w-full h-full relative flex flex-col items-center justify-center text-white p-6 text-center overflow-hidden bg-white shadow-inner border-r-8 border-gray-100">
+                <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-r-8 border-gray-100 ${!hasCustomCover ? 'bg-cloud-blue text-white' : 'bg-white'}`}>
                      {/* Spine / Binding Effect */}
                      <div className="absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-gray-200 to-white border-l border-black/5 z-30"></div>
                      <div className="absolute right-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
@@ -450,18 +455,32 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                      {/* Cover Thickness (Left Edge) */}
                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-black/20 to-transparent z-20 pointer-events-none"></div>
         
-                     {coverBg ? (
+                     {hasCustomCover ? (
                         /* Custom Admin Cover Background */
-                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${coverBg.imageUrl})`, marginRight: '12px' }}></div>
-                     ) : book?.coverImage ? (
                         <>
-                            <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginRight: '12px' }}></div>
-                            <div className="absolute inset-0 bg-black/20" style={{ marginRight: '12px' }}></div>
+                             {coverBg ? (
+                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${coverBg.imageUrl})`, marginRight: '12px' }}></div>
+                             ) : book?.coverImage ? (
+                                <>
+                                    <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginRight: '12px' }}></div>
+                                    <div className="absolute inset-0 bg-black/20" style={{ marginRight: '12px' }}></div>
+                                </>
+                             ) : null}
                         </>
                      ) : (
-                        <div className="absolute inset-0 bg-cloud-blue" style={{ marginRight: '12px' }}>
-                             <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
-                        </div>
+                        /* Default / Legacy Mode */
+                        <>
+                            {book?.coverImage ? (
+                                <>
+                                    <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginRight: '12px' }}></div>
+                                    <div className="absolute inset-0 bg-black/20" style={{ marginRight: '12px' }}></div>
+                                </>
+                            ) : (
+                                <div className="absolute inset-0 bg-cloud-blue" style={{ marginRight: '12px' }}>
+                                     <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
+                                </div>
+                            )}
+                        </>
                      )}
             
                      {/* Branding removed as per strict config requirement */}

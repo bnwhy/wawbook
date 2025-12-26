@@ -4406,7 +4406,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            )}
 
                                                            {/* 1. BASE LAYER */}
-                                                           <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+                                                           <div 
+                                                               className="absolute flex items-center justify-center bg-gray-50"
+                                                               style={{
+                                                                  inset: showGrid && bleedMm 
+                                                                     ? `-${(bleedMm / bookDimensions.height) * 100}% -${(bleedMm / bookDimensions.width) * 100}%` 
+                                                                     : '0'
+                                                               }}
+                                                           >
                                                               {(() => {
                                                                  const bgImage = selectedBook.contentConfig.images.find(
                                                                     img => img.pageIndex === targetPage.pageNumber && 
@@ -4580,7 +4587,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      )}
 
                                                      {/* 1. BASE LAYER (Background Variant) */}
-                                                     <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+                                                     <div 
+                                                         className="absolute flex items-center justify-center bg-gray-50"
+                                                         style={{
+                                                            inset: showGrid && bleedMm 
+                                                               ? `-${(bleedMm / bookDimensions.height) * 100}% -${(bleedMm / bookDimensions.width) * 100}%` 
+                                                               : '0'
+                                                         }}
+                                                     >
                                                         {/* Find image for current variant & page */}
                                                         {(() => {
                                                            const bgImage = selectedBook.contentConfig.images.find(

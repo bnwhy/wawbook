@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Wand2, Cloud, Check, ChevronRight, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 import { BookConfig, Gender, Theme, HairStyle, Outfit, Activity } from '../types';
 import { WizardVariant, WizardOption } from '../types/admin';
 import Navigation from './Navigation';
@@ -292,6 +293,23 @@ const Wizard: React.FC<WizardProps> = (props) => {
   };
 
   const handleComplete = () => {
+    // VALIDATION: Check required fields
+    if (wizardConfig) {
+      for (const tab of wizardConfig.tabs) {
+        for (const variant of tab.variants) {
+          // Check for empty text fields (marked with * in UI)
+          if (variant.type === 'text') {
+            const val = selections[tab.id]?.[variant.id];
+            if (!val || typeof val !== 'string' || val.trim() === '') {
+              toast.error(`Veuillez remplir le champ "${variant.label}"`);
+              setActiveTabId(tab.id); // Switch to the tab with the error
+              return; // Stop submission
+            }
+          }
+        }
+      }
+    }
+
     // Map dynamic selections to BookConfig
     // For now, we map "child" tab to legacy fields if possible for compatibility
     const childTab = selections['child'] || {};

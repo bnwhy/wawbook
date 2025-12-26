@@ -90,11 +90,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                   {menu.type === 'simple' && menu.items && (
                     <div className="flex flex-col gap-1 p-2">
                       {menu.items.map((item, i) => (
-                        <Link key={i} href={getLink(menu.basePath || '', item as string)}>
-                          <a className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2 whitespace-nowrap">
+                        <Link key={i} href={getLink(menu.basePath || '', item as string)} className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2 whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
                             {item as string}
-                          </a>
                         </Link>
                       ))}
                     </div>
@@ -108,11 +106,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                           <h4 className="font-display font-black text-cloud-blue mb-3 px-2 text-lg">{col.title}</h4>
                           <div className="flex flex-col gap-1">
                             {col.items.map((item, j) => (
-                              <Link key={j} href={getLink(menu.basePath || '', item)}>
-                                <a className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
+                              <Link key={j} href={getLink(menu.basePath || '', item)} className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
                                   <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
                                   {item}
-                                </a>
                               </Link>
                             ))}
                           </div>
@@ -125,11 +121,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                   {menu.type === 'grid' && menu.items && (
                     <div className="grid grid-cols-2 gap-2 p-4 w-[400px]">
                       {menu.items.map((item, i) => (
-                        <Link key={i} href={getLink(menu.basePath || '', item as string)}>
-                          <a className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
+                        <Link key={i} href={getLink(menu.basePath || '', item as string)} className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent-sun"></span>
                             {item as string}
-                          </a>
                         </Link>
                       ))}
                     </div>
@@ -144,8 +138,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           {/* CTA Button & Mobile Toggle */}
         <div className="flex items-center gap-4">
           
-          <Link href="/cart">
-            <a className="hidden md:flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
+          <Link href="/cart" className="hidden md:flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
                <ShoppingCart size={20} />
                <span>Panier</span>
                {itemCount > 0 && (
@@ -153,7 +146,6 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                   {itemCount}
                 </span>
                )}
-            </a>
           </Link>
 
           {/* Mobile Menu Button */}
@@ -192,14 +184,14 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                <div className={`overflow-hidden transition-all duration-300 ${expandedMobileItem === idx ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
                  <div className="bg-cloud-lightest/50 rounded-xl p-3 flex flex-col gap-2 mb-2">
                     {menu.type === 'simple' && menu.items && menu.items.map((item, i) => (
-                      <Link key={i} href={getLink(menu.basePath || '', item as string)}>
-                        <a className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">{item as string}</a>
+                      <Link key={i} href={getLink(menu.basePath || '', item as string)} className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">
+                        {item as string}
                       </Link>
                     ))}
 
                     {menu.type === 'grid' && menu.items && menu.items.map((item, i) => (
-                      <Link key={i} href={getLink(menu.basePath || '', item as string)}>
-                        <a className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">{item as string}</a>
+                      <Link key={i} href={getLink(menu.basePath || '', item as string)} className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">
+                        {item as string}
                       </Link>
                     ))}
 
@@ -207,8 +199,8 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                       <div key={i} className="mb-2">
                         <h5 className="text-xs font-black text-cloud-blue uppercase tracking-wider mb-1 px-2">{col.title}</h5>
                         {col.items.map((item, j) => (
-                          <Link key={j} href={getLink(menu.basePath || '', item)}>
-                            <a className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block text-sm">{item}</a>
+                          <Link key={j} href={getLink(menu.basePath || '', item)} className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block text-sm">
+                            {item}
                           </Link>
                         ))}
                       </div>

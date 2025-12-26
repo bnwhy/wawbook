@@ -134,7 +134,7 @@ const App: React.FC = () => {
             <CartPage onEdit={(item) => {
               startCreation(
                 item.config.theme, 
-                item.config.appearance.activity, 
+                item.config.appearance?.activity, 
                 item.bookTitle, 
                 item.config.characters,
                 item.id

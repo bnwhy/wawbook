@@ -110,6 +110,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const contextBook = books.find(b => b.id === selectedBookId);
   const [draftBook, setDraftBook] = useState<BookProduct | null>(null);
+  const selectedBook = draftBook || contextBook;
   const [activeRightTab, setActiveRightTab] = useState<'layers' | 'properties'>('layers');
 
   // Drag & Drop State
@@ -251,8 +252,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setDraftBook(null);
     }
   }, [contextBook?.id]); // Only sync on ID change, not every update
-
-  const selectedBook = draftBook || contextBook;
 
   // Drag Logic Effect
   React.useEffect(() => {

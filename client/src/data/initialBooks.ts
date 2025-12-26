@@ -251,7 +251,7 @@ const RICH_CONTENT_CONFIG = {
     {
       id: 't-cover-title',
       label: 'Titre du livre',
-      type: 'fixed',
+      type: 'fixed' as const,
       content: "L'Aventurier du Monde",
       position: { pageIndex: 0, zoneId: 'body', x: 10, y: 15, width: 80, rotation: 0 },
       style: { fontSize: '48px', fontFamily: 'serif', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' }
@@ -259,7 +259,7 @@ const RICH_CONTENT_CONFIG = {
     {
       id: 't-cover-subtitle',
       label: 'Sous-titre',
-      type: 'variable',
+      type: 'variable' as const,
       content: "Une aventure de {childName}",
       position: { pageIndex: 0, zoneId: 'body', x: 10, y: 25, width: 80, rotation: 0 },
       style: { fontSize: '24px', fontFamily: 'sans-serif', fontWeight: 'normal', color: '#f0f0f0', textAlign: 'center' }
@@ -268,7 +268,7 @@ const RICH_CONTENT_CONFIG = {
     {
       id: 't-p1-dedication',
       label: 'Dédicace',
-      type: 'fixed',
+      type: 'fixed' as const,
       content: "Pour {childName},\n\nQue ce livre t'inspire à explorer le monde avec curiosité et courage.\n\nAvec tout notre amour.",
       position: { pageIndex: 1, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
       style: { fontSize: '18px', fontFamily: 'serif', fontStyle: 'italic', color: '#333333', textAlign: 'center' }
@@ -277,7 +277,7 @@ const RICH_CONTENT_CONFIG = {
     {
       id: 't-p2-story',
       label: 'Texte histoire',
-      type: 'fixed',
+      type: 'fixed' as const,
       content: "Il était une fois, un jeune explorateur nommé {childName}. Depuis sa fenêtre, {childName} rêvait de terres lointaines et de montagnes mystérieuses.",
       position: { pageIndex: 2, zoneId: 'body', x: 10, y: 70, width: 80, rotation: 0 },
       style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
@@ -286,7 +286,7 @@ const RICH_CONTENT_CONFIG = {
     {
       id: 't-p3-story',
       label: 'Texte histoire',
-      type: 'fixed',
+      type: 'fixed' as const,
       content: "Un beau matin, {childName} prépara son sac à dos. 'Je suis prêt pour l'aventure !' s'écria-t-il avec enthousiasme.",
       position: { pageIndex: 3, zoneId: 'body', x: 10, y: 10, width: 80, rotation: 0 },
       style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
@@ -295,7 +295,7 @@ const RICH_CONTENT_CONFIG = {
     {
       id: 't-back-synopsis',
       label: 'Synopsis',
-      type: 'fixed',
+      type: 'fixed' as const,
       content: "Découvrez l'histoire incroyable d'un enfant qui part à la découverte du monde. Une épopée pleine de surprises et de rencontres inoubliables.",
       position: { pageIndex: 4, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
       style: { fontSize: '16px', fontFamily: 'sans-serif', color: '#ffffff', textAlign: 'center' }
@@ -347,7 +347,7 @@ const DEFAULT_FEATURES = {
   formats: ['Broché : 21,5 x 25,8 cm', 'Relié : 22,2 x 26,5 cm'],
   dimensions: { width: 210, height: 210 },
   printConfig: {
-    bindingType: 'hardcover',
+    bindingType: 'hardcover' as const,
     cover: {
       bleedMm: 20, 
       safeMarginMm: 8,

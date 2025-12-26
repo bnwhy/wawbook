@@ -125,6 +125,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [showGrid, setShowGrid] = useState(false);
   const [gridSizeMm, setGridSizeMm] = useState(10); // 10mm grid default
   const [snapToGrid, setSnapToGrid] = useState(false);
+  const [avatarFilters, setAvatarFilters] = useState<Record<string, string>>({}); // Top-level state for avatar filters
 
   // Keyboard Nudge Logic
   React.useEffect(() => {
@@ -3356,14 +3357,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           const targetTab = selectedBook.wizardConfig.tabs.find(t => t.id === (selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id));
                           if (!targetTab) return <div className="text-gray-400">Aucun personnage trouvé.</div>;
 
-                          const [filters, setFilters] = useState<Record<string, string>>({});
-
                           // Filter options variants only
                           const optionVariants = targetTab.variants.filter(v => v.type === 'options');
 
                           const combinations = generateAvatarCombinations(targetTab).filter(combo => {
                               // Apply filters
-                              return Object.entries(filters).every(([variantId, optionId]) => {
+                              return Object.entries(avatarFilters).every(([variantId, optionId]) => {
                                   if (!optionId) return true;
                                   return combo.parts.some((p: any) => p.variantId === variantId && p.id === optionId);
                               });
@@ -3381,8 +3380,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             <div key={variant.id} className="flex flex-col gap-1 min-w-[140px]">
                                                 <label className="text-[10px] font-bold text-slate-500 uppercase">{variant.label}</label>
                                                 <select
-                                                    value={filters[variant.id] || ''}
-                                                    onChange={(e) => setFilters(prev => ({ ...prev, [variant.id]: e.target.value }))}
+                                                    value={avatarFilters[variant.id] || ''}
+                                                    onChange={(e) => setAvatarFilters(prev => ({ ...prev, [variant.id]: e.target.value }))}
                                                     className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white outline-none focus:ring-1 focus:ring-indigo-500"
                                                 >
                                                     <option value="">Tous</option>
@@ -3394,9 +3393,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         ))}
                                         <div className="ml-auto">
                                             <button 
-                                                onClick={() => setFilters({})}
+                                                onClick={() => setAvatarFilters({})}
                                                 className="text-xs text-slate-500 hover:text-red-500 underline"
-                                                disabled={Object.values(filters).every(v => !v)}
+                                                disabled={Object.values(avatarFilters).every(v => !v)}
                                             >
                                                 Réinitialiser
                                             </button>

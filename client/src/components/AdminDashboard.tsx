@@ -420,8 +420,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
              type: v.type,
              options: v.options,
              minLength: v.minLength,
-             maxLength: v.maxLength,
-             thumbnail: v.thumbnail
+             maxLength: v.maxLength
+             // Thumbnail excluded from export
           }))
         })),
         avatarMappings: selectedBook.wizardConfig.avatarMappings
@@ -4552,25 +4552,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                   return (
                                                      <>
-                                                        <div className="flex justify-end mb-4">
-                                                           <button
-                                                              onClick={() => {
-                                                                 if (confirm("Supprimer cet élément ?")) {
-                                                                    if (isText) {
-                                                                       const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== layer.id);
-                                                                       handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                                                    } else {
-                                                                       const newImgs = (selectedBook.contentConfig.imageElements || []).filter(i => i.id !== layer.id);
-                                                                       handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
-                                                                    }
-                                                                    setActiveLayerId(null);
-                                                                 }
-                                                              }}
-                                                              className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-bold transition-colors border border-red-200"
-                                                           >
-                                                              <Trash2 size={14} /> Supprimer l'élément
-                                                           </button>
-                                                        </div>
+                                                        
 
                                                         {/* Common Props */}
                                                         <div>
@@ -4867,27 +4849,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                
                                                {/* Delete Layer Button - Fixed at bottom of properties panel */}
                                                <div className="mt-auto p-4 border-t border-gray-200 bg-white">
-                                                  <button
-                                                     onClick={() => {
-                                                        if (!confirm('Voulez-vous vraiment supprimer ce calque ?')) return;
-                                                        
-                                                        const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
-                                                        const isText = !!textLayer;
-                                                        
-                                                        if (isText) {
-                                                           const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== activeLayerId);
-                                                           handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                                        } else {
-                                                           const newImgs = (selectedBook.contentConfig.imageElements || []).filter(i => i.id !== activeLayerId);
-                                                           handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
-                                                        }
-                                                        setActiveLayerId(null);
-                                                     }}
-                                                     className="w-full py-2.5 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors shadow-sm"
-                                                  >
-                                                     <Trash2 size={16} />
-                                                     Supprimer ce calque
-                                                  </button>
+                                                  
                                                </div>
                                                </>
                                             ) : (

@@ -4326,6 +4326,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   const pagePct = (pageWidth / totalWidth) * 100;
                                                   const spinePct = (spineWidth / totalWidth) * 100;
 
+                                                  // Shared config for cover spread
+                                                  const coverConfig = selectedBook.features?.printConfig?.cover;
+                                                  const bleedMm = coverConfig?.bleedMm;
+
                                                   const renderPageContent = (targetPage: any, label: string, position?: 'left' | 'right') => {
                                                        if (!targetPage) return <div style={{width: `${pagePct}%`}} className="bg-gray-100 flex items-center justify-center text-gray-400">Page manquante</div>;
 
@@ -4338,10 +4342,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           : selectedBook.features?.printConfig?.interior;
                                                           
                                                        const safeMarginMm = config?.safeMarginMm;
-                                                       const bleedMm = config?.bleedMm;
-
+                                                       // bleedMm is now from outer scope for covers, or re-calculated if needed (but cover spread logic implies cover config)
+                                                       // Actually, let's keep local bleedMm variable for renderPageContent but rename or rely on the outer one since we are in cover spread block
+                                                       
                                                        return (
-                                                       <div 
+                                                       <div  
                                                            style={{ width: `${pagePct}%` }}
                                                           className={`h-full relative border-r border-dashed border-gray-300 last:border-0 group/subpage ${showGrid ? 'overflow-visible' : 'overflow-hidden'}`}
                                                            onClick={(e) => {

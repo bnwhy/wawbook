@@ -3930,13 +3930,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             aspectRatio: (() => {
                                                 if (viewMode === 'spread') {
                                                     // Determine if we are viewing cover or interior spread
-                                                    const idx = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
-                                                    const isCover = idx === 0 || idx === selectedBook.contentConfig.pages.length - 1;
+                                                    const pages = selectedBook.contentConfig?.pages || [];
+                                                    const idx = pages.findIndex(p => p.id === selectedPageId);
+                                                    const isCover = idx === 0 || idx === pages.length - 1;
                                                     
                                                     if (isCover) {
                                                         const spineW = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
-                                                        const totalW = (bookDimensions.width * 2) + spineW;
-                                                        return `${totalW / bookDimensions.height}/1`;
+                                                        // Use bookDimensions from state, safe guard against 0 height
+                                                        const h = bookDimensions.height || 210;
+                                                        const w = bookDimensions.width || 210;
+                                                        const totalW = (w * 2) + spineW;
+                                                        return `${totalW / h}/1`;
                                                     }
                                                     
                                                     return `${aspectRatio * 2}/1`;

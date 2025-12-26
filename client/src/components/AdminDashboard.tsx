@@ -4266,7 +4266,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
                                                                  </div>
                                                               )}
-                                                              {/* Delete button for active image element */}
                                                               {activeLayerId === el.id && (
                                                                  <button
                                                                     onClick={(e) => {
@@ -4328,7 +4327,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                      });
                                                                  })()}
                                                               </div>
-                                                              {/* Delete button for active text element */}
                                                               {activeLayerId === text.id && (
                                                                  <button
                                                                     onClick={(e) => {

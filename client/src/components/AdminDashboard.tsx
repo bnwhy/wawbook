@@ -4359,10 +4359,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               <div className="absolute inset-0 border-2 border-brand-coral z-40 pointer-events-none"></div>
                                                            )}
 
+                                                           {/* TRIM LINE (Page Boundary) */}
+                                                           {showGrid && (
+                                                               <div className="absolute inset-0 border border-slate-900/20 z-40 pointer-events-none"></div>
+                                                           )}
+
                                                            {/* 0. BLEED GUIDE (Fonds Perdus) - Outside Trim */}
                                                            {bleedMm && showGrid && (
                                                               <div 
-                                                                 className="absolute border border-cyan-500 border-dashed pointer-events-none z-50 opacity-60"
+                                                                 className="absolute border-2 border-cyan-500 border-dashed pointer-events-none z-50 opacity-75"
                                                                  style={{
                                                                     left: `-${(bleedMm / bookDimensions.width) * 100}%`,
                                                                     top: `-${(bleedMm / bookDimensions.height) * 100}%`,
@@ -4370,7 +4375,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
                                                                  }}
                                                               >
-                                                                 <div className="absolute -top-3 left-0 text-cyan-600 text-[8px] font-bold uppercase whitespace-nowrap bg-white/80 px-1 rounded shadow-sm">
+                                                                 <div className="absolute -top-4 left-0 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200">
                                                                     Fonds Perdus ({bleedMm}mm)
                                                                  </div>
                                                               </div>
@@ -4409,9 +4414,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            <div 
                                                                className="absolute flex items-center justify-center bg-gray-50"
                                                                style={{
-                                                                  inset: showGrid && bleedMm 
-                                                                     ? `-${(bleedMm / bookDimensions.height) * 100}% -${(bleedMm / bookDimensions.width) * 100}%` 
-                                                                     : '0'
+                                                                  top: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
+                                                                  left: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
+                                                                  right: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
+                                                                  bottom: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
                                                                }}
                                                            >
                                                               {(() => {
@@ -4540,10 +4546,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         </div>
                                                      )}
                                                      
+                                                     {/* TRIM LINE (Page Boundary) */}
+                                                     {showGrid && (
+                                                         <div className="absolute inset-0 border border-slate-900/20 z-40 pointer-events-none"></div>
+                                                     )}
+
                                                      {/* 0. BLEED GUIDE (Fonds Perdus) - Outside Trim */}
                                                      {bleedMm && showGrid && (
                                                         <div 
-                                                           className="absolute border border-cyan-500 border-dashed pointer-events-none z-50 opacity-60"
+                                                           className="absolute border-2 border-cyan-500 border-dashed pointer-events-none z-50 opacity-75"
                                                            style={{
                                                               left: `-${(bleedMm / bookDimensions.width) * 100}%`,
                                                               top: `-${(bleedMm / bookDimensions.height) * 100}%`,
@@ -4551,7 +4562,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
                                                            }}
                                                         >
-                                                           <div className="absolute -top-3 left-0 text-cyan-600 text-[8px] font-bold uppercase whitespace-nowrap bg-white/80 px-1 rounded shadow-sm">
+                                                           <div className="absolute -top-4 left-0 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200">
                                                               Fonds Perdus ({bleedMm}mm)
                                                            </div>
                                                         </div>
@@ -4590,9 +4601,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      <div 
                                                          className="absolute flex items-center justify-center bg-gray-50"
                                                          style={{
-                                                            inset: showGrid && bleedMm 
-                                                               ? `-${(bleedMm / bookDimensions.height) * 100}% -${(bleedMm / bookDimensions.width) * 100}%` 
-                                                               : '0'
+                                                            top: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
+                                                            left: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
+                                                            right: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
+                                                            bottom: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
                                                          }}
                                                      >
                                                         {/* Find image for current variant & page */}

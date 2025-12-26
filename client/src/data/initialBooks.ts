@@ -253,7 +253,22 @@ const DEFAULT_FEATURES = {
   languages: ['Français', 'Allemand', 'Anglais', 'Espagnol', 'Italien', 'Norvégien', 'Suédois', 'Luxembourgeois', 'Turc', 'Portugais', 'Catalan', 'Galicien', 'Basque', 'Néerlandais'],
   customization: ['Nom', 'Genre', 'Couleur de peau', 'Cheveux', 'Coiffure', 'Barbe', 'Vêtements', 'Lunettes'],
   pages: 40,
-  formats: ['Broché : 21,5 x 25,8 cm', 'Relié : 22,2 x 26,5 cm']
+  formats: ['Broché : 21,5 x 25,8 cm', 'Relié : 22,2 x 26,5 cm'],
+  dimensions: { width: 210, height: 210 },
+  printConfig: {
+    bindingType: 'hardcover',
+    cover: {
+      bleedMm: 20, 
+      safeMarginMm: 8,
+      paperType: 'coated_standard',
+      spineWidthMm: 8.5
+    },
+    interior: {
+      bleedMm: 3,
+      safeMarginMm: 10,
+      paperType: 'coated_standard'
+    }
+  }
 };
 
 export const INITIAL_BOOKS: BookProduct[] = [

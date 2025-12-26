@@ -4465,9 +4465,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                const pIdx = selectedBook.contentConfig.pages.findIndex(p => p.id === page.id);
                                                const isThisPageCover = pIdx === 0 || pIdx === selectedBook.contentConfig.pages.length - 1;
                                                
+                                               // Default config values for legacy data
+                                               const DEFAULT_PRINT_CONFIG = {
+                                                   cover: { bleedMm: 20, safeMarginMm: 8 },
+                                                   interior: { bleedMm: 3, safeMarginMm: 10 }
+                                               };
+
                                                const config = isThisPageCover 
-                                                  ? selectedBook.features?.printConfig?.cover 
-                                                  : selectedBook.features?.printConfig?.interior;
+                                                  ? (selectedBook.features?.printConfig?.cover || DEFAULT_PRINT_CONFIG.cover)
+                                                  : (selectedBook.features?.printConfig?.interior || DEFAULT_PRINT_CONFIG.interior);
                                                   
                                                const safeMarginMm = config?.safeMarginMm;
                                                const bleedMm = config?.bleedMm;

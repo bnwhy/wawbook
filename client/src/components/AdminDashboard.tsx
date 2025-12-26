@@ -5058,23 +5058,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            <div className="grid grid-cols-2 gap-2">
                                                               <div>
                                                                  <span className="text-[10px] text-gray-400 mr-1">X</span>
-                                                                 <input type="number" value={layer.position.x || 0} onChange={(e) => updateLayer({position: {...layer.position, x: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                                 <input type="number" value={layer.position.x || 0} onChange={(e) => updateLayer({position: {...layer.position, x: parseFloat(e.target.value) || 0}})} className="w-12 text-xs border rounded p-1" />
                                                               </div>
                                                               <div>
                                                                  <span className="text-[10px] text-gray-400 mr-1">Y</span>
-                                                                 <input type="number" value={layer.position.y || 0} onChange={(e) => updateLayer({position: {...layer.position, y: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                                 <input type="number" value={layer.position.y || 0} onChange={(e) => updateLayer({position: {...layer.position, y: parseFloat(e.target.value) || 0}})} className="w-12 text-xs border rounded p-1" />
                                                               </div>
                                                               <div>
                                                                  <span className="text-[10px] text-gray-400 mr-1">W</span>
-                                                                 <input type="number" value={layer.position.width || 0} onChange={(e) => updateLayer({position: {...layer.position, width: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                                 <input type="number" value={layer.position.width || 0} onChange={(e) => updateLayer({position: {...layer.position, width: parseFloat(e.target.value) || 0}})} className="w-12 text-xs border rounded p-1" />
                                                               </div>
                                                               <div>
                                                                  <span className="text-[10px] text-gray-400 mr-1">H</span>
-                                                                 <input type="number" value={layer.position.height || 0} onChange={(e) => updateLayer({position: {...layer.position, height: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                                 <input type="number" value={layer.position.height || 0} onChange={(e) => updateLayer({position: {...layer.position, height: parseFloat(e.target.value) || 0}})} className="w-12 text-xs border rounded p-1" />
                                                               </div>
                                                               <div>
                                                                  <span className="text-[10px] text-gray-400 mr-1">Rot</span>
-                                                                 <input type="number" value={layer.position.rotation || 0} onChange={(e) => updateLayer({position: {...layer.position, rotation: parseFloat(e.target.value)}})} className="w-12 text-xs border rounded p-1" />
+                                                                 <input type="number" value={layer.position.rotation || 0} onChange={(e) => updateLayer({position: {...layer.position, rotation: parseFloat(e.target.value) || 0}})} className="w-12 text-xs border rounded p-1" />
                                                               </div>
                                                            </div>
                                                         </div>

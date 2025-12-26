@@ -66,6 +66,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
   // State for dynamic selections: { [tabId]: { [variantId]: value } }
   const [selections, setSelections] = useState<Record<string, Record<string, any>>>({});
   const [activeTabId, setActiveTabId] = useState<string>('');
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   // Scroll to top on mount
   useEffect(() => {
@@ -123,6 +124,15 @@ const Wizard: React.FC<WizardProps> = (props) => {
         [variantId]: value
       }
     }));
+    
+    // Clear error for this field if it exists
+    if (errors[variantId]) {
+        setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors[variantId];
+            return newErrors;
+        });
+    }
   };
 
   // Helper to get resource (color/image) for a selection
@@ -294,6 +304,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
   const handleComplete = () => {
     // VALIDATION: Check required fields
+    const newErrors: Record<string, boolean> = {};
+    let firstErrorTabId: string | null = null;
+
     if (wizardConfig) {
       for (const tab of wizardConfig.tabs) {
         for (const variant of tab.variants) {
@@ -301,13 +314,25 @@ const Wizard: React.FC<WizardProps> = (props) => {
           if (variant.type === 'text') {
             const val = selections[tab.id]?.[variant.id];
             if (!val || typeof val !== 'string' || val.trim() === '') {
-              toast.error(`Veuillez remplir le champ "${variant.label}"`);
-              setActiveTabId(tab.id); // Switch to the tab with the error
-              return; // Stop submission
+                newErrors[variant.id] = true;
+                if (!firstErrorTabId) {
+                    firstErrorTabId = tab.id;
+                }
             }
           }
         }
       }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        toast.error("Veuillez remplir les champs obligatoires");
+        
+        // Switch to the first tab with an error
+        if (firstErrorTabId && firstErrorTabId !== activeTabId) {
+            setActiveTabId(firstErrorTabId);
+        }
+        return; // Stop submission
     }
 
     // Map dynamic selections to BookConfig
@@ -431,7 +456,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                            type="text" 
                            value={currentValue || ''}
                            onChange={(e) => handleSelectionChange(activeTabId, variant.id, e.target.value)}
-                           className="w-full bg-[#FFFBEB] border border-gray-200 rounded-md px-4 py-2 text-cloud-dark focus:border-cloud-dark focus:ring-0 outline-none transition-colors placeholder:text-gray-300 text-sm font-medium"
+                           className={`w-full border rounded-md px-4 py-2 text-cloud-dark focus:ring-0 outline-none transition-colors placeholder:text-gray-300 text-sm font-medium ${errors[variant.id] ? 'bg-red-50 border-red-500 ring-1 ring-red-500' : 'bg-[#FFFBEB] border-gray-200 focus:border-cloud-dark'}`}
                            placeholder={`Entrez ${variant.label.toLowerCase()}...`}
                            maxLength={variant.maxLength}
                          />

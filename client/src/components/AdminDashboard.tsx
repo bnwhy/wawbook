@@ -4514,6 +4514,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                   return (
                                                      <>
+                                                        <div className="flex justify-end mb-4">
+                                                           <button
+                                                              onClick={() => {
+                                                                 if (confirm("Supprimer cet élément ?")) {
+                                                                    if (isText) {
+                                                                       const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== layer.id);
+                                                                       handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                                    } else {
+                                                                       const newImgs = (selectedBook.contentConfig.imageElements || []).filter(i => i.id !== layer.id);
+                                                                       handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+                                                                    }
+                                                                    setActiveLayerId(null);
+                                                                 }
+                                                              }}
+                                                              className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-bold transition-colors border border-red-200"
+                                                           >
+                                                              <Trash2 size={14} /> Supprimer l'élément
+                                                           </button>
+                                                        </div>
+
                                                         {/* Common Props */}
                                                         <div>
                                                            <label className="text-[10px] font-bold text-gray-500 uppercase">Label</label>

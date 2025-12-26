@@ -238,6 +238,30 @@ const DEFAULT_CONTENT_CONFIG = {
 };
 
 
+const ADVENTURE_WIZARD_CONFIG = {
+  avatarStyle: 'watercolor' as const,
+  avatarMappings: SHARED_AVATAR_MAPPINGS,
+  tabs: [
+    {
+      ...SHARED_CHILD_TAB,
+      id: 'hero', // Rename id to 'hero' for this book
+      label: 'Le Héros',
+      variants: [
+        ...SHARED_CHILD_TAB.variants,
+        {
+          id: 'outfit',
+          label: 'Tenue',
+          type: 'options' as const,
+          options: [
+            { id: 'adventurer', label: 'Aventurier' },
+            { id: 'casual', label: 'Décontracté' }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
 const RICH_CONTENT_CONFIG = {
   pages: [
     { id: 'p0', pageNumber: 0, label: 'Couverture Avant', description: 'Face avant de la couverture' },
@@ -260,7 +284,7 @@ const RICH_CONTENT_CONFIG = {
       id: 't-cover-subtitle',
       label: 'Sous-titre',
       type: 'variable',
-      content: "Une aventure de {childName}",
+      content: "Une aventure de {hero.name}",
       position: { pageIndex: 0, zoneId: 'body', x: 10, y: 25, width: 80, rotation: 0 },
       style: { fontSize: '24px', fontFamily: 'sans-serif', fontWeight: 'normal', color: '#f0f0f0', textAlign: 'center' }
     },
@@ -269,7 +293,7 @@ const RICH_CONTENT_CONFIG = {
       id: 't-p1-dedication',
       label: 'Dédicace',
       type: 'fixed',
-      content: "Pour {childName},\n\nQue ce livre t'inspire à explorer le monde avec curiosité et courage.\n\nAvec tout notre amour.",
+      content: "Pour {hero.name},\n\nQue ce livre t'inspire à explorer le monde avec curiosité et courage.\n\nAvec tout notre amour.",
       position: { pageIndex: 1, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
       style: { fontSize: '18px', fontFamily: 'serif', fontStyle: 'italic', color: '#333333', textAlign: 'center' }
     },
@@ -278,7 +302,7 @@ const RICH_CONTENT_CONFIG = {
       id: 't-p2-story',
       label: 'Texte histoire',
       type: 'fixed',
-      content: "Il était une fois, un jeune explorateur nommé {childName}. Depuis sa fenêtre, {childName} rêvait de terres lointaines et de montagnes mystérieuses.",
+      content: "Il était une fois, un jeune explorateur nommé {hero.name}. Depuis sa fenêtre, {hero.name} rêvait de terres lointaines et de montagnes mystérieuses.",
       position: { pageIndex: 2, zoneId: 'body', x: 10, y: 70, width: 80, rotation: 0 },
       style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
     },
@@ -287,7 +311,7 @@ const RICH_CONTENT_CONFIG = {
       id: 't-p3-story',
       label: 'Texte histoire',
       type: 'fixed',
-      content: "Un beau matin, {childName} prépara son sac à dos. 'Je suis prêt pour l'aventure !' s'écria-t-il avec enthousiasme.",
+      content: "Un beau matin, {hero.name} prépara son sac à dos. 'Je suis prêt pour l'aventure !' s'écria-t-il avec enthousiasme.",
       position: { pageIndex: 3, zoneId: 'body', x: 10, y: 10, width: 80, rotation: 0 },
       style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
     },
@@ -375,7 +399,7 @@ export const INITIAL_BOOKS: BookProduct[] = [
     coverImage: explorerImage,
     badgeText: 'Best-seller',
     features: DEFAULT_FEATURES,
-    wizardConfig: DEFAULT_WIZARD_CONFIG,
+    wizardConfig: ADVENTURE_WIZARD_CONFIG,
     contentConfig: RICH_CONTENT_CONFIG,
     associatedPaths: ['/products/Nouveau', '/products/Bestsellers']
   },

@@ -519,9 +519,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
              <div className="flex flex-col items-center animate-drop-in z-20">
                 <div className="w-64 h-64 rounded-full bg-white border-[8px] border-white shadow-xl overflow-hidden relative">
                    {renderCharacterAvatar(
-                     activeTab?.variants.some(v => v.id === 'skinTone' || v.id === 'hairColor') 
+                     activeTab?.type === 'character' 
                        ? activeTabId 
-                       : 'child'
+                       : (wizardConfig.tabs.find(t => t.type === 'character')?.id || 'child')
                    )}
                 </div>
              </div>

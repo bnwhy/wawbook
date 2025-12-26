@@ -10,6 +10,7 @@ import { MenuItem, MenuColumn } from '../types/menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 
 import { generateCoverPDF, generateInteriorPDF } from '../utils/pdfGenerator';
+import { parseSlaFile } from '../utils/slaImporter';
 
 const slugify = (text: string) => {
   return text
@@ -363,6 +364,44 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const scribusInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleScribusImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const content = e.target?.result as string;
+        try {
+            const importedConfig = parseSlaFile(content);
+            if (importedConfig) {
+                if (window.confirm("Attention : Cela va remplacer la structure actuelle (textes et images) par le contenu du fichier Scribus. Continuer ?")) {
+                    handleSaveBook({
+                        ...selectedBook!,
+                        contentConfig: {
+                            ...selectedBook!.contentConfig,
+                            pages: importedConfig.pages?.length ? importedConfig.pages : selectedBook!.contentConfig.pages,
+                            texts: importedConfig.texts || [],
+                            imageElements: importedConfig.imageElements || [],
+                            // Preserve backgrounds as Scribus importer doesn't handle them perfectly yet
+                            images: selectedBook!.contentConfig.images
+                        }
+                    });
+                    toast.success("Import Scribus réussi !");
+                }
+            } else {
+                toast.error("Échec de l'import : format invalide ou fichier vide");
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Erreur lors de l'analyse du fichier Scribus");
+        }
+    };
+    reader.readAsText(file);
+    // Reset input
+    event.target.value = '';
+  };
 
   const handleExportContent = () => {
     if (!selectedBook) return;
@@ -3639,6 +3678,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   ref={fileInputRef}
                                   onChange={handleImportContent}
                                   accept=".json"
+                                  className="hidden"
+                              />
+
+                              <div className="w-px h-6 bg-gray-200 mx-2"></div>
+
+                              <button 
+                                  onClick={() => scribusInputRef.current?.click()}
+                                  className="p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded shrink-0 border border-indigo-200" 
+                                  title="Importer depuis Scribus (.sla)"
+                              >
+                                  <FileText size={18} />
+                              </button>
+                              <input 
+                                  type="file" 
+                                  ref={scribusInputRef}
+                                  onChange={handleScribusImport}
+                                  accept=".sla,.xml"
                                   className="hidden"
                               />
                           </div>

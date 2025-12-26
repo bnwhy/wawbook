@@ -3121,13 +3121,86 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                <div className="max-w-6xl mx-auto h-[calc(100vh-180px)] flex flex-col">
                   
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 shrink-0">
-                     <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <Eye size={24} className="text-indigo-600" />
-                        Prévisualisation des Personnages
-                     </h2>
-                     <p className="text-slate-500 mb-6">
-                        Configurez l'apparence finale (avatar) pour chaque combinaison d'options possible. Ces images seront affichées dans le Wizard lors de la sélection.
-                     </p>
+                     <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <Eye size={24} className="text-indigo-600" />
+                                Prévisualisation des Personnages
+                            </h2>
+                            <p className="text-sm text-slate-500 mt-1">
+                                Configurez l'apparence finale (avatar) pour chaque combinaison d'options possible.
+                                Ces images seront affichées dans le Wizard lors de la sélection.
+                            </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
+                            <button 
+                                onClick={() => {
+                                    if (!selectedBook) return;
+                                    const exportData = {
+                                        version: '1.0',
+                                        type: 'avatar_mappings',
+                                        timestamp: new Date().toISOString(),
+                                        bookId: selectedBook.id,
+                                        avatarMappings: selectedBook.wizardConfig.avatarMappings
+                                    };
+                                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `${slugify(selectedBook.name || 'book')}_avatars_export_${new Date().toISOString().slice(0, 10)}.json`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(url);
+                                    toast.success('Mappings Avatars exportés');
+                                }}
+                                className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                title="Exporter les mappings (JSON)"
+                            >
+                                <Download size={18} />
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = '.json';
+                                    input.onchange = (e: any) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const reader = new FileReader();
+                                        reader.onload = (re: any) => {
+                                            try {
+                                                const imported = JSON.parse(re.target.result);
+                                                if (!imported.avatarMappings) {
+                                                    toast.error('Format invalide (avatarMappings manquant)');
+                                                    return;
+                                                }
+                                                if (confirm('Remplacer tous les mappings d\'avatars ?')) {
+                                                    handleSaveBook({
+                                                        ...selectedBook,
+                                                        wizardConfig: {
+                                                            ...selectedBook.wizardConfig,
+                                                            avatarMappings: imported.avatarMappings
+                                                        }
+                                                    });
+                                                    toast.success('Mappings Avatars importés');
+                                                }
+                                            } catch (err) {
+                                                toast.error('Erreur de lecture du fichier');
+                                            }
+                                        };
+                                        reader.readAsText(file);
+                                    };
+                                    input.click();
+                                }}
+                                className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                title="Importer les mappings (JSON)"
+                            >
+                                <Upload size={18} />
+                            </button>
+                        </div>
+                     </div>
 
                      {/* Tab Selector */}
                      <div className="flex gap-2 border-b border-gray-100 pb-1">

@@ -4365,7 +4365,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               {(() => {
                                                                  const bgImage = selectedBook.contentConfig.images.find(
                                                                     img => img.pageIndex === targetPage.pageNumber && 
-                                                                          img.combinationKey === selectedVariant
+                                                                          (!img.combinationKey || img.combinationKey === selectedVariant)
                                                                  );
                                                                  if (bgImage?.imageUrl) return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background" />;
                                                                  return null;
@@ -4374,7 +4374,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                            {/* 2. IMAGE LAYERS */}
                                                            {(selectedBook.contentConfig.imageElements || [])
-                                                              .filter(el => el.position.pageIndex === targetPage.pageNumber && el.combinationKey === selectedVariant)
+                                                              .filter(el => el.position.pageIndex === targetPage.pageNumber && (!el.combinationKey || el.combinationKey === selectedVariant))
                                                               .map(el => (
                                                                  <div
                                                                     key={el.id}
@@ -4408,7 +4408,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                            {/* 3. TEXT LAYERS */}
                                                            {selectedBook.contentConfig.texts
-                                                              .filter(t => t.position.pageIndex === targetPage.pageNumber && t.combinationKey === selectedVariant)
+                                                              .filter(t => t.position.pageIndex === targetPage.pageNumber && (!t.combinationKey || t.combinationKey === selectedVariant))
                                                               .map(text => (
                                                                  <div 
                                                                     key={text.id}
@@ -4540,7 +4540,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         {(() => {
                                                            const bgImage = selectedBook.contentConfig.images.find(
                                                               img => img.pageIndex === page.pageNumber && 
-                                                                    img.combinationKey === selectedVariant
+                                                                    (!img.combinationKey || img.combinationKey === selectedVariant)
                                                            );
                                                            
                                                            if (bgImage?.imageUrl) {
@@ -4551,7 +4551,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      </div>
                                                      {/* 2. IMAGE LAYERS (Stickers/Overlays) */}
                                                      {(selectedBook.contentConfig.imageElements || [])
-                                                        .filter(el => el.position.pageIndex === page.pageNumber && el.combinationKey === selectedVariant)
+                                                        .filter(el => el.position.pageIndex === page.pageNumber && (!el.combinationKey || el.combinationKey === selectedVariant))
                                                         .map(el => (
                                                            <div
                                                               key={el.id}
@@ -4585,7 +4585,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      }
                                                      {/* 3. TEXT LAYERS */}
                                                      {selectedBook.contentConfig.texts
-                                                        .filter(t => t.position.pageIndex === page.pageNumber && t.combinationKey === selectedVariant)
+                                                        .filter(t => t.position.pageIndex === page.pageNumber && (!t.combinationKey || t.combinationKey === selectedVariant))
                                                         .map(text => (
                                                            <div 
                                                               key={text.id}

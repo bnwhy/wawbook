@@ -313,10 +313,25 @@ const Wizard: React.FC<WizardProps> = (props) => {
           // Check for empty text fields (marked with * in UI)
           if (variant.type === 'text') {
             const val = selections[tab.id]?.[variant.id];
+            
+            // Check for empty required fields
             if (!val || typeof val !== 'string' || val.trim() === '') {
                 newErrors[variant.id] = true;
                 if (!firstErrorTabId) {
                     firstErrorTabId = tab.id;
+                }
+            } else {
+                // Check min length if specified
+                if (variant.minLength && val.length < variant.minLength) {
+                    newErrors[variant.id] = true;
+                    if (!firstErrorTabId) firstErrorTabId = tab.id;
+                    toast.error(`Le champ "${variant.label}" doit contenir au moins ${variant.minLength} caractères`);
+                }
+                // Check max length if specified (although input limits it, good to double check)
+                if (variant.maxLength && val.length > variant.maxLength) {
+                    newErrors[variant.id] = true;
+                    if (!firstErrorTabId) firstErrorTabId = tab.id;
+                    toast.error(`Le champ "${variant.label}" ne doit pas dépasser ${variant.maxLength} caractères`);
                 }
             }
           }
@@ -326,7 +341,16 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
     if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
-        toast.error("Veuillez remplir les champs obligatoires");
+        // Only show generic error if specific length errors weren't shown
+        if (!Object.keys(newErrors).some(k => {
+             // Find variant to check if it failed due to length
+             const allVariants = wizardConfig?.tabs.flatMap(t => t.variants) || [];
+             const v = allVariants.find(v => v.id === k);
+             const val = selections[wizardConfig?.tabs.find(t => t.variants.find(va => va.id === k))?.id || '']?.[k];
+             return v && val && ((v.minLength && val.length < v.minLength) || (v.maxLength && val.length > v.maxLength));
+        })) {
+             toast.error("Veuillez remplir les champs obligatoires");
+        }
         
         // Switch to the first tab with an error
         if (firstErrorTabId && firstErrorTabId !== activeTabId) {

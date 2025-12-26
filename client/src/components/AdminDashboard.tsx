@@ -4311,41 +4311,46 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
                                                    const frontCover = selectedBook.contentConfig.pages[0];
                                                    
-                                                   const pageWidth = selectedBook.features?.dimensions?.width || 210;
+                                                   const trimWidth = selectedBook.features?.dimensions?.width || 210;
+                                                  const trimHeight = selectedBook.features?.dimensions?.height || 210;
+                                                  
                                                   // Default to 10mm for visualization if 0, but show warning
                                                   const rawSpineWidth = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
                                                   const spineWidth = rawSpineWidth > 0 ? rawSpineWidth : 0;
                                                   
-                                                  // Calculate percentages based on total width
-                                                  const totalWidth = (pageWidth * 2) + (spineWidth || 0);
-                                                  
-                                                  // If spine is 0, we still want to visualize the boundary, maybe add a 1px line?
-                                                  // Or better, we assume 0 means "no spine configured" so hidden is technically correct.
-                                                  // But user says "I don't see it", implying they expect to.
-                                                  
-                                                  const pagePct = (pageWidth / totalWidth) * 100;
-                                                  const spinePct = (spineWidth / totalWidth) * 100;
-
                                                   // Shared config for cover spread
                                                   const coverConfig = selectedBook.features?.printConfig?.cover;
                                                   const bleedMm = coverConfig?.bleedMm || 0;
+                                                  
+                                                  // Calculate dimensions INCLUDING bleed
+                                                  // Spread Structure: [Bleed][BackPage][Spine][FrontPage][Bleed]
+                                                  // Vertical: [Bleed][Page][Bleed]
+                                                  
+                                                  const leftPageWidth = trimWidth + bleedMm;
+                                                  const rightPageWidth = trimWidth + bleedMm;
+                                                  
+                                                  const totalSpreadWidth = leftPageWidth + spineWidth + rightPageWidth;
+                                                  const totalSpreadHeight = trimHeight + (bleedMm * 2);
+                                                  
+                                                  const leftPagePct = (leftPageWidth / totalSpreadWidth) * 100;
+                                                  const rightPagePct = (rightPageWidth / totalSpreadWidth) * 100;
+                                                  const spinePct = (spineWidth / totalSpreadWidth) * 100;
 
-                                                  const renderPageContent = (targetPage: any, label: string, position?: 'left' | 'right') => {
-                                                       if (!targetPage) return <div style={{width: `${pagePct}%`}} className="bg-gray-100 flex items-center justify-center text-gray-400">Page manquante</div>;
+                                                  const renderPageContent = (targetPage: any, label: string, position: 'left' | 'right') => {
+                                                       if (!targetPage) return <div style={{width: `${position === 'left' ? leftPagePct : rightPagePct}%`}} className="bg-gray-100 flex items-center justify-center text-gray-400">Page manquante</div>;
 
-                                                       // Determine margin config for this specific page (Cover Spread sub-pages)
-                                                       const pIdx = selectedBook.contentConfig.pages.findIndex(p => p.id === targetPage.id);
-                                                       const isThisPageCover = pIdx === 0 || pIdx === selectedBook.contentConfig.pages.length - 1;
-                                                       
-                                                       const config = isThisPageCover 
-                                                          ? selectedBook.features?.printConfig?.cover 
-                                                          : selectedBook.features?.printConfig?.interior;
-                                                          
+                                                       const config = selectedBook.features?.printConfig?.cover;
                                                        const safeMarginMm = config?.safeMarginMm || 0;
                                                        
+                                                       // Container Dimensions for this specific page slot
+                                                       // For Left (Back): Bleed is on Left, Top, Bottom. Right is Spine.
+                                                       // For Right (Front): Bleed is on Right, Top, Bottom. Left is Spine.
+                                                       const containerWidthMm = trimWidth + bleedMm;
+                                                       const containerHeightMm = trimHeight + (bleedMm * 2);
+
                                                        return (
                                                        <div  
-                                                           style={{ width: `${pagePct}%` }}
+                                                           style={{ width: `${position === 'left' ? leftPagePct : rightPagePct}%` }}
                                                           className={`h-full relative border-r border-dashed border-gray-300 last:border-0 group/subpage ${showGrid ? 'overflow-visible' : 'overflow-hidden'}`}
                                                            onClick={(e) => {
                                                                e.stopPropagation();
@@ -4363,28 +4368,40 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            )}
 
                                                            {/* TRIM LINE (Page Boundary) */}
+                                                           {/* This visualizes the Trim Box relative to our Bleed-Inclusive Container */}
                                                            {showGrid && (
-                                                               <div className={`absolute inset-0 border-t border-b ${position === 'left' ? 'border-l border-r-0' : position === 'right' ? 'border-r border-l-0' : 'border'} border-slate-900/20 z-40 pointer-events-none`}></div>
+                                                               <div 
+                                                                 className={`absolute border-t border-b ${position === 'left' ? 'border-l border-r-0' : 'border-r border-l-0'} border-slate-900/20 z-40 pointer-events-none`}
+                                                                 style={{
+                                                                     top: `${(bleedMm / containerHeightMm) * 100}%`,
+                                                                     bottom: `${(bleedMm / containerHeightMm) * 100}%`,
+                                                                     left: position === 'left' ? `${(bleedMm / containerWidthMm) * 100}%` : '0',
+                                                                     right: position === 'right' ? `${(bleedMm / containerWidthMm) * 100}%` : '0',
+                                                                 }}
+                                                               ></div>
                                                            )}
 
-                                                           {/* 0. BLEED GUIDE (Fonds Perdus) - Outside Trim */}
+                                                           {/* BLEED GUIDE (Fonds Perdus) - Visualizing the cut zone */}
+                                                           {/* Since the container IS the bleed size, the edges of the container ARE the bleed edges. */}
+                                                           {/* We can highlight the bleed area (the area outside the trim line) */}
                                                            {bleedMm && showGrid && (
-                                                              <div 
-                                                                 className={`absolute border-dashed border-cyan-500 pointer-events-none z-50 opacity-75
-                                                                    border-t-2 border-b-2
-                                                                    ${position === 'left' ? 'border-l-2 border-r-0' : ''}
-                                                                    ${position === 'right' ? 'border-r-2 border-l-0' : ''}
-                                                                    ${!position ? 'border-2' : ''}
-                                                                 `}
-                                                                 style={{
-                                                                    left: position === 'right' ? '0' : `-${(bleedMm / bookDimensions.width) * 100}%`,
-                                                                    top: `-${(bleedMm / bookDimensions.height) * 100}%`,
-                                                                    right: position === 'left' ? '0' : `-${(bleedMm / bookDimensions.width) * 100}%`,
-                                                                    bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
-                                                                 }}
-                                                              >
+                                                              <div className="absolute inset-0 pointer-events-none z-50">
+                                                                  {/* We draw the area OUTSIDE the trim line */}
+                                                                  {/* Top Bleed Strip */}
+                                                                  <div className="absolute top-0 left-0 right-0 bg-cyan-500/10 border-b border-cyan-500 border-dashed" style={{ height: `${(bleedMm / containerHeightMm) * 100}%` }}></div>
+                                                                  {/* Bottom Bleed Strip */}
+                                                                  <div className="absolute bottom-0 left-0 right-0 bg-cyan-500/10 border-t border-cyan-500 border-dashed" style={{ height: `${(bleedMm / containerHeightMm) * 100}%` }}></div>
+                                                                  {/* Side Bleed Strip */}
+                                                                  <div 
+                                                                     className={`absolute top-0 bottom-0 ${position === 'left' ? 'left-0 border-r' : 'right-0 border-l'} bg-cyan-500/10 border-cyan-500 border-dashed`}
+                                                                     style={{ 
+                                                                         width: `${(bleedMm / containerWidthMm) * 100}%`,
+                                                                         [position === 'left' ? 'left' : 'right']: 0
+                                                                     }}
+                                                                  ></div>
+                                                                  
                                                                  {(position === 'left' || !position) && (
-                                                                     <div className="absolute -top-4 left-0 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200">
+                                                                     <div className="absolute top-1 left-1 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200 z-50">
                                                                         Fonds Perdus ({bleedMm}mm)
                                                                      </div>
                                                                  )}
@@ -4398,13 +4415,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     border-t border-b
                                                                     ${position === 'left' ? 'border-l border-r-0' : ''}
                                                                     ${position === 'right' ? 'border-r border-l-0' : ''}
-                                                                    ${!position ? 'border' : ''}
                                                                  `}
                                                                  style={{
-                                                                    left: position === 'right' ? '0' : `${(safeMarginMm / bookDimensions.width) * 100}%`,
-                                                                    top: `${(safeMarginMm / bookDimensions.height) * 100}%`,
-                                                                    right: position === 'left' ? '0' : `${(safeMarginMm / bookDimensions.width) * 100}%`,
-                                                                    bottom: `${(safeMarginMm / bookDimensions.height) * 100}%`,
+                                                                    // Margin is relative to TRIM. So we add/subtract from Trim position.
+                                                                    // Top Trim is at bleedMm. Safe Top is at bleedMm + safeMarginMm
+                                                                    top: `${((bleedMm + safeMarginMm) / containerHeightMm) * 100}%`,
+                                                                    bottom: `${((bleedMm + safeMarginMm) / containerHeightMm) * 100}%`,
+                                                                    
+                                                                    // Left Page: Left Trim is at bleedMm. Safe Left is at bleedMm + safeMarginMm.
+                                                                    // Right Page: Left Trim is at 0. Safe Left is at safeMarginMm.
+                                                                    left: position === 'left' 
+                                                                         ? `${((bleedMm + safeMarginMm) / containerWidthMm) * 100}%` 
+                                                                         : `${(safeMarginMm / containerWidthMm) * 100}%`,
+                                                                         
+                                                                    right: position === 'right'
+                                                                         ? `${((bleedMm + safeMarginMm) / containerWidthMm) * 100}%`
+                                                                         : `${(safeMarginMm / containerWidthMm) * 100}%`
                                                                  }}
                                                               >
                                                                  {(position === 'right' || !position) && (
@@ -4415,27 +4441,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               </div>
                                                            )}
 
-                                                           {/* GRID OVERLAY (Cover Spread) */}
-                                                           {showGrid && (
-                                                               <div className="absolute inset-0 z-40 pointer-events-none" style={{
-                                                                   backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)`,
-                                                                   backgroundSize: `${(10 / bookDimensions.width) * 100}% ${(10 / bookDimensions.height) * 100}%`
-                                                               }}>
-                                                                    {/* Center Lines */}
-                                                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-indigo-300 opacity-50"></div>
-                                                                    <div className="absolute top-1/2 left-0 right-0 h-px bg-indigo-300 opacity-50"></div>
-                                                               </div>
-                                                           )}
-
                                                            {/* 1. BASE LAYER */}
                                                            <div 
-                                                               className="absolute flex items-center justify-center bg-gray-50"
-                                                               style={{
-                                                                  top: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
-                                                                  left: showGrid && bleedMm && position !== 'right' ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
-                                                                  right: showGrid && bleedMm && position !== 'left' ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
-                                                                  bottom: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
-                                                               }}
+                                                               className="absolute inset-0 flex items-center justify-center bg-gray-50"
+                                                               // The base layer now fills the entire container (Bleed Inclusive)
                                                            >
                                                               {(() => {
                                                                  const bgImage = selectedBook.contentConfig.images.find(
@@ -4463,6 +4472,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     }}
                                                                     className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
                                                                     style={{
+                                                                       // Positions are relative to the Container (0% = Bleed Edge)
                                                                        left: `${el.position.x}%`,
                                                                        top: `${el.position.y}%`,
                                                                        width: `${el.position.width}%`,
@@ -4497,6 +4507,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     }}
                                                                     className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                                     style={{
+                                                                       // Positions are relative to the Container (0% = Bleed Edge)
                                                                        left: `${text.position.x}%`,
                                                                        top: `${text.position.y}%`,
                                                                        width: `${text.position.width || 30}%`,
@@ -4527,24 +4538,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               <div className="absolute inset-0 bg-slate-300/50 striped-bg opacity-30 pointer-events-none"></div>
                                                               {/* Spine Bleed (Top/Bottom) */}
                                                               {bleedMm && showGrid && (
-                                                                  <div 
-                                                                     className="absolute border-t-2 border-b-2 border-cyan-500 border-dashed pointer-events-none z-50 opacity-75"
-                                                                     style={{
-                                                                        top: `-${(bleedMm / bookDimensions.height) * 100}%`,
-                                                                        bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
-                                                                        left: '-1px', // Overlap borders slightly
-                                                                        right: '-1px'
-                                                                     }}
-                                                                  ></div>
+                                                                  <div className="absolute top-0 bottom-0 left-[-1px] right-[-1px] pointer-events-none z-50">
+                                                                       <div className="absolute top-0 left-0 right-0 bg-cyan-500/10 border-b border-cyan-500 border-dashed" style={{ height: `${(bleedMm / totalSpreadHeight) * 100}%` }}></div>
+                                                                       <div className="absolute bottom-0 left-0 right-0 bg-cyan-500/10 border-t border-cyan-500 border-dashed" style={{ height: `${(bleedMm / totalSpreadHeight) * 100}%` }}></div>
+                                                                  </div>
                                                               )}
                                                               {/* Spine Base Layer extension */}
-                                                              <div className="absolute inset-0 bg-gray-50 -z-10"
-                                                                   style={{
-                                                                      top: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
-                                                                      bottom: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
-                                                                   }}
-                                                              ></div>
-
+                                                              <div className="absolute inset-0 bg-gray-50 -z-10"></div>
+                                                              
                                                               {spineWidth > 2 && (
                                                                   <span className="text-[9px] font-mono text-gray-600 -rotate-90 whitespace-nowrap select-none font-bold">
                                                                      {spineWidth}mm

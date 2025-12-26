@@ -367,24 +367,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleExportContent = () => {
     if (!selectedBook) return;
 
+    // Enhanced Export Structure
     const exportData = {
-      version: '1.0',
+      version: '1.2', // Bumped version to signify expanded scope
       timestamp: new Date().toISOString(),
       bookId: selectedBook.id,
-      wizardConfig: selectedBook.wizardConfig,
-      contentConfig: selectedBook.contentConfig
+      bookName: selectedBook.name,
+      // Full Configuration
+      wizardConfig: selectedBook.wizardConfig, // Variants
+      contentConfig: selectedBook.contentConfig, // Layers, Texts, Images, Pages
+      features: selectedBook.features, // Dimensions, Print Config
+      // Metadata
+      theme: selectedBook.theme,
+      description: selectedBook.description
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${slugify(selectedBook.name || 'book')}_content_export_${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `${slugify(selectedBook.name || 'book')}_full_config_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Configuration exportée avec succès');
+    toast.success('Configuration complète exportée avec succès');
   };
 
   const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -399,17 +406,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
         // Basic validation
         if (!importedData.wizardConfig || !importedData.contentConfig) {
-          toast.error('Format de fichier invalide');
+          toast.error('Format de fichier invalide: Configuration manquante');
           return;
         }
 
-        if (confirm('Attention : Cette action va remplacer la configuration actuelle des variantes et du contenu. Voulez-vous continuer ?')) {
+        if (confirm('Attention : Cette action va remplacer la configuration complète (variantes, contenu, dimensions). Voulez-vous continuer ?')) {
           handleSaveBook({
             ...selectedBook,
             wizardConfig: importedData.wizardConfig,
-            contentConfig: importedData.contentConfig
+            contentConfig: importedData.contentConfig,
+            // Import Features if available (dimensions, print config)
+            features: importedData.features || selectedBook.features,
+            // Import metadata if present
+            description: importedData.description || selectedBook.description,
+            theme: importedData.theme || selectedBook.theme
           });
-          toast.success('Configuration importée avec succès');
+          toast.success('Configuration complète importée avec succès');
         }
       } catch (error) {
         console.error('Import error:', error);

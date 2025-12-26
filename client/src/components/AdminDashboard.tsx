@@ -3988,8 +3988,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    const frontCover = selectedBook.contentConfig.pages[0];
                                                    
                                                    const pageWidth = selectedBook.features?.dimensions?.width || 210;
-                                                  const spineWidth = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
-                                                  const totalWidth = (pageWidth * 2) + spineWidth;
+                                                  // Default to 10mm for visualization if 0, but show warning
+                                                  const rawSpineWidth = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
+                                                  const spineWidth = rawSpineWidth > 0 ? rawSpineWidth : 0;
+                                                  
+                                                  // Calculate percentages based on total width
+                                                  const totalWidth = (pageWidth * 2) + (spineWidth || 0);
+                                                  
+                                                  // If spine is 0, we still want to visualize the boundary, maybe add a 1px line?
+                                                  // Or better, we assume 0 means "no spine configured" so hidden is technically correct.
+                                                  // But user says "I don't see it", implying they expect to.
                                                   
                                                   const pagePct = (pageWidth / totalWidth) * 100;
                                                   const spinePct = (spineWidth / totalWidth) * 100;
@@ -4105,10 +4113,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                        <div key="cover-spread" className="flex-1 bg-white relative overflow-hidden flex shadow-lg ring-1 ring-gray-200">
                                                            {renderPageContent(backCover, 'Dos / Arrière')}
                                                            {/* Spine Visualization */}
-                                                          <div style={{width: `${spinePct}%`}} className="h-full bg-gray-100 border-x border-gray-300 relative flex items-center justify-center overflow-hidden">
-                                                              <div className="absolute inset-0 bg-slate-200/50 striped-bg opacity-30 pointer-events-none"></div>
+                                                          <div 
+                                                              style={{ width: `${spinePct}%` }} 
+                                                              className="h-full bg-gray-200 border-x border-gray-400 relative flex items-center justify-center overflow-hidden shrink-0 z-10"
+                                                              title={`Tranche: ${spineWidth}mm`}
+                                                          >
+                                                              <div className="absolute inset-0 bg-slate-300/50 striped-bg opacity-30 pointer-events-none"></div>
                                                               {spineWidth > 2 && (
-                                                                  <span className="text-[9px] font-mono text-gray-400 -rotate-90 whitespace-nowrap select-none">
+                                                                  <span className="text-[9px] font-mono text-gray-600 -rotate-90 whitespace-nowrap select-none font-bold">
                                                                      {spineWidth}mm
                                                                   </span>
                                                               )}

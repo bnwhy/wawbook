@@ -4441,6 +4441,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               </div>
                                                            )}
 
+                                                           {/* GRID OVERLAY */}
+                                                           {showGrid && (
+                                                               <div className="absolute inset-0 z-40 pointer-events-none" style={{
+                                                                   backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)`,
+                                                                   backgroundSize: `${(10 / containerWidthMm) * 100}% ${(10 / containerHeightMm) * 100}%`
+                                                               }}>
+                                                                   {/* Center Lines */}
+                                                                   <div className="absolute left-1/2 top-0 bottom-0 w-px bg-indigo-300 opacity-50"></div>
+                                                                   <div className="absolute top-1/2 left-0 right-0 h-px bg-indigo-300 opacity-50"></div>
+                                                               </div>
+                                                           )}
+
                                                            {/* 1. BASE LAYER */}
                                                            <div 
                                                                className="absolute inset-0 flex items-center justify-center bg-gray-50"

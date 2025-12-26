@@ -4770,7 +4770,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      type: 'fixed',
                                                      content: 'Texte ici...',
                                                      combinationKey: selectedVariant, // Strictly bind to current variant
-                                                     position: { pageIndex: currentPage.pageNumber, zoneId: 'body', x: 10, y: 10, width: 30 }
+                                                     position: { pageIndex: currentPage.pageNumber, zoneId: 'body', x: 0, y: 0, width: 30 }
                                                   };
                                                   const newTexts = [...selectedBook.contentConfig.texts, newText];
                                                   handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
@@ -4791,7 +4791,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      label: 'Nouvelle Image',
                                                      type: 'static',
                                                      combinationKey: selectedVariant, // Strictly bind to current variant
-                                                     position: { pageIndex: currentPage.pageNumber, x: 20, y: 20, width: 20, height: 20 }
+                                                     position: { pageIndex: currentPage.pageNumber, x: 0, y: 0, width: 20, height: 20 }
                                                   };
                                                   // Handle optional imageElements array
                                                   const currentElements = selectedBook.contentConfig.imageElements || [];

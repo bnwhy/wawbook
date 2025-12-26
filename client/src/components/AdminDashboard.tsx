@@ -4266,6 +4266,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
                                                                  </div>
                                                               )}
+                                                              {/* Delete button for active image element */}
+                                                              {activeLayerId === el.id && (
+                                                                 <button
+                                                                    onClick={(e) => {
+                                                                       e.stopPropagation();
+                                                                       e.preventDefault();
+                                                                       const newImgs = (selectedBook.contentConfig.imageElements || []).filter(i => i.id !== el.id);
+                                                                       handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+                                                                       setActiveLayerId(null);
+                                                                    }}
+                                                                    className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg z-50 transition-colors"
+                                                                    title="Supprimer l'élément"
+                                                                 >
+                                                                    <Trash2 size={12} />
+                                                                 </button>
+                                                              )}
                                                            </div>
                                                         ))
                                                      }
@@ -4312,6 +4328,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                      });
                                                                  })()}
                                                               </div>
+                                                              {/* Delete button for active text element */}
+                                                              {activeLayerId === text.id && (
+                                                                 <button
+                                                                    onClick={(e) => {
+                                                                       e.stopPropagation();
+                                                                       e.preventDefault();
+                                                                       const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== text.id);
+                                                                       handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                                       setActiveLayerId(null);
+                                                                    }}
+                                                                    className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg z-50 transition-colors"
+                                                                    title="Supprimer l'élément"
+                                                                 >
+                                                                    <Trash2 size={12} />
+                                                                 </button>
+                                                              )}
                                                            </div>
                                                         ))
                                                      }

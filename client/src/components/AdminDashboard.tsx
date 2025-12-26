@@ -4551,13 +4551,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            if (bgImage?.imageUrl) {
                                                               return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background" />;
                                                            }
-                                                           return (
-                                                              <div className="text-center text-gray-300">
-                                                                 <ImageIcon size={48} className="mx-auto mb-2 opacity-50" />
-                                                                 <span className="text-xs font-bold block">Aucune illustration</span>
-                                                                 <span className="text-[10px]">Variante: {selectedVariant}</span>
-                                                              </div>
-                                                           );
+                                                           return null;
                                                         })()}
                                                      </div>
                                                      {/* 2. IMAGE LAYERS (Stickers/Overlays) */}

@@ -3627,7 +3627,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               <label className="text-[10px] text-gray-400">Largeur</label>
                                                               <input 
                                                                   type="number" 
-                                                                  step="0.1"
                                                                   value={selectedBook.features?.dimensions?.width || 210}
                                                                   onChange={(e) => {
                                                                       handleSaveBook({
@@ -3636,7 +3635,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                               ...selectedBook.features,
                                                                               dimensions: {
                                                                                   ...selectedBook.features?.dimensions,
-                                                                                  width: parseFloat(e.target.value) || 210
+                                                                                  width: parseInt(e.target.value) || 210
                                                                               }
                                                                           } as any
                                                                       });
@@ -3649,7 +3648,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               <label className="text-[10px] text-gray-400">Hauteur</label>
                                                               <input 
                                                                   type="number" 
-                                                                  step="0.1"
                                                                   value={selectedBook.features?.dimensions?.height || 210}
                                                                   onChange={(e) => {
                                                                       handleSaveBook({
@@ -3658,7 +3656,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                               ...selectedBook.features,
                                                                               dimensions: {
                                                                                   ...selectedBook.features?.dimensions,
-                                                                                  height: parseFloat(e.target.value) || 210
+                                                                                  height: parseInt(e.target.value) || 210
                                                                               }
                                                                           } as any
                                                                       });
@@ -3757,7 +3755,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       <label className="text-[10px] text-gray-500">Largeur (mm)</label>
                                                       <input 
                                                           type="number" 
-                                                          step="0.1"
                                                           value={selectedBook.features?.dimensions?.width || 210}
                                                           onChange={(e) => {
                                                               handleSaveBook({
@@ -3766,7 +3763,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                       ...selectedBook.features,
                                                                       dimensions: {
                                                                           ...selectedBook.features?.dimensions,
-                                                                          width: parseFloat(e.target.value) || 210
+                                                                          width: parseInt(e.target.value) || 210
                                                                       }
                                                                   } as any
                                                               });
@@ -3778,7 +3775,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       <label className="text-[10px] text-gray-500">Hauteur (mm)</label>
                                                       <input 
                                                           type="number" 
-                                                          step="0.1"
                                                           value={selectedBook.features?.dimensions?.height || 210}
                                                           onChange={(e) => {
                                                               handleSaveBook({
@@ -3787,7 +3783,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                       ...selectedBook.features,
                                                                       dimensions: {
                                                                           ...selectedBook.features?.dimensions,
-                                                                          height: parseFloat(e.target.value) || 210
+                                                                          height: parseInt(e.target.value) || 210
                                                                       }
                                                                   } as any
                                                               });

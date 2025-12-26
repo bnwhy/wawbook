@@ -493,11 +493,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const combinations = cartesian(variantOptions);
     
     return combinations.map(combo => {
-       const parts = combo.map((opt: any) => ({
+       const parts = combo.map((opt: any, index: number) => ({
           label: opt.label,
           id: opt.id,
           // Find which variant this option belongs to
-          variantId: variants.find(v => v.options?.some(o => o.id === opt.id))?.id
+          variantId: variants[index].id
        }));
        
        // Key is sorted combination of option IDs

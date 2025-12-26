@@ -4582,22 +4582,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1"
                                                            />
                                                         </div>
-                                                        {/* Variant Assignment */}
-                                                        <div>
-                                                           <label className="text-[10px] font-bold text-gray-500 uppercase">Variante Assignée</label>
-                                                           <select 
-                                                              value={layer.combinationKey || selectedVariant} // Fallback to current selected if missing
-                                                              onChange={(e) => updateLayer({combinationKey: e.target.value})}
-                                                              className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1 bg-white"
-                                                           >
-                                                              {currentCombinations.map(c => (
-                                                                 <option key={c} value={c}>{c}</option>
-                                                              ))}
-                                                           </select>
-                                                           <div className="text-[9px] text-gray-400 mt-1">
-                                                              Visible uniquement pour cette variante.
-                                                           </div>
-                                                        </div>
+                                                        
                                                         {/* Type Selector (Fixed vs Variable) - Only for images */}
                                                         {!isText && (
                                                            <div>

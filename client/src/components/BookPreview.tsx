@@ -321,7 +321,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       return {
         left: <div className="w-full h-full bg-transparent" />, // Empty space left of cover
         right: (
-          <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-l-8 border-gray-100 ${!hasCustomCover ? 'bg-cloud-blue p-6 text-white' : 'bg-white text-slate-900'}`}>
+          <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-l-8 border-gray-100 bg-white text-slate-900`}>
              {/* Spine / Binding Effect */}
              <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-200 to-white border-r border-black/5 z-30"></div>
              <div className="absolute left-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
@@ -383,28 +383,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     </div>
                 </>
              ) : (
-                /* FALLBACK DEFAULT COVER */
-                <>
-                     {book?.coverImage ? (
-                        <>
-                            <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginLeft: '12px' }}></div>
-                            <div className="absolute inset-0 bg-black/10" style={{ marginLeft: '12px' }}></div>
-                        </>
-                     ) : (
-                        <div className="absolute inset-0 bg-cloud-blue" style={{ marginLeft: '12px' }}>
-                             <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
-                        </div>
-                     )}
-            
-                     <div className="relative z-10 flex flex-col items-center pl-4">
-                        <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 text-6xl shadow-xl">✨</div>
-                        <h1 className="font-display font-black text-4xl md:text-5xl mb-4 drop-shadow-md text-white leading-tight">{story.title}</h1>
-                        <div className="bg-white/20 px-6 py-2 rounded-full text-lg font-bold backdrop-blur-sm border border-white/30">
-                            Une aventure de {config.childName}
-                        </div>
-                        <div className="mt-12 animate-pulse text-white/80 font-bold uppercase tracking-widest text-sm">Ouvrir le livre</div>
-                     </div>
-                </>
+                /* EMPTY COVER IF NOT CONFIGURED */
+                <div className="absolute inset-0 bg-white" style={{ marginLeft: '12px' }}></div>
              )}
           </div>
         )

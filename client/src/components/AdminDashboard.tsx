@@ -3987,12 +3987,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
                                                    const frontCover = selectedBook.contentConfig.pages[0];
                                                    
-                                                   const renderPageContent = (targetPage: any, label: string) => {
-                                                       if (!targetPage) return <div className="w-1/2 bg-gray-100 flex items-center justify-center text-gray-400">Page manquante</div>;
+                                                   const pageWidth = selectedBook.features?.dimensions?.width || 210;
+                                                  const spineWidth = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
+                                                  const totalWidth = (pageWidth * 2) + spineWidth;
+                                                  
+                                                  const pagePct = (pageWidth / totalWidth) * 100;
+                                                  const spinePct = (spineWidth / totalWidth) * 100;
+
+                                                  const renderPageContent = (targetPage: any, label: string) => {
+                                                       if (!targetPage) return <div style={{width: `${pagePct}%`}} className="bg-gray-100 flex items-center justify-center text-gray-400">Page manquante</div>;
 
                                                        return (
                                                        <div 
-                                                           className="w-1/2 h-full relative border-r border-dashed border-gray-300 last:border-0 overflow-hidden group/subpage"
+                                                           style={{ width: `${pagePct}%` }}
+                                                          className="h-full relative border-r border-dashed border-gray-300 last:border-0 overflow-hidden group/subpage"
                                                            onClick={(e) => {
                                                                e.stopPropagation();
                                                                setSelectedPageId(targetPage.id);
@@ -4096,7 +4104,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    return (
                                                        <div key="cover-spread" className="flex-1 bg-white relative overflow-hidden flex shadow-lg ring-1 ring-gray-200">
                                                            {renderPageContent(backCover, 'Dos / Arrière')}
-                                                           {renderPageContent(frontCover, 'Face Avant')}
+                                                           {/* Spine Visualization */}
+                                                          <div style={{width: `${spinePct}%`}} className="h-full bg-gray-100 border-x border-gray-300 relative flex items-center justify-center overflow-hidden">
+                                                              <div className="absolute inset-0 bg-slate-200/50 striped-bg opacity-30 pointer-events-none"></div>
+                                                              {spineWidth > 2 && (
+                                                                  <span className="text-[9px] font-mono text-gray-400 -rotate-90 whitespace-nowrap select-none">
+                                                                     {spineWidth}mm
+                                                                  </span>
+                                                              )}
+                                                          </div>
+                                                          {renderPageContent(frontCover, 'Face Avant')}
                                                        </div>
                                                    );
                                                }

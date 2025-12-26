@@ -4368,12 +4368,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                           img.combinationKey === selectedVariant
                                                                  );
                                                                  if (bgImage?.imageUrl) return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background" />;
-                                                                 return (
-                                                                    <div className="text-center text-gray-300">
-                                                                       <ImageIcon size={48} className="mx-auto mb-2 opacity-50" />
-                                                                       <span className="text-xs font-bold block">{label}</span>
-                                                                    </div>
-                                                                 );
+                                                                 return null;
                                                               })()}
                                                            </div>
 

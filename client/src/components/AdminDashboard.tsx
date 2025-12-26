@@ -3365,7 +3365,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               // Apply filters
                               return Object.entries(filters).every(([variantId, optionId]) => {
                                   if (!optionId) return true;
-                                  return combo.parts.some(p => p.variantId === variantId && p.id === optionId);
+                                  return combo.parts.some((p: any) => p.variantId === variantId && p.id === optionId);
                               });
                           });
 
@@ -3386,7 +3386,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white outline-none focus:ring-1 focus:ring-indigo-500"
                                                 >
                                                     <option value="">Tous</option>
-                                                    {variant.options.map(opt => (
+                                                    {(variant.options || []).map(opt => (
                                                         <option key={opt.id} value={opt.id}>{opt.label}</option>
                                                     ))}
                                                 </select>

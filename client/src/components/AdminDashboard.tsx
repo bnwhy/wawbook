@@ -3653,32 +3653,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
                                                   />
                                               </div>
-                                              <div className="space-y-2 col-span-2">
-                                                  <label className="text-xs font-semibold text-slate-900">Type de papier</label>
-                                                  <select 
-                                                      value={selectedBook.features?.printConfig?.interior?.paperType || '80g_white'}
-                                                      onChange={(e) => {
-                                                          const val = e.target.value as any;
-                                                          handleSaveBook({
-                                                              ...selectedBook,
-                                                              features: {
-                                                                  ...selectedBook.features,
-                                                                  printConfig: {
-                                                                      ...selectedBook.features?.printConfig,
-                                                                      interior: { ...selectedBook.features?.printConfig?.interior, paperType: val }
-                                                                  } as any
-                                                              }
-                                                          });
-                                                      }}
-                                                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
-                                                  >
-                                                      <option value="80g_white">80g Blanc</option>
-                                                      <option value="80g_cream">80g Crème</option>
-                                                      <option value="100g_white">100g Blanc Premium</option>
-                                                      <option value="coated_standard">Couché Standard</option>
-                                                      <option value="coated_premium">Couché Premium</option>
-                                                  </select>
-                                              </div>
                                           </div>
                                       </div>
                                   </div>

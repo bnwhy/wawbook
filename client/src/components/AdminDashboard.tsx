@@ -118,6 +118,73 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [dragStartPos, setDragStartPos] = useState<{x: number, y: number} | null>(null);
   const [dragStartElementPos, setDragStartElementPos] = useState<{x: number, y: number} | null>(null);
 
+  // Grid & Precision State
+  const [showGrid, setShowGrid] = useState(false);
+  const [gridSizeMm, setGridSizeMm] = useState(10); // 10mm grid default
+  const [snapToGrid, setSnapToGrid] = useState(false);
+
+  // Keyboard Nudge Logic
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (!activeLayerId || !selectedBook) return;
+
+        // Only handle arrow keys
+        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+        
+        e.preventDefault();
+
+        const isShift = e.shiftKey; // Shift = 10mm, Normal = 1mm
+        const stepMm = isShift ? 10 : 1;
+        
+        const dims = selectedBook.features?.dimensions || { width: 210, height: 210 };
+        const stepX = (stepMm / dims.width) * 100;
+        const stepY = (stepMm / dims.height) * 100;
+
+        let dx = 0;
+        let dy = 0;
+
+        switch(e.key) {
+            case 'ArrowLeft': dx = -stepX; break;
+            case 'ArrowRight': dx = stepX; break;
+            case 'ArrowUp': dy = -stepY; break;
+            case 'ArrowDown': dy = stepY; break;
+        }
+
+        // Apply update
+        const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
+        const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
+
+        if (textLayer) {
+            const newTexts = selectedBook.contentConfig.texts.map(t => 
+                t.id === activeLayerId ? {
+                    ...t, 
+                    position: {
+                        ...t.position, 
+                        x: (t.position.x || 0) + dx,
+                        y: (t.position.y || 0) + dy
+                    }
+                } : t
+            );
+            handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+        } else if (imgLayer) {
+            const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => 
+                i.id === activeLayerId ? {
+                    ...i, 
+                    position: {
+                        ...i.position, 
+                        x: (i.position.x || 0) + dx,
+                        y: (i.position.y || 0) + dy
+                    }
+                } : i
+            );
+            handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeLayerId, selectedBook]);
+
 
   // SETTINGS STATE
   const [settings, setSettings] = useState(() => {
@@ -196,8 +263,28 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         const deltaX = e.clientX - dragStartPos.x;
         const deltaY = e.clientY - dragStartPos.y;
         
-        // Convert delta to percentage
-        const deltaXPercent = (deltaX / canvasRect.width) * 100;
+        // CORRECTION FOR SPREAD MODE
+        // In spread mode, the canvas is wider than a single page.
+        // We need to scale the deltaX percentage to be relative to the *single page width*, not the canvas width.
+        let scaleX = 1;
+        if (viewMode === 'spread') {
+             const dims = selectedBook.features?.dimensions || { width: 210, height: 210 };
+             const pages = selectedBook.contentConfig.pages;
+             const idx = pages.findIndex(p => p.id === selectedPageId);
+             const isCover = idx === 0 || idx === pages.length - 1;
+             
+             if (isCover) {
+                 const spine = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
+                 const totalW = (dims.width * 2) + spine;
+                 // Ratio of Canvas Width (Total) to Page Width
+                 scaleX = totalW / dims.width;
+             } else {
+                 scaleX = 2; // Interior is exactly 2 pages wide
+             }
+        }
+
+        // Convert delta to percentage (Adjusted for Scale)
+        const deltaXPercent = (deltaX / canvasRect.width) * 100 * scaleX;
         const deltaYPercent = (deltaY / canvasRect.height) * 100;
         
         const newX = dragStartElementPos.x + deltaXPercent;
@@ -232,7 +319,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, activeLayerId, dragStartPos, dragStartElementPos, selectedBook]);
+  }, [isDragging, activeLayerId, dragStartPos, dragStartElementPos, selectedBook, viewMode, selectedPageId]);
   const hasUnsavedChanges = JSON.stringify(draftBook) !== JSON.stringify(contextBook);
 
   // Sync active layer with selected variant visibility
@@ -3982,6 +4069,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       <div className="h-6 w-px bg-gray-200"></div>
                                       
                                       {/* Show View Mode Toggle ONLY for interior pages (not cover) */}
+                                      <div className="flex items-center gap-2 mr-4">
+                                          <button
+                                              onClick={() => setShowGrid(!showGrid)}
+                                              className={`p-1.5 rounded text-xs font-bold flex items-center gap-1 transition-colors ${showGrid ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : 'bg-white text-slate-500 border border-gray-200 hover:bg-gray-50'}`}
+                                              title="Afficher la grille (10mm)"
+                                          >
+                                              <Layout size={14} />
+                                              {showGrid ? 'Grille ON' : 'Grille'}
+                                          </button>
+                                      </div>
+
                                       {(() => {
                                          const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
                                          const isCover = index === 0 || index === selectedBook.contentConfig.pages.length - 1;
@@ -4135,6 +4233,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               <div className="absolute inset-0 border-2 border-brand-coral z-40 pointer-events-none"></div>
                                                            )}
 
+                                                           {/* GRID OVERLAY (Cover Spread) */}
+                                                           {showGrid && (
+                                                               <div className="absolute inset-0 z-40 pointer-events-none" style={{
+                                                                   backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)`,
+                                                                   backgroundSize: `${(10 / bookDimensions.width) * 100}% ${(10 / bookDimensions.height) * 100}%`
+                                                               }}>
+                                                                    {/* Center Lines */}
+                                                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-indigo-300 opacity-50"></div>
+                                                                    <div className="absolute top-1/2 left-0 right-0 h-px bg-indigo-300 opacity-50"></div>
+                                                               </div>
+                                                           )}
+
                                                            {/* 1. BASE LAYER */}
                                                            <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
                                                               {(() => {
@@ -4269,7 +4379,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      {/* Safe Margin Guide */}
                                                      {safeMarginMm && (
                                                         <div 
-                                                           className="absolute border-2 border-red-400 border-dashed pointer-events-none z-50 shadow-sm"
+                                                           className="absolute border-2 border-red-400 border-dashed pointer-events-none z-50 shadow-sm opacity-50"
                                                            style={{
                                                               left: `${(safeMarginMm / bookDimensions.width) * 100}%`,
                                                               top: `${(safeMarginMm / bookDimensions.height) * 100}%`,
@@ -4283,6 +4393,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            </div>
                                                         </div>
                                                      )}
+
+                                                     {/* GRID OVERLAY */}
+                                                     {showGrid && (
+                                                         <div className="absolute inset-0 z-40 pointer-events-none" style={{
+                                                             backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)`,
+                                                             backgroundSize: `${(10 / bookDimensions.width) * 100}% ${(10 / bookDimensions.height) * 100}%`
+                                                         }}>
+                                                             {/* Center Lines */}
+                                                             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-indigo-300 opacity-50"></div>
+                                                             <div className="absolute top-1/2 left-0 right-0 h-px bg-indigo-300 opacity-50"></div>
+                                                         </div>
+                                                     )}
+
                                                      {/* 1. BASE LAYER (Background Variant) */}
                                                      <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
                                                         {/* Find image for current variant & page */}

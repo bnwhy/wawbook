@@ -371,6 +371,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const exportData = {
       version: '1.2',
       timestamp: new Date().toISOString(),
+      sourceBookId: selectedBook.id, // Only ID for reference
       // Export ONLY configuration parts, NOT product identity (id, name, price, etc.)
       wizardConfig: {
         avatarStyle: selectedBook.wizardConfig.avatarStyle,
@@ -391,19 +392,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         avatarMappings: selectedBook.wizardConfig.avatarMappings
       }, // Variants & Options
       contentConfig: selectedBook.contentConfig, // Layers, Texts, Images, Pages
-      features: selectedBook.features // Dimensions & Print Settings
+      features: {
+        dimensions: selectedBook.features?.dimensions || { width: 210, height: 210 },
+        printConfig: selectedBook.features?.printConfig
+      } // ONLY Dimensions & Print Settings
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${slugify(selectedBook.name || 'book')}_content_config_${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `${slugify(selectedBook.name || 'book')}_storyboard_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Configuration du contenu exportée (sans métadonnées produit)');
+    toast.success('Configuration Storyboard exportée (sans données produit)');
   };
 
   const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -423,12 +427,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
 
         if (confirm('Attention : Cette action va remplacer la configuration du contenu (variantes, pages, calques). Les métadonnées du produit (Nom, Prix, ID) ne seront PAS modifiées. Voulez-vous continuer ?')) {
+          
+          // Merge features carefully: Only overwrite dimensions/printConfig, keep others (marketing)
+          const newFeatures = {
+             ...selectedBook.features,
+             ...(importedData.features?.dimensions ? { dimensions: importedData.features.dimensions } : {}),
+             ...(importedData.features?.printConfig ? { printConfig: importedData.features.printConfig } : {})
+          };
+
           handleSaveBook({
             ...selectedBook,
             // Overwrite ONLY configuration parts
             wizardConfig: importedData.wizardConfig,
             contentConfig: importedData.contentConfig,
-            features: importedData.features || selectedBook.features,
+            features: newFeatures,
             // Explicitly PRESERVE product identity
             id: selectedBook.id,
             name: selectedBook.name,
@@ -438,7 +450,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             category: selectedBook.category,
             coverImage: selectedBook.coverImage
           });
-          toast.success('Configuration du contenu importée avec succès');
+          toast.success('Configuration Storyboard importée avec succès');
         }
       } catch (error) {
         console.error('Import error:', error);

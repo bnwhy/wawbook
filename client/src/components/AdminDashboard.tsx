@@ -367,31 +367,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleExportContent = () => {
     if (!selectedBook) return;
 
-    // Enhanced Export Structure
+    // Export ONLY content configuration (variants, pages, elements, dimensions)
     const exportData = {
-      version: '1.2', // Bumped version to signify expanded scope
+      version: '1.2',
       timestamp: new Date().toISOString(),
-      bookId: selectedBook.id,
-      bookName: selectedBook.name,
-      // Full Configuration
-      wizardConfig: selectedBook.wizardConfig, // Variants
+      // Export ONLY configuration parts, NOT product identity (id, name, price, etc.)
+      wizardConfig: selectedBook.wizardConfig, // Variants & Options
       contentConfig: selectedBook.contentConfig, // Layers, Texts, Images, Pages
-      features: selectedBook.features, // Dimensions, Print Config
-      // Metadata
-      theme: selectedBook.theme,
-      description: selectedBook.description
+      features: selectedBook.features // Dimensions & Print Settings
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${slugify(selectedBook.name || 'book')}_full_config_${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `${slugify(selectedBook.name || 'book')}_content_config_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Configuration complète exportée avec succès');
+    toast.success('Configuration du contenu exportée (sans métadonnées produit)');
   };
 
   const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -410,18 +405,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           return;
         }
 
-        if (confirm('Attention : Cette action va remplacer la configuration complète (variantes, contenu, dimensions). Voulez-vous continuer ?')) {
+        if (confirm('Attention : Cette action va remplacer la configuration du contenu (variantes, pages, calques). Les métadonnées du produit (Nom, Prix, ID) ne seront PAS modifiées. Voulez-vous continuer ?')) {
           handleSaveBook({
             ...selectedBook,
+            // Overwrite ONLY configuration parts
             wizardConfig: importedData.wizardConfig,
             contentConfig: importedData.contentConfig,
-            // Import Features if available (dimensions, print config)
             features: importedData.features || selectedBook.features,
-            // Import metadata if present
-            description: importedData.description || selectedBook.description,
-            theme: importedData.theme || selectedBook.theme
+            // Explicitly PRESERVE product identity
+            id: selectedBook.id,
+            name: selectedBook.name,
+            description: selectedBook.description,
+            price: selectedBook.price,
+            theme: selectedBook.theme,
+            category: selectedBook.category,
+            coverImage: selectedBook.coverImage
           });
-          toast.success('Configuration complète importée avec succès');
+          toast.success('Configuration du contenu importée avec succès');
         }
       } catch (error) {
         console.error('Import error:', error);

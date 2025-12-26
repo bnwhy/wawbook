@@ -3382,76 +3382,75 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             const selectedIds = avatarFilters[variant.id] || [];
                                             
                                             return (
-                                            <div key={variant.id} className="flex flex-col gap-1 min-w-[140px]">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase">{variant.label}</label>
-                                                
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        <button className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white flex items-center justify-between hover:bg-slate-50">
-                                                            <span className="truncate">
-                                                                {selectedIds.length === 0 
-                                                                    ? "Tous" 
-                                                                    : selectedIds.length === 1 
-                                                                        ? (variant.options?.find(o => o.id === selectedIds[0])?.label || selectedIds[0])
-                                                                        : `${selectedIds.length} sélectionnés`
-                                                                }
-                                                            </span>
-                                                            <ChevronDown size={12} className="opacity-50" />
-                                                        </button>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-[200px] p-0" align="start">
-                                                        <div className="max-h-[300px] overflow-y-auto p-1">
-                                                            <div 
-                                                                className="flex items-center gap-2 p-2 hover:bg-slate-100 rounded cursor-pointer"
-                                                                onClick={() => {
-                                                                    setAvatarFilters(prev => {
-                                                                        const next = { ...prev };
-                                                                        delete next[variant.id];
-                                                                        return next;
-                                                                    });
-                                                                }}
-                                                            >
-                                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedIds.length === 0 ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
-                                                                    {selectedIds.length === 0 && <span className="text-white text-[10px]">✓</span>}
-                                                                </div>
-                                                                <span className="text-sm">Tous</span>
-                                                            </div>
-                                                            {variant.options?.map(opt => {
-                                                                const isSelected = selectedIds.includes(opt.id);
-                                                                return (
-                                                                    <div 
-                                                                        key={opt.id}
-                                                                        className="flex items-center gap-2 p-2 hover:bg-slate-100 rounded cursor-pointer"
-                                                                        onClick={() => {
-                                                                            setAvatarFilters(prev => {
-                                                                                const current = prev[variant.id] || [];
-                                                                                const next = current.includes(opt.id)
-                                                                                    ? current.filter(id => id !== opt.id)
-                                                                                    : [...current, opt.id];
-                                                                                
-                                                                                // If empty, remove key to reset to "All"
-                                                                                if (next.length === 0) {
-                                                                                    const copy = { ...prev };
-                                                                                    delete copy[variant.id];
-                                                                                    return copy;
-                                                                                }
-                                                                                
-                                                                                return { ...prev, [variant.id]: next };
-                                                                            });
-                                                                        }}
-                                                                    >
-                                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
-                                                                            {isSelected && <span className="text-white text-[10px]">✓</span>}
-                                                                        </div>
-                                                                        <span className="text-sm">{opt.label}</span>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </PopoverContent>
-                                                </Popover>
-                                            </div>
-                                        )})}
+                                               <div key={variant.id} className="flex flex-col gap-1 min-w-[140px]">
+                                                  <label className="text-[10px] font-bold text-slate-500 uppercase">{variant.label}</label>
+                                                  <Popover>
+                                                      <PopoverTrigger asChild>
+                                                          <button className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white flex items-center justify-between hover:bg-slate-50">
+                                                              <span className="truncate">
+                                                                  {selectedIds.length === 0 
+                                                                      ? "Tous" 
+                                                                      : selectedIds.length === 1 
+                                                                          ? (variant.options?.find(o => o.id === selectedIds[0])?.label || selectedIds[0])
+                                                                          : `${selectedIds.length} sélectionnés`
+                                                                  }
+                                                              </span>
+                                                              <ChevronDown size={12} className="opacity-50" />
+                                                          </button>
+                                                      </PopoverTrigger>
+                                                      <PopoverContent className="w-[200px] p-0" align="start">
+                                                          <div className="max-h-[300px] overflow-y-auto p-1 bg-[#ffffff]">
+                                                              <div 
+                                                                  className="flex items-center gap-2 p-2 hover:bg-slate-100 rounded cursor-pointer"
+                                                                  onClick={() => {
+                                                                      setAvatarFilters(prev => {
+                                                                          const next = { ...prev };
+                                                                          delete next[variant.id];
+                                                                          return next;
+                                                                      });
+                                                                  }}
+                                                              >
+                                                                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedIds.length === 0 ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                                                                      {selectedIds.length === 0 && <span className="text-white text-[10px]">✓</span>}
+                                                                  </div>
+                                                                  <span className="text-sm">Tous</span>
+                                                              </div>
+                                                              {variant.options?.map(opt => {
+                                                                  const isSelected = selectedIds.includes(opt.id);
+                                                                  return (
+                                                                      <div 
+                                                                          key={opt.id}
+                                                                          className="flex items-center gap-2 p-2 hover:bg-slate-100 rounded cursor-pointer"
+                                                                          onClick={() => {
+                                                                              setAvatarFilters(prev => {
+                                                                                  const current = prev[variant.id] || [];
+                                                                                  const next = current.includes(opt.id)
+                                                                                      ? current.filter(id => id !== opt.id)
+                                                                                      : [...current, opt.id];
+                                                                                  
+                                                                                  // If empty, remove key to reset to "All"
+                                                                                  if (next.length === 0) {
+                                                                                      const copy = { ...prev };
+                                                                                      delete copy[variant.id];
+                                                                                      return copy;
+                                                                                  }
+                                                                                  
+                                                                                  return { ...prev, [variant.id]: next };
+                                                                              });
+                                                                          }}
+                                                                      >
+                                                                          <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                                                                              {isSelected && <span className="text-white text-[10px]">✓</span>}
+                                                                          </div>
+                                                                          <span className="text-sm">{opt.label}</span>
+                                                                      </div>
+                                                                  );
+                                                              })}
+                                                          </div>
+                                                      </PopoverContent>
+                                                  </Popover>
+                                               </div>
+                                            );})}
                                         <div className="ml-auto">
                                             <button 
                                                 onClick={() => setAvatarFilters({})}
@@ -3463,12 +3462,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         </div>
                                     </div>
                                 )}
-
                                 {/* Results Info */}
                                 <div className="mb-4 text-xs text-slate-400 font-medium">
                                     {combinations.length} combinaisons affichées
                                 </div>
-
                                 {combinations.length === 0 ? (
                                     <div className="text-center py-12 text-gray-400">
                                        <User size={48} className="mx-auto mb-4 opacity-20" />
@@ -4546,12 +4543,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            {pIdx === 0 ? 'Face Avant' : 'Dos / Arrière'}
                                                         </div>
                                                      )}
-                                                     
                                                      {/* TRIM LINE (Page Boundary) */}
                                                      {showGrid && (
                                                          <div className="absolute inset-0 border border-slate-900/20 z-40 pointer-events-none"></div>
                                                      )}
-
                                                      {/* 0. BLEED GUIDE (Fonds Perdus) - Outside Trim */}
                                                      {bleedMm && showGrid && (
                                                         <div 
@@ -4568,7 +4563,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            </div>
                                                         </div>
                                                      )}
-
                                                      {/* Safe Margin Guide - Inside Trim */}
                                                      {safeMarginMm && showGrid && (
                                                         <div 
@@ -4585,7 +4579,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            </div>
                                                         </div>
                                                      )}
-
                                                      {/* GRID OVERLAY */}
                                                      {showGrid && (
                                                          <div className="absolute inset-0 z-40 pointer-events-none" style={{
@@ -4597,7 +4590,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                              <div className="absolute top-1/2 left-0 right-0 h-px bg-indigo-300 opacity-50"></div>
                                                          </div>
                                                      )}
-
                                                      {/* 1. BASE LAYER (Background Variant) */}
                                                      <div 
                                                          className="absolute flex items-center justify-center bg-gray-50"
@@ -4896,8 +4888,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                   return (
                                                      <>
-                                                        
-
                                                         {/* Common Props */}
                                                         <div>
                                                            <label className="text-[10px] font-bold text-gray-500 uppercase">Label</label>
@@ -4908,7 +4898,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1"
                                                            />
                                                         </div>
-                                                        
                                                         {/* Type Selector (Fixed vs Variable) - Only for images */}
                                                         {!isText && (
                                                            <div>

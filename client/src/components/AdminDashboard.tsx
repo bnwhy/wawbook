@@ -3363,13 +3363,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           if (!targetTab) return <div className="text-gray-400">Aucun personnage trouvé.</div>;
 
                           // Filter options variants only
-                          const optionVariants = targetTab.variants.filter(v => v.type === 'options');
+                          const optionVariants = targetTab.variants.filter(v => v.type === 'options' || !v.type);
 
                           const combinations = generateAvatarCombinations(targetTab).filter(combo => {
                               // Apply filters
                               return Object.entries(avatarFilters).every(([variantId, selectedOptionIds]) => {
                                   if (!selectedOptionIds || selectedOptionIds.length === 0) return true;
-                                  return combo.parts.some((p: any) => p.variantId === variantId && selectedOptionIds.includes(p.id));
+                                  
+                                  // Use more robust matching that handles potentially missing/mismatched IDs
+                                  const hasMatch = combo.parts.some((p: any) => {
+                                      // Direct ID match
+                                      if (p.variantId === variantId && selectedOptionIds.includes(p.id)) return true;
+                                      return false;
+                                  });
+                                  
+                                  return hasMatch;
                               });
                           });
 

@@ -3378,9 +3378,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 {/* Filters Header */}
                                 {optionVariants.length > 0 && (
                                     <div className="flex flex-wrap gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-gray-100 items-end">
-                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 w-full flex items-center gap-2">
-                                            <Filter size={14} /> Filtres d'affichage
-                                        </div>
                                         {optionVariants.map(variant => {
                                             const selectedIds = avatarFilters[variant.id] || [];
                                             

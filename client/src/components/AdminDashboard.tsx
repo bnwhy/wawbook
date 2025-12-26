@@ -2521,28 +2521,98 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            <User size={24} className="text-indigo-600" />
                            Structure des Personnages (Wizard)
                         </h2>
-                        <button 
-                          onClick={() => {
-                             const baseLabel = 'Nouveau Perso';
-                             const baseId = slugify(baseLabel);
-                             
-                             // Ensure unique ID
-                             const otherIds = selectedBook.wizardConfig.tabs.map(t => t.id);
-                             let uniqueId = baseId;
-                             let counter = 2;
-                             while (otherIds.includes(uniqueId)) {
-                                 uniqueId = `${baseId}_${counter}`;
-                                 counter++;
-                             }
+                        
+                        <div className="flex items-center gap-3">
+                           {/* Export/Import for Wizard Config */}
+                           <div className="flex items-center gap-2 border-r border-gray-200 pr-3 mr-1">
+                                <button 
+                                    onClick={() => {
+                                        if (!selectedBook) return;
+                                        const exportData = {
+                                            version: '1.0',
+                                            type: 'wizard_config',
+                                            timestamp: new Date().toISOString(),
+                                            bookId: selectedBook.id,
+                                            wizardConfig: selectedBook.wizardConfig
+                                        };
+                                        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                                        const url = URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = `${slugify(selectedBook.name || 'book')}_wizard_export_${new Date().toISOString().slice(0, 10)}.json`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        URL.revokeObjectURL(url);
+                                        toast.success('Configuration Wizard exportée');
+                                    }}
+                                    className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                    title="Exporter la config Wizard (JSON)"
+                                >
+                                    <Download size={16} />
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.accept = '.json';
+                                        input.onchange = (e: any) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onload = (re: any) => {
+                                                try {
+                                                    const imported = JSON.parse(re.target.result);
+                                                    if (!imported.wizardConfig) {
+                                                        toast.error('Format invalide (wizardConfig manquant)');
+                                                        return;
+                                                    }
+                                                    if (confirm('Remplacer toute la configuration des personnages ?')) {
+                                                        handleSaveBook({
+                                                            ...selectedBook,
+                                                            wizardConfig: imported.wizardConfig
+                                                        });
+                                                        toast.success('Configuration Wizard importée');
+                                                    }
+                                                } catch (err) {
+                                                    toast.error('Erreur de lecture du fichier');
+                                                }
+                                            };
+                                            reader.readAsText(file);
+                                        };
+                                        input.click();
+                                    }}
+                                    className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                    title="Importer la config Wizard (JSON)"
+                                >
+                                    <Upload size={16} />
+                                </button>
+                           </div>
 
-                             const newTab: WizardTab = { id: uniqueId, label: baseLabel, type: 'character', options: [], variants: [] };
-                             handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: [...selectedBook.wizardConfig.tabs, newTab]}});
-                          }}
-                          className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm"
-                        >
-                           <Plus size={16} /> Ajouter Personnage
-                        </button>
+                            <button 
+                              onClick={() => {
+                                 const baseLabel = 'Nouveau Perso';
+                                 const baseId = slugify(baseLabel);
+                                 
+                                 // Ensure unique ID
+                                 const otherIds = selectedBook.wizardConfig.tabs.map(t => t.id);
+                                 let uniqueId = baseId;
+                                 let counter = 2;
+                                 while (otherIds.includes(uniqueId)) {
+                                     uniqueId = `${baseId}_${counter}`;
+                                     counter++;
+                                 }
+    
+                                 const newTab: WizardTab = { id: uniqueId, label: baseLabel, type: 'character', options: [], variants: [] };
+                                 handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: [...selectedBook.wizardConfig.tabs, newTab]}});
+                              }}
+                              className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm"
+                            >
+                               <Plus size={16} /> Ajouter Personnage
+                            </button>
+                        </div>
                      </div>
+
 
                      <div className="space-y-4">
                         {selectedBook.wizardConfig.tabs.map((tab, idx) => (

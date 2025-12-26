@@ -3265,7 +3265,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           
                                           {/* Upload Overlay */}
                                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                             <div className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all">
+                                             <div className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all flex gap-2">
                                                 <label className="cursor-pointer bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg hover:bg-indigo-700 flex items-center gap-2">
                                                    <Upload size={14} />
                                                    {existingAvatar ? 'Modifier' : 'Ajouter'}
@@ -3289,6 +3289,29 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       }}
                                                    />
                                                 </label>
+                                                
+                                                {existingAvatar && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (confirm('Supprimer cette image ?')) {
+                                                                const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
+                                                                delete newMappings[combo.key];
+                                                                handleSaveBook({
+                                                                    ...selectedBook,
+                                                                    wizardConfig: {
+                                                                        ...selectedBook.wizardConfig,
+                                                                        avatarMappings: newMappings
+                                                                    }
+                                                                });
+                                                                toast.success('Image supprimée');
+                                                            }
+                                                        }}
+                                                        className="bg-red-500 text-white p-1.5 rounded-lg shadow-lg hover:bg-red-600 flex items-center justify-center"
+                                                        title="Supprimer l'image"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
                                              </div>
                                           </div>
                                        </div>

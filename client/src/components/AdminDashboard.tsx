@@ -3137,12 +3137,27 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             <button 
                                 onClick={() => {
                                     if (!selectedBook) return;
+                                    
+                                    // Generate all possible keys to ensure export is complete (even empty ones)
+                                    const completeMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
+                                    
+                                    selectedBook.wizardConfig.tabs.forEach(tab => {
+                                       if (tab.type === 'character') {
+                                          const combos = generateAvatarCombinations(tab);
+                                          combos.forEach(c => {
+                                             if (!completeMappings[c.key]) {
+                                                completeMappings[c.key] = ""; // Empty placeholder
+                                             }
+                                          });
+                                       }
+                                    });
+
                                     const exportData = {
                                         version: '1.0',
                                         type: 'avatar_mappings',
                                         timestamp: new Date().toISOString(),
                                         bookId: selectedBook.id,
-                                        avatarMappings: selectedBook.wizardConfig.avatarMappings
+                                        avatarMappings: completeMappings
                                     };
                                     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
                                     const url = URL.createObjectURL(blob);
@@ -3153,7 +3168,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     link.click();
                                     document.body.removeChild(link);
                                     URL.revokeObjectURL(url);
-                                    toast.success('Mappings Avatars exportés');
+                                    toast.success('Mappings Avatars exportés (toutes combinaisons)');
                                 }}
                                 className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
                                 title="Exporter les mappings (JSON)"

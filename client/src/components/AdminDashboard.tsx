@@ -3927,9 +3927,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          className="transition-all duration-300 flex gap-0 shadow-2xl bg-white"
                                          style={{
                                             // Force single aspect ratio if viewing cover (since we now treat cover as single page)
-                                            aspectRatio: (viewMode === 'spread') 
-                                               ? `${aspectRatio * 2}/1` 
-                                               : `${aspectRatio}/1`,
+                                            aspectRatio: (() => {
+                                                if (viewMode === 'spread') {
+                                                    // Determine if we are viewing cover or interior spread
+                                                    const idx = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
+                                                    const isCover = idx === 0 || idx === selectedBook.contentConfig.pages.length - 1;
+                                                    
+                                                    if (isCover) {
+                                                        const spineW = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
+                                                        const totalW = (bookDimensions.width * 2) + spineW;
+                                                        return `${totalW / bookDimensions.height}/1`;
+                                                    }
+                                                    
+                                                    return `${aspectRatio * 2}/1`;
+                                                }
+                                                return `${aspectRatio}/1`;
+                                            })(),
                                             width: (viewMode === 'spread') 
                                                ? '90%' 
                                                : 'auto',

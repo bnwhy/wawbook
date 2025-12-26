@@ -23,6 +23,11 @@ const slugify = (text: string) => {
     .replace(/__+/g, '_');
 };
 
+// Load Google Fonts
+const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or a direct list
+// Import font list from the package we just installed if available, or fallback to a larger list
+import googleFonts from 'google-fonts-complete';
+
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -34,6 +39,36 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
+
+  // Font Search State
+  const [fontSearch, setFontSearch] = useState('');
+  const [availableFonts, setAvailableFonts] = useState<string[]>([]);
+
+  // Initialize fonts
+  React.useEffect(() => {
+    // Convert object keys to array
+    const fontList = Object.keys(googleFonts);
+    setAvailableFonts(fontList);
+    
+    // Load some popular fonts by default into the document head so they preview correctly
+    const popularFonts = ['Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat'];
+    popularFonts.forEach(font => {
+        const link = document.createElement('link');
+        link.href = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}&display=swap`;
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+    });
+  }, []);
+
+  // Effect to dynamically load selected font
+  const loadFont = (fontFamily: string) => {
+    if (!fontFamily) return;
+    const link = document.createElement('link');
+    link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}&display=swap`;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  };
+
 
   // Printers State
   const [printers, setPrinters] = useState<PrinterType[]>(() => {
@@ -4705,17 +4740,38 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               </div>
                                                               <div className="mt-2">
                                                                   <label className="text-[9px] text-gray-400 mb-0.5 block">Police</label>
-                                                                  <select 
-                                                                      value={(layer as any).style?.fontFamily || 'Inter'} 
-                                                                      onChange={(e) => updateLayer({style: {...(layer as any).style, fontFamily: e.target.value}})}
-                                                                      className="w-full text-xs border border-gray-300 rounded px-2 py-1"
-                                                                  >
-                                                                      <option value="Inter">Inter (Sans-serif)</option>
-                                                                      <option value="Merriweather">Merriweather (Serif)</option>
-                                                                      <option value="Comic Sans MS">Comic Sans (Ludique)</option>
-                                                                      <option value="Courier New">Courier (Monospace)</option>
-                                                                      <option value="Impact">Impact (Bold)</option>
-                                                                  </select>
+                                                                  <div className="relative">
+                                                                      <input
+                                                                          type="text"
+                                                                          placeholder="Rechercher une police..."
+                                                                          value={fontSearch}
+                                                                          onChange={(e) => setFontSearch(e.target.value)}
+                                                                          className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-1"
+                                                                      />
+                                                                      <select 
+                                                                          value={(layer as any).style?.fontFamily || 'Inter'} 
+                                                                          onChange={(e) => {
+                                                                              const newFont = e.target.value;
+                                                                              loadFont(newFont);
+                                                                              updateLayer({style: {...(layer as any).style, fontFamily: newFont}});
+                                                                          }}
+                                                                          className="w-full text-xs border border-gray-300 rounded px-2 py-1"
+                                                                          size={5} // Show multiple options to make scrolling easier
+                                                                      >
+                                                                          <option value="Inter">Inter (Default)</option>
+                                                                          {availableFonts
+                                                                              .filter(f => f.toLowerCase().includes(fontSearch.toLowerCase()))
+                                                                              .slice(0, 100) // Limit results for performance
+                                                                              .map(font => (
+                                                                              <option key={font} value={font} style={{ fontFamily: font }}>
+                                                                                  {font}
+                                                                              </option>
+                                                                          ))}
+                                                                      </select>
+                                                                      <div className="text-[9px] text-gray-400 mt-1 text-right">
+                                                                          {availableFonts.filter(f => f.toLowerCase().includes(fontSearch.toLowerCase())).length} polices trouvées
+                                                                      </div>
+                                                                  </div>
                                                               </div>
                                                            </div>
                                                         )}

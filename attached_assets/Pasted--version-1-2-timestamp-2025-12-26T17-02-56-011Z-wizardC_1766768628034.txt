@@ -1,0 +1,219 @@
+{
+  "version": "1.2",
+  "timestamp": "2025-12-26T17:02:56.011Z",
+  "wizardConfig": {
+    "avatarStyle": "watercolor",
+    "tabs": [
+      {
+        "id": "enfant",
+        "label": "Enfant",
+        "type": "character",
+        "options": [],
+        "variants": [
+          {
+            "id": "nom",
+            "label": "nom",
+            "type": "text",
+            "options": [],
+            "minLength": 1,
+            "maxLength": 30
+          },
+          {
+            "id": "peau",
+            "label": "peau",
+            "type": "options",
+            "options": [
+              {
+                "id": "brun",
+                "label": "Brun",
+                "thumbnail": "blob:https://cd6577c1-2123-40df-b260-e70cbb77d64a-00-mrxb8i63fav1.spock.replit.dev/10f5bff2-619b-4833-9181-2e13563ff132"
+              },
+              {
+                "id": "blanc",
+                "label": "Blanc"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "aventurier",
+        "label": "Aventurier",
+        "type": "character",
+        "options": [],
+        "variants": [
+          {
+            "id": "nom",
+            "label": "Nom",
+            "type": "text",
+            "options": []
+          },
+          {
+            "id": "peaux",
+            "label": "Peaux",
+            "type": "options",
+            "options": [
+              {
+                "id": "brun",
+                "label": "Brun",
+                "thumbnail": "blob:https://cd6577c1-2123-40df-b260-e70cbb77d64a-00-mrxb8i63fav1.spock.replit.dev/9df61477-c2bc-43d0-9ca6-a825187e9e63"
+              },
+              {
+                "id": "blanc",
+                "label": "Blanc"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "avatarMappings": {
+      "brun": "https://img.freepik.com/vecteurs-premium/avatar-enfants-vecteur-garcon-souriant_495897-145.jpg",
+      "blanc": "https://images.icon-icons.com/1736/PNG/512/4043250-avatar-child-girl-kid_113270.png"
+    }
+  },
+  "contentConfig": {
+    "pages": [
+      {
+        "id": "1766766836322",
+        "pageNumber": 0,
+        "label": "Page 2"
+      },
+      {
+        "id": "1766768506727",
+        "pageNumber": 1,
+        "label": "Page 1"
+      },
+      {
+        "id": "1766768507394",
+        "pageNumber": 2,
+        "label": "Page 2"
+      },
+      {
+        "id": "1766768507867",
+        "pageNumber": 3,
+        "label": "Page 3"
+      },
+      {
+        "id": "1766768508519",
+        "pageNumber": 4,
+        "label": "Page 4"
+      },
+      {
+        "id": "cover-back-1766768506727",
+        "pageNumber": 999,
+        "label": "Couverture Arrière"
+      }
+    ],
+    "texts": [
+      {
+        "id": "text-1766657553419",
+        "label": "Nouveau Texte",
+        "type": "fixed",
+        "content": "Dos",
+        "position": {
+          "pageIndex": 986,
+          "zoneId": "body",
+          "x": 64.90778896169695,
+          "y": 16.91798405620862,
+          "width": 30
+        }
+      },
+      {
+        "id": "text-1766677903556",
+        "label": "Nouveau Texte",
+        "type": "fixed",
+        "content": "Texte ici...",
+        "combinationKey": "blanc_brun",
+        "position": {
+          "pageIndex": 991,
+          "zoneId": "body",
+          "x": 10,
+          "y": 10,
+          "width": 30
+        }
+      },
+      {
+        "id": "text-1766681182387",
+        "label": "Nouveau Texte",
+        "type": "fixed",
+        "content": "2",
+        "combinationKey": "blanc_brun",
+        "position": {
+          "pageIndex": 995,
+          "zoneId": "body",
+          "x": 10,
+          "y": 10,
+          "width": 30
+        }
+      },
+      {
+        "id": "text-1766681199375",
+        "label": "Nouveau Texte",
+        "type": "fixed",
+        "content": "4",
+        "combinationKey": "blanc_blanc",
+        "position": {
+          "pageIndex": 995,
+          "zoneId": "body",
+          "x": 10,
+          "y": 10,
+          "width": 30
+        }
+      },
+      {
+        "id": "text-1766768518096",
+        "label": "Nouveau Texte",
+        "type": "fixed",
+        "content": "Le livre de {enfant.nom}",
+        "combinationKey": "default",
+        "position": {
+          "pageIndex": 0,
+          "zoneId": "body",
+          "x": 10,
+          "y": 10,
+          "width": 30
+        }
+      }
+    ],
+    "images": [],
+    "imageElements": []
+  },
+  "features": {
+    "languages": [
+      "Français",
+      "Allemand",
+      "Anglais",
+      "Espagnol",
+      "Italien",
+      "Norvégien",
+      "Suédois",
+      "Luxembourgeois",
+      "Turc",
+      "Portugais",
+      "Catalan",
+      "Galicien",
+      "Basque",
+      "Néerlandais"
+    ],
+    "customization": [
+      "Nom",
+      "Genre",
+      "Couleur de peau",
+      "Cheveux",
+      "Coiffure",
+      "Barbe",
+      "Vêtements",
+      "Lunettes"
+    ],
+    "pages": 40,
+    "formats": [
+      "Broché : 21,5 x 25,8 cm",
+      "Relié : 22,2 x 26,5 cm"
+    ],
+    "dimensions": {
+      "width": 210,
+      "height": 210
+    }
+  }
+}

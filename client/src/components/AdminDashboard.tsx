@@ -372,7 +372,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       version: '1.2',
       timestamp: new Date().toISOString(),
       // Export ONLY configuration parts, NOT product identity (id, name, price, etc.)
-      wizardConfig: selectedBook.wizardConfig, // Variants & Options
+      wizardConfig: {
+        avatarStyle: selectedBook.wizardConfig.avatarStyle,
+        tabs: selectedBook.wizardConfig.tabs.map(tab => ({
+          id: tab.id,
+          label: tab.label,
+          type: tab.type,
+          variants: tab.variants.map(v => ({
+             id: v.id,
+             label: v.label,
+             type: v.type,
+             options: v.options,
+             minLength: v.minLength,
+             maxLength: v.maxLength,
+             thumbnail: v.thumbnail
+          }))
+        })),
+        avatarMappings: selectedBook.wizardConfig.avatarMappings
+      }, // Variants & Options
       contentConfig: selectedBook.contentConfig, // Layers, Texts, Images, Pages
       features: selectedBook.features // Dimensions & Print Settings
     };

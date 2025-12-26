@@ -4608,25 +4608,50 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               }}
                                                            >
                                                               {renderTransformHandles(text.id, text.position)}
-                                                              <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
-                                                                 {(() => {
-                                                                     // Always try to replace variable placeholders, regardless of text type
-                                                                     // Use [Friendly Name] format for readability in admin
-                                                                     const content = text.content || '';
-                                                                     let processed = content.replace(/\{childName\}/g, '[Prénom]');
-                                                                     return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
-                                                                         const [tabId, variantId] = key.split('.');
-                                                                         const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
-                                                                         if (tab) {
-                                                                             const variant = tab.variants.find(v => v.id === variantId);
-                                                                             if (variant) {
-                                                                                 return `[${tab.label}: ${variant.label}]`;
+                                                              {activeLayerId === text.id ? (
+                                                                  <textarea
+                                                                      value={text.content}
+                                                                      onChange={(e) => {
+                                                                          const newTexts = selectedBook.contentConfig.texts.map(t => 
+                                                                              t.id === text.id ? { ...t, content: e.target.value } : t
+                                                                          );
+                                                                          handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, texts: newTexts } });
+                                                                      }}
+                                                                      onMouseDown={(e) => e.stopPropagation()}
+                                                                      className="w-full h-full bg-transparent resize-none outline-none p-0 m-0 border-none focus:ring-0 overflow-hidden font-inherit"
+                                                                      style={{ 
+                                                                          ...text.style,
+                                                                          fontSize: text.style?.fontSize,
+                                                                          fontFamily: text.style?.fontFamily,
+                                                                          fontWeight: text.style?.fontWeight,
+                                                                          fontStyle: text.style?.fontStyle,
+                                                                          textDecoration: text.style?.textDecoration,
+                                                                          textAlign: text.style?.textAlign as any,
+                                                                          color: text.style?.color
+                                                                      }}
+                                                                      autoFocus
+                                                                  />
+                                                              ) : (
+                                                                  <div className={`font-medium w-full h-full pointer-events-none ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
+                                                                     {(() => {
+                                                                         // Always try to replace variable placeholders, regardless of text type
+                                                                         // Use [Friendly Name] format for readability in admin
+                                                                         const content = text.content || '';
+                                                                         let processed = content.replace(/\{childName\}/g, '[Prénom]');
+                                                                         return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
+                                                                             const [tabId, variantId] = key.split('.');
+                                                                             const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
+                                                                             if (tab) {
+                                                                                 const variant = tab.variants.find(v => v.id === variantId);
+                                                                                 if (variant) {
+                                                                                     return `[${tab.label}: ${variant.label}]`;
+                                                                                 }
                                                                              }
-                                                                         }
-                                                                         return match;
-                                                                     });
-                                                                 })()}
-                                                              </div>
+                                                                             return match;
+                                                                         });
+                                                                     })()}
+                                                                  </div>
+                                                              )}
                                                            </div>
                                                         ))
                                                      }

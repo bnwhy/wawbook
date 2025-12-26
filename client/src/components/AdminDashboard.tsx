@@ -3356,100 +3356,148 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           const targetTab = selectedBook.wizardConfig.tabs.find(t => t.id === (selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id));
                           if (!targetTab) return <div className="text-gray-400">Aucun personnage trouvé.</div>;
 
-                          const combinations = generateAvatarCombinations(targetTab);
+                          const [filters, setFilters] = useState<Record<string, string>>({});
 
-                          if (combinations.length === 0) {
-                             return (
-                                <div className="text-center py-12 text-gray-400">
-                                   <User size={48} className="mx-auto mb-4 opacity-20" />
-                                   <p>Aucune combinaison d'options disponible pour ce personnage.</p>
-                                   <p className="text-sm mt-2">Ajoutez des variantes de type "Options" dans l'onglet Wizard.</p>
-                                </div>
-                             );
-                          }
+                          // Filter options variants only
+                          const optionVariants = targetTab.variants.filter(v => v.type === 'options');
+
+                          const combinations = generateAvatarCombinations(targetTab).filter(combo => {
+                              // Apply filters
+                              return Object.entries(filters).every(([variantId, optionId]) => {
+                                  if (!optionId) return true;
+                                  return combo.parts.some(p => p.variantId === variantId && p.id === optionId);
+                              });
+                          });
 
                           return (
-                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                                {combinations.map((combo) => {
-                                   const existingAvatar = selectedBook.wizardConfig.avatarMappings?.[combo.key];
-                                   
-                                   return (
-                                      <div key={combo.key} className="bg-slate-50 rounded-xl border border-gray-200 overflow-hidden group hover:shadow-md transition-all">
-                                         <div className="aspect-square bg-white relative flex items-center justify-center border-b border-gray-100">
-                                            {existingAvatar ? (
-                                               <img src={existingAvatar} alt="Avatar" className="w-full h-full object-contain p-4" />
-                                            ) : (
-                                               <User size={48} className="text-gray-200" />
-                                            )}
-                                            
-                                            {/* Upload Overlay */}
-                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                               <div className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all flex gap-2">
-                                                  <label className="cursor-pointer bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg hover:bg-indigo-700 flex items-center gap-2">
-                                                     <Upload size={14} />
-                                                     {existingAvatar ? 'Modifier' : 'Ajouter'}
-                                                     <input 
-                                                        type="file" 
-                                                        className="hidden" 
-                                                        onChange={(e) => {
-                                                           const file = e.target.files?.[0];
-                                                           if (file) {
-                                                              const url = URL.createObjectURL(file);
-                                                              const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
-                                                              newMappings[combo.key] = url;
-                                                              handleSaveBook({
-                                                                 ...selectedBook,
-                                                                 wizardConfig: {
-                                                                    ...selectedBook.wizardConfig,
-                                                                    avatarMappings: newMappings
-                                                                 }
-                                                              });
-                                                           }
-                                                        }}
-                                                     />
-                                                  </label>
-                                                  
-                                                  {existingAvatar && (
-                                                      <button 
-                                                          onClick={() => {
-                                                              if (confirm('Supprimer cette image ?')) {
-                                                                  const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
-                                                                  delete newMappings[combo.key];
-                                                                  handleSaveBook({
-                                                                      ...selectedBook,
-                                                                      wizardConfig: {
-                                                                          ...selectedBook.wizardConfig,
-                                                                          avatarMappings: newMappings
-                                                                      }
-                                                                  });
-                                                                  toast.success('Image supprimée');
-                                                              }
-                                                          }}
-                                                          className="bg-red-500 text-white p-1.5 rounded-lg shadow-lg hover:bg-red-600 flex items-center justify-center"
-                                                          title="Supprimer l'image"
-                                                      >
-                                                          <Trash2 size={14} />
-                                                      </button>
-                                                  )}
-                                               </div>
+                             <div>
+                                {/* Filters Header */}
+                                {optionVariants.length > 0 && (
+                                    <div className="flex flex-wrap gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-gray-100 items-end">
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 w-full flex items-center gap-2">
+                                            <Filter size={14} /> Filtres d'affichage
+                                        </div>
+                                        {optionVariants.map(variant => (
+                                            <div key={variant.id} className="flex flex-col gap-1 min-w-[140px]">
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase">{variant.label}</label>
+                                                <select
+                                                    value={filters[variant.id] || ''}
+                                                    onChange={(e) => setFilters(prev => ({ ...prev, [variant.id]: e.target.value }))}
+                                                    className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white outline-none focus:ring-1 focus:ring-indigo-500"
+                                                >
+                                                    <option value="">Tous</option>
+                                                    {variant.options.map(opt => (
+                                                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                                                    ))}
+                                                </select>
                                             </div>
-                                         </div>
+                                        ))}
+                                        <div className="ml-auto">
+                                            <button 
+                                                onClick={() => setFilters({})}
+                                                className="text-xs text-slate-500 hover:text-red-500 underline"
+                                                disabled={Object.values(filters).every(v => !v)}
+                                            >
+                                                Réinitialiser
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
-                                         <div className="p-3">
-                                            <div className="flex flex-wrap gap-1 mb-1">
-                                               {combo.parts.map((part: any, i: number) => (
-                                                  <span key={i} className="text-[10px] font-bold px-1.5 py-0.5 bg-white border border-gray-200 rounded text-slate-600">
-                                                     {part.label}
-                                                  </span>
-                                               ))}
-                                            </div>
-                                            <div className="text-[9px] text-gray-400 font-mono truncate" title={combo.key}>
-                                               KEY: {combo.key}
-                                            </div>
-                                         </div>
-                                      </div>
-                                   );
-                                })}
+                                {/* Results Info */}
+                                <div className="mb-4 text-xs text-slate-400 font-medium">
+                                    {combinations.length} combinaisons affichées
+                                </div>
+
+                                {combinations.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400">
+                                       <User size={48} className="mx-auto mb-4 opacity-20" />
+                                       <p>Aucune combinaison ne correspond à vos filtres.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                        {combinations.map((combo) => {
+                                           const existingAvatar = selectedBook.wizardConfig.avatarMappings?.[combo.key];
+                                           
+                                           return (
+                                              <div key={combo.key} className="bg-slate-50 rounded-xl border border-gray-200 overflow-hidden group hover:shadow-md transition-all">
+                                                 <div className="aspect-square bg-white relative flex items-center justify-center border-b border-gray-100">
+                                                    {existingAvatar ? (
+                                                       <img src={existingAvatar} alt="Avatar" className="w-full h-full object-contain p-4" />
+                                                    ) : (
+                                                       <User size={48} className="text-gray-200" />
+                                                    )}
+                                                    
+                                                    {/* Upload Overlay */}
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                                       <div className="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all flex gap-2">
+                                                          <label className="cursor-pointer bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg hover:bg-indigo-700 flex items-center gap-2">
+                                                             <Upload size={14} />
+                                                             {existingAvatar ? 'Modifier' : 'Ajouter'}
+                                                             <input 
+                                                                type="file" 
+                                                                className="hidden" 
+                                                                onChange={(e) => {
+                                                                   const file = e.target.files?.[0];
+                                                                   if (file) {
+                                                                      const url = URL.createObjectURL(file);
+                                                                      const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
+                                                                      newMappings[combo.key] = url;
+                                                                      handleSaveBook({
+                                                                         ...selectedBook,
+                                                                         wizardConfig: {
+                                                                            ...selectedBook.wizardConfig,
+                                                                            avatarMappings: newMappings
+                                                                         }
+                                                                      });
+                                                                   }
+                                                                }}
+                                                             />
+                                                          </label>
+                                                          
+                                                          {existingAvatar && (
+                                                              <button 
+                                                                  onClick={() => {
+                                                                      if (confirm('Supprimer cette image ?')) {
+                                                                          const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
+                                                                          delete newMappings[combo.key];
+                                                                          handleSaveBook({
+                                                                              ...selectedBook,
+                                                                              wizardConfig: {
+                                                                                  ...selectedBook.wizardConfig,
+                                                                                  avatarMappings: newMappings
+                                                                              }
+                                                                          });
+                                                                          toast.success('Image supprimée');
+                                                                      }
+                                                                  }}
+                                                                  className="bg-red-500 text-white p-1.5 rounded-lg shadow-lg hover:bg-red-600 flex items-center justify-center"
+                                                                  title="Supprimer l'image"
+                                                              >
+                                                                  <Trash2 size={14} />
+                                                              </button>
+                                                          )}
+                                                       </div>
+                                                    </div>
+                                                 </div>
+
+                                                 <div className="p-3">
+                                                    <div className="flex flex-wrap gap-1 mb-1">
+                                                       {combo.parts.map((part: any, i: number) => (
+                                                          <span key={i} className="text-[10px] font-bold px-1.5 py-0.5 bg-white border border-gray-200 rounded text-slate-600">
+                                                             {part.label}
+                                                          </span>
+                                                       ))}
+                                                    </div>
+                                                    <div className="text-[9px] text-gray-400 font-mono truncate" title={combo.key}>
+                                                       KEY: {combo.key}
+                                                    </div>
+                                                 </div>
+                                              </div>
+                                           );
+                                        })}
+                                     </div>
+                                )}
                              </div>
                           );
                        })()}

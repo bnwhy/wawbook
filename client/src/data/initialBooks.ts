@@ -237,6 +237,97 @@ const DEFAULT_CONTENT_CONFIG = {
   imageElements: []
 };
 
+
+const RICH_CONTENT_CONFIG = {
+  pages: [
+    { id: 'p0', pageNumber: 0, label: 'Couverture Avant', description: 'Face avant de la couverture' },
+    { id: 'p1', pageNumber: 1, label: 'Page 1', description: 'Dédicace' },
+    { id: 'p2', pageNumber: 2, label: 'Page 2', description: 'Le départ' },
+    { id: 'p3', pageNumber: 3, label: 'Page 3', description: 'La rencontre' },
+    { id: 'p4', pageNumber: 4, label: 'Couverture Arrière', description: 'Dos de la couverture' }
+  ],
+  texts: [
+    // Front Cover
+    {
+      id: 't-cover-title',
+      label: 'Titre du livre',
+      type: 'fixed',
+      content: "L'Aventurier du Monde",
+      position: { pageIndex: 0, zoneId: 'body', x: 10, y: 15, width: 80, rotation: 0 },
+      style: { fontSize: '48px', fontFamily: 'serif', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' }
+    },
+    {
+      id: 't-cover-subtitle',
+      label: 'Sous-titre',
+      type: 'variable',
+      content: "Une aventure de {childName}",
+      position: { pageIndex: 0, zoneId: 'body', x: 10, y: 25, width: 80, rotation: 0 },
+      style: { fontSize: '24px', fontFamily: 'sans-serif', fontWeight: 'normal', color: '#f0f0f0', textAlign: 'center' }
+    },
+    // Page 1 (Dedication)
+    {
+      id: 't-p1-dedication',
+      label: 'Dédicace',
+      type: 'fixed',
+      content: "Pour {childName},\n\nQue ce livre t'inspire à explorer le monde avec curiosité et courage.\n\nAvec tout notre amour.",
+      position: { pageIndex: 1, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
+      style: { fontSize: '18px', fontFamily: 'serif', fontStyle: 'italic', color: '#333333', textAlign: 'center' }
+    },
+    // Page 2 (Story)
+    {
+      id: 't-p2-story',
+      label: 'Texte histoire',
+      type: 'fixed',
+      content: "Il était une fois, un jeune explorateur nommé {childName}. Depuis sa fenêtre, {childName} rêvait de terres lointaines et de montagnes mystérieuses.",
+      position: { pageIndex: 2, zoneId: 'body', x: 10, y: 70, width: 80, rotation: 0 },
+      style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
+    },
+    // Page 3 (Story)
+    {
+      id: 't-p3-story',
+      label: 'Texte histoire',
+      type: 'fixed',
+      content: "Un beau matin, {childName} prépara son sac à dos. 'Je suis prêt pour l'aventure !' s'écria-t-il avec enthousiasme.",
+      position: { pageIndex: 3, zoneId: 'body', x: 10, y: 10, width: 80, rotation: 0 },
+      style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
+    },
+    // Back Cover
+    {
+      id: 't-back-synopsis',
+      label: 'Synopsis',
+      type: 'fixed',
+      content: "Découvrez l'histoire incroyable d'un enfant qui part à la découverte du monde. Une épopée pleine de surprises et de rencontres inoubliables.",
+      position: { pageIndex: 4, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
+      style: { fontSize: '16px', fontFamily: 'sans-serif', color: '#ffffff', textAlign: 'center' }
+    }
+  ],
+  images: [
+     // Backgrounds (using existing images as placeholders)
+     { id: 'bg-cover', pageIndex: 0, combinationKey: '', imageUrl: explorerImage },
+     { id: 'bg-p2', pageIndex: 2, combinationKey: '', imageUrl: natureImage }, // Reuse nature image
+     { id: 'bg-p3', pageIndex: 3, combinationKey: '', imageUrl: animalsImage }, // Reuse animals image
+     { id: 'bg-back', pageIndex: 4, combinationKey: '', imageUrl: explorerImage } // Reuse cover for back for now
+  ],
+  imageElements: [
+    // Character on Page 2
+    {
+      id: 'img-p2-char',
+      label: 'Personnage Principal',
+      type: 'static',
+      url: boyBlondAvatar,
+      position: { pageIndex: 2, x: 60, y: 40, width: 30, height: 30, rotation: 0 }
+    },
+     // Character on Page 3
+    {
+      id: 'img-p3-char',
+      label: 'Personnage Marche',
+      type: 'static',
+      url: boyBlondAvatar,
+      position: { pageIndex: 3, x: 10, y: 50, width: 40, height: 40, rotation: 10 }
+    }
+  ]
+};
+
 const FAMILY_CONTENT_CONFIG = {
     ...DEFAULT_CONTENT_CONFIG,
     images: [
@@ -285,7 +376,7 @@ export const INITIAL_BOOKS: BookProduct[] = [
     badgeText: 'Best-seller',
     features: DEFAULT_FEATURES,
     wizardConfig: DEFAULT_WIZARD_CONFIG,
-    contentConfig: DEFAULT_CONTENT_CONFIG,
+    contentConfig: RICH_CONTENT_CONFIG,
     associatedPaths: ['/products/Nouveau', '/products/Bestsellers']
   },
   {

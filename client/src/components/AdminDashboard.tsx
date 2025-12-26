@@ -4326,7 +4326,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   const pagePct = (pageWidth / totalWidth) * 100;
                                                   const spinePct = (spineWidth / totalWidth) * 100;
 
-                                                  const renderPageContent = (targetPage: any, label: string) => {
+                                                  const renderPageContent = (targetPage: any, label: string, position?: 'left' | 'right') => {
                                                        if (!targetPage) return <div style={{width: `${pagePct}%`}} className="bg-gray-100 flex items-center justify-center text-gray-400">Page manquante</div>;
 
                                                        // Determine margin config for this specific page (Cover Spread sub-pages)
@@ -4361,40 +4361,54 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                            {/* TRIM LINE (Page Boundary) */}
                                                            {showGrid && (
-                                                               <div className="absolute inset-0 border border-slate-900/20 z-40 pointer-events-none"></div>
+                                                               <div className={`absolute inset-0 border-t border-b ${position === 'left' ? 'border-l border-r-0' : position === 'right' ? 'border-r border-l-0' : 'border'} border-slate-900/20 z-40 pointer-events-none`}></div>
                                                            )}
 
                                                            {/* 0. BLEED GUIDE (Fonds Perdus) - Outside Trim */}
                                                            {bleedMm && showGrid && (
                                                               <div 
-                                                                 className="absolute border-2 border-cyan-500 border-dashed pointer-events-none z-50 opacity-75"
+                                                                 className={`absolute border-dashed border-cyan-500 pointer-events-none z-50 opacity-75
+                                                                    border-t-2 border-b-2
+                                                                    ${position === 'left' ? 'border-l-2 border-r-0' : ''}
+                                                                    ${position === 'right' ? 'border-r-2 border-l-0' : ''}
+                                                                    ${!position ? 'border-2' : ''}
+                                                                 `}
                                                                  style={{
-                                                                    left: `-${(bleedMm / bookDimensions.width) * 100}%`,
+                                                                    left: position === 'right' ? '0' : `-${(bleedMm / bookDimensions.width) * 100}%`,
                                                                     top: `-${(bleedMm / bookDimensions.height) * 100}%`,
-                                                                    right: `-${(bleedMm / bookDimensions.width) * 100}%`,
+                                                                    right: position === 'left' ? '0' : `-${(bleedMm / bookDimensions.width) * 100}%`,
                                                                     bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
                                                                  }}
                                                               >
-                                                                 <div className="absolute -top-4 left-0 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200">
-                                                                    Fonds Perdus ({bleedMm}mm)
-                                                                 </div>
+                                                                 {(position === 'left' || !position) && (
+                                                                     <div className="absolute -top-4 left-0 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200">
+                                                                        Fonds Perdus ({bleedMm}mm)
+                                                                     </div>
+                                                                 )}
                                                               </div>
                                                            )}
 
                                                            {/* Safe Margin Guide - Inside Trim */}
                                                            {safeMarginMm && showGrid && (
                                                               <div 
-                                                                 className="absolute border border-red-400 border-dashed pointer-events-none z-50 shadow-sm opacity-60"
+                                                                 className={`absolute border-dashed border-red-400 pointer-events-none z-50 shadow-sm opacity-60
+                                                                    border-t border-b
+                                                                    ${position === 'left' ? 'border-l border-r-0' : ''}
+                                                                    ${position === 'right' ? 'border-r border-l-0' : ''}
+                                                                    ${!position ? 'border' : ''}
+                                                                 `}
                                                                  style={{
-                                                                    left: `${(safeMarginMm / bookDimensions.width) * 100}%`,
+                                                                    left: position === 'right' ? '0' : `${(safeMarginMm / bookDimensions.width) * 100}%`,
                                                                     top: `${(safeMarginMm / bookDimensions.height) * 100}%`,
-                                                                    right: `${(safeMarginMm / bookDimensions.width) * 100}%`,
+                                                                    right: position === 'left' ? '0' : `${(safeMarginMm / bookDimensions.width) * 100}%`,
                                                                     bottom: `${(safeMarginMm / bookDimensions.height) * 100}%`,
                                                                  }}
                                                               >
-                                                                 <div className="absolute top-0 right-0 bg-red-400 text-white text-[8px] px-1 font-bold rounded-bl opacity-80">
-                                                                    MARGE ({safeMarginMm}mm)
-                                                                 </div>
+                                                                 {(position === 'right' || !position) && (
+                                                                     <div className="absolute top-0 right-0 bg-red-400 text-white text-[8px] px-1 font-bold rounded-bl opacity-80">
+                                                                        MARGE ({safeMarginMm}mm)
+                                                                     </div>
+                                                                 )}
                                                               </div>
                                                            )}
 
@@ -4415,8 +4429,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                className="absolute flex items-center justify-center bg-gray-50"
                                                                style={{
                                                                   top: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
-                                                                  left: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
-                                                                  right: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
+                                                                  left: showGrid && bleedMm && position !== 'right' ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
+                                                                  right: showGrid && bleedMm && position !== 'left' ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
                                                                   bottom: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
                                                                }}
                                                            >
@@ -4500,7 +4514,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                    return (
                                                        <div key="cover-spread" className={`flex-1 bg-white relative flex shadow-lg ring-1 ring-gray-200 ${showGrid ? 'overflow-visible' : 'overflow-hidden'}`}>
-                                                           {renderPageContent(backCover, 'Dos / Arrière')}
+                                                           {renderPageContent(backCover, 'Dos / Arrière', 'left')}
                                                            {/* Spine Visualization */}
                                                           <div 
                                                               style={{ width: `${spinePct}%` }} 
@@ -4508,13 +4522,33 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               title={`Tranche: ${spineWidth}mm`}
                                                           >
                                                               <div className="absolute inset-0 bg-slate-300/50 striped-bg opacity-30 pointer-events-none"></div>
+                                                              {/* Spine Bleed (Top/Bottom) */}
+                                                              {bleedMm && showGrid && (
+                                                                  <div 
+                                                                     className="absolute border-t-2 border-b-2 border-cyan-500 border-dashed pointer-events-none z-50 opacity-75"
+                                                                     style={{
+                                                                        top: `-${(bleedMm / bookDimensions.height) * 100}%`,
+                                                                        bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
+                                                                        left: '-1px', // Overlap borders slightly
+                                                                        right: '-1px'
+                                                                     }}
+                                                                  ></div>
+                                                              )}
+                                                              {/* Spine Base Layer extension */}
+                                                              <div className="absolute inset-0 bg-gray-50 -z-10"
+                                                                   style={{
+                                                                      top: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
+                                                                      bottom: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
+                                                                   }}
+                                                              ></div>
+
                                                               {spineWidth > 2 && (
                                                                   <span className="text-[9px] font-mono text-gray-600 -rotate-90 whitespace-nowrap select-none font-bold">
                                                                      {spineWidth}mm
                                                                   </span>
                                                               )}
                                                           </div>
-                                                          {renderPageContent(frontCover, 'Face Avant')}
+                                                          {renderPageContent(frontCover, 'Face Avant', 'right')}
                                                        </div>
                                                    );
                                                }

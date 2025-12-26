@@ -3663,6 +3663,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               >
                                   <Upload size={18} />
                               </button>
+                              <button
+                                  onClick={() => {
+                                      if (confirm('ATTENTION: Voulez-vous réinitialiser TOUTE la configuration du livre ?\nCela effacera toutes les pages, textes, images et variantes.\nCette action est irréversible.')) {
+                                          handleSaveBook({
+                                              ...selectedBook,
+                                              wizardConfig: { avatarStyle: 'watercolor', tabs: [] },
+                                              contentConfig: { pages: [], texts: [], images: [], imageElements: [] },
+                                              features: { ...selectedBook.features, dimensions: { width: 210, height: 210 } }
+                                          });
+                                          setSelectedPageId(null);
+                                          toast.success('Configuration réinitialisée avec succès');
+                                      }
+                                  }}
+                                  className="p-2 bg-red-50 hover:bg-red-100 rounded text-red-600 shrink-0 ml-2 border border-red-200"
+                                  title="Réinitialiser la configuration (Reset complet)"
+                              >
+                                  <RotateCcw size={18} />
+                              </button>
                               <input 
                                   type="file" 
                                   ref={fileInputRef}

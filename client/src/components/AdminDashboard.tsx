@@ -4446,7 +4446,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    };
 
                                                    return (
-                                                       <div key="cover-spread" className="flex-1 bg-white relative overflow-hidden flex shadow-lg ring-1 ring-gray-200">
+                                                       <div key="cover-spread" className={`flex-1 bg-white relative flex shadow-lg ring-1 ring-gray-200 ${showGrid ? 'overflow-visible' : 'overflow-hidden'}`}>
                                                            {renderPageContent(backCover, 'Dos / Arrière')}
                                                            {/* Spine Visualization */}
                                                           <div 
@@ -4475,6 +4475,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   : selectedBook.features?.printConfig?.interior;
                                                   
                                                const safeMarginMm = config?.safeMarginMm;
+                                               const bleedMm = config?.bleedMm;
 
                                                return (
                                                   <div 
@@ -4483,7 +4484,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         e.stopPropagation();
                                                         setSelectedPageId(page.id);
                                                      }}
-                                                     className={`flex-1 bg-white relative overflow-hidden group border-r border-gray-100 last:border-0 transition-shadow duration-200 ${selectedPageId === page.id ? 'ring-2 ring-brand-coral ring-inset z-10' : 'hover:ring-1 hover:ring-gray-300 ring-inset'}`}
+                                                     className={`flex-1 bg-white relative group border-r border-gray-100 last:border-0 transition-shadow duration-200 ${showGrid ? 'overflow-visible' : 'overflow-hidden'} ${selectedPageId === page.id ? 'ring-2 ring-brand-coral ring-inset z-10' : 'hover:ring-1 hover:ring-gray-300 ring-inset'}`}
                                                   >
                                                      {/* Label Overlay for Cover Spread */}
                                                      {viewMode === 'spread' && isCoverPage && (
@@ -4491,20 +4492,37 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            {pIdx === 0 ? 'Face Avant' : 'Dos / Arrière'}
                                                         </div>
                                                      )}
-                                                     {/* Safe Margin Guide */}
-                                                     {safeMarginMm && (
+                                                     
+                                                     {/* 0. BLEED GUIDE (Fonds Perdus) - Outside Trim */}
+                                                     {bleedMm && showGrid && (
                                                         <div 
-                                                           className="absolute border-2 border-red-400 border-dashed pointer-events-none z-50 shadow-sm opacity-50"
+                                                           className="absolute border border-cyan-500 border-dashed pointer-events-none z-50 opacity-60"
+                                                           style={{
+                                                              left: `-${(bleedMm / bookDimensions.width) * 100}%`,
+                                                              top: `-${(bleedMm / bookDimensions.height) * 100}%`,
+                                                              right: `-${(bleedMm / bookDimensions.width) * 100}%`,
+                                                              bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
+                                                           }}
+                                                        >
+                                                           <div className="absolute -top-3 left-0 text-cyan-600 text-[8px] font-bold uppercase whitespace-nowrap bg-white/80 px-1 rounded shadow-sm">
+                                                              Fonds Perdus ({bleedMm}mm)
+                                                           </div>
+                                                        </div>
+                                                     )}
+
+                                                     {/* Safe Margin Guide - Inside Trim */}
+                                                     {safeMarginMm && showGrid && (
+                                                        <div 
+                                                           className="absolute border border-red-400 border-dashed pointer-events-none z-50 shadow-sm opacity-60"
                                                            style={{
                                                               left: `${(safeMarginMm / bookDimensions.width) * 100}%`,
                                                               top: `${(safeMarginMm / bookDimensions.height) * 100}%`,
                                                               right: `${(safeMarginMm / bookDimensions.width) * 100}%`,
                                                               bottom: `${(safeMarginMm / bookDimensions.height) * 100}%`,
                                                            }}
-                                                           title={`Marge de sécurité: ${safeMarginMm}mm`}
                                                         >
-                                                           <div className="absolute top-0 right-0 bg-red-400 text-white text-[8px] px-1 font-bold rounded-bl opacity-70">
-                                                              MARGE
+                                                           <div className="absolute top-0 right-0 bg-red-400 text-white text-[8px] px-1 font-bold rounded-bl opacity-80">
+                                                              MARGE ({safeMarginMm}mm)
                                                            </div>
                                                         </div>
                                                      )}

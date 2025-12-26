@@ -4606,55 +4606,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         {/* Text Styling Options */}
                                                         {isText && (
                                                            <div>
-                                                              <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Déplacer vers...</label>
-                                                              <div className="flex bg-white rounded border border-gray-300 mb-4 p-0.5">
-                                                                 <button 
-                                                                    onClick={() => {
-                                                                        const currentIdx = layer.position.pageIndex;
-                                                                        const totalPages = selectedBook.contentConfig.pages.length;
-                                                                        let newIdx = currentIdx - 1;
-                                                                        if (newIdx < 0) return; // Can't go before front cover
-                                                                        
-                                                                        // Find page object for newIdx
-                                                                        const targetPage = selectedBook.contentConfig.pages.find(p => p.pageNumber === newIdx);
-                                                                        if (!targetPage) return; // Should not happen if newIdx is valid
-
-                                                                        // Update layer
-                                                                        updateLayer({ position: { ...layer.position, pageIndex: newIdx } });
-                                                                        // Switch view to target page
-                                                                        setSelectedPageId(targetPage.id);
-                                                                    }}
-                                                                    disabled={layer.position.pageIndex <= 0}
-                                                                    className={`flex-1 py-1 text-xs font-medium rounded flex items-center justify-center gap-1 ${layer.position.pageIndex <= 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100 text-slate-700'}`}
-                                                                    title="Page précédente"
-                                                                 >
-                                                                    <ArrowLeft size={12} /> Préc.
-                                                                 </button>
-                                                                 <div className="w-px bg-gray-200 my-1"></div>
-                                                                 <button 
-                                                                    onClick={() => {
-                                                                        const currentIdx = layer.position.pageIndex;
-                                                                        const totalPages = selectedBook.contentConfig.pages.length;
-                                                                        let newIdx = currentIdx + 1;
-                                                                        if (newIdx >= totalPages) return; // Can't go after back cover
-
-                                                                        // Find page object for newIdx
-                                                                        const targetPage = selectedBook.contentConfig.pages.find(p => p.pageNumber === newIdx);
-                                                                        if (!targetPage) return;
-
-                                                                        // Update layer
-                                                                        updateLayer({ position: { ...layer.position, pageIndex: newIdx } });
-                                                                        // Switch view to target page
-                                                                        setSelectedPageId(targetPage.id);
-                                                                    }}
-                                                                    disabled={layer.position.pageIndex >= selectedBook.contentConfig.pages.length - 1}
-                                                                    className={`flex-1 py-1 text-xs font-medium rounded flex items-center justify-center gap-1 ${layer.position.pageIndex >= selectedBook.contentConfig.pages.length - 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100 text-slate-700'}`}
-                                                                    title="Page suivante"
-                                                                 >
-                                                                    Suiv. <ArrowRight size={12} />
-                                                                 </button>
-                                                              </div>
-
                                                               <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Style du texte</label>
                                                               <div className="grid grid-cols-2 gap-2 mb-2">
                                                                   <div>

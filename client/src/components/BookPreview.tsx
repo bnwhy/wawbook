@@ -70,6 +70,26 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   const currentCombinationKey = getCombinationKey();
 
+  // --- DIMENSIONS & SCALE ---
+  // Default to Square 210x210 if not specified
+  const dims = book?.features?.dimensions || { width: 210, height: 210 };
+  
+  // Spread aspect ratio = (Single Page Width * 2) / Page Height
+  const spreadAspectRatio = (dims.width * 2) / dims.height;
+  
+  // Max dimensions for the book preview container
+  const MAX_W = 1080;
+  const MAX_H = 720;
+
+  let computedW = MAX_H * spreadAspectRatio;
+  let computedH = MAX_H;
+
+  // Constrain to max width if it exceeds
+  if (computedW > MAX_W) {
+      computedW = MAX_W;
+      computedH = MAX_W / spreadAspectRatio;
+  }
+
   const handleAddToCart = () => {
     // Add to cart functionality
     const itemData = {
@@ -592,8 +612,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
             {/* BOOK OBJECT */}
             <div 
-              className={`relative w-[1080px] h-[720px] flex shadow-[0_30px_60px_rgba(0,0,0,0.4)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev') || (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
+              className={`relative flex shadow-[0_30px_60px_rgba(0,0,0,0.4)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev') || (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
               style={{ 
+                width: `${computedW}px`,
+                height: `${computedH}px`,
                 transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev')
                   ? 'translateX(-25%)'
                   : (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')

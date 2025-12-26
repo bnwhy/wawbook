@@ -130,10 +130,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   // Determine total views based on content source
   const getContentPages = () => {
-      if (book?.contentConfig?.pages?.length) {
-          return book.contentConfig.pages;
-      }
-      return story.pages; // Fallback
+      return book?.contentConfig?.pages || [];
   };
 
   const contentPages = getContentPages();
@@ -150,7 +147,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const totalSpreads = Math.ceil(pageCount / 2); 
   
   // Check if we have custom content to decide on Intro spread visibility
-  const hasCustomContent = !!book?.contentConfig?.pages?.length;
+  const hasCustomContent = true; // Always true for strict config mode
   
   // 0: Cover
   // 1: Intro (ONLY if !hasCustomContent)
@@ -290,20 +287,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           );
       }
 
-      // 2. Fallback to Simple Story (Legacy)
-      const storyPage = story.pages[pageIndex - 1]; // story.pages is 0-indexed, pageIndex is 1-indexed (starts after intro)
-      
-      if (!storyPage) return <div className="w-full h-full bg-white"></div>;
-
-      return (
-        <div className="w-full h-full bg-white p-6 flex flex-col justify-center relative shadow-inner">
-            <div className={`absolute ${isLeft ? 'right-0' : 'left-0'} top-0 bottom-0 w-6 bg-gradient-to-${isLeft ? 'l' : 'r'} from-black/5 to-transparent pointer-events-none z-10`}></div>
-            <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-sm bg-cloud-lightest border-4 border-white">
-                {storyPage.imageUrl ? <img src={storyPage.imageUrl} className="w-full h-full object-cover" alt="Illustration" /> : <div className="w-full h-full bg-cloud-lightest"></div>}
-            </div>
-            <div className="mt-6 font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center">{storyPage.text}</div>
-        </div>
-      );
+      // 2. Fallback to Simple Story (Legacy) -> REMOVED (Strict Config Mode)
+      return <div className="w-full h-full bg-white"></div>;
   };
 
   const getSpreadContent = (index: number) => {
@@ -458,7 +443,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         const hasCustomFrontCover = frontCoverTexts.length > 0 || frontCoverImages.length > 0 || !!frontCoverBg;
 
         const showCustomBack = hasCustomBackCover;
-        const showCleanBack = !hasCustomBackCover && hasCustomFrontCover;
+        const showCleanBack = !hasCustomBackCover; // Always clean if not configured
 
         return {
             left: (

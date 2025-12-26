@@ -4329,10 +4329,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   const renderPageContent = (targetPage: any, label: string) => {
                                                        if (!targetPage) return <div style={{width: `${pagePct}%`}} className="bg-gray-100 flex items-center justify-center text-gray-400">Page manquante</div>;
 
+                                                       // Determine margin config for this specific page (Cover Spread sub-pages)
+                                                       const pIdx = selectedBook.contentConfig.pages.findIndex(p => p.id === targetPage.id);
+                                                       const isThisPageCover = pIdx === 0 || pIdx === selectedBook.contentConfig.pages.length - 1;
+                                                       
+                                                       const config = isThisPageCover 
+                                                          ? selectedBook.features?.printConfig?.cover 
+                                                          : selectedBook.features?.printConfig?.interior;
+                                                          
+                                                       const safeMarginMm = config?.safeMarginMm;
+                                                       const bleedMm = config?.bleedMm;
+
                                                        return (
                                                        <div 
                                                            style={{ width: `${pagePct}%` }}
-                                                          className="h-full relative border-r border-dashed border-gray-300 last:border-0 overflow-hidden group/subpage"
+                                                          className={`h-full relative border-r border-dashed border-gray-300 last:border-0 group/subpage ${showGrid ? 'overflow-visible' : 'overflow-hidden'}`}
                                                            onClick={(e) => {
                                                                e.stopPropagation();
                                                                setSelectedPageId(targetPage.id);
@@ -4346,6 +4357,40 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            {/* Selection Ring */}
                                                            {selectedPageId === targetPage.id && (
                                                               <div className="absolute inset-0 border-2 border-brand-coral z-40 pointer-events-none"></div>
+                                                           )}
+
+                                                           {/* 0. BLEED GUIDE (Fonds Perdus) - Outside Trim */}
+                                                           {bleedMm && showGrid && (
+                                                              <div 
+                                                                 className="absolute border border-cyan-500 border-dashed pointer-events-none z-50 opacity-60"
+                                                                 style={{
+                                                                    left: `-${(bleedMm / bookDimensions.width) * 100}%`,
+                                                                    top: `-${(bleedMm / bookDimensions.height) * 100}%`,
+                                                                    right: `-${(bleedMm / bookDimensions.width) * 100}%`,
+                                                                    bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
+                                                                 }}
+                                                              >
+                                                                 <div className="absolute -top-3 left-0 text-cyan-600 text-[8px] font-bold uppercase whitespace-nowrap bg-white/80 px-1 rounded shadow-sm">
+                                                                    Fonds Perdus ({bleedMm}mm)
+                                                                 </div>
+                                                              </div>
+                                                           )}
+
+                                                           {/* Safe Margin Guide - Inside Trim */}
+                                                           {safeMarginMm && showGrid && (
+                                                              <div 
+                                                                 className="absolute border border-red-400 border-dashed pointer-events-none z-50 shadow-sm opacity-60"
+                                                                 style={{
+                                                                    left: `${(safeMarginMm / bookDimensions.width) * 100}%`,
+                                                                    top: `${(safeMarginMm / bookDimensions.height) * 100}%`,
+                                                                    right: `${(safeMarginMm / bookDimensions.width) * 100}%`,
+                                                                    bottom: `${(safeMarginMm / bookDimensions.height) * 100}%`,
+                                                                 }}
+                                                              >
+                                                                 <div className="absolute top-0 right-0 bg-red-400 text-white text-[8px] px-1 font-bold rounded-bl opacity-80">
+                                                                    MARGE ({safeMarginMm}mm)
+                                                                 </div>
+                                                              </div>
                                                            )}
 
                                                            {/* GRID OVERLAY (Cover Spread) */}

@@ -8,6 +8,9 @@ import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { MenuItem, MenuColumn } from '../types/menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Checkbox } from './ui/checkbox';
+import { Badge } from './ui/badge';
 
 import { generateCoverPDF, generateInteriorPDF } from '../utils/pdfGenerator';
 
@@ -125,7 +128,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [showGrid, setShowGrid] = useState(false);
   const [gridSizeMm, setGridSizeMm] = useState(10); // 10mm grid default
   const [snapToGrid, setSnapToGrid] = useState(false);
-  const [avatarFilters, setAvatarFilters] = useState<Record<string, string>>({}); // Top-level state for avatar filters
+  const [avatarFilters, setAvatarFilters] = useState<Record<string, string[]>>({}); // Top-level state for avatar filters, string[] for multiselect
 
   // Keyboard Nudge Logic
   React.useEffect(() => {
@@ -492,7 +495,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return combinations.map(combo => {
        const parts = combo.map((opt: any) => ({
           label: opt.label,
-          id: opt.id
+          id: opt.id,
+          // Find which variant this option belongs to
+          variantId: variants.find(v => v.options?.some(o => o.id === opt.id))?.id
        }));
        
        // Key is sorted combination of option IDs
@@ -3362,9 +3367,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                           const combinations = generateAvatarCombinations(targetTab).filter(combo => {
                               // Apply filters
-                              return Object.entries(avatarFilters).every(([variantId, optionId]) => {
-                                  if (!optionId) return true;
-                                  return combo.parts.some((p: any) => p.variantId === variantId && p.id === optionId);
+                              return Object.entries(avatarFilters).every(([variantId, selectedOptionIds]) => {
+                                  if (!selectedOptionIds || selectedOptionIds.length === 0) return true;
+                                  return combo.parts.some((p: any) => p.variantId === variantId && selectedOptionIds.includes(p.id));
                               });
                           });
 
@@ -3376,26 +3381,85 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 w-full flex items-center gap-2">
                                             <Filter size={14} /> Filtres d'affichage
                                         </div>
-                                        {optionVariants.map(variant => (
+                                        {optionVariants.map(variant => {
+                                            const selectedIds = avatarFilters[variant.id] || [];
+                                            
+                                            return (
                                             <div key={variant.id} className="flex flex-col gap-1 min-w-[140px]">
                                                 <label className="text-[10px] font-bold text-slate-500 uppercase">{variant.label}</label>
-                                                <select
-                                                    value={avatarFilters[variant.id] || ''}
-                                                    onChange={(e) => setAvatarFilters(prev => ({ ...prev, [variant.id]: e.target.value }))}
-                                                    className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white outline-none focus:ring-1 focus:ring-indigo-500"
-                                                >
-                                                    <option value="">Tous</option>
-                                                    {(variant.options || []).map(opt => (
-                                                        <option key={opt.id} value={opt.id}>{opt.label}</option>
-                                                    ))}
-                                                </select>
+                                                
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <button className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white flex items-center justify-between hover:bg-slate-50">
+                                                            <span className="truncate">
+                                                                {selectedIds.length === 0 
+                                                                    ? "Tous" 
+                                                                    : selectedIds.length === 1 
+                                                                        ? (variant.options?.find(o => o.id === selectedIds[0])?.label || selectedIds[0])
+                                                                        : `${selectedIds.length} sélectionnés`
+                                                                }
+                                                            </span>
+                                                            <ChevronDown size={12} className="opacity-50" />
+                                                        </button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[200px] p-0" align="start">
+                                                        <div className="max-h-[300px] overflow-y-auto p-1">
+                                                            <div 
+                                                                className="flex items-center gap-2 p-2 hover:bg-slate-100 rounded cursor-pointer"
+                                                                onClick={() => {
+                                                                    setAvatarFilters(prev => {
+                                                                        const next = { ...prev };
+                                                                        delete next[variant.id];
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                            >
+                                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedIds.length === 0 ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                                                                    {selectedIds.length === 0 && <span className="text-white text-[10px]">✓</span>}
+                                                                </div>
+                                                                <span className="text-sm">Tous</span>
+                                                            </div>
+                                                            {variant.options?.map(opt => {
+                                                                const isSelected = selectedIds.includes(opt.id);
+                                                                return (
+                                                                    <div 
+                                                                        key={opt.id}
+                                                                        className="flex items-center gap-2 p-2 hover:bg-slate-100 rounded cursor-pointer"
+                                                                        onClick={() => {
+                                                                            setAvatarFilters(prev => {
+                                                                                const current = prev[variant.id] || [];
+                                                                                const next = current.includes(opt.id)
+                                                                                    ? current.filter(id => id !== opt.id)
+                                                                                    : [...current, opt.id];
+                                                                                
+                                                                                // If empty, remove key to reset to "All"
+                                                                                if (next.length === 0) {
+                                                                                    const copy = { ...prev };
+                                                                                    delete copy[variant.id];
+                                                                                    return copy;
+                                                                                }
+                                                                                
+                                                                                return { ...prev, [variant.id]: next };
+                                                                            });
+                                                                        }}
+                                                                    >
+                                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                                                                            {isSelected && <span className="text-white text-[10px]">✓</span>}
+                                                                        </div>
+                                                                        <span className="text-sm">{opt.label}</span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
-                                        ))}
+                                        )})}
                                         <div className="ml-auto">
                                             <button 
                                                 onClick={() => setAvatarFilters({})}
                                                 className="text-xs text-slate-500 hover:text-red-500 underline"
-                                                disabled={Object.values(avatarFilters).every(v => !v)}
+                                                disabled={Object.keys(avatarFilters).length === 0}
                                             >
                                                 Réinitialiser
                                             </button>

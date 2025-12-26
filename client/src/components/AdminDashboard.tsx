@@ -118,6 +118,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState<{x: number, y: number} | null>(null);
   const [dragStartElementPos, setDragStartElementPos] = useState<{x: number, y: number} | null>(null);
+  const [resizeHandle, setResizeHandle] = useState<string | null>(null); // 'nw', 'ne', 'se', 'sw', 'rotate'
+  const [initialDims, setInitialDims] = useState<{w: number, h: number, r: number} | null>(null);
 
   // Grid & Precision State
   const [showGrid, setShowGrid] = useState(false);
@@ -263,8 +265,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         const deltaY = e.clientY - dragStartPos.y;
         
         // CORRECTION FOR SPREAD MODE
-        // In spread mode, the canvas is wider than a single page.
-        // We need to scale the deltaX percentage to be relative to the *single page width*, not the canvas width.
         let scaleX = 1;
         if (viewMode === 'spread') {
              const dims = selectedBook.features?.dimensions || { width: 210, height: 210 };
@@ -275,10 +275,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
              if (isCover) {
                  const spine = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
                  const totalW = (dims.width * 2) + spine;
-                 // Ratio of Canvas Width (Total) to Page Width
                  scaleX = totalW / dims.width;
              } else {
-                 scaleX = 2; // Interior is exactly 2 pages wide
+                 scaleX = 2; 
              }
         }
 
@@ -286,25 +285,86 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         const deltaXPercent = (deltaX / canvasRect.width) * 100 * scaleX;
         const deltaYPercent = (deltaY / canvasRect.height) * 100;
         
-        const newX = dragStartElementPos.x + deltaXPercent;
-        const newY = dragStartElementPos.y + deltaYPercent;
-        
-        // Update Layer
         const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
         const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
         
-        if (textLayer) {
-             const newTexts = selectedBook.contentConfig.texts.map(t => t.id === activeLayerId ? {...t, position: {...t.position, x: newX, y: newY}} : t);
-             // We don't save to history on every move to avoid performance issues, just update draft
-             handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-        } else if (imgLayer) {
-             const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => i.id === activeLayerId ? {...i, position: {...i.position, x: newX, y: newY}} : i);
-             handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+        if (resizeHandle) {
+            // RESIZING / ROTATING LOGIC
+            let newX = dragStartElementPos.x;
+            let newY = dragStartElementPos.y;
+            let newW = initialDims?.w || 20;
+            let newH = initialDims?.h || 20;
+            let newR = initialDims?.r || 0;
+
+            if (resizeHandle === 'rotate') {
+                 // Rotation logic
+                 // Center of element in screen coords
+                 const elementCenterX = canvasRect.left + (dragStartElementPos.x / (100 * scaleX)) * canvasRect.width + ((initialDims?.w || 0) / (100 * scaleX) * canvasRect.width) / 2;
+                 const elementCenterY = canvasRect.top + (dragStartElementPos.y / 100) * canvasRect.height + ((initialDims?.h || 0) / 100 * canvasRect.height) / 2;
+                 
+                 const angle = Math.atan2(e.clientY - elementCenterY, e.clientX - elementCenterX);
+                 const angleDeg = angle * (180 / Math.PI);
+                 // Snap to 45 deg
+                 newR = e.shiftKey ? Math.round((angleDeg + 90) / 45) * 45 : angleDeg + 90;
+            } else {
+                // Resize logic (Simplified - assumes no rotation for resize math for now)
+                // TODO: Handle rotated resize properly
+                
+                if (resizeHandle.includes('e')) {
+                    newW = (initialDims?.w || 0) + deltaXPercent;
+                }
+                if (resizeHandle.includes('w')) {
+                    newW = (initialDims?.w || 0) - deltaXPercent;
+                    newX = dragStartElementPos.x + deltaXPercent;
+                }
+                if (resizeHandle.includes('s')) {
+                    newH = (initialDims?.h || 0) + deltaYPercent;
+                }
+                if (resizeHandle.includes('n')) {
+                    newH = (initialDims?.h || 0) - deltaYPercent;
+                    newY = dragStartElementPos.y + deltaYPercent;
+                }
+            }
+
+            if (textLayer) {
+                 const newTexts = selectedBook.contentConfig.texts.map(t => t.id === activeLayerId ? {
+                     ...t, 
+                     position: {
+                         ...t.position, 
+                         x: newX, y: newY, width: newW, height: newH, rotation: newR
+                     }
+                 } : t);
+                 handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+            } else if (imgLayer) {
+                 const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => i.id === activeLayerId ? {
+                     ...i, 
+                     position: {
+                         ...i.position, 
+                         x: newX, y: newY, width: newW, height: newH, rotation: newR
+                     }
+                 } : i);
+                 handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+            }
+
+        } else {
+            // MOVING LOGIC
+            const newX = dragStartElementPos.x + deltaXPercent;
+            const newY = dragStartElementPos.y + deltaYPercent;
+            
+            if (textLayer) {
+                 const newTexts = selectedBook.contentConfig.texts.map(t => t.id === activeLayerId ? {...t, position: {...t.position, x: newX, y: newY}} : t);
+                 handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+            } else if (imgLayer) {
+                 const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => i.id === activeLayerId ? {...i, position: {...i.position, x: newX, y: newY}} : i);
+                 handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+            }
         }
     };
     
     const handleMouseUp = () => {
         setIsDragging(false);
+        setResizeHandle(null);
+        setInitialDims(null);
         setDragStartPos(null);
         setDragStartElementPos(null);
     };
@@ -318,7 +378,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, activeLayerId, dragStartPos, dragStartElementPos, selectedBook, viewMode, selectedPageId]);
+  }, [isDragging, activeLayerId, dragStartPos, dragStartElementPos, selectedBook, viewMode, selectedPageId, resizeHandle, initialDims]);
   const hasUnsavedChanges = JSON.stringify(draftBook) !== JSON.stringify(contextBook);
 
   // Sync active layer with selected variant visibility
@@ -444,6 +504,62 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Calculate aspect ratio style
   const bookDimensions = selectedBook?.features?.dimensions || { width: 210, height: 210 }; // Default square 21x21
   const aspectRatio = bookDimensions.width / bookDimensions.height;
+
+  // Helper to render Resize/Rotate Handles
+  const renderTransformHandles = (elementId: string, position: {width?: number, height?: number, rotation?: number}) => {
+      if (activeLayerId !== elementId) return null;
+      
+      const handleStyle = "absolute w-2.5 h-2.5 bg-white border border-brand-coral rounded-full shadow z-50 pointer-events-auto";
+      const w = position.width || 0;
+      const h = position.height || 0;
+
+      const onHandleDown = (e: React.MouseEvent, type: string) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setIsDragging(true);
+          setResizeHandle(type);
+          setDragStartPos({ x: e.clientX, y: e.clientY });
+          
+          const textLayer = selectedBook?.contentConfig.texts.find(t => t.id === elementId);
+          const imgLayer = (selectedBook?.contentConfig.imageElements || []).find(i => i.id === elementId);
+          const layer = textLayer || imgLayer;
+          
+          if (layer) {
+              setDragStartElementPos({ x: layer.position.x || 0, y: layer.position.y || 0 });
+              setInitialDims({ 
+                  w: layer.position.width || 0, 
+                  h: layer.position.height || 0,
+                  r: layer.position.rotation || 0
+              });
+          }
+      };
+
+      return (
+          <>
+            {/* Rotate Handle */}
+            <div 
+                className={handleStyle} 
+                style={{ top: '-15px', left: '50%', transform: 'translateX(-50%)', cursor: 'grab' }}
+                onMouseDown={(e) => onHandleDown(e, 'rotate')}
+                title="Pivoter"
+            >
+                <div className="absolute top-full left-1/2 h-2.5 w-px bg-brand-coral -translate-x-1/2"></div>
+            </div>
+
+            {/* Corners */}
+            <div className={handleStyle} style={{ top: '-5px', left: '-5px', cursor: 'nw-resize' }} onMouseDown={(e) => onHandleDown(e, 'nw')} />
+            <div className={handleStyle} style={{ top: '-5px', right: '-5px', cursor: 'ne-resize' }} onMouseDown={(e) => onHandleDown(e, 'ne')} />
+            <div className={handleStyle} style={{ bottom: '-5px', left: '-5px', cursor: 'sw-resize' }} onMouseDown={(e) => onHandleDown(e, 'sw')} />
+            <div className={handleStyle} style={{ bottom: '-5px', right: '-5px', cursor: 'se-resize' }} onMouseDown={(e) => onHandleDown(e, 'se')} />
+            
+            {/* Edges */}
+            <div className="absolute top-0 left-1/2 w-full h-1 -translate-y-1/2 -translate-x-1/2 cursor-n-resize group-hover/handle:bg-brand-coral/20" onMouseDown={(e) => onHandleDown(e, 'n')} />
+            <div className="absolute bottom-0 left-1/2 w-full h-1 translate-y-1/2 -translate-x-1/2 cursor-s-resize" onMouseDown={(e) => onHandleDown(e, 's')} />
+            <div className="absolute left-0 top-1/2 h-full w-1 -translate-x-1/2 -translate-y-1/2 cursor-w-resize" onMouseDown={(e) => onHandleDown(e, 'w')} />
+            <div className="absolute right-0 top-1/2 h-full w-1 translate-x-1/2 -translate-y-1/2 cursor-e-resize" onMouseDown={(e) => onHandleDown(e, 'e')} />
+          </>
+      );
+  };
 
   const handleSaveBook = (updatedBook: BookProduct) => {
     setDraftBook(updatedBook);
@@ -4449,6 +4565,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  transform: `rotate(${el.position.rotation || 0}deg)`
                                                               }}
                                                            >
+                                                              {renderTransformHandles(el.id, el.position)}
                                                               {el.type === 'static' && el.url ? (
                                                                  <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
                                                               ) : (
@@ -4483,6 +4600,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  ...text.style
                                                               }}
                                                            >
+                                                              {renderTransformHandles(text.id, text.position)}
                                                               <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
                                                                  {(() => {
                                                                      // Always try to replace variable placeholders, regardless of text type

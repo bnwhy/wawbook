@@ -127,6 +127,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     toast.success(`${ordersToExport.length} commandes exportées avec succès`);
   };
 
+  const handleExportCustomers = () => {
+    const customersToExport = customers;
+    
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "ID,Nom,Email,Téléphone,Ville,Commandes,Total Dépensé\n"
+      + customersToExport.map(c => `${c.id},${c.firstName} ${c.lastName},${c.email},${c.phone || ''},${c.address?.city || ''},${c.orderCount},${c.totalSpent}`).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `clients_export_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`${customersToExport.length} clients exportés avec succès`);
+  };
+
   // Create Order Handler
   const handleCreateOrder = () => {
      setIsCreatingOrder(true);
@@ -2589,6 +2606,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* --- VIEW: CUSTOMERS --- */}
               {activeTab === 'customers' && !selectedCustomerId && (
                  <div className="space-y-6">
+                    <div className="flex justify-end items-center">
+                         <div className="flex gap-2">
+                            <button 
+                               onClick={handleExportCustomers}
+                               className="bg-white border border-gray-300 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 flex items-center gap-2"
+                            >
+                               <Download size={16} />
+                               Exporter
+                            </button>
+                            <button 
+                               onClick={() => toast.info("Fonctionnalité d'ajout de client à venir")}
+                               className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-800 flex items-center gap-2"
+                            >
+                               <Plus size={16} />
+                               Ajouter un client
+                            </button>
+                         </div>
+                    </div>
+
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                        <table className="w-full text-left text-sm">
                           <thead className="bg-slate-50 border-b border-gray-200 text-slate-500 font-medium">

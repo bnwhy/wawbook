@@ -1195,7 +1195,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    type="text" 
                                    value={settings.general.storeName}
                                    onChange={(e) => setSettings({...settings, general: {...settings.general, storeName: e.target.value}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                 />
                              </div>
                              <div>
@@ -1204,7 +1204,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    type="email" 
                                    value={settings.general.supportEmail}
                                    onChange={(e) => setSettings({...settings, general: {...settings.general, supportEmail: e.target.value}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                 />
                              </div>
                              <div>
@@ -1212,7 +1212,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <select 
                                    value={settings.general.currency}
                                    onChange={(e) => setSettings({...settings, general: {...settings.general, currency: e.target.value}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                 >
                                    <option value="EUR">Euro (€)</option>
                                    <option value="USD">Dollar ($)</option>
@@ -1304,7 +1304,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    step="0.1"
                                    value={settings.shipping.standardRate}
                                    onChange={(e) => setSettings({...settings, shipping: {...settings.shipping, standardRate: parseFloat(e.target.value)}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                 />
                              </div>
                              <div>
@@ -1314,7 +1314,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    step="0.1"
                                    value={settings.shipping.expressRate}
                                    onChange={(e) => setSettings({...settings, shipping: {...settings.shipping, expressRate: parseFloat(e.target.value)}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                 />
                              </div>
                              <div>
@@ -1323,7 +1323,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    type="number" 
                                    value={settings.shipping.freeShippingThreshold}
                                    onChange={(e) => setSettings({...settings, shipping: {...settings.shipping, freeShippingThreshold: parseFloat(e.target.value)}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                 />
                              </div>
                           </div>
@@ -1642,7 +1642,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="text" 
                                             value={newOrderForm.customer.firstName}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, firstName: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div>
@@ -1651,7 +1651,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="text" 
                                             value={newOrderForm.customer.lastName}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, lastName: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div className="col-span-2">
@@ -1660,7 +1660,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="email" 
                                             value={newOrderForm.customer.email}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, email: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div className="col-span-2">
@@ -1669,7 +1669,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="tel" 
                                             value={newOrderForm.customer.phone}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, phone: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                 </div>
@@ -1687,7 +1687,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="text" 
                                             value={newOrderForm.customer.address.street}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, street: e.target.value}}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -1697,7 +1697,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 type="text" 
                                                 value={newOrderForm.customer.address.zipCode}
                                                 onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, zipCode: e.target.value}}})}
-                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                             />
                                         </div>
                                         <div>
@@ -1706,7 +1706,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 type="text" 
                                                 value={newOrderForm.customer.address.city}
                                                 onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, city: e.target.value}}})}
-                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                             />
                                         </div>
                                     </div>
@@ -1715,7 +1715,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <select 
                                             value={newOrderForm.customer.address.country}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, country: e.target.value}}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         >
                                             <option value="France">France</option>
                                             <option value="Belgique">Belgique</option>
@@ -1744,7 +1744,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 newItems[0].bookId = e.target.value;
                                                 setNewOrderForm({...newOrderForm, items: newItems});
                                             }}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         >
                                             <option value="">Sélectionner un livre...</option>
                                             {books.map(book => (
@@ -1763,7 +1763,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 newItems[0].quantity = parseInt(e.target.value) || 1;
                                                 setNewOrderForm({...newOrderForm, items: newItems});
                                             }}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     
@@ -1780,7 +1780,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         newItems[0].config.name = e.target.value;
                                                         setNewOrderForm({...newOrderForm, items: newItems});
                                                     }}
-                                                    className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                                    className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                                 />
                                             </div>
                                             <div>

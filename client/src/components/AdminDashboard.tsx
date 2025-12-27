@@ -8,6 +8,9 @@ import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { MenuItem, MenuColumn } from '../types/menu';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+import { SortableItem } from './SortableItem';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Checkbox } from './ui/checkbox';
@@ -74,6 +77,48 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent, menuIdx: number, colIdx?: number) => {
+    const { active, over } = event;
+    
+    if (active.id !== over?.id) {
+      const menu = mainMenu[menuIdx];
+      
+      if (colIdx !== undefined && menu.columns) {
+        // Reorder column items
+        const col = menu.columns[colIdx];
+        const oldIndex = col.items.indexOf(active.id as string);
+        const newIndex = col.items.indexOf(over!.id as string);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+            const newItems = arrayMove(col.items, oldIndex, newIndex);
+            const newCols = [...menu.columns];
+            newCols[colIdx] = { ...col, items: newItems };
+            updateMenuItem(menuIdx, { ...menu, columns: newCols });
+        }
+      } else if (menu.items) {
+        // Reorder simple items
+        const oldIndex = menu.items.indexOf(active.id as string);
+        const newIndex = menu.items.indexOf(over!.id as string);
+        
+        if (oldIndex !== -1 && newIndex !== -1) {
+            const newItems = arrayMove(menu.items, oldIndex, newIndex);
+            updateMenuItem(menuIdx, { ...menu, items: newItems });
+        }
+      }
+    }
   };
 
   // Fulfillment Tracking State
@@ -3257,46 +3302,60 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           <X size={14} />
                                                       </button>
                                                   </div>
-                                                  <div className="flex flex-wrap gap-2">
-                                                      {col.items.map((item, itemIdx) => (
-                                                          <div key={itemIdx} className="bg-white border border-gray-200 rounded px-2 py-1 text-xs flex items-center gap-1">
-                                                              <input 
-                                                                  type="text"
-                                                                  value={item}
-                                                                  onChange={(e) => {
-                                                                      const newItems = [...col.items];
-                                                                      newItems[itemIdx] = e.target.value;
-                                                                      const newCols = [...(menu.columns || [])];
-                                                                      newCols[colIdx] = { ...col, items: newItems };
-                                                                      updateMenuItem(idx, { ...menu, columns: newCols });
-                                                                  }}
-                                                                  className="border-none p-0 text-xs w-24 focus:ring-0"
-                                                              />
+                                                  <DndContext 
+                                                      sensors={sensors}
+                                                      collisionDetection={closestCenter}
+                                                      onDragEnd={(e) => handleDragEnd(e, idx, colIdx)}
+                                                  >
+                                                      <SortableContext 
+                                                          items={col.items}
+                                                          strategy={rectSortingStrategy}
+                                                      >
+                                                          <div className="flex flex-wrap gap-2">
+                                                              {col.items.map((item, itemIdx) => (
+                                                                  <SortableItem key={item} id={item} className="bg-white border border-gray-200 rounded px-2 py-1 text-xs flex items-center gap-1 cursor-grab active:cursor-grabbing">
+                                                                      <input 
+                                                                          type="text"
+                                                                          value={item}
+                                                                          onChange={(e) => {
+                                                                              const newItems = [...col.items];
+                                                                              newItems[itemIdx] = e.target.value;
+                                                                              const newCols = [...(menu.columns || [])];
+                                                                              newCols[colIdx] = { ...col, items: newItems };
+                                                                              updateMenuItem(idx, { ...menu, columns: newCols });
+                                                                          }}
+                                                                          className="border-none p-0 text-xs w-24 focus:ring-0"
+                                                                          onPointerDown={(e) => e.stopPropagation()}
+                                                                          onKeyDown={(e) => e.stopPropagation()}
+                                                                      />
+                                                                      <button 
+                                                                          onClick={() => {
+                                                                              const newItems = col.items.filter((_, i) => i !== itemIdx);
+                                                                              const newCols = [...(menu.columns || [])];
+                                                                              newCols[colIdx] = { ...col, items: newItems };
+                                                                              updateMenuItem(idx, { ...menu, columns: newCols });
+                                                                          }}
+                                                                          className="text-gray-300 hover:text-red-400"
+                                                                          onPointerDown={(e) => e.stopPropagation()}
+                                                                      >
+                                                                          <X size={10} />
+                                                                      </button>
+                                                                  </SortableItem>
+                                                              ))}
                                                               <button 
                                                                   onClick={() => {
-                                                                      const newItems = col.items.filter((_, i) => i !== itemIdx);
+                                                                      const newItems = [...col.items, 'Nouveau'];
                                                                       const newCols = [...(menu.columns || [])];
                                                                       newCols[colIdx] = { ...col, items: newItems };
                                                                       updateMenuItem(idx, { ...menu, columns: newCols });
                                                                   }}
-                                                                  className="text-gray-300 hover:text-red-400"
+                                                                  className="bg-white border border-dashed border-gray-300 text-gray-400 hover:text-brand-coral hover:border-brand-coral rounded px-2 py-1 text-xs transition-colors"
                                                               >
-                                                                  <X size={10} />
+                                                                  + Item
                                                               </button>
                                                           </div>
-                                                      ))}
-                                                      <button 
-                                                          onClick={() => {
-                                                              const newItems = [...col.items, 'Nouveau'];
-                                                              const newCols = [...(menu.columns || [])];
-                                                              newCols[colIdx] = { ...col, items: newItems };
-                                                              updateMenuItem(idx, { ...menu, columns: newCols });
-                                                          }}
-                                                          className="bg-white border border-dashed border-gray-300 text-gray-400 hover:text-brand-coral hover:border-brand-coral rounded px-2 py-1 text-xs transition-colors"
-                                                      >
-                                                          + Item
-                                                      </button>
-                                                  </div>
+                                                      </SortableContext>
+                                                  </DndContext>
                                               </div>
                                           ))}
                                           <button 
@@ -3311,40 +3370,54 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       </div>
                                   ) : (
                                       // Simple or Grid (List of items)
-                                      (<div className="flex flex-wrap gap-2">
-                                         {(menu.items || []).map((item, itemIdx) => (
-                                             <div key={itemIdx} className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm flex items-center gap-2 group">
-                                                 <input 
-                                                     type="text"
-                                                     value={item}
-                                                     onChange={(e) => {
-                                                         const newItems = [...(menu.items || [])];
-                                                         newItems[itemIdx] = e.target.value;
-                                                         updateMenuItem(idx, { ...menu, items: newItems });
-                                                     }}
-                                                     className="bg-transparent border-none p-0 focus:ring-0 w-32 text-slate-700 font-medium"
-                                                 />
+                                      (<DndContext 
+                                          sensors={sensors}
+                                          collisionDetection={closestCenter}
+                                          onDragEnd={(e) => handleDragEnd(e, idx)}
+                                      >
+                                          <SortableContext 
+                                              items={menu.items || []}
+                                              strategy={rectSortingStrategy}
+                                          >
+                                              <div className="flex flex-wrap gap-2">
+                                                 {(menu.items || []).map((item, itemIdx) => (
+                                                     <SortableItem key={item} id={item} className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm flex items-center gap-2 group cursor-grab active:cursor-grabbing">
+                                                         <input 
+                                                             type="text"
+                                                             value={item}
+                                                             onChange={(e) => {
+                                                                 const newItems = [...(menu.items || [])];
+                                                                 newItems[itemIdx] = e.target.value;
+                                                                 updateMenuItem(idx, { ...menu, items: newItems });
+                                                             }}
+                                                             className="bg-transparent border-none p-0 focus:ring-0 w-32 text-slate-700 font-medium"
+                                                             onPointerDown={(e) => e.stopPropagation()}
+                                                             onKeyDown={(e) => e.stopPropagation()}
+                                                         />
+                                                         <button 
+                                                             onClick={() => {
+                                                                 const newItems = (menu.items || []).filter((_, i) => i !== itemIdx);
+                                                                 updateMenuItem(idx, { ...menu, items: newItems });
+                                                             }}
+                                                             className="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                             onPointerDown={(e) => e.stopPropagation()}
+                                                         >
+                                                             <X size={14} />
+                                                         </button>
+                                                     </SortableItem>
+                                                 ))}
                                                  <button 
                                                      onClick={() => {
-                                                         const newItems = (menu.items || []).filter((_, i) => i !== itemIdx);
+                                                         const newItems = [...(menu.items || []), 'Nouveau lien'];
                                                          updateMenuItem(idx, { ...menu, items: newItems });
                                                      }}
-                                                     className="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                     className="bg-white border border-dashed border-gray-300 text-gray-400 hover:text-brand-coral hover:border-brand-coral rounded-lg px-3 py-1.5 text-sm font-bold transition-colors flex items-center gap-1"
                                                  >
-                                                     <X size={14} />
+                                                     <Plus size={14} /> Ajouter
                                                  </button>
-                                             </div>
-                                         ))}
-                                         <button 
-                                             onClick={() => {
-                                                 const newItems = [...(menu.items || []), 'Nouveau lien'];
-                                                 updateMenuItem(idx, { ...menu, items: newItems });
-                                             }}
-                                             className="bg-white border border-dashed border-gray-300 text-gray-400 hover:text-brand-coral hover:border-brand-coral rounded-lg px-3 py-1.5 text-sm font-bold transition-colors flex items-center gap-1"
-                                         >
-                                             <Plus size={14} /> Ajouter
-                                         </button>
-                                      </div>)
+                                              </div>
+                                          </SortableContext>
+                                      </DndContext>)
                                   )}
                               </div>
                           </div>

@@ -89,7 +89,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              initialSelectionsState[tab.id][variant.id] = props.initialSelections[tab.id][variant.id];
           } else {
              // Default to first option if available, or empty string
-             if (variant.type === 'options' && variant.options.length > 0) {
+             if (variant.type === 'options' && variant.options && variant.options.length > 0) {
                initialSelectionsState[tab.id][variant.id] = variant.options[0].id;
              } else {
                initialSelectionsState[tab.id][variant.id] = '';
@@ -142,7 +142,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
      
      const tab = wizardConfig.tabs.find(t => t.id === tabId);
      const variant = tab?.variants.find(v => v.id === variantId);
-     const option = variant?.options.find(o => o.id === selectedId);
+     const option = variant?.options?.find(o => o.id === selectedId);
      return option?.resource;
   };
 
@@ -406,11 +406,11 @@ const Wizard: React.FC<WizardProps> = (props) => {
        const skinVariant = activeTab.variants.find(v => v.id === 'skinTone');
        const hairVariant = activeTab.variants.find(v => v.id === 'hairColor');
        
-       if (skinVariant && skinToneId) {
+       if (skinVariant && skinToneId && skinVariant.options) {
          const opt = skinVariant.options.find(o => o.id === skinToneId);
          if (opt?.resource) skinHex = opt.resource;
        }
-       if (hairVariant && hairColorId) {
+       if (hairVariant && hairColorId && hairVariant.options) {
          const opt = hairVariant.options.find(o => o.id === hairColorId);
          if (opt?.resource) hairHex = opt.resource;
        }

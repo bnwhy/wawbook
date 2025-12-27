@@ -275,7 +275,7 @@ const CheckoutPage = () => {
 
                             {/* Shipping Method */}
                             <div className="space-y-4">
-                                <h2 className="font-bold text-lg text-stone-800">
+                                <h2 className="font-bold text-lg text-stone-800 flex items-center gap-2">
                                     Mode d'expédition
                                 </h2>
                                 

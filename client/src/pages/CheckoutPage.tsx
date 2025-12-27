@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
-import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { ShippingMethod } from '../types/ecommerce';
 
 const CheckoutPage = () => {
   const { items, total, clearCart } = useCart();
-  const { createOrder } = useEcommerce();
+  const { createOrder, shippingZones } = useEcommerce();
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,12 +41,40 @@ const CheckoutPage = () => {
     billingCountry: 'France',
   });
 
+  // Shipping State
+  const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<string | null>(null);
+
+  // Find applicable zone based on country
+  const applicableZone = shippingZones.find(z => 
+      z.countries.some(c => c.toLowerCase() === formData.country.toLowerCase())
+  );
+
+  // Set default shipping method when zone changes
+  useEffect(() => {
+      if (applicableZone && applicableZone.methods.length > 0) {
+          // Keep current if valid, otherwise select first
+          if (!selectedShippingMethodId || !applicableZone.methods.find(m => m.id === selectedShippingMethodId)) {
+              setSelectedShippingMethodId(applicableZone.methods[0].id);
+          }
+      } else {
+          setSelectedShippingMethodId(null);
+      }
+  }, [applicableZone?.id, formData.country]);
+
+  const selectedMethod = applicableZone?.methods.find(m => m.id === selectedShippingMethodId);
+  const shippingCost = selectedMethod ? selectedMethod.price : 0;
+  const grandTotal = total + shippingCost;
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedMethod) {
+        alert("Veuillez sélectionner un mode de livraison valide pour votre pays.");
+        return;
+    }
     setStep('payment');
     window.scrollTo(0, 0);
   };
@@ -61,13 +90,14 @@ const CheckoutPage = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
+        phone: formData.phone,
         address: {
             street: formData.address,
             city: formData.city,
             zipCode: formData.zip,
             country: formData.country
         }
-      }, items, total);
+      }, items, grandTotal);
 
       setIsLoading(false);
       setStep('confirmation');
@@ -107,7 +137,7 @@ const CheckoutPage = () => {
             <div className="border-t border-stone-100 my-4"></div>
             <div className="flex justify-between">
                 <span className="font-bold text-stone-800">Total payé</span>
-                <span className="font-black text-brand-coral">{total.toFixed(2)}€</span>
+                <span className="font-black text-brand-coral">{grandTotal.toFixed(2)}€</span>
             </div>
           </div>
           <button 
@@ -187,11 +217,19 @@ const CheckoutPage = () => {
                                 
                                 <div className="space-y-4">
                                     <div className="relative">
-                                        <select className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer" defaultValue="FR">
-                                            <option value="FR">France</option>
-                                            <option value="BE">Belgique</option>
-                                            <option value="CH">Suisse</option>
-                                            <option value="CA">Canada</option>
+                                        <select 
+                                            name="country"
+                                            value={formData.country}
+                                            onChange={handleInputChange}
+                                            className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer"
+                                        >
+                                            <option value="France">France</option>
+                                            <option value="Belgique">Belgique</option>
+                                            <option value="Suisse">Suisse</option>
+                                            <option value="Allemagne">Allemagne</option>
+                                            <option value="Espagne">Espagne</option>
+                                            <option value="Italie">Italie</option>
+                                            <option value="Canada">Canada</option>
                                         </select>
                                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
                                     </div>
@@ -215,23 +253,47 @@ const CheckoutPage = () => {
 
                             {/* Shipping Method */}
                             <div className="space-y-4">
-                                <h2 className="font-bold text-lg text-stone-800">Mode d'expédition</h2>
-                                <div className="border border-stone-300 rounded-lg overflow-hidden">
-                                    <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-200">
-                                        <div className="flex items-center gap-3">
-                                            <input type="radio" name="shipping" defaultChecked className="text-cloud-blue focus:ring-cloud-blue" />
-                                            <span className="text-sm font-medium text-stone-800">Standard (3-5 jours)</span>
+                                <h2 className="font-bold text-lg text-stone-800 flex items-center gap-2">
+                                    Mode d'expédition
+                                    {applicableZone && <span className="text-xs font-normal px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Zone: {applicableZone.name}</span>}
+                                </h2>
+                                
+                                {applicableZone ? (
+                                    applicableZone.methods.length > 0 ? (
+                                        <div className="border border-stone-300 rounded-lg overflow-hidden">
+                                            {applicableZone.methods.map((method) => (
+                                                <label key={method.id} className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-200 last:border-b-0">
+                                                    <div className="flex items-center gap-3">
+                                                        <input 
+                                                            type="radio" 
+                                                            name="shipping" 
+                                                            checked={selectedShippingMethodId === method.id}
+                                                            onChange={() => setSelectedShippingMethodId(method.id)}
+                                                            className="text-cloud-blue focus:ring-cloud-blue" 
+                                                        />
+                                                        <div>
+                                                            <div className="text-sm font-medium text-stone-800">{method.name}</div>
+                                                            {method.estimatedDelay && <div className="text-xs text-stone-500">{method.estimatedDelay}</div>}
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-sm font-bold text-stone-800">
+                                                        {method.price === 0 ? 'Gratuit' : `${method.price.toFixed(2)} €`}
+                                                    </span>
+                                                </label>
+                                            ))}
                                         </div>
-                                        <span className="text-sm font-bold text-stone-800">Gratuit</span>
-                                    </label>
-                                    <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <input type="radio" name="shipping" className="text-cloud-blue focus:ring-cloud-blue" />
-                                            <span className="text-sm font-medium text-stone-800">Express (24-48h)</span>
+                                    ) : (
+                                        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex items-center gap-3 text-sm">
+                                            <AlertCircle size={18} />
+                                            <p>Aucun mode de livraison disponible pour cette zone.</p>
                                         </div>
-                                        <span className="text-sm font-bold text-stone-800">9.90 €</span>
-                                    </label>
-                                </div>
+                                    )
+                                ) : (
+                                    <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex items-center gap-3 text-sm">
+                                        <AlertCircle size={18} />
+                                        <p>Nous ne livrons pas encore dans ce pays ({formData.country}). Veuillez nous contacter pour plus d'informations.</p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="pt-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
@@ -340,11 +402,11 @@ const CheckoutPage = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button type="submit" disabled={isLoading} className="w-full bg-cloud-deep text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait">
+                            <button type="submit" disabled={isLoading || !selectedMethod} className="w-full bg-cloud-deep text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
                                 {isLoading ? (
                                     <>Traitement en cours...</>
                                 ) : (
-                                    <>Payer {total.toFixed(2)}€</>
+                                    <>Payer {grandTotal.toFixed(2)}€</>
                                 )}
                             </button>
                         </div>
@@ -380,11 +442,13 @@ const CheckoutPage = () => {
                         </div>
                         <div className="flex justify-between text-stone-600 text-sm">
                             <span>Livraison</span>
-                            <span className="text-green-600 font-bold">Gratuite</span>
+                            <span className={shippingCost === 0 ? "text-green-600 font-bold" : "font-bold text-stone-800"}>
+                                {shippingCost === 0 ? "Gratuite" : `${shippingCost.toFixed(2)}€`}
+                            </span>
                         </div>
                         <div className="border-t border-stone-200 pt-4 mt-4 flex justify-between items-center">
                             <span className="font-bold text-stone-800">Total</span>
-                            <span className="font-black text-2xl text-brand-coral">{total.toFixed(2)}€</span>
+                            <span className="font-black text-2xl text-brand-coral">{grandTotal.toFixed(2)}€</span>
                         </div>
                     </div>
                     

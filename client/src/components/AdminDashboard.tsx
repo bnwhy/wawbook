@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ArrowUpDown, Check, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -49,6 +49,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Fulfillment Tracking State
   const [fulfillmentTracking, setFulfillmentTracking] = useState('');
+  
+  // Sort & Search State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState<{
+    field: 'id' | 'date' | 'status' | 'total' | 'customer';
+    direction: 'asc' | 'desc';
+  }>({ field: 'date', direction: 'desc' });
 
   // Edit Customer State
   const [isEditingCustomer, setIsEditingCustomer] = useState(false);
@@ -1520,13 +1527,67 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   Annulée
                                </button>
                             </div>
-                            <div className="relative">
-                               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                               <input 
-                                  type="text" 
-                                  placeholder="Rechercher..." 
-                                  className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-48 outline-none focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral transition-all"
-                               />
+                            <div className="flex items-center gap-2">
+                               <div className="relative">
+                                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                  <input 
+                                     type="text" 
+                                     placeholder="Rechercher..." 
+                                     value={searchTerm}
+                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                     className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-48 outline-none focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral transition-all"
+                                  />
+                               </div>
+                               
+                               <Popover>
+                                  <PopoverTrigger asChild>
+                                     <button className="p-1.5 border border-gray-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors">
+                                        <ArrowUpDown size={16} />
+                                     </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-56 p-0" align="end">
+                                     <div className="p-2">
+                                        <div className="text-xs font-semibold text-slate-500 px-2 py-1.5">Trier par</div>
+                                        {([
+                                           { id: 'id', label: 'Numéro de commande provisoire' },
+                                           { id: 'date', label: 'Date' },
+                                           { id: 'status', label: 'Statut' },
+                                           { id: 'total', label: 'Prix total' },
+                                           { id: 'customer', label: 'Nom du/de la client(e)' },
+                                        ] as const).map((option) => (
+                                           <div 
+                                              key={option.id}
+                                              className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-md cursor-pointer text-sm"
+                                              onClick={() => setSortConfig({ ...sortConfig, field: option.id })}
+                                           >
+                                              <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${sortConfig.field === option.id ? 'border-brand-coral bg-brand-coral' : 'border-slate-300'}`}>
+                                                 {sortConfig.field === option.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                              </div>
+                                              <span className={sortConfig.field === option.id ? 'text-slate-900 font-medium' : 'text-slate-600'}>
+                                                 {option.label}
+                                              </span>
+                                           </div>
+                                        ))}
+
+                                        <div className="h-px bg-gray-100 my-2" />
+                                        
+                                        <div 
+                                           className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-md cursor-pointer text-sm"
+                                           onClick={() => setSortConfig({ ...sortConfig, direction: 'asc' })}
+                                        >
+                                           <ArrowUp size={14} className={sortConfig.direction === 'asc' ? 'text-brand-coral' : 'text-slate-400'} />
+                                           <span className={sortConfig.direction === 'asc' ? 'text-slate-900 font-medium' : 'text-slate-600'}>Du plus ancien au plus récent</span>
+                                        </div>
+                                        <div 
+                                           className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-md cursor-pointer text-sm"
+                                           onClick={() => setSortConfig({ ...sortConfig, direction: 'desc' })}
+                                        >
+                                           <ArrowDown size={14} className={sortConfig.direction === 'desc' ? 'text-brand-coral' : 'text-slate-400'} />
+                                           <span className={sortConfig.direction === 'desc' ? 'text-slate-900 font-medium' : 'text-slate-600'}>Du plus récent au plus ancien</span>
+                                        </div>
+                                     </div>
+                                  </PopoverContent>
+                               </Popover>
                             </div>
                          </div>
                          
@@ -1565,6 +1626,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                <tbody className="divide-y divide-gray-50">
                                   {orders
                                      .filter(order => !orderFilter || order.status === orderFilter)
+                                     .filter(order => 
+                                         searchTerm === '' ||
+                                         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                         order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                         order.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                         (order.trackingNumber && order.trackingNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+                                     )
+                                     .sort((a, b) => {
+                                         const { field, direction } = sortConfig;
+                                         const modifier = direction === 'asc' ? 1 : -1;
+                                         
+                                         switch (field) {
+                                             case 'date':
+                                                 return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * modifier;
+                                             case 'total':
+                                                 return (a.totalAmount - b.totalAmount) * modifier;
+                                             case 'status':
+                                                 return a.status.localeCompare(b.status) * modifier;
+                                             case 'customer':
+                                                 return a.customerName.localeCompare(b.customerName) * modifier;
+                                             case 'id':
+                                             default:
+                                                 return a.id.localeCompare(b.id) * modifier;
+                                         }
+                                     })
                                      .map(order => {
                                      // Mock statuses for the view
                                      const isPaid = order.status !== 'pending' && order.status !== 'cancelled';

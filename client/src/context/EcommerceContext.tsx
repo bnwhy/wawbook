@@ -252,11 +252,18 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
                 message: `Numéro de suivi ajouté: ${trackingNumber}`,
                 author: 'Système'
             };
+            const statusLog = {
+                id: `log-${Date.now()}-status`,
+                date: new Date().toISOString(),
+                type: 'status_change',
+                message: 'Statut modifié vers Expédiée',
+                author: 'Système'
+            };
             return { 
                 ...o, 
                 trackingNumber, 
                 status: 'shipped',
-                logs: [...(o.logs || []), newLog] as any[]
+                logs: [...(o.logs || []), newLog, statusLog] as any[]
             };
         }
         return o;
@@ -325,7 +332,16 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
         quantity: item.quantity,
         price: item.price,
         configuration: item.config // Store full config including characters and childName
-      }))
+      })),
+      logs: [
+        {
+            id: `log-${Date.now()}`,
+            date: new Date().toISOString(),
+            type: 'system',
+            message: 'Commande créée',
+            author: 'Système'
+        }
+      ]
     };
 
     setOrders(prev => [newOrder, ...prev]);

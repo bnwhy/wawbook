@@ -3618,7 +3618,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           
                                           {/* Cover Dimensions */}
                                           <div className="space-y-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                              <h5 className="text-xs font-bold text-slate-600 uppercase mb-2">Dimensions (à plat)</h5>
+                                              <h5 className="text-xs font-bold text-slate-600 uppercase mb-2">Dimensions totales (à plat)</h5>
                                               
                                               <div className="grid grid-cols-2 gap-6">
                                                   {/* Pages (Front/Back) */}
@@ -3723,7 +3723,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   />
                                               </div>
                                               <div className="space-y-2">
-                                                  <label className="text-xs font-semibold text-slate-900">Marge de sécurité (mm)</label>
+                                                  <label className="text-xs font-semibold text-slate-900">Marge de sécurité (incluse) (mm)</label>
                                                   <input 
                                                       type="number" 
                                                       step="0.01"
@@ -3753,7 +3753,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           
                                           {/* Interior Dimensions */}
                                           <div className="space-y-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                              <h5 className="text-xs font-bold text-slate-600 uppercase mb-2">Dimensions Page</h5>
+                                              <h5 className="text-xs font-bold text-slate-600 uppercase mb-2">Dimensions totales Page</h5>
                                               <div className="grid grid-cols-2 gap-4">
                                                   <div className="space-y-1">
                                                       <label className="text-[10px] text-gray-500">Largeur (mm)</label>
@@ -3824,7 +3824,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   />
                                               </div>
                                               <div className="space-y-2">
-                                                  <label className="text-xs font-semibold text-slate-900">Marge de sécurité (mm)</label>
+                                                  <label className="text-xs font-semibold text-slate-900">Marge de sécurité (incluse) (mm)</label>
                                                   <input 
                                                       type="number" 
                                                       step="0.01"

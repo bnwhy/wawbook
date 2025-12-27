@@ -2590,12 +2590,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* --- VIEW: CUSTOMERS --- */}
               {activeTab === 'customers' && !selectedCustomerId && (
                  <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                       <div>
-                          <h2 className="text-2xl font-bold text-slate-800">Clients</h2>
-                       </div>
-                    </div>
-
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                        <table className="w-full text-left text-sm">
                           <thead className="bg-slate-50 border-b border-gray-200 text-slate-500 font-medium">

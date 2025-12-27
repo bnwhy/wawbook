@@ -34,7 +34,7 @@ import googleFonts from 'google-fonts-complete';
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
-  const { customers, orders, updateOrderStatus, updateOrderTracking, updateOrder, getOrdersByCustomer } = useEcommerce();
+  const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer } = useEcommerce();
   
   const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -42,10 +42,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
-
-  // Order Item Editing State
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [tempConfig, setTempConfig] = useState<string>('');
 
   // Font Search State
   const [fontSearch, setFontSearch] = useState('');
@@ -1498,58 +1494,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   <span className="font-bold">{item.price.toFixed(2)} €</span>
                                                </div>
                                                <p className="text-sm text-slate-500 mb-1">Quantité: {item.quantity}</p>
-                                               
-                                               {editingItemId === item.id ? (
-                                                  <div className="space-y-2 mt-2">
-                                                     <textarea
-                                                        value={tempConfig}
-                                                        onChange={(e) => setTempConfig(e.target.value)}
-                                                        className="w-full h-32 text-xs font-mono p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral"
-                                                     />
-                                                     <div className="flex gap-2">
-                                                        <button
-                                                           onClick={() => {
-                                                              try {
-                                                                 const newConfig = JSON.parse(tempConfig);
-                                                                 const updatedItems = order.items.map(i => 
-                                                                    i.id === item.id ? { ...i, configuration: newConfig } : i
-                                                                 );
-                                                                 updateOrder({ ...order, items: updatedItems });
-                                                                 setEditingItemId(null);
-                                                                 toast.success('Configuration mise à jour');
-                                                              } catch (e) {
-                                                                 toast.error('JSON invalide');
-                                                              }
-                                                           }}
-                                                           className="bg-brand-coral text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-brand-coral/90 transition-colors flex items-center gap-1"
-                                                        >
-                                                           <Save size={12} /> Enregistrer
-                                                        </button>
-                                                        <button
-                                                           onClick={() => setEditingItemId(null)}
-                                                           className="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-md text-xs font-bold hover:bg-slate-200 transition-colors"
-                                                        >
-                                                           Annuler
-                                                        </button>
-                                                     </div>
-                                                  </div>
-                                               ) : (
-                                                  <div className="group relative inline-block">
-                                                     <div className="text-xs text-slate-400 bg-slate-50 p-2 rounded font-mono whitespace-pre-wrap">
-                                                        {JSON.stringify(item.configuration, null, 2)}
-                                                     </div>
-                                                     <button
-                                                        onClick={() => {
-                                                           setEditingItemId(item.id);
-                                                           setTempConfig(JSON.stringify(item.configuration, null, 2));
-                                                        }}
-                                                        className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-white shadow-sm border border-gray-200 p-1 rounded text-slate-500 hover:text-indigo-600 transition-all"
-                                                        title="Modifier la configuration"
-                                                     >
-                                                        <Edit2 size={12} />
-                                                     </button>
-                                                  </div>
-                                               )}
+                                               <div className="text-xs text-slate-400 bg-slate-50 p-2 rounded inline-block">
+                                                  {JSON.stringify(item.configuration, null, 2)}
+                                               </div>
                                             </div>
                                          </div>
                                       ))}

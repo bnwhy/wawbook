@@ -512,8 +512,8 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     // Checkbox handling (using first option or defaulting if no option exists)
                     const isChecked = !!currentValue;
                     return withDivider(
-                        <div className="flex items-center justify-between space-x-3 bg-white p-3 rounded-lg border border-gray-200">
-                             <label htmlFor={`checkbox-${variant.id}`} className="font-bold text-gray-700 text-sm cursor-pointer select-none">
+                        <div className="flex items-center justify-between gap-4">
+                             <label htmlFor={`checkbox-${variant.id}`} className="font-bold text-gray-600 text-sm cursor-pointer select-none">
                                 {variant.label}
                             </label>
                             <div 

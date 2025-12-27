@@ -61,6 +61,12 @@ export interface ShippingMethod {
   price: number;
   description?: string;
   estimatedDelay?: string;
+  condition?: {
+    type: 'weight' | 'price' | 'none';
+    operator: 'greater_than' | 'less_than' | 'between';
+    value: number;
+    maxValue?: number; // Only for 'between'
+  };
 }
 
 export interface ShippingZone {

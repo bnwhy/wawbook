@@ -3641,17 +3641,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     {zone.methods.map((method, mIdx) => (
                                                         <div key={method.id} className="flex flex-col md:flex-row gap-3 bg-white p-3 rounded border border-gray-200 items-start md:items-center">
                                                             <div className="flex-1 w-full">
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={method.name}
-                                                                    onChange={(e) => {
-                                                                        const newMethods = [...zone.methods];
-                                                                        newMethods[mIdx] = { ...method, name: e.target.value };
-                                                                        updateShippingZone(zone.id, { methods: newMethods });
-                                                                    }}
-                                                                    className="w-full text-sm font-bold border-none p-0 focus:ring-0 text-slate-800 placeholder-gray-400"
-                                                                    placeholder="Nom de la méthode"
-                                                                />
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={method.name}
+                                                                        onChange={(e) => {
+                                                                            const newMethods = [...zone.methods];
+                                                                            newMethods[mIdx] = { ...method, name: e.target.value };
+                                                                            updateShippingZone(zone.id, { methods: newMethods });
+                                                                        }}
+                                                                        className="flex-1 text-sm font-bold border-none p-0 focus:ring-0 text-slate-800 placeholder-gray-400"
+                                                                        placeholder="Nom de la méthode"
+                                                                    />
+                                                                    {method.condition && method.condition.type !== 'none' && (
+                                                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 whitespace-nowrap">
+                                                                            {method.condition.type === 'price' ? 'Prix' : 'Poids'} {
+                                                                                method.condition.operator === 'greater_than' ? '> ' : 
+                                                                                method.condition.operator === 'less_than' ? '< ' : ''
+                                                                            }
+                                                                            {method.condition.value}
+                                                                            {method.condition.operator === 'between' ? ` - ${method.condition.maxValue}` : ''}
+                                                                            {method.condition.type === 'price' ? '€' : 'kg'}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                                 <input 
                                                                     type="text" 
                                                                     value={method.estimatedDelay || ''}
@@ -3678,6 +3691,109 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                         className="w-20 text-sm border border-gray-200 rounded pl-6 pr-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 text-right font-bold"
                                                                     />
                                                                 </div>
+                                                                <Popover>
+                                                                    <PopoverTrigger asChild>
+                                                                        <button className={`p-1.5 rounded transition-colors ${method.condition?.type && method.condition.type !== 'none' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:text-slate-500'}`}>
+                                                                            <Filter size={16} />
+                                                                        </button>
+                                                                    </PopoverTrigger>
+                                                                    <PopoverContent className="w-80 p-4">
+                                                                        <div className="space-y-4">
+                                                                            <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                                                                                <Filter size={14} /> Condition d'application
+                                                                            </h4>
+                                                                            
+                                                                            <div className="space-y-3">
+                                                                                <div>
+                                                                                    <label className="text-xs font-bold text-slate-500 mb-1 block">Type de condition</label>
+                                                                                    <select 
+                                                                                        className="w-full text-sm border border-gray-200 rounded p-2"
+                                                                                        value={method.condition?.type || 'none'}
+                                                                                        onChange={(e) => {
+                                                                                            const newMethods = [...zone.methods];
+                                                                                            // @ts-ignore
+                                                                                            const type = e.target.value as 'weight' | 'price' | 'none';
+                                                                                            newMethods[mIdx] = { 
+                                                                                                ...method, 
+                                                                                                condition: type === 'none' ? undefined : { 
+                                                                                                    type, 
+                                                                                                    operator: 'greater_than', 
+                                                                                                    value: 0 
+                                                                                                } 
+                                                                                            };
+                                                                                            updateShippingZone(zone.id, { methods: newMethods });
+                                                                                        }}
+                                                                                    >
+                                                                                        <option value="none">Aucune condition (Toujours appliquer)</option>
+                                                                                        <option value="price">Basé sur le prix de la commande</option>
+                                                                                        <option value="weight">Basé sur le poids de la commande</option>
+                                                                                    </select>
+                                                                                </div>
+
+                                                                                {method.condition && method.condition.type !== 'none' && (
+                                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                                        <div>
+                                                                                            <label className="text-xs font-bold text-slate-500 mb-1 block">Opérateur</label>
+                                                                                            <select 
+                                                                                                className="w-full text-sm border border-gray-200 rounded p-2"
+                                                                                                value={method.condition.operator}
+                                                                                                onChange={(e) => {
+                                                                                                    const newMethods = [...zone.methods];
+                                                                                                    if (newMethods[mIdx].condition) {
+                                                                                                        // @ts-ignore
+                                                                                                        newMethods[mIdx].condition.operator = e.target.value;
+                                                                                                        updateShippingZone(zone.id, { methods: newMethods });
+                                                                                                    }
+                                                                                                }}
+                                                                                            >
+                                                                                                <option value="greater_than">Supérieur à ({'>'})</option>
+                                                                                                <option value="less_than">Inférieur à ({'<'})</option>
+                                                                                                <option value="between">Entre</option>
+                                                                                            </select>
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <label className="text-xs font-bold text-slate-500 mb-1 block">
+                                                                                                Valeur {method.condition.type === 'price' ? '(€)' : '(kg)'}
+                                                                                            </label>
+                                                                                            <input 
+                                                                                                type="number"
+                                                                                                className="w-full text-sm border border-gray-200 rounded p-2"
+                                                                                                value={method.condition.value}
+                                                                                                onChange={(e) => {
+                                                                                                    const newMethods = [...zone.methods];
+                                                                                                    if (newMethods[mIdx].condition) {
+                                                                                                        newMethods[mIdx].condition.value = parseFloat(e.target.value) || 0;
+                                                                                                        updateShippingZone(zone.id, { methods: newMethods });
+                                                                                                    }
+                                                                                                }}
+                                                                                            />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+                                                                                
+                                                                                {method.condition && method.condition.operator === 'between' && (
+                                                                                    <div>
+                                                                                        <label className="text-xs font-bold text-slate-500 mb-1 block">
+                                                                                            Valeur Max {method.condition.type === 'price' ? '(€)' : '(kg)'}
+                                                                                        </label>
+                                                                                        <input 
+                                                                                            type="number"
+                                                                                            className="w-full text-sm border border-gray-200 rounded p-2"
+                                                                                            value={method.condition.maxValue || 0}
+                                                                                            onChange={(e) => {
+                                                                                                const newMethods = [...zone.methods];
+                                                                                                if (newMethods[mIdx].condition) {
+                                                                                                    newMethods[mIdx].condition.maxValue = parseFloat(e.target.value) || 0;
+                                                                                                    updateShippingZone(zone.id, { methods: newMethods });
+                                                                                                }
+                                                                                            }}
+                                                                                        />
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </PopoverContent>
+                                                                </Popover>
                                                                 <button 
                                                                     onClick={() => {
                                                                         const newMethods = zone.methods.filter((_, i) => i !== mIdx);
@@ -3741,7 +3857,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     <div key={method.id} className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2">
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-medium text-slate-700">{method.name}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm font-medium text-slate-700">{method.name}</span>
+                                                                    {method.condition && method.condition.type !== 'none' && (
+                                                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 whitespace-nowrap">
+                                                                            {method.condition.type === 'price' ? 'Prix' : 'Poids'} {
+                                                                                method.condition.operator === 'greater_than' ? '> ' : 
+                                                                                method.condition.operator === 'less_than' ? '< ' : ''
+                                                                            }
+                                                                            {method.condition.value}
+                                                                            {method.condition.operator === 'between' ? ` - ${method.condition.maxValue}` : ''}
+                                                                            {method.condition.type === 'price' ? '€' : 'kg'}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                                 {method.estimatedDelay && (
                                                                     <span className="text-[10px] text-slate-400">{method.estimatedDelay}</span>
                                                                 )}

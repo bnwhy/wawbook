@@ -103,7 +103,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                     <div className="flex gap-6 p-4">
                       {menu.columns.map((col, i) => (
                         <div key={i} className="w-48">
-                          <h4 className="font-display font-black text-cloud-blue mb-3 px-2 text-lg">{col.title}</h4>
+                          <h4 className="font-display font-black mb-3 px-2 text-lg text-[#0c4a6e]">{col.title}</h4>
                           <div className="flex flex-col gap-1">
                             {col.items.map((item, j) => (
                               <Link key={j} href={getLink(menu.basePath || '', item)} className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
@@ -157,10 +157,8 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           </button>
         </div>
       </div>
-
       {/* --- MOBILE MENU OVERLAY --- */}
       <div className={`fixed inset-0 bg-cloud-dark/20 backdrop-blur-sm z-[60] transition-opacity duration-300 lg:hidden ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`} onClick={() => setMobileMenuOpen(false)} />
-      
       <div className={`fixed top-0 right-0 w-[300px] h-full bg-white shadow-2xl z-[70] transform transition-transform duration-300 lg:hidden flex flex-col overflow-y-auto ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-6 flex justify-between items-center border-b border-cloud-light">
           <span className="font-display font-black text-2xl text-cloud-blue">Menu</span>

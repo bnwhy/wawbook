@@ -122,7 +122,6 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                     <div className="flex justify-between items-start pr-10">
                         <div>
                             <h3 className="font-display font-black text-xl text-cloud-dark mb-1">{item.bookTitle}</h3>
-                            <p className="text-stone-500 italic text-sm mb-3">({item.dedication || "C'est un endroit étrange"})</p>
                             
                             <div className="space-y-1 text-sm text-stone-600">
                                 {/* Dynamic Text Fields from Wizard Config */}

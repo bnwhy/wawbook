@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, Check } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -42,15 +42,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
-
-  // Order Detail State
-  const [pendingOrderChanges, setPendingOrderChanges] = useState<Partial<import('../types/ecommerce').Order> | null>(null); // Holds all pending changes for the current order
-
-  // Reset pending changes when changing order
-  React.useEffect(() => {
-     setPendingOrderChanges(null);
-     setEditingItemId(null);
-  }, [selectedOrderId]);
 
   // Order Item Editing State
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -831,12 +822,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        disabled={!selectedBook}
                        className={`w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm ${
                           hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook))
-                             ? 'bg-brand-coral hover:bg-brand-coral/90 text-white cursor-pointer' 
+                             ? 'bg-brand-coral hover:bg-red-500 text-white cursor-pointer' 
                              : 'bg-slate-800 text-slate-500 hover:bg-slate-700 cursor-pointer'
                        }`}
                     >
                        <Save size={14} />
-                       {hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook)) ? 'Enregistrer les modifications' : 'Enregistré'}
+                       {hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook)) ? 'Sauvegarder' : 'Enregistré'}
                     </button>
                  </div>
 
@@ -1083,7 +1074,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                           <button 
                              onClick={() => handleSaveSettings('Général')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:bg-slate-950 active:scale-95 duration-150"
+                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
                           >
                              <Save size={16} /> Sauvegarder
                           </button>
@@ -1132,7 +1123,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                           <button 
                              onClick={() => handleSaveSettings('Paiement')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:bg-slate-950 active:scale-95 duration-150"
+                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
                           >
                              <Save size={16} /> Sauvegarder
                           </button>
@@ -1191,7 +1182,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                           <button 
                              onClick={() => handleSaveSettings('Expédition')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:bg-slate-950 active:scale-95 duration-150"
+                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
                           >
                              <Save size={16} /> Sauvegarder
                           </button>
@@ -1239,7 +1230,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                           <button 
                              onClick={() => handleSaveSettings('Notifications')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:bg-slate-950 active:scale-95 duration-150"
+                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
                           >
                              <Save size={16} /> Sauvegarder
                           </button>
@@ -1469,7 +1460,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 : ''}
                           </div>
                        </div>
-                       
                        <div className="flex gap-2">
                            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-slate-50">
                               Imprimer
@@ -1484,11 +1474,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
 
                     {(() => {
-                       const originalOrder = orders.find(o => o.id === selectedOrderId);
-                       if (!originalOrder) return <div>Commande introuvable</div>;
-                       
-                       // Merge pending changes for display
-                       const order = { ...originalOrder, ...pendingOrderChanges };
+                       const order = orders.find(o => o.id === selectedOrderId);
+                       if (!order) return <div>Commande introuvable</div>;
                        
                        return (
                           <div className="grid grid-cols-3 gap-6">
@@ -1527,22 +1514,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  const updatedItems = order.items.map(i => 
                                                                     i.id === item.id ? { ...i, configuration: newConfig } : i
                                                                  );
-                                                                 
-                                                                 // Update pending changes instead of saving immediately
-                                                                 setPendingOrderChanges(prev => ({
-                                                                    ...prev,
-                                                                    items: updatedItems
-                                                                 }));
-                                                                 
+                                                                 updateOrder({ ...order, items: updatedItems });
                                                                  setEditingItemId(null);
-                                                                 toast.success('Modification ajoutée (pensez à enregistrer)');
+                                                                 toast.success('Configuration mise à jour');
                                                               } catch (e) {
                                                                  toast.error('JSON invalide');
                                                               }
                                                            }}
-                                                           className="bg-indigo-600 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1"
+                                                           className="bg-brand-coral text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-brand-coral/90 transition-colors flex items-center gap-1"
                                                         >
-                                                           <Check size={12} /> Valider
+                                                           <Save size={12} /> Enregistrer
                                                         </button>
                                                         <button
                                                            onClick={() => setEditingItemId(null)}
@@ -1740,57 +1721,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              {/* Sidebar Actions */}
                              <div className="space-y-6">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                   <div className="flex justify-between items-center mb-4">
-                                      <h3 className="font-bold text-slate-800">Statut</h3>
-                                      {pendingOrderChanges && (
-                                         <button
-                                            onClick={(e) => {
-                                               e.stopPropagation(); // Empêcher la propagation si nécessaire
-                                               if (!selectedOrderId) return;
-                                               const originalOrder = orders.find(o => o.id === selectedOrderId);
-                                               if (!originalOrder) return;
-                                               
-                                               updateOrder({
-                                                  ...originalOrder,
-                                                  ...pendingOrderChanges
-                                               });
-                                               setPendingOrderChanges(null);
-                                               toast.success('Modifications enregistrées');
-                                            }}
-                                            className="bg-brand-coral text-white p-2 rounded-lg hover:bg-brand-coral/90 transition-colors shadow-md animate-in fade-in zoom-in duration-200 flex items-center justify-center"
-                                            title="Enregistrer toutes les modifications"
-                                         >
-                                            <Save size={18} />
-                                         </button>
-                                      )}
-                                   </div>
+                                   <h3 className="font-bold text-slate-800 mb-4">Statut</h3>
                                    <div className="space-y-2">
-                                      {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => {
-                                         const isActive = order.status === status;
-                                         return (
-                                            <button
-                                               key={status}
-                                               onClick={() => setPendingOrderChanges(prev => ({ ...prev, status: status as any }))}
-                                               className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                                  isActive 
-                                                     ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
-                                                     : 'text-slate-600 hover:bg-slate-50'
-                                               }`}
-                                            >
-                                               <div className="flex items-center justify-between">
-                                                  <span>
-                                                     {status === 'pending' ? 'En attente' :
-                                                      status === 'processing' ? 'En cours de production' :
-                                                      status === 'shipped' ? 'Expédiée' :
-                                                      status === 'delivered' ? 'Livrée' : 'Annulée'}
-                                                  </span>
-                                                  {pendingOrderChanges?.status === status && pendingOrderChanges.status !== originalOrder.status && (
-                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand-coral animate-pulse" title="Modification en attente" />
-                                                  )}
-                                               </div>
-                                            </button>
-                                         );
-                                      })}
+                                      {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
+                                         <button
+                                            key={status}
+                                            onClick={() => updateOrderStatus(order.id, status as any)}
+                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                               order.status === status 
+                                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
+                                                  : 'text-slate-600 hover:bg-slate-50'
+                                            }`}
+                                         >
+                                            {status === 'pending' ? 'En attente' :
+                                             status === 'processing' ? 'En cours de production' :
+                                             status === 'shipped' ? 'Expédiée' :
+                                             status === 'delivered' ? 'Livrée' : 'Annulée'}
+                                         </button>
+                                      ))}
                                    </div>
                                 </div>
 

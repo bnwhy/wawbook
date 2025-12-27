@@ -6,6 +6,7 @@ import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { ShippingMethod } from '../types/ecommerce';
+import { ALL_COUNTRIES } from '../data/countries';
 
 const CheckoutPage = () => {
   const { items, total, clearCart } = useCart();
@@ -223,13 +224,9 @@ const CheckoutPage = () => {
                                             onChange={handleInputChange}
                                             className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer"
                                         >
-                                            <option value="France">France</option>
-                                            <option value="Belgique">Belgique</option>
-                                            <option value="Suisse">Suisse</option>
-                                            <option value="Allemagne">Allemagne</option>
-                                            <option value="Espagne">Espagne</option>
-                                            <option value="Italie">Italie</option>
-                                            <option value="Canada">Canada</option>
+                                            {ALL_COUNTRIES.map(country => (
+                                                <option key={country} value={country}>{country}</option>
+                                            ))}
                                         </select>
                                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
                                     </div>
@@ -350,11 +347,15 @@ const CheckoutPage = () => {
                             {billingMode === 'different' && (
                                 <div className="p-4 bg-stone-50 rounded-lg space-y-4 border border-stone-200 animate-in slide-in-from-top-2">
                                     <div className="relative">
-                                        <select className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer" defaultValue="FR">
-                                            <option value="FR">France</option>
-                                            <option value="BE">Belgique</option>
-                                            <option value="CH">Suisse</option>
-                                            <option value="CA">Canada</option>
+                                        <select 
+                                            name="billingCountry"
+                                            value={formData.billingCountry}
+                                            onChange={handleInputChange}
+                                            className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer"
+                                        >
+                                            {ALL_COUNTRIES.map(country => (
+                                                <option key={country} value={country}>{country}</option>
+                                            ))}
                                         </select>
                                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
                                     </div>

@@ -2706,7 +2706,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             </div>
 
                             <div className="mb-6">
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Téléphone</label>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Téléphone <span className="text-red-500">*</span></label>
                                 <input 
                                     type="tel" 
                                     value={newCustomerForm.phone}
@@ -2722,7 +2722,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </h4>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rue</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rue <span className="text-red-500">*</span></label>
                                         <input 
                                             type="text" 
                                             value={newCustomerForm.address.street}
@@ -2732,7 +2732,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Code Postal</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Code Postal <span className="text-red-500">*</span></label>
                                             <input 
                                                 type="text" 
                                                 value={newCustomerForm.address.zipCode}
@@ -2741,7 +2741,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ville</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ville <span className="text-red-500">*</span></label>
                                             <input 
                                                 type="text" 
                                                 value={newCustomerForm.address.city}

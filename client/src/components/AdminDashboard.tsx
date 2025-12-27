@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -36,7 +36,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
   const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer, addOrderLog, createOrder, updateCustomer, addCustomer } = useEcommerce();
   
-  const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -988,6 +988,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
              <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logistique</div>
 
              <button 
+               onClick={() => { setActiveTab('shipping'); setSelectedBookId(null); setIsEditing(false); }}
+               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'shipping' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+             >
+                <Truck size={18} />
+                <span>Expédition</span>
+             </button>
+
+             <button 
                onClick={() => { setActiveTab('printers'); setSelectedBookId(null); setIsEditing(false); }}
                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'printers' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
              >
@@ -1111,6 +1119,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     activeTab === 'orders' ? 'Commandes' :
                     activeTab === 'customers' ? 'Clients' :
                     activeTab === 'menus' ? 'Menus' :
+                    activeTab === 'shipping' ? 'Expédition' :
                     activeTab === 'printers' ? 'Imprimeurs' :
                     activeTab === 'settings' ? 'Paramètres' : 
                     activeTab === 'analytics' ? 'Analyses' : 'Admin'
@@ -3287,6 +3296,136 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       ))}
                   </div>
                 </div>
+              )}
+
+              {/* --- VIEW: SHIPPING --- */}
+              {activeTab === 'shipping' && (
+                 <div className="max-w-4xl mx-auto space-y-8">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-800">Expédition et Livraison</h2>
+                            <p className="text-slate-500 mt-1">Configurez les zones, tarifs et délais de livraison.</p>
+                        </div>
+                        <button className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors">
+                            <Plus size={18} /> Ajouter une méthode
+                        </button>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 bg-slate-50/50">
+                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <Truck size={20} className="text-indigo-600" />
+                                Méthodes de livraison
+                            </h3>
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                            {/* Standard Delivery */}
+                            <div className="p-6 flex items-start justify-between hover:bg-slate-50 transition-colors">
+                                <div className="flex gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                        <Truck size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-slate-900">Livraison Standard</h4>
+                                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded-full">Actif</span>
+                                        </div>
+                                        <p className="text-sm text-slate-500 mt-1">Livraison colissimo à domicile sans signature.</p>
+                                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                            <span className="flex items-center gap-1"><MapPin size={12} /> France métropolitaine</span>
+                                            <span className="flex items-center gap-1"><Clock size={12} /> 3-5 jours ouvrés</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-bold text-slate-900 text-lg">4.90 €</div>
+                                    <div className="text-xs text-slate-500 mb-2">Gratuit dès 50€</div>
+                                    <button className="text-indigo-600 font-bold text-xs hover:underline">Modifier</button>
+                                </div>
+                            </div>
+
+                            {/* Express Delivery */}
+                            <div className="p-6 flex items-start justify-between hover:bg-slate-50 transition-colors">
+                                <div className="flex gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                                        <Zap size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-slate-900">Livraison Express</h4>
+                                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded-full">Actif</span>
+                                        </div>
+                                        <p className="text-sm text-slate-500 mt-1">Livraison Chronopost le lendemain avant 13h.</p>
+                                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                            <span className="flex items-center gap-1"><MapPin size={12} /> France métropolitaine</span>
+                                            <span className="flex items-center gap-1"><Clock size={12} /> 1 jour ouvré</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-bold text-slate-900 text-lg">12.90 €</div>
+                                    <div className="text-xs text-slate-500 mb-2">Jamais gratuit</div>
+                                    <button className="text-indigo-600 font-bold text-xs hover:underline">Modifier</button>
+                                </div>
+                            </div>
+
+                            {/* International */}
+                            <div className="p-6 flex items-start justify-between hover:bg-slate-50 transition-colors opacity-60">
+                                <div className="flex gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                                        <Globe size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-slate-900">International</h4>
+                                            <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase rounded-full">Inactif</span>
+                                        </div>
+                                        <p className="text-sm text-slate-500 mt-1">Livraison standard Europe et Monde.</p>
+                                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                            <span className="flex items-center gap-1"><MapPin size={12} /> Monde</span>
+                                            <span className="flex items-center gap-1"><Clock size={12} /> 5-10 jours ouvrés</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-bold text-slate-900 text-lg">Calculé</div>
+                                    <button className="text-indigo-600 font-bold text-xs hover:underline">Activer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 bg-slate-50/50">
+                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <Package size={20} className="text-indigo-600" />
+                                Règles d'emballage
+                            </h3>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Poids par livre (g)</label>
+                                    <input 
+                                        type="number" 
+                                        className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                        defaultValue={350}
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Poids moyen utilisé pour le calcul des frais de port.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Frais de manutention (€)</label>
+                                    <input 
+                                        type="number" 
+                                        className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                        defaultValue={0}
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Ajouté automatiquement à chaque commande.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
               )}
 
               {/* --- VIEW: PRINTERS --- */}

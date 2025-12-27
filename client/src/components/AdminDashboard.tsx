@@ -3762,16 +3762,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           step="0.01"
                                                           value={selectedBook.features?.dimensions?.width || 210}
                                                           onChange={(e) => {
+                                                              const val = parseFloat(parseFloat(e.target.value).toFixed(2));
                                                               handleSaveBook({
                                                                   ...selectedBook,
                                                                   features: {
                                                                       ...selectedBook.features,
                                                                       dimensions: {
                                                                           ...selectedBook.features?.dimensions,
-                                                                          width: parseFloat(e.target.value) || 210
+                                                                          width: val || 210
                                                                       }
                                                                   } as any
                                                               });
+                                                          }}
+                                                          onBlur={(e) => {
+                                                              const val = parseFloat(e.target.value).toFixed(2);
+                                                              e.target.value = val;
                                                           }}
                                                           className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
                                                       />
@@ -3783,16 +3788,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           step="0.01"
                                                           value={selectedBook.features?.dimensions?.height || 210}
                                                           onChange={(e) => {
+                                                              const val = parseFloat(parseFloat(e.target.value).toFixed(2));
                                                               handleSaveBook({
                                                                   ...selectedBook,
                                                                   features: {
                                                                       ...selectedBook.features,
                                                                       dimensions: {
                                                                           ...selectedBook.features?.dimensions,
-                                                                          height: parseFloat(e.target.value) || 210
+                                                                          height: val || 210
                                                                       }
                                                                   } as any
                                                               });
+                                                          }}
+                                                          onBlur={(e) => {
+                                                              const val = parseFloat(e.target.value).toFixed(2);
+                                                              e.target.value = val;
                                                           }}
                                                           className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
                                                       />
@@ -3808,7 +3818,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       step="0.01"
                                                       value={selectedBook.features?.printConfig?.interior?.bleedMm || 3.175}
                                                       onChange={(e) => {
-                                                          const val = parseFloat(e.target.value);
+                                                          const val = parseFloat(parseFloat(e.target.value).toFixed(2));
                                                           handleSaveBook({
                                                               ...selectedBook,
                                                               features: {
@@ -3820,6 +3830,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               }
                                                           });
                                                       }}
+                                                      onBlur={(e) => {
+                                                          const val = parseFloat(e.target.value).toFixed(2);
+                                                          e.target.value = val;
+                                                      }}
                                                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
                                                   />
                                               </div>
@@ -3830,7 +3844,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       step="0.01"
                                                       value={selectedBook.features?.printConfig?.interior?.safeMarginMm || 10}
                                                       onChange={(e) => {
-                                                          const val = parseFloat(e.target.value);
+                                                          const val = parseFloat(parseFloat(e.target.value).toFixed(2));
                                                           handleSaveBook({
                                                               ...selectedBook,
                                                               features: {
@@ -3841,6 +3855,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   } as any
                                                               }
                                                           });
+                                                      }}
+                                                      onBlur={(e) => {
+                                                          const val = parseFloat(e.target.value).toFixed(2);
+                                                          e.target.value = val;
                                                       }}
                                                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
                                                   />

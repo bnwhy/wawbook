@@ -253,7 +253,7 @@ const RICH_CONTENT_CONFIG = {
       label: 'Titre du livre',
       type: 'fixed' as const,
       content: "L'Aventurier du Monde",
-      position: { pageIndex: 0, zoneId: 'body', x: 10, y: 15, width: 80, rotation: 0 },
+      position: { pageIndex: 0, zoneId: 'body', x: 55, y: 15, width: 37, rotation: 0 },
       style: { fontSize: '48px', fontFamily: 'serif', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' }
     },
     {
@@ -261,7 +261,7 @@ const RICH_CONTENT_CONFIG = {
       label: 'Sous-titre',
       type: 'variable' as const,
       content: "Une aventure de {childName}",
-      position: { pageIndex: 0, zoneId: 'body', x: 10, y: 25, width: 80, rotation: 0 },
+      position: { pageIndex: 0, zoneId: 'body', x: 55, y: 25, width: 37, rotation: 0 },
       style: { fontSize: '24px', fontFamily: 'sans-serif', fontWeight: 'normal', color: '#f0f0f0', textAlign: 'center' }
     },
     // Page 1 (Dedication)
@@ -291,13 +291,13 @@ const RICH_CONTENT_CONFIG = {
       position: { pageIndex: 3, zoneId: 'body', x: 10, y: 10, width: 80, rotation: 0 },
       style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
     },
-    // Back Cover
+    // Back Cover (Merged into Page 0)
     {
       id: 't-back-synopsis',
       label: 'Synopsis',
       type: 'fixed' as const,
       content: "Découvrez l'histoire incroyable d'un enfant qui part à la découverte du monde. Une épopée pleine de surprises et de rencontres inoubliables.",
-      position: { pageIndex: 4, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
+      position: { pageIndex: 0, zoneId: 'body', x: 14, y: 30, width: 28, rotation: 0 },
       style: { fontSize: '16px', fontFamily: 'sans-serif', color: '#ffffff', textAlign: 'center' }
     }
   ],

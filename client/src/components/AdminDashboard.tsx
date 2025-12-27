@@ -1689,37 +1689,41 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         </div>
 
                                         <Dialog open={isCustomerSearchOpen} onOpenChange={setIsCustomerSearchOpen}>
-                                            <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-                                                <DialogHeader>
-                                                    <DialogTitle>Rechercher un client</DialogTitle>
-                                                    <DialogDescription>
-                                                        Sélectionnez un client dans la liste ci-dessous.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                
-                                                <div className="relative mb-4 mt-2">
-                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Rechercher par nom, email, téléphone..."
-                                                        value={customerSearch}
-                                                        onChange={(e) => setCustomerSearch(e.target.value)}
-                                                        autoFocus
-                                                        className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                    />
+                                            <DialogContent className="max-w-4xl h-[70vh] flex flex-col p-0 gap-0 bg-slate-50 overflow-hidden outline-none">
+                                                {/* Header */}
+                                                <div className="p-6 bg-white border-b border-gray-200">
+                                                    <DialogHeader className="mb-4">
+                                                        <DialogTitle className="text-xl">Rechercher un client</DialogTitle>
+                                                        <DialogDescription>
+                                                            Recherchez et sélectionnez un client pour pré-remplir la commande.
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    
+                                                    <div className="relative">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Rechercher par nom, email, téléphone..."
+                                                            value={customerSearch}
+                                                            onChange={(e) => setCustomerSearch(e.target.value)}
+                                                            autoFocus
+                                                            className="w-full border-gray-200 bg-slate-50 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-base shadow-sm outline-none"
+                                                        />
+                                                    </div>
                                                 </div>
 
-                                                <div className="flex-1 overflow-y-auto border border-gray-100 rounded-lg">
+                                                {/* Content */}
+                                                <div className="flex-1 overflow-y-auto bg-white p-0">
                                                     <table className="w-full text-sm text-left">
-                                                        <thead className="bg-slate-50 text-slate-500 font-medium border-b border-gray-100 sticky top-0">
+                                                        <thead className="bg-slate-50 text-slate-500 font-bold border-b border-gray-100 sticky top-0 z-10 shadow-sm">
                                                             <tr>
-                                                                <th className="px-4 py-2">Nom</th>
-                                                                <th className="px-4 py-2">Email</th>
-                                                                <th className="px-4 py-2">Ville</th>
-                                                                <th className="px-4 py-2 text-right">Action</th>
+                                                                <th className="px-6 py-3">Nom</th>
+                                                                <th className="px-6 py-3">Email</th>
+                                                                <th className="px-6 py-3">Ville</th>
+                                                                <th className="px-6 py-3 text-right">Dernière commande</th>
                                                             </tr>
                                                         </thead>
-                                                        <tbody className="divide-y divide-gray-100">
+                                                        <tbody className="divide-y divide-gray-50">
                                                             {customers
                                                                 .filter(c => 
                                                                     c.firstName.toLowerCase().includes(customerSearch.toLowerCase()) || 
@@ -1729,7 +1733,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 .map(c => (
                                                                     <tr 
                                                                         key={c.id} 
-                                                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                                                        className="hover:bg-indigo-50/50 transition-colors cursor-pointer group"
                                                                         onClick={() => {
                                                                             setNewOrderForm({
                                                                                 ...newOrderForm,
@@ -1749,13 +1753,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                             setIsCustomerSearchOpen(false);
                                                                         }}
                                                                     >
-                                                                        <td className="px-4 py-3 font-medium text-slate-900">{c.firstName} {c.lastName}</td>
-                                                                        <td className="px-4 py-3 text-slate-500">{c.email}</td>
-                                                                        <td className="px-4 py-3 text-slate-500">{c.address?.city || '-'}</td>
-                                                                        <td className="px-4 py-3 text-right">
-                                                                            <button className="text-indigo-600 hover:text-indigo-800 font-medium text-xs bg-indigo-50 px-2 py-1 rounded">
-                                                                                Sélectionner
-                                                                            </button>
+                                                                        <td className="px-6 py-4">
+                                                                            <div className="font-bold text-slate-900 group-hover:text-indigo-700">{c.firstName} {c.lastName}</div>
+                                                                        </td>
+                                                                        <td className="px-6 py-4 text-slate-500">{c.email}</td>
+                                                                        <td className="px-6 py-4 text-slate-500">{c.address?.city || '-'}</td>
+                                                                        <td className="px-6 py-4 text-right text-slate-400 text-xs">
+                                                                            {new Date(c.createdAt).toLocaleDateString()}
                                                                         </td>
                                                                     </tr>
                                                                 ))}
@@ -1765,13 +1769,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 c.email.toLowerCase().includes(customerSearch.toLowerCase())
                                                             ).length === 0 && (
                                                                 <tr>
-                                                                    <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
-                                                                        Aucun client trouvé
+                                                                    <td colSpan={4} className="px-6 py-12 text-center">
+                                                                        <div className="flex flex-col items-center gap-2 text-slate-400">
+                                                                            <Search size={32} className="opacity-20" />
+                                                                            <p>Aucun client trouvé pour "{customerSearch}"</p>
+                                                                        </div>
                                                                     </td>
                                                                 </tr>
                                                             )}
                                                         </tbody>
                                                     </table>
+                                                </div>
+                                                
+                                                {/* Footer */}
+                                                <div className="p-4 bg-slate-50 border-t border-gray-200 flex justify-end">
+                                                    <button 
+                                                        onClick={() => setIsCustomerSearchOpen(false)}
+                                                        className="px-4 py-2 bg-white border border-gray-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 shadow-sm"
+                                                    >
+                                                        Annuler
+                                                    </button>
                                                 </div>
                                             </DialogContent>
                                         </Dialog>

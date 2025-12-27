@@ -490,7 +490,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   // --- RENDER: VISUAL OPTIONS (Colors/Icons) ---
                   // Check if options have 'resource' (colors/images) or just labels
                   const isColorPicker = variant.options.some(o => o.resource && o.resource.startsWith('#'));
-                  const hasThumbnails = variant.options.some(o => o.thumbnail);
+                  const hasThumbnails = variant.options.some(o => o.thumbnail || o.resource);
                   const isGrid = variant.options.length > 6 && !isColorPicker;
 
                   if (isColorPicker) {
@@ -517,20 +517,24 @@ const Wizard: React.FC<WizardProps> = (props) => {
                        <div key={variant.id} className="space-y-2">
                           <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
                           <div className="flex gap-3 flex-wrap">
-                             {variant.options.map((opt) => (
+                             {variant.options.map((opt) => {
+                               // Prefer resource (uploaded image) over legacy thumbnail
+                               const imageUrl = opt.resource && !opt.resource.startsWith('#') ? opt.resource : opt.thumbnail;
+                               
+                               return (
                                <button
                                  key={opt.id}
                                  onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
                                  className={`w-14 h-14 rounded-full transition-all border border-gray-200 overflow-hidden flex items-center justify-center bg-white ${currentValue === opt.id ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] scale-110 ring-offset-2' : 'hover:scale-105'}`}
                                  title={opt.label}
                                >
-                                  {opt.thumbnail ? (
-                                     <img src={opt.thumbnail} alt={opt.label} className="w-full h-full object-cover" />
+                                  {imageUrl ? (
+                                     <img src={imageUrl} alt={opt.label} className="w-full h-full object-cover" />
                                   ) : (
                                      <span className="text-sm font-bold text-gray-400">{opt.label[0]}</span>
                                   )}
                                </button>
-                             ))}
+                             )})}
                           </div>
                        </div>
                      );

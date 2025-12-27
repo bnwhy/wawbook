@@ -93,8 +93,34 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
 
                 {/* Book Thumbnail */}
                 <div className="w-full md:w-32 md:h-32 bg-cloud-blue rounded-full shadow-inner flex-shrink-0 relative overflow-hidden self-center md:self-start border-4 border-white shadow-lg">
-                    {item.coverImage ? (
+                    {/* Only show cover image if present AND not a custom book with dynamic rendering */}
+                    {item.coverImage && !item.config ? (
                         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${item.coverImage})` }}></div>
+                    ) : item.config ? (
+                        <div className="absolute inset-0 overflow-hidden">
+                             {/* Attempt to render a mini-preview using the config */}
+                             {/* Since we can't easily inline the full Wizard render logic here without duplicating code, 
+                                 we will rely on the coverImage prop being populated with a snapshot if available, 
+                                 OR fallback to a generic visual.
+                                 
+                                 Ideally, the Wizard should have generated a snapshot and saved it to item.coverImage.
+                                 If that's missing, let's show a placeholder character.
+                             */}
+                             {item.coverImage ? (
+                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${item.coverImage})` }}></div>
+                             ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-[#f0f9ff] p-2">
+                                   <div className="text-[10px] text-cloud-blue font-bold text-center leading-tight mb-1">{item.config.childName}</div>
+                                   {/* Simple SVG Avatar Placeholder */}
+                                   <svg viewBox="0 0 100 100" className="w-16 h-16">
+                                      <circle cx="50" cy="50" r="40" fill="#FFE0BD" />
+                                      <path d="M30 60 Q50 80 70 60" fill="none" stroke="#333" strokeWidth="3" strokeLinecap="round" />
+                                      <circle cx="35" cy="45" r="4" fill="#333" />
+                                      <circle cx="65" cy="45" r="4" fill="#333" />
+                                   </svg>
+                                </div>
+                             )}
+                        </div>
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-white text-xs text-center p-2 font-bold bg-cloud-light">
                             {item.bookTitle}

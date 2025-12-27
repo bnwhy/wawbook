@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, Check } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -44,11 +44,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [showFulfillment, setShowFulfillment] = useState(false);
 
   // Order Detail State
-  const [pendingStatus, setPendingStatus] = useState<any>(null); // OrderStatus | null
-  
-  // Reset pending status when changing order
+  const [pendingOrderChanges, setPendingOrderChanges] = useState<Partial<import('../types/ecommerce').Order> | null>(null); // Holds all pending changes for the current order
+
+  // Reset pending changes when changing order
   React.useEffect(() => {
-     setPendingStatus(null);
+     setPendingOrderChanges(null);
+     setEditingItemId(null);
   }, [selectedOrderId]);
 
   // Order Item Editing State
@@ -1468,6 +1469,36 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 : ''}
                           </div>
                        </div>
+                       
+                       {/* Unsaved Changes Actions */}
+                       {pendingOrderChanges && (
+                          <div className="flex gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                             <button 
+                                onClick={() => {
+                                   if (!selectedOrderId) return;
+                                   const originalOrder = orders.find(o => o.id === selectedOrderId);
+                                   if (!originalOrder) return;
+                                   
+                                   updateOrder({
+                                      ...originalOrder,
+                                      ...pendingOrderChanges
+                                   });
+                                   setPendingOrderChanges(null);
+                                   toast.success('Modifications enregistrées');
+                                }}
+                                className="px-4 py-2 bg-brand-coral text-white rounded-lg text-sm font-bold shadow-md hover:bg-brand-coral/90 transition-colors flex items-center gap-2"
+                             >
+                                <Save size={16} /> Enregistrer
+                             </button>
+                             <button 
+                                onClick={() => setPendingOrderChanges(null)}
+                                className="px-4 py-2 bg-white border border-gray-300 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors"
+                             >
+                                Annuler
+                             </button>
+                          </div>
+                       )}
+
                        <div className="flex gap-2">
                            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-slate-50">
                               Imprimer
@@ -1482,8 +1513,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
 
                     {(() => {
-                       const order = orders.find(o => o.id === selectedOrderId);
-                       if (!order) return <div>Commande introuvable</div>;
+                       const originalOrder = orders.find(o => o.id === selectedOrderId);
+                       if (!originalOrder) return <div>Commande introuvable</div>;
+                       
+                       // Merge pending changes for display
+                       const order = { ...originalOrder, ...pendingOrderChanges };
                        
                        return (
                           <div className="grid grid-cols-3 gap-6">
@@ -1522,16 +1556,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  const updatedItems = order.items.map(i => 
                                                                     i.id === item.id ? { ...i, configuration: newConfig } : i
                                                                  );
-                                                                 updateOrder({ ...order, items: updatedItems });
+                                                                 
+                                                                 // Update pending changes instead of saving immediately
+                                                                 setPendingOrderChanges(prev => ({
+                                                                    ...prev,
+                                                                    items: updatedItems
+                                                                 }));
+                                                                 
                                                                  setEditingItemId(null);
-                                                                 toast.success('Configuration mise à jour');
+                                                                 toast.success('Modification ajoutée (pensez à enregistrer)');
                                                               } catch (e) {
                                                                  toast.error('JSON invalide');
                                                               }
                                                            }}
-                                                           className="bg-brand-coral text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-brand-coral/90 transition-colors flex items-center gap-1"
+                                                           className="bg-indigo-600 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1"
                                                         >
-                                                           <Save size={12} /> Enregistrer
+                                                           <Check size={12} /> Valider
                                                         </button>
                                                         <button
                                                            onClick={() => setEditingItemId(null)}
@@ -1731,27 +1771,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                    <div className="flex justify-between items-center mb-4">
                                       <h3 className="font-bold text-slate-800">Statut</h3>
-                                      {pendingStatus && pendingStatus !== order.status && (
-                                         <button
-                                            onClick={() => {
-                                               updateOrderStatus(order.id, pendingStatus);
-                                               setPendingStatus(null);
-                                               toast.success(`Statut mis à jour: ${pendingStatus}`);
-                                            }}
-                                            className="bg-slate-900 text-white p-1.5 rounded-md hover:bg-slate-800 transition-colors shadow-sm"
-                                            title="Enregistrer le changement de statut"
-                                         >
-                                            <Save size={14} />
-                                         </button>
-                                      )}
                                    </div>
                                    <div className="space-y-2">
                                       {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => {
-                                         const isActive = (pendingStatus || order.status) === status;
+                                         const isActive = order.status === status;
                                          return (
                                             <button
                                                key={status}
-                                               onClick={() => setPendingStatus(status as any)}
+                                               onClick={() => setPendingOrderChanges(prev => ({ ...prev, status: status as any }))}
                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                                   isActive 
                                                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
@@ -1765,29 +1792,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       status === 'shipped' ? 'Expédiée' :
                                                       status === 'delivered' ? 'Livrée' : 'Annulée'}
                                                   </span>
-                                                  {pendingStatus === status && pendingStatus !== order.status && (
-                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand-coral animate-pulse" />
+                                                  {pendingOrderChanges?.status === status && pendingOrderChanges.status !== originalOrder.status && (
+                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand-coral animate-pulse" title="Modification en attente" />
                                                   )}
                                                </div>
                                             </button>
                                          );
                                       })}
                                    </div>
-                                   {pendingStatus && pendingStatus !== order.status && (
-                                      <div className="mt-4 pt-4 border-t border-gray-100">
-                                         <button
-                                            onClick={() => {
-                                               updateOrderStatus(order.id, pendingStatus);
-                                               setPendingStatus(null);
-                                               toast.success(`Statut mis à jour: ${pendingStatus}`);
-                                            }}
-                                            className="w-full bg-brand-coral text-white py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-brand-coral/90 transition-colors flex items-center justify-center gap-2"
-                                         >
-                                            <Save size={16} />
-                                            Enregistrer le statut
-                                         </button>
-                                      </div>
-                                   )}
                                 </div>
 
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

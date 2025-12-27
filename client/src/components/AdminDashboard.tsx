@@ -1677,75 +1677,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          </div>
                                       </div>
 
-                                      {/* Logs & Commentaires */}
-                                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                            <MessageSquare size={18} className="text-indigo-600" />
-                                            Activité & Commentaires
-                                         </h3>
-                                         
-                                         <div className="space-y-6">
-                                            {/* Logs Timeline */}
-                                            <div className="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                                               {order.logs && order.logs.length > 0 ? (
-                                                  order.logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(log => (
-                                                     <div key={log.id} className="flex gap-3 text-sm">
-                                                        <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
-                                                           log.type === 'status_change' ? 'bg-orange-400' : 
-                                                           log.type === 'system' ? 'bg-slate-300' : 'bg-indigo-500'
-                                                        }`} />
-                                                        <div className="flex-1">
-                                                           <div className="flex justify-between items-start">
-                                                              <span className={`font-medium text-xs ${
-                                                                 log.type === 'system' ? 'text-slate-500' : 'text-slate-800'
-                                                              }`}>
-                                                                 {log.author || 'Système'}
-                                                              </span>
-                                                              <span className="text-[10px] text-slate-400">
-                                                                 {new Date(log.date).toLocaleString()}
-                                                              </span>
-                                                           </div>
-                                                           <p className="text-slate-600 text-sm mt-0.5">{log.message}</p>
-                                                        </div>
-                                                     </div>
-                                                  ))
-                                               ) : (
-                                                  <div className="text-center text-slate-400 text-sm py-4">Aucune activité enregistrée</div>
-                                               )}
-                                            </div>
-
-                                            {/* Add Comment Input */}
-                                            <div className="flex gap-2 items-start pt-4 border-t border-gray-100">
-                                               <div className="flex-1">
-                                                  <input 
-                                                     type="text" 
-                                                     placeholder="Ajouter un commentaire interne..." 
-                                                     className="w-full text-sm border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                                     value={newComment}
-                                                     onChange={(e) => setNewComment(e.target.value)}
-                                                     onKeyDown={(e) => {
-                                                        if (e.key === 'Enter' && newComment.trim()) {
-                                                           addOrderLog(order.id, newComment.trim(), 'comment');
-                                                           setNewComment('');
-                                                        }
-                                                     }}
-                                                  />
-                                               </div>
-                                               <button 
-                                                  onClick={() => {
-                                                     if (newComment.trim()) {
-                                                        addOrderLog(order.id, newComment.trim(), 'comment');
-                                                        setNewComment('');
-                                                     }
-                                                  }}
-                                                  disabled={!newComment.trim()}
-                                                  className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                               >
-                                                  <Send size={18} />
-                                               </button>
-                                            </div>
-                                         </div>
-                                      </div>
                                 </div>
 
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -1824,6 +1755,76 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    >
                                       Voir le profil client
                                    </button>
+                                </div>
+
+                                {/* Logs & Commentaires (Moved to Sidebar) */}
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                   <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                      <MessageSquare size={18} className="text-indigo-600" />
+                                      Activité & Commentaires
+                                   </h3>
+                                   
+                                   <div className="space-y-6">
+                                      {/* Logs Timeline */}
+                                      <div className="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                         {order.logs && order.logs.length > 0 ? (
+                                            order.logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(log => (
+                                               <div key={log.id} className="flex gap-3 text-sm">
+                                                  <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
+                                                     log.type === 'status_change' ? 'bg-orange-400' : 
+                                                     log.type === 'system' ? 'bg-slate-300' : 'bg-indigo-500'
+                                                  }`} />
+                                                  <div className="flex-1">
+                                                     <div className="flex justify-between items-start">
+                                                        <span className={`font-medium text-xs ${
+                                                           log.type === 'system' ? 'text-slate-500' : 'text-slate-800'
+                                                        }`}>
+                                                           {log.author || 'Système'}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400">
+                                                           {new Date(log.date).toLocaleString()}
+                                                        </span>
+                                                     </div>
+                                                     <p className="text-slate-600 text-sm mt-0.5">{log.message}</p>
+                                                  </div>
+                                               </div>
+                                            ))
+                                         ) : (
+                                            <div className="text-center text-slate-400 text-sm py-4">Aucune activité enregistrée</div>
+                                         )}
+                                      </div>
+
+                                      {/* Add Comment Input */}
+                                      <div className="flex gap-2 items-start pt-4 border-t border-gray-100">
+                                         <div className="flex-1">
+                                            <input 
+                                               type="text" 
+                                               placeholder="Ajouter un commentaire..." 
+                                               className="w-full text-sm border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                               value={newComment}
+                                               onChange={(e) => setNewComment(e.target.value)}
+                                               onKeyDown={(e) => {
+                                                  if (e.key === 'Enter' && newComment.trim()) {
+                                                     addOrderLog(order.id, newComment.trim(), 'comment');
+                                                     setNewComment('');
+                                                  }
+                                               }}
+                                            />
+                                         </div>
+                                         <button 
+                                            onClick={() => {
+                                               if (newComment.trim()) {
+                                                  addOrderLog(order.id, newComment.trim(), 'comment');
+                                                  setNewComment('');
+                                               }
+                                            }}
+                                            disabled={!newComment.trim()}
+                                            className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                         >
+                                            <Send size={18} />
+                                         </button>
+                                      </div>
+                                   </div>
                                 </div>
                              </div>
                           </div>

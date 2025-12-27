@@ -47,6 +47,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [isCustomerSearchOpen, setIsCustomerSearchOpen] = useState(false);
 
+  // Fulfillment Tracking State
+  const [fulfillmentTracking, setFulfillmentTracking] = useState('');
+
   // Edit Customer State
   const [isEditingCustomer, setIsEditingCustomer] = useState(false);
   const [editCustomerForm, setEditCustomerForm] = useState({
@@ -2016,7 +2019,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               Imprimer
                            </button>
                            <button 
-                              onClick={() => setShowFulfillment(true)}
+                              onClick={() => {
+                                  setFulfillmentTracking(orders.find(o => o.id === selectedOrderId)?.trackingNumber || '');
+                                  setShowFulfillment(true);
+                              }}
                               className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 shadow-sm"
                            >
                               Expédier les articles
@@ -2423,11 +2429,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          
                                          <div className="grid grid-cols-3 gap-4 mb-4">
                                             <div className="col-span-2">
-                                               <label className="text-xs font-bold text-slate-500 mb-1 block">Numéro de suivi</label>
+                                               <label className="text-xs font-bold text-slate-500 mb-1 block">Numéro de suivi <span className="text-red-500">*</span></label>
                                                <input 
                                                   type="text"
-                                                  id="tracking-input" 
-                                                  defaultValue={order.trackingNumber || ''}
+                                                  value={fulfillmentTracking}
+                                                  onChange={(e) => setFulfillmentTracking(e.target.value)}
                                                   className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral transition-all"
                                                />
                                             </div>
@@ -2499,16 +2505,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       </div>
                                       <button 
                                          onClick={() => {
-                                            const trackingInput = document.getElementById('tracking-input') as HTMLInputElement;
-                                            if (trackingInput && trackingInput.value) {
-                                               updateOrderTracking(order.id, trackingInput.value);
-                                               toast.success(`Commande expédiée avec le suivi ${trackingInput.value}`);
+                                            if (fulfillmentTracking) {
+                                               updateOrderTracking(order.id, fulfillmentTracking);
+                                               toast.success(`Commande expédiée avec le suivi ${fulfillmentTracking}`);
                                                setShowFulfillment(false);
                                             } else {
                                                toast.error("Veuillez entrer un numéro de suivi");
                                             }
                                          }}
-                                         className="w-full py-2.5 bg-slate-900 text-white rounded-lg font-bold text-sm shadow-md hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                                         disabled={!fulfillmentTracking}
+                                         className={`w-full py-2.5 rounded-lg font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 ${
+                                            !fulfillmentTracking 
+                                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                            : 'bg-slate-900 text-white hover:bg-slate-800'
+                                         }`}
                                       >
                                          Confirmer l'expédition
                                       </button>
@@ -2646,7 +2656,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Prénom</label>
+                                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Prénom <span className="text-red-500">*</span></label>
                                                     <input 
                                                         type="text" 
                                                         value={editCustomerForm.firstName}
@@ -2655,7 +2665,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Nom</label>
+                                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Nom <span className="text-red-500">*</span></label>
                                                     <input 
                                                         type="text" 
                                                         value={editCustomerForm.lastName}
@@ -2666,7 +2676,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             </div>
 
                                             <div>
-                                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Email</label>
+                                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Email <span className="text-red-500">*</span></label>
                                                 <input 
                                                     type="email" 
                                                     value={editCustomerForm.email}
@@ -2743,7 +2753,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         setIsEditingCustomer(false);
                                                         toast.success("Profil client mis à jour");
                                                     }}
-                                                    className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+                                                    disabled={!editCustomerForm.firstName || !editCustomerForm.lastName || !editCustomerForm.email}
+                                                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                        !editCustomerForm.firstName || !editCustomerForm.lastName || !editCustomerForm.email
+                                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                                                    }`}
                                                 >
                                                     Enregistrer
                                                 </button>

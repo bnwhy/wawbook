@@ -43,6 +43,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
 
+  // Order Filters State
+  const [orderFilter, setOrderFilter] = useState<string | null>(null);
+
   // Order Status Draft State
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
 
@@ -1340,12 +1343,42 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
                          <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-2 px-2">
                             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-                               <button className="px-3 py-1.5 bg-slate-100 text-slate-800 text-xs font-bold rounded-md whitespace-nowrap">Tout</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">En attente</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">En cours</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Expédiée</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Livrée</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Annulée</button>
+                               <button 
+                                  onClick={() => setOrderFilter(null)}
+                                  className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-colors ${!orderFilter ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-600'}`}
+                               >
+                                  Tout
+                               </button>
+                               <button 
+                                  onClick={() => setOrderFilter('pending')}
+                                  className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-colors ${orderFilter === 'pending' ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-600 font-medium'}`}
+                               >
+                                  En attente
+                               </button>
+                               <button 
+                                  onClick={() => setOrderFilter('processing')}
+                                  className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-colors ${orderFilter === 'processing' ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-600 font-medium'}`}
+                               >
+                                  En cours
+                               </button>
+                               <button 
+                                  onClick={() => setOrderFilter('shipped')}
+                                  className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-colors ${orderFilter === 'shipped' ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-600 font-medium'}`}
+                               >
+                                  Expédiée
+                               </button>
+                               <button 
+                                  onClick={() => setOrderFilter('delivered')}
+                                  className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-colors ${orderFilter === 'delivered' ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-600 font-medium'}`}
+                               >
+                                  Livrée
+                               </button>
+                               <button 
+                                  onClick={() => setOrderFilter('cancelled')}
+                                  className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap transition-colors ${orderFilter === 'cancelled' ? 'bg-slate-100 text-slate-800' : 'hover:bg-slate-50 text-slate-600 font-medium'}`}
+                               >
+                                  Annulée
+                               </button>
                             </div>
                             <div className="relative">
                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
@@ -1378,7 +1411,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   </tr>
                                </thead>
                                <tbody className="divide-y divide-gray-50">
-                                  {orders.map(order => {
+                                  {orders
+                                     .filter(order => !orderFilter || order.status === orderFilter)
+                                     .map(order => {
                                      // Mock statuses for the view
                                      const isPaid = order.status !== 'pending' && order.status !== 'cancelled';
                                      const paymentStatus = isPaid ? 'Payé' : 'En attente';

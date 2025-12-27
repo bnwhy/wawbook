@@ -65,7 +65,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     });
     
     if (optionIds.length === 0) return 'default';
-    return optionIds.sort().join('_');
+    return optionIds.join('_');
   };
 
   const currentCombinationKey = getCombinationKey();
@@ -203,7 +203,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
               });
               
               if (optionIds.length > 0) {
-                  const key = optionIds.sort().join('_');
+                  const key = optionIds.join('_');
                   // Look up in avatarMappings
                   if (book?.wizardConfig?.avatarMappings?.[key]) {
                       return book.wizardConfig.avatarMappings[key];

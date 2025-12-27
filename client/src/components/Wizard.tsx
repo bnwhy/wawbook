@@ -156,7 +156,6 @@ const Wizard: React.FC<WizardProps> = (props) => {
         const selectedOptionIds = relevantVariants
             .map(v => currentSelections[v.id])
             .filter(id => id && id !== '') // Filter out empty strings/undefined
-            .sort();
         
         const combinationKey = selectedOptionIds.join('_');
         const customAvatarUrl = wizardConfig.avatarMappings[combinationKey];

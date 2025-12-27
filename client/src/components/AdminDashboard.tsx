@@ -696,7 +696,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     // 4. Map to strings (keys)
     const results = combinations.map(combo => {
-        const ids = combo.map((o: any) => o.id).sort();
+        const ids = combo.map((o: any) => o.id); // Remove sort to avoid collisions (e.g. A_B vs B_A)
         return ids.join('_');
     });
 
@@ -743,8 +743,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           variantId: variants[index].id
        }));
        
-       // Key is sorted combination of option IDs
-       const key = parts.map((p: any) => p.id).sort().join('_');
+       // Key is combination of option IDs (preserve order for uniqueness)
+       const key = parts.map((p: any) => p.id).join('_');
        
        return { key, parts };
     });

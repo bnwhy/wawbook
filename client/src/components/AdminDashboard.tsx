@@ -831,12 +831,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        disabled={!selectedBook}
                        className={`w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm ${
                           hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook))
-                             ? 'bg-brand-coral hover:bg-red-500 text-white cursor-pointer' 
+                             ? 'bg-brand-coral hover:bg-brand-coral/90 text-white cursor-pointer' 
                              : 'bg-slate-800 text-slate-500 hover:bg-slate-700 cursor-pointer'
                        }`}
                     >
                        <Save size={14} />
-                       {hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook)) ? 'Sauvegarder' : 'Enregistré'}
+                       {hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook)) ? 'Enregistrer les modifications' : 'Enregistré'}
                     </button>
                  </div>
 
@@ -1083,7 +1083,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                           <button 
                              onClick={() => handleSaveSettings('Général')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:bg-slate-950 active:scale-95 duration-150"
                           >
                              <Save size={16} /> Sauvegarder
                           </button>
@@ -1132,7 +1132,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                           <button 
                              onClick={() => handleSaveSettings('Paiement')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:bg-slate-950 active:scale-95 duration-150"
                           >
                              <Save size={16} /> Sauvegarder
                           </button>
@@ -1191,7 +1191,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                           <button 
                              onClick={() => handleSaveSettings('Expédition')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:bg-slate-950 active:scale-95 duration-150"
                           >
                              <Save size={16} /> Sauvegarder
                           </button>
@@ -1239,7 +1239,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                           <button 
                              onClick={() => handleSaveSettings('Notifications')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:bg-slate-950 active:scale-95 duration-150"
                           >
                              <Save size={16} /> Sauvegarder
                           </button>

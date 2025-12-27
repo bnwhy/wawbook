@@ -34,7 +34,7 @@ import googleFonts from 'google-fonts-complete';
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
-  const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer, addOrderLog } = useEcommerce();
+  const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer, addOrderLog, createOrder } = useEcommerce();
   
   const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -50,6 +50,53 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Order Status Draft State
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
   const [newComment, setNewComment] = useState('');
+
+  // Export Function
+  const handleExport = () => {
+    const ordersToExport = selectedOrderIds.size > 0 
+      ? orders.filter(o => selectedOrderIds.has(o.id))
+      : orders;
+    
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "ID,Date,Client,Email,Statut,Total,Tracking\n"
+      + ordersToExport.map(o => `${o.id},${o.createdAt},${o.customerName},${o.customerEmail},${o.status},${o.totalAmount},${o.trackingNumber || ''}`).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `commandes_export_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`${ordersToExport.length} commandes exportées avec succès`);
+  };
+
+  // Mock Create Order
+  const handleCreateOrder = () => {
+     const mockCustomer = {
+         firstName: "Nouveau",
+         lastName: "Client",
+         email: `nouveau.client.${Date.now()}@example.com`,
+         phone: "06 99 88 77 66",
+         address: {
+             street: "10 Avenue des Champs-Élysées",
+             city: "Paris",
+             zipCode: "75008",
+             country: "France"
+         }
+     };
+
+     const mockItem = {
+         productId: books[0]?.id || 'explorer',
+         bookTitle: books[0]?.name || "Livre Personnalisé",
+         quantity: 1,
+         price: 29.90,
+         config: { name: 'Enfant Test', gender: 'boy' }
+     };
+
+     createOrder(mockCustomer, [mockItem], 29.90);
+     toast.success("Nouvelle commande simulée créée !");
+  };
 
   React.useEffect(() => {
     setDraftStatus(null);
@@ -1333,10 +1380,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       <div className="flex justify-between items-center">
                          <h2 className="text-xl font-bold text-slate-800">Commandes</h2>
                          <div className="flex gap-2">
-                            <button className="bg-white border border-gray-300 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50">
-                               Exporter
+                            <button 
+                               onClick={handleExport}
+                               className="bg-white border border-gray-300 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 flex items-center gap-2"
+                            >
+                               <Download size={16} />
+                               Exporter {selectedOrderIds.size > 0 ? `(${selectedOrderIds.size})` : ''}
                             </button>
-                            <button className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-800">
+                            <button 
+                               onClick={handleCreateOrder}
+                               className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-800 flex items-center gap-2"
+                            >
+                               <Plus size={16} />
                                Créer une commande
                             </button>
                          </div>

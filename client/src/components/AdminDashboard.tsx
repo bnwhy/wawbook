@@ -1513,6 +1513,32 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                        </div>
                     </div>
+
+                    <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
+                       <div className="p-6 border-b border-red-100 flex justify-between items-center bg-red-50/50">
+                          <div>
+                             <h3 className="font-bold text-red-800 text-lg">Zone de Danger</h3>
+                             <p className="text-sm text-red-500">Gestion des données locales</p>
+                          </div>
+                       </div>
+                       <div className="p-6">
+                          <p className="text-sm text-slate-600 mb-4">
+                             Cette application utilise le stockage local de votre navigateur (LocalStorage) pour sauvegarder vos données (Livres, Commandes, Clients, Réglages). 
+                             Si vous souhaitez réinitialiser l'application à son état d'origine (données de démonstration), vous pouvez effacer les données locales ci-dessous.
+                          </p>
+                          <button 
+                             onClick={() => {
+                                if (confirm('Attention : Toutes vos modifications seront perdues. Voulez-vous vraiment réinitialiser toutes les données ?')) {
+                                   localStorage.clear();
+                                   window.location.reload();
+                                }
+                             }}
+                             className="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-red-50 transition-colors shadow-sm"
+                          >
+                             <Trash2 size={16} /> Réinitialiser toutes les données
+                          </button>
+                       </div>
+                    </div>
                  </div>
               )}
 

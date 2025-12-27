@@ -534,9 +534,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
                   if (isColorPicker) {
                     return withDivider(
-                      <div className="space-y-2">
-                         <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
-                         <div className="flex gap-3 flex-wrap">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                         <label className="font-bold text-gray-600 text-sm w-24 shrink-0">{variant.label}</label>
+                         <div className="flex gap-3 flex-wrap flex-1">
                             {variant.options.map((opt) => (
                               <button
                                 key={opt.id}
@@ -553,9 +553,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
                   if (hasThumbnails) {
                      return withDivider(
-                       <div className="space-y-2">
-                          <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
-                          <div className="flex gap-3 flex-wrap">
+                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                          <label className="font-bold text-gray-600 text-sm w-24 shrink-0">{variant.label}</label>
+                          <div className="flex gap-3 flex-wrap flex-1">
                              {variant.options.map((opt) => {
                                // Prefer resource (uploaded image) over legacy thumbnail
                                const imageUrl = opt.resource && !opt.resource.startsWith('#') ? opt.resource : opt.thumbnail;

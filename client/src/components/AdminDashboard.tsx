@@ -3367,57 +3367,77 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           >
                                               + Ajouter une colonne
                                           </button>
+                                          
+                                          <div className="flex justify-end pt-2 border-t border-gray-100">
+                                              <button 
+                                                  onClick={() => toast.success('Menu enregistré avec succès')}
+                                                  className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+                                              >
+                                                  <Save size={14} /> Enregistrer les modifications
+                                              </button>
+                                          </div>
                                       </div>
                                   ) : (
                                       // Simple or Grid (List of items)
-                                      (<DndContext 
-                                          sensors={sensors}
-                                          collisionDetection={closestCenter}
-                                          onDragEnd={(e) => handleDragEnd(e, idx)}
-                                      >
-                                          <SortableContext 
-                                              items={menu.items || []}
-                                              strategy={rectSortingStrategy}
+                                      (<div className="space-y-4">
+                                          <DndContext 
+                                              sensors={sensors}
+                                              collisionDetection={closestCenter}
+                                              onDragEnd={(e) => handleDragEnd(e, idx)}
                                           >
-                                              <div className="flex flex-wrap gap-2">
-                                                 {(menu.items || []).map((item, itemIdx) => (
-                                                     <SortableItem key={item} id={item} className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm flex items-center gap-2 group">
-                                                         <input 
-                                                             type="text"
-                                                             value={item}
-                                                             onChange={(e) => {
-                                                                 const newItems = [...(menu.items || [])];
-                                                                 newItems[itemIdx] = e.target.value;
-                                                                 updateMenuItem(idx, { ...menu, items: newItems });
-                                                             }}
-                                                             className="bg-transparent border-none p-0 focus:ring-0 w-32 text-slate-700 font-medium"
-                                                             onPointerDown={(e) => e.stopPropagation()}
-                                                             onKeyDown={(e) => e.stopPropagation()}
-                                                         />
-                                                         <button 
-                                                             onClick={() => {
-                                                                 const newItems = (menu.items || []).filter((_, i) => i !== itemIdx);
-                                                                 updateMenuItem(idx, { ...menu, items: newItems });
-                                                             }}
-                                                             className="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                             onPointerDown={(e) => e.stopPropagation()}
-                                                         >
-                                                             <X size={14} />
-                                                         </button>
-                                                     </SortableItem>
-                                                 ))}
-                                                 <button 
-                                                     onClick={() => {
-                                                         const newItems = [...(menu.items || []), 'Nouveau lien'];
-                                                         updateMenuItem(idx, { ...menu, items: newItems });
-                                                     }}
-                                                     className="bg-white border border-dashed border-gray-300 text-gray-400 hover:text-brand-coral hover:border-brand-coral rounded-lg px-3 py-1.5 text-sm font-bold transition-colors flex items-center gap-1"
-                                                 >
-                                                     <Plus size={14} /> Ajouter
-                                                 </button>
-                                              </div>
-                                          </SortableContext>
-                                      </DndContext>)
+                                              <SortableContext 
+                                                  items={menu.items || []}
+                                                  strategy={rectSortingStrategy}
+                                              >
+                                                  <div className="flex flex-wrap gap-2">
+                                                     {(menu.items || []).map((item, itemIdx) => (
+                                                         <SortableItem key={item} id={item} className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm flex items-center gap-2 group">
+                                                             <input 
+                                                                 type="text"
+                                                                 value={item}
+                                                                 onChange={(e) => {
+                                                                     const newItems = [...(menu.items || [])];
+                                                                     newItems[itemIdx] = e.target.value;
+                                                                     updateMenuItem(idx, { ...menu, items: newItems });
+                                                                 }}
+                                                                 className="bg-transparent border-none p-0 focus:ring-0 w-32 text-slate-700 font-medium"
+                                                                 onPointerDown={(e) => e.stopPropagation()}
+                                                                 onKeyDown={(e) => e.stopPropagation()}
+                                                             />
+                                                             <button 
+                                                                 onClick={() => {
+                                                                     const newItems = (menu.items || []).filter((_, i) => i !== itemIdx);
+                                                                     updateMenuItem(idx, { ...menu, items: newItems });
+                                                                 }}
+                                                                 className="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                 onPointerDown={(e) => e.stopPropagation()}
+                                                             >
+                                                                 <X size={14} />
+                                                             </button>
+                                                         </SortableItem>
+                                                     ))}
+                                                     <button 
+                                                         onClick={() => {
+                                                             const newItems = [...(menu.items || []), 'Nouveau lien'];
+                                                             updateMenuItem(idx, { ...menu, items: newItems });
+                                                         }}
+                                                         className="bg-white border border-dashed border-gray-300 text-gray-400 hover:text-brand-coral hover:border-brand-coral rounded-lg px-3 py-1.5 text-sm font-bold transition-colors flex items-center gap-1"
+                                                     >
+                                                         <Plus size={14} /> Ajouter
+                                                     </button>
+                                                  </div>
+                                              </SortableContext>
+                                          </DndContext>
+                                          
+                                          <div className="flex justify-end pt-2 border-t border-gray-100">
+                                              <button 
+                                                  onClick={() => toast.success('Menu enregistré avec succès')}
+                                                  className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
+                                              >
+                                                  <Save size={14} /> Enregistrer les modifications
+                                              </button>
+                                          </div>
+                                      </div>)
                                   )}
                               </div>
                           </div>

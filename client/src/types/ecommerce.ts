@@ -44,4 +44,13 @@ export interface Order {
     country: string;
   };
   trackingNumber?: string;
+  logs?: OrderLog[];
+}
+
+export interface OrderLog {
+  id: string;
+  date: string;
+  type: 'status_change' | 'comment' | 'system';
+  message: string;
+  author?: string; // "System" or "Admin"
 }

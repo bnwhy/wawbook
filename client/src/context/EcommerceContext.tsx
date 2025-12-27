@@ -76,6 +76,11 @@ const MOCK_ORDERS: Order[] = [
         price: 29.90,
         configuration: { name: 'Léo', gender: 'boy' }
       }
+    ],
+    logs: [
+      { id: 'l1', date: '2023-11-15T10:35:00Z', type: 'system', message: 'Commande créée', author: 'Système' },
+      { id: 'l2', date: '2023-11-15T10:36:00Z', type: 'status_change', message: 'Statut passé à En attente', author: 'Système' },
+      { id: 'l3', date: '2023-11-16T09:00:00Z', type: 'status_change', message: 'Statut passé à Livrée', author: 'Admin' }
     ]
   },
   {
@@ -172,6 +177,7 @@ interface EcommerceContextType {
   getCustomerById: (id: string) => Customer | undefined;
   getOrdersByCustomer: (customerId: string) => Order[];
   createOrder: (customerData: any, cartItems: any[], totalAmount: number) => void;
+  addOrderLog: (orderId: string, message: string, type?: 'comment' | 'status_change' | 'system') => void;
 }
 
 const EcommerceContext = createContext<EcommerceContextType | undefined>(undefined);
@@ -216,11 +222,63 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [orders]);
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
+    setOrders(prev => prev.map(o => {
+      if (o.id === orderId) {
+        const newLog = {
+            id: `log-${Date.now()}`,
+            date: new Date().toISOString(),
+            type: 'status_change',
+            message: `Statut modifié vers ${status === 'pending' ? 'En attente' : status === 'processing' ? 'En cours' : status === 'shipped' ? 'Expédiée' : status === 'delivered' ? 'Livrée' : 'Annulée'}`,
+            author: 'Admin'
+        };
+        return { 
+            ...o, 
+            status,
+            logs: [...(o.logs || []), newLog] as any[]
+        };
+      }
+      return o;
+    }));
   };
 
   const updateOrderTracking = (orderId: string, trackingNumber: string) => {
-    setOrders(orders.map(o => o.id === orderId ? { ...o, trackingNumber, status: 'shipped' } : o));
+    setOrders(prev => prev.map(o => {
+        if (o.id === orderId) {
+            const newLog = {
+                id: `log-${Date.now()}`,
+                date: new Date().toISOString(),
+                type: 'system',
+                message: `Numéro de suivi ajouté: ${trackingNumber}`,
+                author: 'Système'
+            };
+            return { 
+                ...o, 
+                trackingNumber, 
+                status: 'shipped',
+                logs: [...(o.logs || []), newLog] as any[]
+            };
+        }
+        return o;
+    }));
+  };
+
+  const addOrderLog = (orderId: string, message: string, type: 'comment' | 'status_change' | 'system' = 'comment') => {
+      setOrders(prev => prev.map(o => {
+          if (o.id === orderId) {
+              const newLog = {
+                  id: `log-${Date.now()}`,
+                  date: new Date().toISOString(),
+                  type,
+                  message,
+                  author: 'Admin'
+              };
+              return {
+                  ...o,
+                  logs: [...(o.logs || []), newLog] as any[]
+              };
+          }
+          return o;
+      }));
   };
 
   const createOrder = (customerData: any, cartItems: any[], totalAmount: number) => {
@@ -296,7 +354,8 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       updateOrderTracking,
       getCustomerById,
       getOrdersByCustomer,
-      createOrder
+      createOrder,
+      addOrderLog
     }}>
       {children}
     </EcommerceContext.Provider>

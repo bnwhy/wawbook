@@ -4446,22 +4446,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     )}
                                                                  </div>
                                                                  <div className={`text-[9px] font-bold ${option.thumbnail ? 'text-green-600' : 'text-gray-400 group-hover/upload:text-brand-coral'}`}>Miniature</div>
-                                                                 
-                                                                 {/* Hidden File Input for Mock Upload */}
-                                                                 <input 
-                                                                    type="file" 
-                                                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                                                    onChange={(e) => {
-                                                                       const file = e.target.files?.[0];
-                                                                       if (file) {
-                                                                          // Mock upload - create object URL
-                                                                          const url = URL.createObjectURL(file);
-                                                                          const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                          newTabs[idx].variants[vIdx].options![oIdx].thumbnail = url;
-                                                                          handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                                                       }
-                                                                    }}
-                                                                 />
                                                               </div>
 
                                                               <div className="text-center group/upload cursor-pointer relative">

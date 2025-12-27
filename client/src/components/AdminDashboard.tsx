@@ -1470,7 +1470,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {activeTab === 'orders' && !selectedOrderId && !isCreatingOrder && (
                 <div className="space-y-4">
                    <div className="flex flex-col gap-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-end items-center">
                          <div className="flex gap-2">
                             <button 
                                onClick={handleExport}

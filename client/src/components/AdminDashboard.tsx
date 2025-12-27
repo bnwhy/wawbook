@@ -2273,9 +2273,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                        </div>
                        <div className="flex gap-2">
-                           <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-slate-50">
-                              Imprimer
-                           </button>
                            <button 
                               onClick={() => {
                                   setFulfillmentTracking(orders.find(o => o.id === selectedOrderId)?.trackingNumber || '');

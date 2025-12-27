@@ -43,6 +43,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
 
+  // Order Detail State
+  const [pendingStatus, setPendingStatus] = useState<any>(null); // OrderStatus | null
+  
+  // Reset pending status when changing order
+  React.useEffect(() => {
+     setPendingStatus(null);
+  }, [selectedOrderId]);
+
   // Order Item Editing State
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [tempConfig, setTempConfig] = useState<string>('');
@@ -1721,25 +1729,65 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              {/* Sidebar Actions */}
                              <div className="space-y-6">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                   <h3 className="font-bold text-slate-800 mb-4">Statut</h3>
-                                   <div className="space-y-2">
-                                      {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
+                                   <div className="flex justify-between items-center mb-4">
+                                      <h3 className="font-bold text-slate-800">Statut</h3>
+                                      {pendingStatus && pendingStatus !== order.status && (
                                          <button
-                                            key={status}
-                                            onClick={() => updateOrderStatus(order.id, status as any)}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                               order.status === status 
-                                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
-                                                  : 'text-slate-600 hover:bg-slate-50'
-                                            }`}
+                                            onClick={() => {
+                                               updateOrderStatus(order.id, pendingStatus);
+                                               setPendingStatus(null);
+                                               toast.success(`Statut mis à jour: ${pendingStatus}`);
+                                            }}
+                                            className="bg-slate-900 text-white p-1.5 rounded-md hover:bg-slate-800 transition-colors shadow-sm"
+                                            title="Enregistrer le changement de statut"
                                          >
-                                            {status === 'pending' ? 'En attente' :
-                                             status === 'processing' ? 'En cours de production' :
-                                             status === 'shipped' ? 'Expédiée' :
-                                             status === 'delivered' ? 'Livrée' : 'Annulée'}
+                                            <Save size={14} />
                                          </button>
-                                      ))}
+                                      )}
                                    </div>
+                                   <div className="space-y-2">
+                                      {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => {
+                                         const isActive = (pendingStatus || order.status) === status;
+                                         return (
+                                            <button
+                                               key={status}
+                                               onClick={() => setPendingStatus(status as any)}
+                                               className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                  isActive 
+                                                     ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
+                                                     : 'text-slate-600 hover:bg-slate-50'
+                                               }`}
+                                            >
+                                               <div className="flex items-center justify-between">
+                                                  <span>
+                                                     {status === 'pending' ? 'En attente' :
+                                                      status === 'processing' ? 'En cours de production' :
+                                                      status === 'shipped' ? 'Expédiée' :
+                                                      status === 'delivered' ? 'Livrée' : 'Annulée'}
+                                                  </span>
+                                                  {pendingStatus === status && pendingStatus !== order.status && (
+                                                     <div className="w-1.5 h-1.5 rounded-full bg-brand-coral animate-pulse" />
+                                                  )}
+                                               </div>
+                                            </button>
+                                         );
+                                      })}
+                                   </div>
+                                   {pendingStatus && pendingStatus !== order.status && (
+                                      <div className="mt-4 pt-4 border-t border-gray-100">
+                                         <button
+                                            onClick={() => {
+                                               updateOrderStatus(order.id, pendingStatus);
+                                               setPendingStatus(null);
+                                               toast.success(`Statut mis à jour: ${pendingStatus}`);
+                                            }}
+                                            className="w-full bg-brand-coral text-white py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-brand-coral/90 transition-colors flex items-center justify-center gap-2"
+                                         >
+                                            <Save size={16} />
+                                            Enregistrer le statut
+                                         </button>
+                                      </div>
+                                   )}
                                 </div>
 
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

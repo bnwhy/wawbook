@@ -3606,7 +3606,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               </DialogTrigger>
                               <DialogContent className="bg-white sm:max-w-[600px]">
                                   <DialogHeader>
-                                      <DialogTitle className="text-slate-900 text-lg">Configuration Impression (Lulu / POD)</DialogTitle>
+                                      <DialogTitle className="text-slate-900 text-lg">Configuration Impression</DialogTitle>
                                       <DialogDescription className="text-slate-500">
                                           Définissez les marges et fonds perdus pour l'export PDF.
                                       </DialogDescription>

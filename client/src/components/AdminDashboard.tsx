@@ -31,6 +31,36 @@ const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or
 // Import font list from the package we just installed if available, or fallback to a larger list
 import googleFonts from 'google-fonts-complete';
 
+// Simple Ruler Component
+const Ruler = ({ sizeMm, orientation }: { sizeMm: number, orientation: 'horizontal' | 'vertical' }) => {
+    const ticks = [];
+    const step = 10; // 10mm steps
+    // Optimize for large sizes
+    for (let i = 0; i <= sizeMm; i += step) {
+        const pct = (i / sizeMm) * 100;
+        const isMajor = i % 50 === 0;
+        ticks.push(
+            <div 
+                key={i} 
+                className="absolute bg-gray-400"
+                style={{
+                    [orientation === 'horizontal' ? 'left' : 'top']: `${pct}%`,
+                    [orientation === 'horizontal' ? 'height' : 'width']: isMajor ? '100%' : '40%',
+                    [orientation === 'horizontal' ? 'bottom' : 'right']: 0,
+                    [orientation === 'horizontal' ? 'width' : 'height']: '1px',
+                }}
+            >
+                {isMajor && (
+                    <span className={`absolute text-[8px] text-gray-500 font-sans ${orientation === 'horizontal' ? 'top-0 left-1' : 'right-1 top-0 -translate-y-1/2 rotate-[-90deg] origin-right'}`}>
+                        {i}
+                    </span>
+                )}
+            </div>
+        );
+    }
+    return <div className="w-full h-full relative overflow-hidden">{ticks}</div>;
+};
+
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -4184,9 +4214,41 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    
                                    {/* CANVAS AREA */}
                                    <div className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative">
-                                      {/* Page Container */}
-                                      <div 
-                                         ref={canvasRef}
+                                      <div className="relative">
+                                          {/* RULERS */}
+                                          {showGrid && (() => {
+                                             const pageIndex = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
+                                             const isCover = pageIndex === 0 || pageIndex === selectedBook.contentConfig.pages.length - 1;
+                                             
+                                             let rulerW = selectedBook.features?.dimensions?.width || 210;
+                                             let rulerH = selectedBook.features?.dimensions?.height || 210;
+
+                                             if (viewMode === 'spread' && isCover) {
+                                                const config = selectedBook.features?.printConfig?.cover;
+                                                const bleed = config?.bleedMm || 0;
+                                                const spine = config?.spineWidthMm || 0;
+                                                rulerW = bleed + rulerW + spine + rulerW + bleed;
+                                                rulerH = bleed + rulerH + bleed;
+                                             } else if (viewMode === 'spread') {
+                                                 rulerW = rulerW * 2;
+                                             }
+                                             
+                                             return (
+                                                 <>
+                                                     <div className="absolute -top-6 left-0 right-0 h-6 bg-white/80 backdrop-blur border-b border-gray-300 z-10">
+                                                         <Ruler sizeMm={rulerW} orientation="horizontal" />
+                                                     </div>
+                                                     <div className="absolute top-0 -left-6 bottom-0 w-6 bg-white/80 backdrop-blur border-r border-gray-300 z-10">
+                                                         <Ruler sizeMm={rulerH} orientation="vertical" />
+                                                     </div>
+                                                     <div className="absolute -top-6 -left-6 w-6 h-6 bg-white border-r border-b border-gray-300 z-20 flex items-center justify-center text-[8px] text-gray-400 font-bold select-none">mm</div>
+                                                 </>
+                                             );
+                                          })()}
+                                          
+                                          {/* Page Container */}
+                                          <div 
+                                             ref={canvasRef}
                                          className="transition-all duration-300 flex gap-0 shadow-2xl bg-white"
                                          style={{
                                             // Force single aspect ratio if viewing cover (since we now treat cover as single page)
@@ -4684,6 +4746,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                );
                                          });
                                       })()}
+                                      </div>
                                       </div>
                                    </div>
 

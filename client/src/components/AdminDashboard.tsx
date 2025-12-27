@@ -3655,13 +3655,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     />
                                                                     {method.condition && method.condition.type !== 'none' && (
                                                                         <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 whitespace-nowrap">
-                                                                            {method.condition.type === 'price' ? 'Prix' : 'Poids'} {
+                                                                            {method.condition.type === 'price' ? 'Prix' : method.condition.type === 'weight' ? 'Poids' : 'Quantité'} {
                                                                                 method.condition.operator === 'greater_than' ? '> ' : 
                                                                                 method.condition.operator === 'less_than' ? '< ' : ''
                                                                             }
                                                                             {method.condition.value}
                                                                             {method.condition.operator === 'between' ? ` - ${method.condition.maxValue}` : ''}
-                                                                            {method.condition.type === 'price' ? '€' : 'kg'}
+                                                                            {method.condition.type === 'price' ? '€' : method.condition.type === 'weight' ? 'kg' : ''}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -3712,7 +3712,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         onChange={(e) => {
                                                                                             const newMethods = [...zone.methods];
                                                                                             // @ts-ignore
-                                                                                            const type = e.target.value as 'weight' | 'price' | 'none';
+                                                                                            const type = e.target.value as 'weight' | 'price' | 'quantity' | 'none';
                                                                                             newMethods[mIdx] = { 
                                                                                                 ...method, 
                                                                                                 condition: type === 'none' ? undefined : { 
@@ -3727,6 +3727,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         <option value="none">Aucune condition (Toujours appliquer)</option>
                                                                                         <option value="price">Basé sur le prix de la commande</option>
                                                                                         <option value="weight">Basé sur le poids de la commande</option>
+                                                                                    <option value="quantity">Basé sur la quantité d'articles</option>
                                                                                     </select>
                                                                                 </div>
 
@@ -3753,7 +3754,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         </div>
                                                                                         <div>
                                                                                             <label className="text-xs font-bold text-slate-500 mb-1 block">
-                                                                                                Valeur {method.condition.type === 'price' ? '(€)' : '(kg)'}
+                                                                                                Valeur {method.condition.type === 'price' ? '(€)' : method.condition.type === 'weight' ? '(kg)' : '(Qté)'}
                                                                                             </label>
                                                                                             <input 
                                                                                                 type="number"
@@ -3774,7 +3775,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                 {method.condition && method.condition.operator === 'between' && (
                                                                                     <div>
                                                                                         <label className="text-xs font-bold text-slate-500 mb-1 block">
-                                                                                            Valeur Max {method.condition.type === 'price' ? '(€)' : '(kg)'}
+                                                                                            Valeur Max {method.condition.type === 'price' ? '(€)' : method.condition.type === 'weight' ? '(kg)' : '(Qté)'}
                                                                                         </label>
                                                                                         <input 
                                                                                             type="number"
@@ -3861,13 +3862,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     <span className="text-sm font-medium text-slate-700">{method.name}</span>
                                                                     {method.condition && method.condition.type !== 'none' && (
                                                                         <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 whitespace-nowrap">
-                                                                            {method.condition.type === 'price' ? 'Prix' : 'Poids'} {
+                                                                            {method.condition.type === 'price' ? 'Prix' : method.condition.type === 'weight' ? 'Poids' : 'Quantité'} {
                                                                                 method.condition.operator === 'greater_than' ? '> ' : 
                                                                                 method.condition.operator === 'less_than' ? '< ' : ''
                                                                             }
                                                                             {method.condition.value}
                                                                             {method.condition.operator === 'between' ? ` - ${method.condition.maxValue}` : ''}
-                                                                            {method.condition.type === 'price' ? '€' : 'kg'}
+                                                                            {method.condition.type === 'price' ? '€' : method.condition.type === 'weight' ? 'kg' : ''}
                                                                         </span>
                                                                     )}
                                                                 </div>

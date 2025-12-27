@@ -62,7 +62,7 @@ export interface ShippingMethod {
   description?: string;
   estimatedDelay?: string;
   condition?: {
-    type: 'weight' | 'price' | 'none';
+    type: 'weight' | 'price' | 'quantity' | 'none';
     operator: 'greater_than' | 'less_than' | 'between';
     value: number;
     maxValue?: number; // Only for 'between'

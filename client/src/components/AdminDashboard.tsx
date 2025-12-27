@@ -3313,7 +3313,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       >
                                                           <div className="flex flex-wrap gap-2">
                                                               {col.items.map((item, itemIdx) => (
-                                                                  <SortableItem key={item} id={item} className="bg-white border border-gray-200 rounded px-2 py-1 text-xs flex items-center gap-1 cursor-grab active:cursor-grabbing">
+                                                                  <SortableItem key={item} id={item} className="bg-white border border-gray-200 rounded px-2 py-1 text-xs flex items-center gap-1">
                                                                       <input 
                                                                           type="text"
                                                                           value={item}
@@ -3381,7 +3381,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           >
                                               <div className="flex flex-wrap gap-2">
                                                  {(menu.items || []).map((item, itemIdx) => (
-                                                     <SortableItem key={item} id={item} className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm flex items-center gap-2 group cursor-grab active:cursor-grabbing">
+                                                     <SortableItem key={item} id={item} className="bg-slate-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm flex items-center gap-2 group">
                                                          <input 
                                                              type="text"
                                                              value={item}

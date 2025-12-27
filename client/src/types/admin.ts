@@ -55,7 +55,7 @@ export interface WizardVariant {
   id: string;
   label: string; // Internal name
   title?: string; // Public display title
-  type: 'options' | 'text';
+  type: 'options' | 'text' | 'checkbox';
   minLength?: number;
   maxLength?: number;
   thumbnail?: string;

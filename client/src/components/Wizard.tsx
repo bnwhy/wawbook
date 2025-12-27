@@ -493,6 +493,30 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   const hasThumbnails = variant.options.some(o => o.thumbnail || o.resource);
                   const isGrid = variant.options.length > 6 && !isColorPicker;
 
+                  if (variant.type === 'checkbox') {
+                    // Checkbox handling (using first option or defaulting if no option exists)
+                    const isChecked = !!currentValue;
+                    return (
+                        <div key={variant.id} className="flex items-center space-x-3 bg-white p-4 rounded-lg border border-gray-200">
+                            <div className="relative flex items-center">
+                                <input
+                                    type="checkbox"
+                                    id={`checkbox-${variant.id}`}
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                        // If checked, store 'true', if unchecked, store empty string (falsy)
+                                        handleSelectionChange(activeTabId, variant.id, e.target.checked ? 'true' : '');
+                                    }}
+                                    className="h-5 w-5 rounded border-gray-300 text-cloud-dark focus:ring-cloud-dark transition-colors cursor-pointer"
+                                />
+                            </div>
+                            <label htmlFor={`checkbox-${variant.id}`} className="font-bold text-gray-700 text-sm cursor-pointer select-none flex-1">
+                                {variant.label}
+                            </label>
+                        </div>
+                    );
+                  }
+
                   if (isColorPicker) {
                     return (
                       <div key={variant.id} className="space-y-2">

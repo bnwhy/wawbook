@@ -4380,13 +4380,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      value={variant.type || 'options'}
                                                      onChange={(e) => {
                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                        newTabs[idx].variants[vIdx].type = e.target.value as 'options' | 'text';
+                                                        newTabs[idx].variants[vIdx].type = e.target.value as 'options' | 'text' | 'checkbox';
                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                      }}
                                                      className="w-full text-xs border-gray-200 rounded-md py-1.5 pl-3 pr-8 bg-white text-slate-600 font-medium focus:ring-indigo-500 focus:border-indigo-500"
                                                   >
                                                      <option value="options">Choix (Options)</option>
                                                      <option value="text">Texte (Libre)</option>
+                                                     <option value="checkbox">Case à cocher</option>
                                                   </select>
                                                   
                                                   {variant.type === 'text' && expandedVariantIds.has(variant.id) && (

@@ -4136,7 +4136,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
                                             const index = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
                                             if (!page) return '';
-                                            if (index === 0) return 'Couverture Avant';
+                                            if (index === 0) return 'Couverture';
                                             if (index === selectedBook.contentConfig.pages.length - 1) return 'Couverture Arrière';
                                             return page.label;
                                          })()}

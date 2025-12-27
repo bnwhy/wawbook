@@ -172,6 +172,7 @@ interface EcommerceContextType {
   getCustomerById: (id: string) => Customer | undefined;
   getOrdersByCustomer: (customerId: string) => Order[];
   createOrder: (customerData: any, cartItems: any[], totalAmount: number) => void;
+  updateOrder: (order: Order) => void;
 }
 
 const EcommerceContext = createContext<EcommerceContextType | undefined>(undefined);
@@ -221,6 +222,10 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const updateOrderTracking = (orderId: string, trackingNumber: string) => {
     setOrders(orders.map(o => o.id === orderId ? { ...o, trackingNumber, status: 'shipped' } : o));
+  };
+
+  const updateOrder = (updatedOrder: Order) => {
+    setOrders(orders.map(o => o.id === updatedOrder.id ? updatedOrder : o));
   };
 
   const createOrder = (customerData: any, cartItems: any[], totalAmount: number) => {
@@ -294,6 +299,7 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       orders, 
       updateOrderStatus, 
       updateOrderTracking,
+      updateOrder,
       getCustomerById,
       getOrdersByCustomer,
       createOrder

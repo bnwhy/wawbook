@@ -4295,11 +4295,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                setSelectedPageId(targetPage.id);
                                                            }}
                                                        >
-                                                           {/* Label */}
-                                                           <div className="absolute top-2 left-2 z-50 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none">
-                                                              Couverture Complète (Dos + Tranche + Face)
-                                                           </div>
-
+                                                           {/* Label removed as requested */}
+                                                           
                                                            {/* Selection Ring */}
                                                            {selectedPageId === targetPage.id && (
                                                               <div className="absolute inset-0 border-2 border-brand-coral z-40 pointer-events-none"></div>
@@ -4334,10 +4331,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                       {/* Right Strip */}
                                                                       <div className="absolute top-0 bottom-0 right-0 bg-cyan-500/10 border-l border-cyan-500 border-dashed" style={{ width: `${toPctX(bleedMm)}%` }}></div>
                                                                       
-                                                                      {/* Label */}
-                                                                      <div className="absolute top-1 left-1 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200">
-                                                                        Fonds Perdus ({bleedMm}mm)
-                                                                      </div>
+                                                                      {/* Label removed as requested */}
                                                                   </div>
 
                                                                   {/* 3. SAFE MARGINS (Zone de sécurité) */}

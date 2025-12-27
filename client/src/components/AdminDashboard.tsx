@@ -43,6 +43,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
 
+  // Order Status Draft State
+  const [draftStatus, setDraftStatus] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    setDraftStatus(null);
+  }, [selectedOrderId, activeTab]);
+
   // Font Search State
   const [fontSearch, setFontSearch] = useState('');
   const [availableFonts, setAvailableFonts] = useState<string[]>([]);
@@ -1670,22 +1677,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                    <h3 className="font-bold text-slate-800 mb-4">Statut</h3>
                                    <div className="space-y-2">
-                                      {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
-                                         <button
-                                            key={status}
-                                            onClick={() => updateOrderStatus(order.id, status as any)}
-                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                               order.status === status 
-                                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
-                                                  : 'text-slate-600 hover:bg-slate-50'
-                                            }`}
-                                         >
-                                            {status === 'pending' ? 'En attente' :
-                                             status === 'processing' ? 'En cours de production' :
-                                             status === 'shipped' ? 'Expédiée' :
-                                             status === 'delivered' ? 'Livrée' : 'Annulée'}
-                                         </button>
-                                      ))}
+                                      {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => {
+                                         const isSelected = (draftStatus || order.status) === status;
+                                         return (
+                                            <button
+                                               key={status}
+                                               onClick={() => setDraftStatus(status)}
+                                               className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                  isSelected
+                                                     ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
+                                                     : 'text-slate-600 hover:bg-slate-50'
+                                               }`}
+                                            >
+                                               {status === 'pending' ? 'En attente' :
+                                                status === 'processing' ? 'En cours de production' :
+                                                status === 'shipped' ? 'Expédiée' :
+                                                status === 'delivered' ? 'Livrée' : 'Annulée'}
+                                            </button>
+                                         );
+                                      })}
                                    </div>
                                 </div>
 
@@ -5333,6 +5343,36 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  </div>
               )}
 
+              {/* Floating Save Bar for Order Status */}
+              {draftStatus && draftStatus !== (orders.find(o => o.id === selectedOrderId)?.status) && (
+                 <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 border border-slate-700/50 backdrop-blur-md bg-slate-900/90">
+                    <span className="font-medium flex items-center gap-2">
+                       <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                       Statut modifié
+                    </span>
+                    <div className="h-4 w-px bg-slate-700"></div>
+                    <div className="flex items-center gap-2">
+                       <button 
+                          onClick={() => setDraftStatus(null)}
+                          className="px-3 py-1.5 hover:bg-white/10 rounded-md transition-colors text-xs font-bold uppercase tracking-wide text-slate-300 hover:text-white"
+                       >
+                          Annuler
+                       </button>
+                       <button 
+                          onClick={() => {
+                             if (selectedOrderId) {
+                                updateOrderStatus(selectedOrderId, draftStatus as any);
+                                setDraftStatus(null);
+                                toast.success("Statut de la commande mis à jour");
+                             }
+                          }}
+                          className="bg-brand-coral hover:bg-red-500 text-white px-4 py-1.5 rounded-full font-bold text-sm transition-colors shadow-lg shadow-brand-coral/20"
+                       >
+                          Enregistrer
+                       </button>
+                    </div>
+                 </div>
+              )}
            </main>
         </div>
      </div>

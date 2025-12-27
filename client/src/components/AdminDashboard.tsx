@@ -1471,7 +1471,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <div className="space-y-4">
                    <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-center">
-                         <h2 className="text-xl font-bold text-slate-800">Commandes</h2>
                          <div className="flex gap-2">
                             <button 
                                onClick={handleExport}

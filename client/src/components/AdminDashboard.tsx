@@ -4606,10 +4606,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      <div 
                                                          className="absolute flex items-center justify-center bg-gray-50"
                                                          style={{
-                                                            top: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
-                                                            left: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
-                                                            right: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.width) * 100}%` : '0',
-                                                            bottom: showGrid && bleedMm ? `-${(bleedMm / bookDimensions.height) * 100}%` : '0',
+                                                            top: '0',
+                                                            left: '0',
+                                                            right: '0',
+                                                            bottom: '0',
                                                          }}
                                                      >
                                                         {/* Find image for current variant & page */}

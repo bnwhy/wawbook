@@ -4327,335 +4327,322 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   const rightPageOffsetPct = leftPagePct + spinePct;
 
                                                   return (
-                                                      <div key="cover-spread" className={`flex-1 bg-white relative shadow-lg ring-1 ring-gray-200 ${showGrid ? 'overflow-visible' : 'overflow-hidden'}`}>
-                                                          
-                                                          {/* --- BACKGROUNDS --- */}
-                                                          
-                                                          {/* Back Cover Background */}
-                                                          <div 
-                                                              className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center overflow-hidden"
-                                                              style={{ left: '0%', width: `${leftPagePct}%` }}
-                                                              onClick={(e) => {
-                                                                  e.stopPropagation();
-                                                                  setSelectedPageId(backCover.id);
-                                                              }}
-                                                          >
-                                                              {(() => {
-                                                                 const bgImage = selectedBook.contentConfig.images.find(
-                                                                    img => img.pageIndex === backCover.pageNumber && 
-                                                                          img.combinationKey === selectedVariant
-                                                                 );
-                                                                 if (bgImage?.imageUrl) return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background Back" />;
-                                                                 return null;
-                                                              })()}
-                                                          </div>
-
-                                                          {/* Spine Background (Continuous/Gray) */}
-                                                          <div 
-                                                              className="absolute top-0 bottom-0 bg-gray-100 flex items-center justify-center"
-                                                              style={{ left: `${leftPagePct}%`, width: `${spinePct}%` }}
-                                                          >
-                                                              {/* Optional Spine Texture/Color */}
-                                                          </div>
-
-                                                          {/* Front Cover Background */}
-                                                          <div 
-                                                              className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center overflow-hidden"
-                                                              style={{ left: `${rightPageOffsetPct}%`, width: `${rightPagePct}%` }}
-                                                              onClick={(e) => {
-                                                                  e.stopPropagation();
-                                                                  setSelectedPageId(frontCover.id);
-                                                              }}
-                                                          >
-                                                              {(() => {
-                                                                 const bgImage = selectedBook.contentConfig.images.find(
-                                                                    img => img.pageIndex === frontCover.pageNumber && 
-                                                                          img.combinationKey === selectedVariant
-                                                                 );
-                                                                 if (bgImage?.imageUrl) return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background Front" />;
-                                                                 return null;
-                                                              })()}
-                                                          </div>
-
-                                                          {/* --- UNIFIED ELEMENTS LAYER --- */}
-                                                          {/* We map elements from both pages into this single container */}
-
-                                                          {/* 1. Back Cover Elements */}
-                                                          {(selectedBook.contentConfig.imageElements || [])
-                                                              .filter(el => el.position.pageIndex === backCover.pageNumber && el.combinationKey === selectedVariant)
-                                                              .map(el => (
-                                                                 <div
-                                                                    key={el.id}
-                                                                    onMouseDown={(e) => {
-                                                                       e.stopPropagation();
-                                                                       e.preventDefault();
-                                                                       setActiveLayerId(el.id);
-                                                                       setIsDragging(true);
-                                                                       setDragStartPos({ x: e.clientX, y: e.clientY });
-                                                                       setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
-                                                                    }}
-                                                                    className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
+                                                     <div key="cover-spread" className={`flex-1 bg-white relative shadow-lg ring-1 ring-gray-200 ${showGrid ? 'overflow-visible' : 'overflow-hidden'}`}>
+                                                        {/* --- BACKGROUNDS --- */}
+                                                        {/* Back Cover Background */}
+                                                        <div 
+                                                            className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center overflow-hidden"
+                                                            style={{ left: '0%', width: `${leftPagePct}%` }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedPageId(backCover.id);
+                                                            }}
+                                                        >
+                                                            {(() => {
+                                                               const bgImage = selectedBook.contentConfig.images.find(
+                                                                  img => img.pageIndex === backCover.pageNumber && 
+                                                                        img.combinationKey === selectedVariant
+                                                               );
+                                                               if (bgImage?.imageUrl) return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background Back" />;
+                                                               return null;
+                                                            })()}
+                                                        </div>
+                                                        {/* Spine Background (Continuous/Gray) */}
+                                                        <div 
+                                                            className="absolute top-0 bottom-0 flex items-center justify-center bg-[#f9fafb]"
+                                                            style={{ left: `${leftPagePct}%`, width: `${spinePct}%` }}
+                                                        >
+                                                            {/* Optional Spine Texture/Color */}
+                                                        </div>
+                                                        {/* Front Cover Background */}
+                                                        <div 
+                                                            className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center overflow-hidden"
+                                                            style={{ left: `${rightPageOffsetPct}%`, width: `${rightPagePct}%` }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedPageId(frontCover.id);
+                                                            }}
+                                                        >
+                                                            {(() => {
+                                                               const bgImage = selectedBook.contentConfig.images.find(
+                                                                  img => img.pageIndex === frontCover.pageNumber && 
+                                                                        img.combinationKey === selectedVariant
+                                                               );
+                                                               if (bgImage?.imageUrl) return <img src={bgImage.imageUrl} className="w-full h-full object-cover" alt="Background Front" />;
+                                                               return null;
+                                                            })()}
+                                                        </div>
+                                                        {/* --- UNIFIED ELEMENTS LAYER --- */}
+                                                        {/* We map elements from both pages into this single container */}
+                                                        {/* 1. Back Cover Elements */}
+                                                        {(selectedBook.contentConfig.imageElements || [])
+                                                            .filter(el => el.position.pageIndex === backCover.pageNumber && el.combinationKey === selectedVariant)
+                                                            .map(el => (
+                                                               <div
+                                                                  key={el.id}
+                                                                  onMouseDown={(e) => {
+                                                                     e.stopPropagation();
+                                                                     e.preventDefault();
+                                                                     setActiveLayerId(el.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
+                                                                  }}
+                                                                  className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
+                                                                  style={{
+                                                                     left: `${el.position.x * (leftPagePct/100)}%`,
+                                                                     top: `${el.position.y}%`,
+                                                                     width: `${el.position.width * (leftPagePct/100)}%`,
+                                                                     height: el.position.height ? `${el.position.height}%` : 'auto',
+                                                                     transform: `rotate(${el.position.rotation || 0}deg)`
+                                                                  }}
+                                                               >
+                                                                  {renderTransformHandles(el.id, el.position)}
+                                                                  {el.type === 'static' && el.url ? (
+                                                                     <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
+                                                                  ) : (
+                                                                     <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
+                                                                        {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
+                                                                     </div>
+                                                                  )}
+                                                               </div>
+                                                            ))
+                                                        }
+                                                        {selectedBook.contentConfig.texts
+                                                            .filter(t => t.position.pageIndex === backCover.pageNumber && t.combinationKey === selectedVariant)
+                                                            .map(text => (
+                                                               <div 
+                                                                  key={text.id}
+                                                                  onMouseDown={(e) => {
+                                                                     e.stopPropagation();
+                                                                     e.preventDefault();
+                                                                     setActiveLayerId(text.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
+                                                                  }}
+                                                                  className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                  style={{
+                                                                     left: `${text.position.x * (leftPagePct/100)}%`,
+                                                                     top: `${text.position.y}%`,
+                                                                     width: `${(text.position.width || 30) * (leftPagePct/100)}%`,
+                                                                     height: text.position.height ? `${text.position.height}%` : 'auto',
+                                                                     transform: `rotate(${text.position.rotation || 0}deg)`,
+                                                                     ...text.style
+                                                                  }}
+                                                               >
+                                                                  {renderTransformHandles(text.id, text.position)}
+                                                                  {activeLayerId === text.id ? (
+                                                                      <textarea
+                                                                          value={text.content}
+                                                                          onChange={(e) => {
+                                                                              const newTexts = selectedBook.contentConfig.texts.map(t => 
+                                                                                  t.id === text.id ? { ...t, content: e.target.value } : t
+                                                                              );
+                                                                              handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, texts: newTexts } });
+                                                                          }}
+                                                                          onMouseDown={(e) => e.stopPropagation()}
+                                                                          className="w-full h-full bg-transparent resize-none outline-none p-0 m-0 border-none focus:ring-0 overflow-hidden font-inherit"
+                                                                          style={{ 
+                                                                              ...text.style,
+                                                                              fontSize: text.style?.fontSize,
+                                                                              fontFamily: text.style?.fontFamily,
+                                                                              fontWeight: text.style?.fontWeight,
+                                                                              fontStyle: text.style?.fontStyle,
+                                                                              textDecoration: text.style?.textDecoration,
+                                                                              textAlign: text.style?.textAlign as any,
+                                                                              color: text.style?.color
+                                                                          }}
+                                                                          autoFocus
+                                                                      />
+                                                                  ) : (
+                                                                      <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
+                                                                          {(() => {
+                                                                              const content = text.content || '';
+                                                                              let processed = content.replace(/\{childName\}/g, '[Prénom]');
+                                                                              return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
+                                                                                  const [tabId, variantId] = key.split('.');
+                                                                                  const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
+                                                                                  if (tab) {
+                                                                                      const variant = tab.variants.find(v => v.id === variantId);
+                                                                                      if (variant) {
+                                                                                          return `[${tab.label}: ${variant.label}]`;
+                                                                                      }
+                                                                                  }
+                                                                                  return match;
+                                                                              });
+                                                                          })()}
+                                                                      </div>
+                                                                  )}
+                                                               </div>
+                                                            ))
+                                                        }
+                                                        {/* 2. Front Cover Elements */}
+                                                        {(selectedBook.contentConfig.imageElements || [])
+                                                            .filter(el => el.position.pageIndex === frontCover.pageNumber && el.combinationKey === selectedVariant)
+                                                            .map(el => (
+                                                               <div
+                                                                  key={el.id}
+                                                                  onMouseDown={(e) => {
+                                                                     e.stopPropagation();
+                                                                     e.preventDefault();
+                                                                     setActiveLayerId(el.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
+                                                                  }}
+                                                                  className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
+                                                                  style={{
+                                                                     left: `${rightPageOffsetPct + (el.position.x * (rightPagePct/100))}%`,
+                                                                     top: `${el.position.y}%`,
+                                                                     width: `${el.position.width * (rightPagePct/100)}%`,
+                                                                     height: el.position.height ? `${el.position.height}%` : 'auto',
+                                                                     transform: `rotate(${el.position.rotation || 0}deg)`
+                                                                  }}
+                                                               >
+                                                                  {renderTransformHandles(el.id, el.position)}
+                                                                  {el.type === 'static' && el.url ? (
+                                                                     <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
+                                                                  ) : (
+                                                                     <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
+                                                                        {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
+                                                                     </div>
+                                                                  )}
+                                                               </div>
+                                                            ))
+                                                        }
+                                                        {selectedBook.contentConfig.texts
+                                                            .filter(t => t.position.pageIndex === frontCover.pageNumber && t.combinationKey === selectedVariant)
+                                                            .map(text => (
+                                                               <div 
+                                                                  key={text.id}
+                                                                  onMouseDown={(e) => {
+                                                                     e.stopPropagation();
+                                                                     e.preventDefault();
+                                                                     setActiveLayerId(text.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
+                                                                  }}
+                                                                  className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                  style={{
+                                                                     left: `${rightPageOffsetPct + (text.position.x * (rightPagePct/100))}%`,
+                                                                     top: `${text.position.y}%`,
+                                                                     width: `${(text.position.width || 30) * (rightPagePct/100)}%`,
+                                                                     height: text.position.height ? `${text.position.height}%` : 'auto',
+                                                                     transform: `rotate(${text.position.rotation || 0}deg)`,
+                                                                     ...text.style
+                                                                  }}
+                                                               >
+                                                                  {renderTransformHandles(text.id, text.position)}
+                                                                  {activeLayerId === text.id ? (
+                                                                      <textarea
+                                                                          value={text.content}
+                                                                          onChange={(e) => {
+                                                                              const newTexts = selectedBook.contentConfig.texts.map(t => 
+                                                                                  t.id === text.id ? { ...t, content: e.target.value } : t
+                                                                              );
+                                                                              handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, texts: newTexts } });
+                                                                          }}
+                                                                          onMouseDown={(e) => e.stopPropagation()}
+                                                                          className="w-full h-full bg-transparent resize-none outline-none p-0 m-0 border-none focus:ring-0 overflow-hidden font-inherit"
+                                                                          style={{ 
+                                                                              ...text.style,
+                                                                              fontSize: text.style?.fontSize,
+                                                                              fontFamily: text.style?.fontFamily,
+                                                                              fontWeight: text.style?.fontWeight,
+                                                                              fontStyle: text.style?.fontStyle,
+                                                                              textDecoration: text.style?.textDecoration,
+                                                                              textAlign: text.style?.textAlign as any,
+                                                                              color: text.style?.color
+                                                                          }}
+                                                                          autoFocus
+                                                                      />
+                                                                  ) : (
+                                                                      <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
+                                                                          {(() => {
+                                                                              const content = text.content || '';
+                                                                              let processed = content.replace(/\{childName\}/g, '[Prénom]');
+                                                                              return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
+                                                                                  const [tabId, variantId] = key.split('.');
+                                                                                  const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
+                                                                                  if (tab) {
+                                                                                      const variant = tab.variants.find(v => v.id === variantId);
+                                                                                      if (variant) {
+                                                                                          return `[${tab.label}: ${variant.label}]`;
+                                                                                      }
+                                                                                  }
+                                                                                  return match;
+                                                                              });
+                                                                          })()}
+                                                                      </div>
+                                                                  )}
+                                                               </div>
+                                                            ))
+                                                        }
+                                                        {/* --- OVERLAYS & GUIDES (Above content) --- */}
+                                                        {/* Spine Guide Overlay */}
+                                                        <div 
+                                                            style={{ left: `${leftPagePct}%`, width: `${spinePct}%` }} 
+                                                            className="absolute top-0 bottom-0 border-x border-gray-300/50 pointer-events-none z-30"
+                                                        >
+                                                            {/* Dashed lines to show spine folds */}
+                                                            <div className="absolute inset-0 bg-slate-500/5"></div>
+                                                        </div>
+                                                        {/* Trim Lines (Page Boundaries) */}
+                                                        {showGrid && (
+                                                            <>
+                                                                {/* Left Page Trim Box */}
+                                                                <div 
+                                                                    className="absolute border border-slate-900/20 z-40 pointer-events-none"
                                                                     style={{
-                                                                       left: `${el.position.x * (leftPagePct/100)}%`,
-                                                                       top: `${el.position.y}%`,
-                                                                       width: `${el.position.width * (leftPagePct/100)}%`,
-                                                                       height: el.position.height ? `${el.position.height}%` : 'auto',
-                                                                       transform: `rotate(${el.position.rotation || 0}deg)`
+                                                                        left: `${(bleedMm / totalSpreadWidth) * 100}%`,
+                                                                        top: `${(bleedMm / totalSpreadHeight) * 100}%`,
+                                                                        width: `${(trimWidth / totalSpreadWidth) * 100}%`,
+                                                                        height: `${(trimHeight / totalSpreadHeight) * 100}%`
                                                                     }}
-                                                                 >
-                                                                    {renderTransformHandles(el.id, el.position)}
-                                                                    {el.type === 'static' && el.url ? (
-                                                                       <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
-                                                                    ) : (
-                                                                       <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
-                                                                          {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
-                                                                       </div>
-                                                                    )}
-                                                                 </div>
-                                                              ))
-                                                          }
-                                                          {selectedBook.contentConfig.texts
-                                                              .filter(t => t.position.pageIndex === backCover.pageNumber && t.combinationKey === selectedVariant)
-                                                              .map(text => (
-                                                                 <div 
-                                                                    key={text.id}
-                                                                    onMouseDown={(e) => {
-                                                                       e.stopPropagation();
-                                                                       e.preventDefault();
-                                                                       setActiveLayerId(text.id);
-                                                                       setIsDragging(true);
-                                                                       setDragStartPos({ x: e.clientX, y: e.clientY });
-                                                                       setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
-                                                                    }}
-                                                                    className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                ></div>
+                                                                {/* Right Page Trim Box */}
+                                                                <div 
+                                                                    className="absolute border border-slate-900/20 z-40 pointer-events-none"
                                                                     style={{
-                                                                       left: `${text.position.x * (leftPagePct/100)}%`,
-                                                                       top: `${text.position.y}%`,
-                                                                       width: `${(text.position.width || 30) * (leftPagePct/100)}%`,
-                                                                       height: text.position.height ? `${text.position.height}%` : 'auto',
-                                                                       transform: `rotate(${text.position.rotation || 0}deg)`,
-                                                                       ...text.style
+                                                                        left: `${((leftPageWidth + spineWidth) / totalSpreadWidth) * 100}%`,
+                                                                        top: `${(bleedMm / totalSpreadHeight) * 100}%`,
+                                                                        width: `${(trimWidth / totalSpreadWidth) * 100}%`,
+                                                                        height: `${(trimHeight / totalSpreadHeight) * 100}%`
                                                                     }}
-                                                                 >
-                                                                    {renderTransformHandles(text.id, text.position)}
-                                                                    {activeLayerId === text.id ? (
-                                                                        <textarea
-                                                                            value={text.content}
-                                                                            onChange={(e) => {
-                                                                                const newTexts = selectedBook.contentConfig.texts.map(t => 
-                                                                                    t.id === text.id ? { ...t, content: e.target.value } : t
-                                                                                );
-                                                                                handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, texts: newTexts } });
-                                                                            }}
-                                                                            onMouseDown={(e) => e.stopPropagation()}
-                                                                            className="w-full h-full bg-transparent resize-none outline-none p-0 m-0 border-none focus:ring-0 overflow-hidden font-inherit"
-                                                                            style={{ 
-                                                                                ...text.style,
-                                                                                fontSize: text.style?.fontSize,
-                                                                                fontFamily: text.style?.fontFamily,
-                                                                                fontWeight: text.style?.fontWeight,
-                                                                                fontStyle: text.style?.fontStyle,
-                                                                                textDecoration: text.style?.textDecoration,
-                                                                                textAlign: text.style?.textAlign as any,
-                                                                                color: text.style?.color
-                                                                            }}
-                                                                            autoFocus
-                                                                        />
-                                                                    ) : (
-                                                                        <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
-                                                                            {(() => {
-                                                                                const content = text.content || '';
-                                                                                let processed = content.replace(/\{childName\}/g, '[Prénom]');
-                                                                                return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
-                                                                                    const [tabId, variantId] = key.split('.');
-                                                                                    const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
-                                                                                    if (tab) {
-                                                                                        const variant = tab.variants.find(v => v.id === variantId);
-                                                                                        if (variant) {
-                                                                                            return `[${tab.label}: ${variant.label}]`;
-                                                                                        }
-                                                                                    }
-                                                                                    return match;
-                                                                                });
-                                                                            })()}
-                                                                        </div>
-                                                                    )}
-                                                                 </div>
-                                                              ))
-                                                          }
-
-                                                          {/* 2. Front Cover Elements */}
-                                                          {(selectedBook.contentConfig.imageElements || [])
-                                                              .filter(el => el.position.pageIndex === frontCover.pageNumber && el.combinationKey === selectedVariant)
-                                                              .map(el => (
-                                                                 <div
-                                                                    key={el.id}
-                                                                    onMouseDown={(e) => {
-                                                                       e.stopPropagation();
-                                                                       e.preventDefault();
-                                                                       setActiveLayerId(el.id);
-                                                                       setIsDragging(true);
-                                                                       setDragStartPos({ x: e.clientX, y: e.clientY });
-                                                                       setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
-                                                                    }}
-                                                                    className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
-                                                                    style={{
-                                                                       left: `${rightPageOffsetPct + (el.position.x * (rightPagePct/100))}%`,
-                                                                       top: `${el.position.y}%`,
-                                                                       width: `${el.position.width * (rightPagePct/100)}%`,
-                                                                       height: el.position.height ? `${el.position.height}%` : 'auto',
-                                                                       transform: `rotate(${el.position.rotation || 0}deg)`
-                                                                    }}
-                                                                 >
-                                                                    {renderTransformHandles(el.id, el.position)}
-                                                                    {el.type === 'static' && el.url ? (
-                                                                       <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
-                                                                    ) : (
-                                                                       <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
-                                                                          {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
-                                                                       </div>
-                                                                    )}
-                                                                 </div>
-                                                              ))
-                                                          }
-                                                          {selectedBook.contentConfig.texts
-                                                              .filter(t => t.position.pageIndex === frontCover.pageNumber && t.combinationKey === selectedVariant)
-                                                              .map(text => (
-                                                                 <div 
-                                                                    key={text.id}
-                                                                    onMouseDown={(e) => {
-                                                                       e.stopPropagation();
-                                                                       e.preventDefault();
-                                                                       setActiveLayerId(text.id);
-                                                                       setIsDragging(true);
-                                                                       setDragStartPos({ x: e.clientX, y: e.clientY });
-                                                                       setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
-                                                                    }}
-                                                                    className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
-                                                                    style={{
-                                                                       left: `${rightPageOffsetPct + (text.position.x * (rightPagePct/100))}%`,
-                                                                       top: `${text.position.y}%`,
-                                                                       width: `${(text.position.width || 30) * (rightPagePct/100)}%`,
-                                                                       height: text.position.height ? `${text.position.height}%` : 'auto',
-                                                                       transform: `rotate(${text.position.rotation || 0}deg)`,
-                                                                       ...text.style
-                                                                    }}
-                                                                 >
-                                                                    {renderTransformHandles(text.id, text.position)}
-                                                                    {activeLayerId === text.id ? (
-                                                                        <textarea
-                                                                            value={text.content}
-                                                                            onChange={(e) => {
-                                                                                const newTexts = selectedBook.contentConfig.texts.map(t => 
-                                                                                    t.id === text.id ? { ...t, content: e.target.value } : t
-                                                                                );
-                                                                                handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, texts: newTexts } });
-                                                                            }}
-                                                                            onMouseDown={(e) => e.stopPropagation()}
-                                                                            className="w-full h-full bg-transparent resize-none outline-none p-0 m-0 border-none focus:ring-0 overflow-hidden font-inherit"
-                                                                            style={{ 
-                                                                                ...text.style,
-                                                                                fontSize: text.style?.fontSize,
-                                                                                fontFamily: text.style?.fontFamily,
-                                                                                fontWeight: text.style?.fontWeight,
-                                                                                fontStyle: text.style?.fontStyle,
-                                                                                textDecoration: text.style?.textDecoration,
-                                                                                textAlign: text.style?.textAlign as any,
-                                                                                color: text.style?.color
-                                                                            }}
-                                                                            autoFocus
-                                                                        />
-                                                                    ) : (
-                                                                        <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
-                                                                            {(() => {
-                                                                                const content = text.content || '';
-                                                                                let processed = content.replace(/\{childName\}/g, '[Prénom]');
-                                                                                return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
-                                                                                    const [tabId, variantId] = key.split('.');
-                                                                                    const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
-                                                                                    if (tab) {
-                                                                                        const variant = tab.variants.find(v => v.id === variantId);
-                                                                                        if (variant) {
-                                                                                            return `[${tab.label}: ${variant.label}]`;
-                                                                                        }
-                                                                                    }
-                                                                                    return match;
-                                                                                });
-                                                                            })()}
-                                                                        </div>
-                                                                    )}
-                                                                 </div>
-                                                              ))
-                                                          }
-
-
-                                                          {/* --- OVERLAYS & GUIDES (Above content) --- */}
-
-                                                          {/* Spine Guide Overlay */}
-                                                          <div 
-                                                              style={{ left: `${leftPagePct}%`, width: `${spinePct}%` }} 
-                                                              className="absolute top-0 bottom-0 border-x border-gray-300/50 pointer-events-none z-30"
-                                                          >
-                                                              {/* Dashed lines to show spine folds */}
-                                                              <div className="absolute inset-0 bg-slate-500/5"></div>
-                                                          </div>
-
-                                                          {/* Trim Lines (Page Boundaries) */}
-                                                          {showGrid && (
-                                                              <>
-                                                                  {/* Left Page Trim Box */}
-                                                                  <div 
-                                                                      className="absolute border border-slate-900/20 z-40 pointer-events-none"
-                                                                      style={{
-                                                                          left: `${(bleedMm / totalSpreadWidth) * 100}%`,
-                                                                          top: `${(bleedMm / totalSpreadHeight) * 100}%`,
-                                                                          width: `${(trimWidth / totalSpreadWidth) * 100}%`,
-                                                                          height: `${(trimHeight / totalSpreadHeight) * 100}%`
-                                                                      }}
-                                                                  ></div>
-                                                                  {/* Right Page Trim Box */}
-                                                                  <div 
-                                                                      className="absolute border border-slate-900/20 z-40 pointer-events-none"
-                                                                      style={{
-                                                                          left: `${((leftPageWidth + spineWidth) / totalSpreadWidth) * 100}%`,
-                                                                          top: `${(bleedMm / totalSpreadHeight) * 100}%`,
-                                                                          width: `${(trimWidth / totalSpreadWidth) * 100}%`,
-                                                                          height: `${(trimHeight / totalSpreadHeight) * 100}%`
-                                                                      }}
-                                                                  ></div>
-                                                              </>
-                                                          )}
-
-                                                          {/* Bleed Guide (Fonds Perdus) */}
-                                                          {bleedMm && showGrid && (
-                                                              <div className="absolute inset-0 pointer-events-none z-50">
-                                                                  <div className="absolute top-1 left-1 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200 z-50">
-                                                                     Fonds Perdus ({bleedMm}mm)
-                                                                  </div>
-                                                                  
-                                                                  {/* Top Bleed Strip */}
-                                                                  <div className="absolute top-0 left-0 right-0 bg-cyan-500/10 border-b border-cyan-500 border-dashed" style={{ height: `${(bleedMm / totalSpreadHeight) * 100}%` }}></div>
-                                                                  {/* Bottom Bleed Strip */}
-                                                                  <div className="absolute bottom-0 left-0 right-0 bg-cyan-500/10 border-t border-cyan-500 border-dashed" style={{ height: `${(bleedMm / totalSpreadHeight) * 100}%` }}></div>
-                                                                  {/* Left Bleed Strip */}
-                                                                  <div className="absolute top-0 bottom-0 left-0 bg-cyan-500/10 border-r border-cyan-500 border-dashed" style={{ width: `${(bleedMm / totalSpreadWidth) * 100}%` }}></div>
-                                                                  {/* Right Bleed Strip */}
-                                                                  <div className="absolute top-0 bottom-0 right-0 bg-cyan-500/10 border-l border-cyan-500 border-dashed" style={{ width: `${(bleedMm / totalSpreadWidth) * 100}%` }}></div>
-                                                              </div>
-                                                          )}
-
-                                                          {/* GRID OVERLAY */}
-                                                          {showGrid && (
-                                                              <div className="absolute inset-0 z-40 pointer-events-none" style={{
-                                                                  backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)`,
-                                                                  backgroundSize: `${(10 / totalSpreadWidth) * 100}% ${(10 / totalSpreadHeight) * 100}%`
-                                                              }}>
-                                                                  {/* Center Lines */}
-                                                                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-indigo-300 opacity-50"></div>
-                                                                  <div className="absolute top-1/2 left-0 right-0 h-px bg-indigo-300 opacity-50"></div>
-                                                              </div>
-                                                          )}
-                                                      </div>
+                                                                ></div>
+                                                            </>
+                                                        )}
+                                                        {/* Bleed Guide (Fonds Perdus) */}
+                                                        {bleedMm && showGrid && (
+                                                            <div className="absolute inset-0 pointer-events-none z-50">
+                                                                <div className="absolute top-1 left-1 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200 z-50">
+                                                                   Fonds Perdus ({bleedMm}mm)
+                                                                </div>
+                                                                
+                                                                {/* Top Bleed Strip */}
+                                                                <div className="absolute top-0 left-0 right-0 bg-cyan-500/10 border-b border-cyan-500 border-dashed" style={{ height: `${(bleedMm / totalSpreadHeight) * 100}%` }}></div>
+                                                                {/* Bottom Bleed Strip */}
+                                                                <div className="absolute bottom-0 left-0 right-0 bg-cyan-500/10 border-t border-cyan-500 border-dashed" style={{ height: `${(bleedMm / totalSpreadHeight) * 100}%` }}></div>
+                                                                {/* Left Bleed Strip */}
+                                                                <div className="absolute top-0 bottom-0 left-0 bg-cyan-500/10 border-r border-cyan-500 border-dashed" style={{ width: `${(bleedMm / totalSpreadWidth) * 100}%` }}></div>
+                                                                {/* Right Bleed Strip */}
+                                                                <div className="absolute top-0 bottom-0 right-0 bg-cyan-500/10 border-l border-cyan-500 border-dashed" style={{ width: `${(bleedMm / totalSpreadWidth) * 100}%` }}></div>
+                                                            </div>
+                                                        )}
+                                                        {/* GRID OVERLAY */}
+                                                        {showGrid && (
+                                                            <div className="absolute inset-0 z-40 pointer-events-none" style={{
+                                                                backgroundImage: `linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)`,
+                                                                backgroundSize: `${(10 / totalSpreadWidth) * 100}% ${(10 / totalSpreadHeight) * 100}%`
+                                                            }}>
+                                                                {/* Center Lines */}
+                                                                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-indigo-300 opacity-50"></div>
+                                                                <div className="absolute top-1/2 left-0 right-0 h-px bg-indigo-300 opacity-50"></div>
+                                                            </div>
+                                                        )}
+                                                     </div>
                                                   );
                                                }
 

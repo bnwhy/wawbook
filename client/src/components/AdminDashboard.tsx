@@ -5346,11 +5346,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* Floating Save Bar for Order Status */}
               {draftStatus && draftStatus !== (orders.find(o => o.id === selectedOrderId)?.status) && (
                  <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 border border-slate-700/50 backdrop-blur-md bg-slate-900/90">
-                    <span className="font-medium flex items-center gap-2">
-                       <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
-                       Statut modifié
-                    </span>
-                    <div className="h-4 w-px bg-slate-700"></div>
                     <div className="flex items-center gap-2">
                        <button 
                           onClick={() => setDraftStatus(null)}

@@ -44,6 +44,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [showFulfillment, setShowFulfillment] = useState(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [isNewCustomer, setIsNewCustomer] = useState(true);
+  const [customerSearch, setCustomerSearch] = useState('');
   
   // New Order Form State
   const [newOrderForm, setNewOrderForm] = useState({
@@ -1665,6 +1666,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 {!isNewCustomer && (
                                     <div className="mb-6">
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rechercher un client</label>
+                                        <div className="relative mb-2">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                            <input
+                                                type="text"
+                                                placeholder="Filtrer par nom ou email..."
+                                                value={customerSearch}
+                                                onChange={(e) => setCustomerSearch(e.target.value)}
+                                                className="w-full text-sm border-gray-300 rounded-lg pl-9 pr-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                            />
+                                        </div>
                                         <select 
                                             className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                             onChange={(e) => {
@@ -1687,9 +1698,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      });
                                                 }
                                             }}
+                                            size={5}
                                         >
                                             <option value="">Sélectionner un client...</option>
-                                            {customers.map(c => (
+                                            {customers
+                                                .filter(c => 
+                                                    c.firstName.toLowerCase().includes(customerSearch.toLowerCase()) || 
+                                                    c.lastName.toLowerCase().includes(customerSearch.toLowerCase()) || 
+                                                    c.email.toLowerCase().includes(customerSearch.toLowerCase())
+                                                )
+                                                .map(c => (
                                                 <option key={c.id} value={c.id}>{c.firstName} {c.lastName} - {c.email}</option>
                                             ))}
                                         </select>

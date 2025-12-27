@@ -4327,7 +4327,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            {/* This visualizes the Trim Box relative to our Bleed-Inclusive Container */}
                                                            {showGrid && (
                                                                <div 
-                                                                 className={`absolute border-t border-b ${position === 'left' ? 'border-l border-r-0' : 'border-r border-l-0'} border-slate-900/20 z-40 pointer-events-none`}
+                                                                 className="absolute border border-slate-900/20 z-40 pointer-events-none"
                                                                  style={{
                                                                      top: `${(bleedMm / containerHeightMm) * 100}%`,
                                                                      bottom: `${(bleedMm / containerHeightMm) * 100}%`,
@@ -4367,11 +4367,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            {/* Safe Margin Guide - Inside Trim */}
                                                            {safeMarginMm && showGrid && (
                                                               <div 
-                                                                 className={`absolute border-dashed border-red-400 pointer-events-none z-50 shadow-sm opacity-60
-                                                                    border-t border-b
-                                                                    ${position === 'left' ? 'border-l border-r-0' : ''}
-                                                                    ${position === 'right' ? 'border-r border-l-0' : ''}
-                                                                 `}
+                                                                 className="absolute border border-dashed border-red-400 pointer-events-none z-50 shadow-sm opacity-60"
                                                                  style={{
                                                                     // Margin is relative to TRIM. So we add/subtract from Trim position.
                                                                     // Top Trim is at bleedMm. Safe Top is at bleedMm + safeMarginMm

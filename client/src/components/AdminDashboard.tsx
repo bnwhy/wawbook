@@ -1457,22 +1457,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* --- VIEW: ORDER DETAIL --- */}
               {activeTab === 'orders' && selectedOrderId && !showFulfillment && (
                  <div className="max-w-4xl mx-auto space-y-6">
-                    <div className="flex items-center gap-4 mb-4">
-                       <button onClick={() => setSelectedOrderId(null)} className="text-slate-400 hover:text-slate-600">
-                          <ArrowUp className="-rotate-90" size={20} />
-                       </button>
-                       <div className="flex-1">
-                          <h2 className="text-2xl font-bold text-slate-800">Commande {selectedOrderId}</h2>
-                          <div className="text-sm text-slate-500">
-                             {orders.find(o => o.id === selectedOrderId)?.createdAt 
-                                ? new Date(orders.find(o => o.id === selectedOrderId)!.createdAt).toLocaleDateString() + ' à ' + new Date(orders.find(o => o.id === selectedOrderId)!.createdAt).toLocaleTimeString()
-                                : ''}
+                    {/* Floating Save Bar */}
+                    {pendingOrderChanges && (
+                       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-6 z-50 animate-in slide-in-from-bottom-4 duration-300 border border-slate-700">
+                          <div className="flex flex-col">
+                             <span className="font-bold text-sm">Modifications en attente</span>
+                             <span className="text-xs text-slate-400">Vous avez des changements non enregistrés</span>
                           </div>
-                       </div>
-                       
-                       {/* Unsaved Changes Actions */}
-                       {pendingOrderChanges && (
-                          <div className="flex gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="flex items-center gap-3">
+                             <button 
+                                onClick={() => setPendingOrderChanges(null)}
+                                className="px-4 py-2 hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors"
+                             >
+                                Annuler
+                             </button>
                              <button 
                                 onClick={() => {
                                    if (!selectedOrderId) return;
@@ -1486,19 +1484,27 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    setPendingOrderChanges(null);
                                    toast.success('Modifications enregistrées');
                                 }}
-                                className="px-4 py-2 bg-brand-coral text-white rounded-lg text-sm font-bold shadow-md hover:bg-brand-coral/90 transition-colors flex items-center gap-2"
+                                className="px-4 py-2 bg-brand-coral text-white rounded-lg text-sm font-bold shadow-lg hover:bg-brand-coral/90 transition-colors flex items-center gap-2"
                              >
-                                <Save size={16} /> Enregistrer
-                             </button>
-                             <button 
-                                onClick={() => setPendingOrderChanges(null)}
-                                className="px-4 py-2 bg-white border border-gray-300 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors"
-                             >
-                                Annuler
+                                <Save size={16} /> Enregistrer les modifications
                              </button>
                           </div>
-                       )}
+                       </div>
+                    )}
 
+                    <div className="flex items-center gap-4 mb-4">
+                       <button onClick={() => setSelectedOrderId(null)} className="text-slate-400 hover:text-slate-600">
+                          <ArrowUp className="-rotate-90" size={20} />
+                       </button>
+                       <div className="flex-1">
+                          <h2 className="text-2xl font-bold text-slate-800">Commande {selectedOrderId}</h2>
+                          <div className="text-sm text-slate-500">
+                             {orders.find(o => o.id === selectedOrderId)?.createdAt 
+                                ? new Date(orders.find(o => o.id === selectedOrderId)!.createdAt).toLocaleDateString() + ' à ' + new Date(orders.find(o => o.id === selectedOrderId)!.createdAt).toLocaleTimeString()
+                                : ''}
+                          </div>
+                       </div>
+                       
                        <div className="flex gap-2">
                            <button className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-slate-50">
                               Imprimer

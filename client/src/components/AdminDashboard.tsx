@@ -1585,7 +1585,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              )}
                                          </div>
                                      </th>
-                                     <th className="px-4 py-3 font-semibold">Canal</th>
                                      <th className="px-4 py-3 font-semibold text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('totalAmount')}>
                                          <div className="flex items-center justify-end gap-1">
                                              Total
@@ -1611,8 +1610,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              )}
                                          </div>
                                      </th>
-                                     <th className="px-4 py-3 font-semibold">Livraison</th>
-                                     <th className="px-4 py-3 font-semibold">Méthode</th>
                                   </tr>
                                </thead>
                                <tbody className="divide-y divide-gray-50">
@@ -1680,7 +1677,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                            <td className="px-4 py-3">
                                               <div className="font-medium text-slate-900">{order.customerName}</div>
                                            </td>
-                                           <td className="px-4 py-3 text-slate-500">Boutique en ligne</td>
                                            <td className="px-4 py-3 text-right font-medium text-slate-900">
                                               {order.totalAmount.toFixed(2)} €
                                            </td>
@@ -1696,16 +1692,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               </span>
                                            </td>
                                            <td className="px-4 py-3 text-slate-500">{order.items.length} article{order.items.length > 1 ? 's' : ''}</td>
-                                           <td className="px-4 py-3">
-                                              {order.trackingNumber ? (
-                                                 <span className="text-slate-900 font-medium text-[11px] border border-slate-200 px-1.5 py-0.5 rounded bg-white">
-                                                    En transit
-                                                 </span>
-                                              ) : (
-                                                 <span className="text-slate-400 text-[11px]">-</span>
-                                              )}
-                                           </td>
-                                           <td className="px-4 py-3 text-slate-500">Standard</td>
                                         </tr>
                                      );
                                   })}

@@ -3554,11 +3554,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 {zone.methods.map(method => (
                                                     <div key={method.id} className="flex items-center justify-between">
                                                         <div className="flex items-center gap-2">
-                                                            {method.name.toLowerCase().includes('express') || method.price > 10 ? (
-                                                                <Zap size={16} className="text-amber-500" />
-                                                            ) : (
-                                                                <Truck size={16} className="text-slate-400" />
-                                                            )}
                                                             <div className="flex flex-col">
                                                                 <span className="text-sm font-medium text-slate-700">{method.name}</span>
                                                                 {method.estimatedDelay && (

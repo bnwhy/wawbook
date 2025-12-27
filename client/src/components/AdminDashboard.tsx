@@ -62,7 +62,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           {
               bookId: '',
               quantity: 1,
-              config: { name: '', gender: 'boy' }
+              config: '{\n  "name": "",\n  "gender": "boy"\n}'
           }
       ]
   });
@@ -107,6 +107,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           return;
       }
       
+      let itemConfig = {};
+      try {
+        // @ts-ignore
+        itemConfig = JSON.parse(newOrderForm.items[0].config);
+      } catch (e) {
+        toast.error("La configuration doit être un JSON valide");
+        return;
+      }
+
       const selectedBook = books.find(b => b.id === newOrderForm.items[0].bookId) || books[0];
       
       const orderItems = newOrderForm.items.map(item => {
@@ -116,7 +125,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               bookTitle: book.name,
               quantity: item.quantity,
               price: book.price,
-              config: item.config
+              config: itemConfig
           };
       });
 
@@ -144,7 +153,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {
                   bookId: books[0]?.id || '',
                   quantity: 1,
-                  config: { name: '', gender: 'boy' }
+                  config: '{\n  "name": "",\n  "gender": "boy"\n}'
               }
           ]
       });
@@ -1768,54 +1777,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                     
                                     <div className="pt-4 border-t border-gray-100">
-                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Personnalisation</h4>
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Personnalisation (JSON)</h4>
                                         <div className="space-y-3">
-                                            <div>
-                                                <label className="block text-xs text-slate-500 mb-1">Prénom de l'enfant</label>
-                                                <input 
-                                                    type="text" 
-                                                    value={newOrderForm.items[0].config.name}
-                                                    onChange={(e) => {
-                                                        const newItems = [...newOrderForm.items];
-                                                        newItems[0].config.name = e.target.value;
-                                                        setNewOrderForm({...newOrderForm, items: newItems});
-                                                    }}
-                                                    className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-slate-500 mb-1">Genre</label>
-                                                <div className="flex gap-4">
-                                                    <label className="flex items-center gap-2 text-sm">
-                                                        <input 
-                                                            type="radio" 
-                                                            name="gender" 
-                                                            checked={newOrderForm.items[0].config.gender === 'boy'}
-                                                            onChange={() => {
-                                                                const newItems = [...newOrderForm.items];
-                                                                newItems[0].config.gender = 'boy';
-                                                                setNewOrderForm({...newOrderForm, items: newItems});
-                                                            }}
-                                                            className="text-brand-coral focus:ring-brand-coral"
-                                                        />
-                                                        Garçon
-                                                    </label>
-                                                    <label className="flex items-center gap-2 text-sm">
-                                                        <input 
-                                                            type="radio" 
-                                                            name="gender" 
-                                                            checked={newOrderForm.items[0].config.gender === 'girl'}
-                                                            onChange={() => {
-                                                                const newItems = [...newOrderForm.items];
-                                                                newItems[0].config.gender = 'girl';
-                                                                setNewOrderForm({...newOrderForm, items: newItems});
-                                                            }}
-                                                            className="text-brand-coral focus:ring-brand-coral"
-                                                        />
-                                                        Fille
-                                                    </label>
-                                                </div>
-                                            </div>
+                                            <textarea
+                                                rows={5}
+                                                className="w-full text-sm font-mono border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2 bg-slate-50"
+                                                value={typeof newOrderForm.items[0].config === 'string' ? newOrderForm.items[0].config : JSON.stringify(newOrderForm.items[0].config, null, 2)}
+                                                onChange={(e) => {
+                                                    const newItems = [...newOrderForm.items];
+                                                    // @ts-ignore - Temporary type mismatch during refactor
+                                                    newItems[0].config = e.target.value;
+                                                    setNewOrderForm({...newOrderForm, items: newItems});
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                 </div>

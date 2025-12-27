@@ -2775,7 +2775,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          <div className="text-xs text-slate-500">Commandes</div>
                                       </div>
                                       <div className="text-center p-3 bg-slate-50 rounded-lg">
-                                         <div className="text-xl font-bold text-green-600">{customer.totalSpent.toFixed(0)}€</div>
+                                         <div className="text-xl font-bold text-green-600">{customer.totalSpent.toFixed(2)}€</div>
                                          <div className="text-xs text-slate-500">Dépensé</div>
                                       </div>
                                    </div>

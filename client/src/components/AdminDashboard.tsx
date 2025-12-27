@@ -47,6 +47,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [isCustomerSearchOpen, setIsCustomerSearchOpen] = useState(false);
 
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
   // Fulfillment Tracking State
   const [fulfillmentTracking, setFulfillmentTracking] = useState('');
 
@@ -1550,14 +1561,56 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                            }}
                                         />
                                      </th>
-                                     <th className="px-4 py-3 font-semibold">Commande</th>
-                                     <th className="px-4 py-3 font-semibold">Date</th>
-                                     <th className="px-4 py-3 font-semibold">Client</th>
+                                     <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('id')}>
+                                         <div className="flex items-center gap-1">
+                                             Commande
+                                             {sortConfig?.key === 'id' && (
+                                                 sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                                             )}
+                                         </div>
+                                     </th>
+                                     <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('createdAt')}>
+                                         <div className="flex items-center gap-1">
+                                             Date
+                                             {sortConfig?.key === 'createdAt' && (
+                                                 sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                                             )}
+                                         </div>
+                                     </th>
+                                     <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('customerName')}>
+                                         <div className="flex items-center gap-1">
+                                             Client
+                                             {sortConfig?.key === 'customerName' && (
+                                                 sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                                             )}
+                                         </div>
+                                     </th>
                                      <th className="px-4 py-3 font-semibold">Canal</th>
-                                     <th className="px-4 py-3 font-semibold text-right">Total</th>
+                                     <th className="px-4 py-3 font-semibold text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('totalAmount')}>
+                                         <div className="flex items-center justify-end gap-1">
+                                             Total
+                                             {sortConfig?.key === 'totalAmount' && (
+                                                 sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                                             )}
+                                         </div>
+                                     </th>
                                      <th className="px-4 py-3 font-semibold">Statut paiement</th>
-                                     <th className="px-4 py-3 font-semibold">Statut traitement</th>
-                                     <th className="px-4 py-3 font-semibold">Articles</th>
+                                     <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('status')}>
+                                         <div className="flex items-center gap-1">
+                                             Statut traitement
+                                             {sortConfig?.key === 'status' && (
+                                                 sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                                             )}
+                                         </div>
+                                     </th>
+                                     <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort('items')}>
+                                         <div className="flex items-center gap-1">
+                                             Articles
+                                             {sortConfig?.key === 'items' && (
+                                                 sortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                                             )}
+                                         </div>
+                                     </th>
                                      <th className="px-4 py-3 font-semibold">Livraison</th>
                                      <th className="px-4 py-3 font-semibold">Méthode</th>
                                   </tr>
@@ -1565,6 +1618,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                <tbody className="divide-y divide-gray-50">
                                   {orders
                                      .filter(order => !orderFilter || order.status === orderFilter)
+                                     .sort((a, b) => {
+                                        if (!sortConfig) return 0;
+                                        const { key, direction } = sortConfig;
+                                        
+                                        // Handle specific fields
+                                        let aValue: any = a[key as keyof typeof a];
+                                        let bValue: any = b[key as keyof typeof b];
+
+                                        if (key === 'items') {
+                                            aValue = a.items.length;
+                                            bValue = b.items.length;
+                                        }
+                                        
+                                        if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+                                        if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+                                        return 0;
+                                     })
                                      .map(order => {
                                      // Mock statuses for the view
                                      const isPaid = order.status !== 'pending' && order.status !== 'cancelled';

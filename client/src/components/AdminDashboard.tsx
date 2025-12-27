@@ -4559,18 +4559,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      {showGrid && (
                                                          <div className="absolute inset-0 border border-slate-900/20 z-40 pointer-events-none"></div>
                                                      )}
-                                                     {/* 0. BLEED GUIDE (Fonds Perdus) - Outside Trim */}
+                                                     {/* 0. BLEED GUIDE (Fonds Perdus) - Inside Page Boundary */}
                                                      {bleedMm && showGrid && (
                                                         <div 
-                                                           className="absolute border-2 border-cyan-500 border-dashed pointer-events-none z-50 opacity-75"
-                                                           style={{
-                                                              left: `-${(bleedMm / bookDimensions.width) * 100}%`,
-                                                              top: `-${(bleedMm / bookDimensions.height) * 100}%`,
-                                                              right: `-${(bleedMm / bookDimensions.width) * 100}%`,
-                                                              bottom: `-${(bleedMm / bookDimensions.height) * 100}%`,
-                                                           }}
+                                                           className="absolute inset-0 pointer-events-none z-50 opacity-75"
                                                         >
-                                                           <div className="absolute -top-4 left-0 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200">
+                                                           {/* Top Bleed Strip */}
+                                                           <div className="absolute top-0 left-0 right-0 bg-cyan-500/10 border-b border-cyan-500 border-dashed" style={{ height: `${(bleedMm / bookDimensions.height) * 100}%` }}></div>
+                                                           {/* Bottom Bleed Strip */}
+                                                           <div className="absolute bottom-0 left-0 right-0 bg-cyan-500/10 border-t border-cyan-500 border-dashed" style={{ height: `${(bleedMm / bookDimensions.height) * 100}%` }}></div>
+                                                           {/* Left Bleed Strip */}
+                                                           <div className="absolute top-0 bottom-0 left-0 bg-cyan-500/10 border-r border-cyan-500 border-dashed" style={{ width: `${(bleedMm / bookDimensions.width) * 100}%` }}></div>
+                                                           {/* Right Bleed Strip */}
+                                                           <div className="absolute top-0 bottom-0 right-0 bg-cyan-500/10 border-l border-cyan-500 border-dashed" style={{ width: `${(bleedMm / bookDimensions.width) * 100}%` }}></div>
+
+                                                           <div className="absolute top-1 left-1 text-cyan-600 text-[9px] font-bold uppercase whitespace-nowrap bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-cyan-200 z-50">
                                                               Fonds Perdus ({bleedMm}mm)
                                                            </div>
                                                         </div>

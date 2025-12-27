@@ -43,6 +43,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [isNewCustomer, setIsNewCustomer] = useState(true);
   
   // New Order Form State
   const [newOrderForm, setNewOrderForm] = useState({
@@ -1640,10 +1641,61 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         {/* Customer Info */}
                         <div className="col-span-2 space-y-6">
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    <User size={18} className="text-indigo-600" />
-                                    Informations Client
-                                </h3>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                        <User size={18} className="text-indigo-600" />
+                                        Informations Client
+                                    </h3>
+                                    <div className="flex bg-slate-100 rounded-lg p-1">
+                                        <button 
+                                            onClick={() => setIsNewCustomer(true)}
+                                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${isNewCustomer ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            Nouveau
+                                        </button>
+                                        <button 
+                                            onClick={() => setIsNewCustomer(false)}
+                                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${!isNewCustomer ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            Existant
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {!isNewCustomer && (
+                                    <div className="mb-6">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rechercher un client</label>
+                                        <select 
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            onChange={(e) => {
+                                                const customer = customers.find(c => c.id === e.target.value);
+                                                if (customer) {
+                                                     setNewOrderForm({
+                                                         ...newOrderForm,
+                                                         customer: {
+                                                             firstName: customer.firstName,
+                                                             lastName: customer.lastName,
+                                                             email: customer.email,
+                                                             phone: customer.phone || '',
+                                                             address: {
+                                                                 street: customer.address?.street || '',
+                                                                 zipCode: customer.address?.zipCode || '',
+                                                                 city: customer.address?.city || '',
+                                                                 country: customer.address?.country || 'France'
+                                                             }
+                                                         }
+                                                     });
+                                                }
+                                            }}
+                                        >
+                                            <option value="">Sélectionner un client...</option>
+                                            {customers.map(c => (
+                                                <option key={c.id} value={c.id}>{c.firstName} {c.lastName} - {c.email}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prénom <span className="text-red-500">*</span></label>

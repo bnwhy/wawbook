@@ -275,9 +275,8 @@ const CheckoutPage = () => {
 
                             {/* Shipping Method */}
                             <div className="space-y-4">
-                                <h2 className="font-bold text-lg text-stone-800 flex items-center gap-2">
+                                <h2 className="font-bold text-lg text-stone-800">
                                     Mode d'expédition
-                                    {applicableZone && <span className="text-xs font-normal px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Zone: {applicableZone.name}</span>}
                                 </h2>
                                 
                                 {applicableZone ? (

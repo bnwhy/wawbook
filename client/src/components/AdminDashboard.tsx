@@ -45,6 +45,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [isNewCustomer, setIsNewCustomer] = useState(true);
   const [customerSearch, setCustomerSearch] = useState('');
+  const [isCustomerSearchOpen, setIsCustomerSearchOpen] = useState(false);
   
   // New Order Form State
   const [newOrderForm, setNewOrderForm] = useState({
@@ -1665,52 +1666,115 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                 {!isNewCustomer && (
                                     <div className="mb-6">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rechercher un client</label>
-                                        <div className="relative mb-2">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                                            <input
-                                                type="text"
-                                                placeholder="Filtrer par nom ou email..."
-                                                value={customerSearch}
-                                                onChange={(e) => setCustomerSearch(e.target.value)}
-                                                className="w-full text-sm border-gray-300 rounded-lg pl-9 pr-3 py-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                            />
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Client</label>
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
+                                                <User className="absolute left-3 top-2.5 text-slate-400" size={16} />
+                                                <input
+                                                    type="text"
+                                                    readOnly
+                                                    placeholder="Sélectionner un client..."
+                                                    value={newOrderForm.customer.email ? `${newOrderForm.customer.firstName} ${newOrderForm.customer.lastName}` : ''}
+                                                    className="w-full text-sm border-gray-300 rounded-lg pl-10 pr-3 py-2 bg-slate-50 focus:ring-brand-coral focus:border-brand-coral cursor-pointer"
+                                                    onClick={() => setIsCustomerSearchOpen(true)}
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => setIsCustomerSearchOpen(true)}
+                                                className="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-lg border border-slate-200 transition-colors"
+                                                title="Rechercher (F4)"
+                                            >
+                                                <Search size={20} />
+                                            </button>
                                         </div>
-                                        <select 
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                            onChange={(e) => {
-                                                const customer = customers.find(c => c.id === e.target.value);
-                                                if (customer) {
-                                                     setNewOrderForm({
-                                                         ...newOrderForm,
-                                                         customer: {
-                                                             firstName: customer.firstName,
-                                                             lastName: customer.lastName,
-                                                             email: customer.email,
-                                                             phone: customer.phone || '',
-                                                             address: {
-                                                                 street: customer.address?.street || '',
-                                                                 zipCode: customer.address?.zipCode || '',
-                                                                 city: customer.address?.city || '',
-                                                                 country: customer.address?.country || 'France'
-                                                             }
-                                                         }
-                                                     });
-                                                }
-                                            }}
-                                            size={5}
-                                        >
-                                            <option value="">Sélectionner un client...</option>
-                                            {customers
-                                                .filter(c => 
-                                                    c.firstName.toLowerCase().includes(customerSearch.toLowerCase()) || 
-                                                    c.lastName.toLowerCase().includes(customerSearch.toLowerCase()) || 
-                                                    c.email.toLowerCase().includes(customerSearch.toLowerCase())
-                                                )
-                                                .map(c => (
-                                                <option key={c.id} value={c.id}>{c.firstName} {c.lastName} - {c.email}</option>
-                                            ))}
-                                        </select>
+
+                                        <Dialog open={isCustomerSearchOpen} onOpenChange={setIsCustomerSearchOpen}>
+                                            <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+                                                <DialogHeader>
+                                                    <DialogTitle>Rechercher un client</DialogTitle>
+                                                    <DialogDescription>
+                                                        Sélectionnez un client dans la liste ci-dessous.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                
+                                                <div className="relative mb-4 mt-2">
+                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Rechercher par nom, email, téléphone..."
+                                                        value={customerSearch}
+                                                        onChange={(e) => setCustomerSearch(e.target.value)}
+                                                        autoFocus
+                                                        className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                                    />
+                                                </div>
+
+                                                <div className="flex-1 overflow-y-auto border border-gray-100 rounded-lg">
+                                                    <table className="w-full text-sm text-left">
+                                                        <thead className="bg-slate-50 text-slate-500 font-medium border-b border-gray-100 sticky top-0">
+                                                            <tr>
+                                                                <th className="px-4 py-2">Nom</th>
+                                                                <th className="px-4 py-2">Email</th>
+                                                                <th className="px-4 py-2">Ville</th>
+                                                                <th className="px-4 py-2 text-right">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-100">
+                                                            {customers
+                                                                .filter(c => 
+                                                                    c.firstName.toLowerCase().includes(customerSearch.toLowerCase()) || 
+                                                                    c.lastName.toLowerCase().includes(customerSearch.toLowerCase()) || 
+                                                                    c.email.toLowerCase().includes(customerSearch.toLowerCase())
+                                                                )
+                                                                .map(c => (
+                                                                    <tr 
+                                                                        key={c.id} 
+                                                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                                                        onClick={() => {
+                                                                            setNewOrderForm({
+                                                                                ...newOrderForm,
+                                                                                customer: {
+                                                                                    firstName: c.firstName,
+                                                                                    lastName: c.lastName,
+                                                                                    email: c.email,
+                                                                                    phone: c.phone || '',
+                                                                                    address: {
+                                                                                        street: c.address?.street || '',
+                                                                                        zipCode: c.address?.zipCode || '',
+                                                                                        city: c.address?.city || '',
+                                                                                        country: c.address?.country || 'France'
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                            setIsCustomerSearchOpen(false);
+                                                                        }}
+                                                                    >
+                                                                        <td className="px-4 py-3 font-medium text-slate-900">{c.firstName} {c.lastName}</td>
+                                                                        <td className="px-4 py-3 text-slate-500">{c.email}</td>
+                                                                        <td className="px-4 py-3 text-slate-500">{c.address?.city || '-'}</td>
+                                                                        <td className="px-4 py-3 text-right">
+                                                                            <button className="text-indigo-600 hover:text-indigo-800 font-medium text-xs bg-indigo-50 px-2 py-1 rounded">
+                                                                                Sélectionner
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            {customers.filter(c => 
+                                                                c.firstName.toLowerCase().includes(customerSearch.toLowerCase()) || 
+                                                                c.lastName.toLowerCase().includes(customerSearch.toLowerCase()) || 
+                                                                c.email.toLowerCase().includes(customerSearch.toLowerCase())
+                                                            ).length === 0 && (
+                                                                <tr>
+                                                                    <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
+                                                                        Aucun client trouvé
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
                                     </div>
                                 )}
 

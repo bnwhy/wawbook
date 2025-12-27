@@ -27,6 +27,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   
   const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -49,7 +50,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const handleSaveAndExit = () => {
     if (draftBook) {
-        updateBook(draftBook.id, draftBook);
+        updateBook(draftBook);
         toast.success("Modifications enregistrées");
         setIsEditing(false);
         setDraftBook(null);
@@ -256,7 +257,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
            
-           {activeTab === 'home' && <AdminHome />}
+           {activeTab === 'home' && <AdminHome setActiveTab={setActiveTab} setSelectedOrderId={setSelectedOrderId} />}
            
            {activeTab === 'analytics' && <AdminAnalytics />}
            

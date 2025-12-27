@@ -193,6 +193,8 @@ interface EcommerceContextType {
   customers: Customer[];
   orders: Order[];
   shippingZones: ShippingZone[];
+  defaultShippingRate: number;
+  updateDefaultShippingRate: (rate: number) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   updateOrderTracking: (orderId: string, trackingNumber: string) => void;
   getCustomerById: (id: string) => Customer | undefined;
@@ -240,6 +242,16 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   });
 
+  const [defaultShippingRate, setDefaultShippingRate] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('ecommerce_default_shipping_rate');
+      return saved ? parseFloat(saved) : 5.90;
+    } catch (e) {
+      console.error('Error parsing default shipping rate', e);
+      return 5.90;
+    }
+  });
+
   // Persist to localStorage whenever state changes
   React.useEffect(() => {
     try {
@@ -264,6 +276,14 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       console.error('Error saving shipping zones data', e);
     }
   }, [shippingZones]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('ecommerce_default_shipping_rate', defaultShippingRate.toString());
+    } catch (e) {
+      console.error('Error saving default shipping rate', e);
+    }
+  }, [defaultShippingRate]);
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
     setOrders(prev => prev.map(o => {
@@ -426,11 +446,17 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     setShippingZones(prev => prev.filter(z => z.id !== id));
   };
 
+  const updateDefaultShippingRate = (rate: number) => {
+    setDefaultShippingRate(rate);
+  };
+
   return (
     <EcommerceContext.Provider value={{ 
       customers, 
       orders, 
       shippingZones,
+      defaultShippingRate,
+      updateDefaultShippingRate,
       updateOrderStatus, 
       updateOrderTracking,
       getCustomerById,

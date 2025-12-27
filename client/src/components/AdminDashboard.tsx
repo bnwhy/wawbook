@@ -42,6 +42,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     customers, 
     orders, 
     shippingZones,
+    defaultShippingRate,
+    updateDefaultShippingRate,
     addShippingZone,
     updateShippingZone,
     deleteShippingZone,
@@ -3579,7 +3581,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
                                     <input 
                                         type="number" 
-                                        defaultValue={5.90}
+                                        value={defaultShippingRate}
+                                        onChange={(e) => updateDefaultShippingRate(parseFloat(e.target.value) || 0)}
                                         className="w-full text-sm border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none text-right font-bold text-slate-800"
                                         placeholder="0.00"
                                     />

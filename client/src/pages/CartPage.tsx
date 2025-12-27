@@ -11,12 +11,15 @@ import BookCover from '../components/BookCover';
 import { generateStoryText } from '../services/geminiService';
 import { Story } from '../types';
 
+import { useEcommerce } from '../context/EcommerceContext';
+
 interface CartPageProps {
   onEdit?: (item: CartItem) => void;
 }
 
 const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
   const { items, removeFromCart, updateQuantity, total } = useCart();
+  const { defaultShippingRate } = useEcommerce();
   const { books } = useBooks();
   const [, setLocation] = useLocation();
   const [previewItem, setPreviewItem] = useState<CartItem | null>(null);
@@ -207,7 +210,7 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                     </div>
                     <div className="flex justify-between text-stone-600 text-sm font-medium">
                         <span>Expédition :</span>
-                        <span className="font-bold text-cloud-dark">9.99€</span>
+                        <span className="font-bold text-cloud-dark">{defaultShippingRate.toFixed(2)}€</span>
                     </div>
                     {discount > 0 && (
                         <div className="flex justify-between text-sm font-medium text-brand-coral">
@@ -218,7 +221,7 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                     
                     <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center">
                         <span className="font-bold text-lg text-cloud-dark">Total :</span>
-                        <span className="font-black text-2xl text-cloud-dark">{(total + 9.99 - discount).toFixed(2)}€</span>
+                        <span className="font-black text-2xl text-cloud-dark">{(total + defaultShippingRate - discount).toFixed(2)}€</span>
                     </div>
                 </div>
                 

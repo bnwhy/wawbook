@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -34,7 +34,7 @@ import googleFonts from 'google-fonts-complete';
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
-  const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer, addOrderLog, createOrder, updateCustomer } = useEcommerce();
+  const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer, addOrderLog, createOrder, updateCustomer, addCustomer } = useEcommerce();
   
   const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -102,6 +102,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Order Filters State
   const [orderFilter, setOrderFilter] = useState<string | null>(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  
+  // Customer Creation State
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: {
+          street: '',
+          zipCode: '',
+          city: '',
+          country: 'France'
+      }
+  });
 
   // Order Status Draft State
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
@@ -142,6 +157,45 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     link.click();
     document.body.removeChild(link);
     toast.success(`${customersToExport.length} clients exportés avec succès`);
+  };
+
+  const handleCreateCustomer = () => {
+      setIsCreatingCustomer(true);
+  };
+
+  const submitNewCustomer = () => {
+      if (!newCustomerForm.firstName || !newCustomerForm.lastName || !newCustomerForm.email) {
+          toast.error("Veuillez remplir les informations obligatoires");
+          return;
+      }
+
+      const newCustomer = {
+          id: Date.now().toString(),
+          firstName: newCustomerForm.firstName,
+          lastName: newCustomerForm.lastName,
+          email: newCustomerForm.email,
+          phone: newCustomerForm.phone,
+          address: newCustomerForm.address,
+          createdAt: new Date().toISOString(),
+          orderCount: 0,
+          totalSpent: 0
+      };
+
+      addCustomer(newCustomer);
+      toast.success("Client créé avec succès !");
+      setIsCreatingCustomer(false);
+      setNewCustomerForm({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          address: {
+              street: '',
+              zipCode: '',
+              city: '',
+              country: 'France'
+          }
+      });
   };
 
   // Create Order Handler
@@ -2603,8 +2657,136 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  </div>
               )}
 
+              {/* --- VIEW: CREATE CUSTOMER --- */}
+              {activeTab === 'customers' && isCreatingCustomer && (
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="flex items-center gap-4 mb-4">
+                       <button onClick={() => setIsCreatingCustomer(false)} className="text-slate-400 hover:text-slate-600">
+                          <ArrowUp className="-rotate-90" size={20} />
+                       </button>
+                       <h2 className="text-2xl font-bold text-slate-800">Nouveau Client</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <User size={18} className="text-indigo-600" />
+                                Informations Client
+                            </h3>
+
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prénom <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        value={newCustomerForm.firstName}
+                                        onChange={(e) => setNewCustomerForm({...newCustomerForm, firstName: e.target.value})}
+                                        className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nom <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" 
+                                        value={newCustomerForm.lastName}
+                                        onChange={(e) => setNewCustomerForm({...newCustomerForm, lastName: e.target.value})}
+                                        className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="email" 
+                                    value={newCustomerForm.email}
+                                    onChange={(e) => setNewCustomerForm({...newCustomerForm, email: e.target.value})}
+                                    className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                />
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Téléphone</label>
+                                <input 
+                                    type="tel" 
+                                    value={newCustomerForm.phone}
+                                    onChange={(e) => setNewCustomerForm({...newCustomerForm, phone: e.target.value})}
+                                    className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                />
+                            </div>
+
+                            <div className="pt-6 border-t border-gray-100">
+                                <h4 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                    <MapPin size={16} className="text-slate-400" />
+                                    Adresse
+                                </h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rue</label>
+                                        <input 
+                                            type="text" 
+                                            value={newCustomerForm.address.street}
+                                            onChange={(e) => setNewCustomerForm({...newCustomerForm, address: {...newCustomerForm.address, street: e.target.value}})}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Code Postal</label>
+                                            <input 
+                                                type="text" 
+                                                value={newCustomerForm.address.zipCode}
+                                                onChange={(e) => setNewCustomerForm({...newCustomerForm, address: {...newCustomerForm.address, zipCode: e.target.value}})}
+                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ville</label>
+                                            <input 
+                                                type="text" 
+                                                value={newCustomerForm.address.city}
+                                                onChange={(e) => setNewCustomerForm({...newCustomerForm, address: {...newCustomerForm.address, city: e.target.value}})}
+                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Pays</label>
+                                        <select 
+                                            value={newCustomerForm.address.country}
+                                            onChange={(e) => setNewCustomerForm({...newCustomerForm, address: {...newCustomerForm.address, country: e.target.value}})}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                        >
+                                            <option value="France">France</option>
+                                            <option value="Belgique">Belgique</option>
+                                            <option value="Suisse">Suisse</option>
+                                            <option value="Canada">Canada</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <button 
+                                onClick={() => setIsCreatingCustomer(false)}
+                                className="px-6 py-2.5 border border-gray-300 text-slate-700 rounded-lg font-bold hover:bg-slate-50 transition-colors"
+                            >
+                                Annuler
+                            </button>
+                            <button 
+                                onClick={submitNewCustomer}
+                                className="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-indigo-500/20"
+                            >
+                                Créer le client
+                            </button>
+                        </div>
+                    </div>
+                  </div>
+              )}
+
               {/* --- VIEW: CUSTOMERS --- */}
-              {activeTab === 'customers' && !selectedCustomerId && (
+              {activeTab === 'customers' && !selectedCustomerId && !isCreatingCustomer && (
                  <div className="space-y-6">
                     <div className="flex justify-end items-center">
                          <div className="flex gap-2">
@@ -2616,7 +2798,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                Exporter
                             </button>
                             <button 
-                               onClick={() => toast.info("Fonctionnalité d'ajout de client à venir")}
+                               onClick={handleCreateCustomer}
                                className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-800 flex items-center gap-2"
                             >
                                <Plus size={16} />

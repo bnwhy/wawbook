@@ -178,6 +178,7 @@ interface EcommerceContextType {
   getOrdersByCustomer: (customerId: string) => Order[];
   createOrder: (customerData: any, cartItems: any[], totalAmount: number) => void;
   updateCustomer: (customerId: string, data: Partial<Customer>) => void;
+  addCustomer: (customer: Customer) => void;
   addOrderLog: (orderId: string, message: string, type?: 'comment' | 'status_change' | 'system') => void;
 }
 
@@ -363,6 +364,10 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, ...data } : c));
   };
 
+  const addCustomer = (customer: Customer) => {
+    setCustomers(prev => [customer, ...prev]);
+  };
+
   const getCustomerById = (id: string) => customers.find(c => c.id === id);
   
   const getOrdersByCustomer = (customerId: string) => orders.filter(o => o.customerId === customerId);
@@ -377,6 +382,7 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       getOrdersByCustomer,
       createOrder,
       updateCustomer,
+      addCustomer,
       addOrderLog
     }}>
       {children}

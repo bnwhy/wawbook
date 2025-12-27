@@ -45,6 +45,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Order Filters State
   const [orderFilter, setOrderFilter] = useState<string | null>(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
 
   // Order Status Draft State
   const [draftStatus, setDraftStatus] = useState<string | null>(null);
@@ -52,6 +53,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   React.useEffect(() => {
     setDraftStatus(null);
+    setSelectedOrderIds(new Set()); // Clear selection when switching tabs or clicking an order
   }, [selectedOrderId, activeTab]);
 
   // Font Search State
@@ -1397,7 +1399,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-gray-100">
                                   <tr>
                                      <th className="px-4 py-3 w-8">
-                                        <input type="checkbox" className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral" />
+                                        <input 
+                                           type="checkbox" 
+                                           className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                           checked={orders.length > 0 && orders.every(o => selectedOrderIds.has(o.id))}
+                                           onChange={(e) => {
+                                              if (e.target.checked) {
+                                                 const allIds = orders.map(o => o.id);
+                                                 setSelectedOrderIds(new Set(allIds));
+                                              } else {
+                                                 setSelectedOrderIds(new Set());
+                                              }
+                                           }}
+                                        />
                                      </th>
                                      <th className="px-4 py-3 font-semibold">Commande</th>
                                      <th className="px-4 py-3 font-semibold">Date</th>
@@ -1433,9 +1447,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         order.status === 'cancelled' ? 'bg-slate-100 text-slate-500' : 'bg-yellow-100 text-yellow-800';
 
                                      return (
-                                        <tr key={order.id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => setSelectedOrderId(order.id)}>
+                                        <tr key={order.id} className={`hover:bg-slate-50 transition-colors group cursor-pointer ${selectedOrderIds.has(order.id) ? 'bg-indigo-50/30' : ''}`} onClick={() => setSelectedOrderId(order.id)}>
                                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                                              <input type="checkbox" className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral" />
+                                              <input 
+                                                 type="checkbox" 
+                                                 className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                                 checked={selectedOrderIds.has(order.id)}
+                                                 onChange={(e) => {
+                                                    e.stopPropagation(); // Prevent row click
+                                                    const newSelected = new Set(selectedOrderIds);
+                                                    if (e.target.checked) {
+                                                       newSelected.add(order.id);
+                                                    } else {
+                                                       newSelected.delete(order.id);
+                                                    }
+                                                    setSelectedOrderIds(newSelected);
+                                                 }}
+                                              />
                                            </td>
                                            <td className="px-4 py-3 font-bold text-slate-900 group-hover:underline">#{order.id.slice(0,8)}</td>
                                            <td className="px-4 py-3 text-slate-500 whitespace-nowrap">

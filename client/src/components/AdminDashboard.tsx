@@ -34,7 +34,7 @@ import googleFonts from 'google-fonts-complete';
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
-  const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer, addOrderLog, createOrder } = useEcommerce();
+  const { customers, orders, updateOrderStatus, updateOrderTracking, getOrdersByCustomer, addOrderLog, createOrder, updateCustomer } = useEcommerce();
   
   const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -46,6 +46,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isNewCustomer, setIsNewCustomer] = useState(true);
   const [customerSearch, setCustomerSearch] = useState('');
   const [isCustomerSearchOpen, setIsCustomerSearchOpen] = useState(false);
+
+  // Edit Customer State
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [editCustomerForm, setEditCustomerForm] = useState({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: {
+          street: '',
+          zipCode: '',
+          city: '',
+          country: ''
+      }
+  });
   
   // New Order Form State
   const [newOrderForm, setNewOrderForm] = useState({
@@ -2575,30 +2590,166 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              {/* Profile Info */}
                              <div className="col-span-1 space-y-6">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                                   <div className="w-24 h-24 rounded-full bg-slate-100 mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-slate-400">
-                                      {customer.firstName.charAt(0)}
-                                   </div>
-                                   <h3 className="text-xl font-bold text-slate-900">{customer.firstName} {customer.lastName}</h3>
-                                   <p className="text-slate-500 text-sm mb-4">Client depuis {new Date(customer.createdAt).toLocaleDateString()}</p>
-                                   
-                                   <div className="border-t border-gray-100 pt-4 text-left space-y-3">
-                                      <div>
-                                         <label className="text-xs font-bold text-slate-400 uppercase">Email</label>
-                                         <div className="text-sm font-medium text-slate-700 break-all">{customer.email}</div>
-                                      </div>
-                                      <div>
-                                         <label className="text-xs font-bold text-slate-400 uppercase">Téléphone</label>
-                                         <div className="text-sm font-medium text-slate-700">{customer.phone || '-'}</div>
-                                      </div>
-                                      <div>
-                                         <label className="text-xs font-bold text-slate-400 uppercase">Adresse</label>
-                                         <div className="text-sm font-medium text-slate-700">
-                                            {customer.address?.street}<br/>
-                                            {customer.address?.zipCode} {customer.address?.city}<br/>
-                                            {customer.address?.country}
-                                         </div>
-                                      </div>
-                                   </div>
+                                   {!isEditingCustomer ? (
+                                       <>
+                                           <div className="flex justify-end mb-2 -mt-2">
+                                                <button 
+                                                    onClick={() => {
+                                                        setEditCustomerForm({
+                                                            firstName: customer.firstName,
+                                                            lastName: customer.lastName,
+                                                            email: customer.email,
+                                                            phone: customer.phone || '',
+                                                            address: {
+                                                                street: customer.address?.street || '',
+                                                                zipCode: customer.address?.zipCode || '',
+                                                                city: customer.address?.city || '',
+                                                                country: customer.address?.country || ''
+                                                            }
+                                                        });
+                                                        setIsEditingCustomer(true);
+                                                    }}
+                                                    className="text-slate-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-50 transition-colors"
+                                                    title="Modifier le profil"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                           </div>
+                                           <div className="w-24 h-24 rounded-full bg-slate-100 mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-slate-400">
+                                              {customer.firstName.charAt(0)}
+                                           </div>
+                                           <h3 className="text-xl font-bold text-slate-900">{customer.firstName} {customer.lastName}</h3>
+                                           <p className="text-slate-500 text-sm mb-4">Client depuis {new Date(customer.createdAt).toLocaleDateString()}</p>
+                                           
+                                           <div className="border-t border-gray-100 pt-4 text-left space-y-3">
+                                              <div>
+                                                 <label className="text-xs font-bold text-slate-400 uppercase">Email</label>
+                                                 <div className="text-sm font-medium text-slate-700 break-all">{customer.email}</div>
+                                              </div>
+                                              <div>
+                                                 <label className="text-xs font-bold text-slate-400 uppercase">Téléphone</label>
+                                                 <div className="text-sm font-medium text-slate-700">{customer.phone || '-'}</div>
+                                              </div>
+                                              <div>
+                                                 <label className="text-xs font-bold text-slate-400 uppercase">Adresse</label>
+                                                 <div className="text-sm font-medium text-slate-700">
+                                                    {customer.address?.street}<br/>
+                                                    {customer.address?.zipCode} {customer.address?.city}<br/>
+                                                    {customer.address?.country}
+                                                 </div>
+                                              </div>
+                                           </div>
+                                       </>
+                                   ) : (
+                                       <div className="text-left space-y-4">
+                                            <div className="text-center font-bold text-slate-800 mb-4">Modifier le Profil</div>
+                                            
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Prénom</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={editCustomerForm.firstName}
+                                                        onChange={(e) => setEditCustomerForm({...editCustomerForm, firstName: e.target.value})}
+                                                        className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Nom</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={editCustomerForm.lastName}
+                                                        onChange={(e) => setEditCustomerForm({...editCustomerForm, lastName: e.target.value})}
+                                                        className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Email</label>
+                                                <input 
+                                                    type="email" 
+                                                    value={editCustomerForm.email}
+                                                    onChange={(e) => setEditCustomerForm({...editCustomerForm, email: e.target.value})}
+                                                    className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Téléphone</label>
+                                                <input 
+                                                    type="tel" 
+                                                    value={editCustomerForm.phone}
+                                                    onChange={(e) => setEditCustomerForm({...editCustomerForm, phone: e.target.value})}
+                                                    className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                />
+                                            </div>
+
+                                            <div className="pt-2 border-t border-gray-100 mt-2">
+                                                <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Adresse</label>
+                                                <div className="space-y-2">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Rue"
+                                                        value={editCustomerForm.address.street}
+                                                        onChange={(e) => setEditCustomerForm({...editCustomerForm, address: {...editCustomerForm.address, street: e.target.value}})}
+                                                        className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                    />
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Code Postal"
+                                                            value={editCustomerForm.address.zipCode}
+                                                            onChange={(e) => setEditCustomerForm({...editCustomerForm, address: {...editCustomerForm.address, zipCode: e.target.value}})}
+                                                            className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                        />
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Ville"
+                                                            value={editCustomerForm.address.city}
+                                                            onChange={(e) => setEditCustomerForm({...editCustomerForm, address: {...editCustomerForm.address, city: e.target.value}})}
+                                                            className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                        />
+                                                    </div>
+                                                    <select 
+                                                        value={editCustomerForm.address.country}
+                                                        onChange={(e) => setEditCustomerForm({...editCustomerForm, address: {...editCustomerForm.address, country: e.target.value}})}
+                                                        className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                    >
+                                                        <option value="France">France</option>
+                                                        <option value="Belgique">Belgique</option>
+                                                        <option value="Suisse">Suisse</option>
+                                                        <option value="Canada">Canada</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-2 pt-2">
+                                                <button 
+                                                    onClick={() => setIsEditingCustomer(false)}
+                                                    className="flex-1 px-3 py-2 border border-gray-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50"
+                                                >
+                                                    Annuler
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        updateCustomer(customer.id, {
+                                                            firstName: editCustomerForm.firstName,
+                                                            lastName: editCustomerForm.lastName,
+                                                            email: editCustomerForm.email,
+                                                            phone: editCustomerForm.phone,
+                                                            address: editCustomerForm.address
+                                                        });
+                                                        setIsEditingCustomer(false);
+                                                        toast.success("Profil client mis à jour");
+                                                    }}
+                                                    className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
+                                                >
+                                                    Enregistrer
+                                                </button>
+                                            </div>
+                                       </div>
+                                   )}
                                 </div>
                                 
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

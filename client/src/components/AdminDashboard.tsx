@@ -4349,7 +4349,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         </div>
                                                         {/* Spine Background (Continuous/Gray) */}
                                                         <div 
-                                                            className="absolute top-0 bottom-0 flex items-center justify-center bg-[#f9fafb]"
+                                                            className="absolute top-0 bottom-0 bg-gray-100 flex items-center justify-center"
                                                             style={{ left: `${leftPagePct}%`, width: `${spinePct}%` }}
                                                         >
                                                             {/* Optional Spine Texture/Color */}

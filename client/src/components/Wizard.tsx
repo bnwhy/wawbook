@@ -437,9 +437,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
         <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start justify-center p-4 pt-20 md:p-8 md:pt-24 mb-12">
           
           {/* --- LEFT COLUMN: CONFIGURATION --- */}
-          <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col h-[600px] lg:h-[700px] sticky top-24">
+          <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col relative">
              
-             <div className="p-4 border-b border-gray-100 shrink-0">
+             <div className="p-4 border-b border-gray-100 shrink-0 sticky top-0 bg-white z-10">
                 <div className="text-xs font-bold text-brand-coral uppercase tracking-wider mb-1">
                    Personnalisation du livre
                 </div>
@@ -449,7 +449,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* TABS */}
-             <div className="flex border-b border-gray-200 overflow-x-auto shrink-0">
+             <div className="flex border-b border-gray-200 overflow-x-auto shrink-0 sticky top-[73px] bg-white z-10">
                 {wizardConfig.tabs.map(tab => (
                   <button 
                      key={tab.id}
@@ -464,7 +464,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* FORM CONTENT */}
-             <div className="p-4 space-y-6 overflow-y-auto flex-1">
+             <div className="p-4 space-y-6 flex-1">
                 {activeTab && activeTab.variants.map((variant, index) => {
                   const currentValue = selections[activeTabId]?.[variant.id];
                   const isLast = index === activeTab.variants.length - 1;

@@ -3306,9 +3306,77 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             <h2 className="text-2xl font-bold text-slate-800">Expédition et Livraison</h2>
                             <p className="text-slate-500 mt-1">Configurez les zones, tarifs et délais de livraison.</p>
                         </div>
-                        <button className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors">
-                            <Plus size={18} /> Ajouter une méthode
-                        </button>
+                        <div className="flex gap-2">
+                             <button className="bg-white border border-gray-300 text-slate-700 px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
+                                <Plus size={18} /> Ajouter une zone
+                            </button>
+                            <button className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors">
+                                <Plus size={18} /> Ajouter une méthode
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 bg-slate-50/50">
+                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <Globe size={20} className="text-indigo-600" />
+                                Zones d'expédition
+                            </h3>
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                             {/* France Zone */}
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">FR</div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-900">France Métropolitaine</h4>
+                                            <p className="text-xs text-slate-500">France</p>
+                                        </div>
+                                    </div>
+                                    <button className="text-indigo-600 font-bold text-xs hover:underline">Modifier</button>
+                                </div>
+                                <div className="bg-slate-50 rounded-lg p-4 border border-gray-100 space-y-3">
+                                     <div className="flex items-center justify-between">
+                                         <div className="flex items-center gap-2">
+                                             <Truck size={16} className="text-slate-400" />
+                                             <span className="text-sm font-medium text-slate-700">Livraison Standard</span>
+                                         </div>
+                                         <div className="text-sm font-bold text-slate-900">4.90 €</div>
+                                     </div>
+                                     <div className="flex items-center justify-between">
+                                         <div className="flex items-center gap-2">
+                                             <Zap size={16} className="text-slate-400" />
+                                             <span className="text-sm font-medium text-slate-700">Livraison Express</span>
+                                         </div>
+                                         <div className="text-sm font-bold text-slate-900">12.90 €</div>
+                                     </div>
+                                </div>
+                            </div>
+
+                             {/* Europe Zone */}
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">EU</div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-900">Union Européenne</h4>
+                                            <p className="text-xs text-slate-500">Belgique, Allemagne, Italie, Espagne...</p>
+                                        </div>
+                                    </div>
+                                    <button className="text-indigo-600 font-bold text-xs hover:underline">Modifier</button>
+                                </div>
+                                <div className="bg-slate-50 rounded-lg p-4 border border-gray-100 space-y-3">
+                                     <div className="flex items-center justify-between">
+                                         <div className="flex items-center gap-2">
+                                             <Truck size={16} className="text-slate-400" />
+                                             <span className="text-sm font-medium text-slate-700">Standard International</span>
+                                         </div>
+                                         <div className="text-sm font-bold text-slate-900">14.90 €</div>
+                                     </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

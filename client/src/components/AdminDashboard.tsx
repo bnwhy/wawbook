@@ -2593,7 +2593,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     <div className="flex justify-between items-center">
                        <div>
                           <h2 className="text-2xl font-bold text-slate-800">Clients</h2>
-                          <p className="text-slate-500 mt-1">Base de données clients.</p>
                        </div>
                     </div>
 

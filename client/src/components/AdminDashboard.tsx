@@ -4586,8 +4586,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             style={{ left: `${leftPagePct}%`, width: `${spinePct}%` }} 
                                                             className="absolute top-0 bottom-0 border-x border-gray-300/50 pointer-events-none z-30"
                                                         >
-                                                            {/* Dashed lines to show spine folds */}
-                                                            <div className="absolute inset-0 bg-slate-500/5"></div>
+                                                            {/* Dashed lines to show spine folds - Transparent to keep color uniform */}
                                                         </div>
                                                         {/* Trim Lines (Page Boundaries) */}
                                                         {showGrid && (

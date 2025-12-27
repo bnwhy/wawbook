@@ -464,17 +464,17 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* FORM CONTENT */}
-             <div className="p-4 space-y-6 flex-1">
+             <div className="p-4 space-y-4 flex-1">
                 {activeTab && activeTab.variants.map((variant, index) => {
                   const currentValue = selections[activeTabId]?.[variant.id];
                   const isLast = index === activeTab.variants.length - 1;
 
                   // Wrapper function to add divider after each section except the last one
                   const withDivider = (content: React.ReactNode) => (
-                    <div key={variant.id} className="space-y-6">
+                    <div key={variant.id} className="space-y-3">
                        {content}
                        {!isLast && (
-                          <div className="flex items-center gap-4 py-2 opacity-50">
+                          <div className="flex items-center gap-4 py-1 opacity-50">
                              <div className="h-px bg-gray-200 flex-1"></div>
                              <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
                              <div className="h-px bg-gray-200 flex-1"></div>
@@ -512,7 +512,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     // Checkbox handling (using first option or defaulting if no option exists)
                     const isChecked = !!currentValue;
                     return withDivider(
-                        <div className="flex items-center space-x-3 bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
                             <div className="relative flex items-center">
                                 <input
                                     type="checkbox"
@@ -534,9 +534,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
                   if (isColorPicker) {
                     return withDivider(
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                          <label className="font-bold text-gray-600 text-sm w-24 shrink-0">{variant.label}</label>
-                         <div className="flex gap-3 flex-wrap flex-1">
+                         <div className="flex gap-2 flex-wrap flex-1">
                             {variant.options.map((opt) => (
                               <button
                                 key={opt.id}
@@ -553,9 +553,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
                   if (hasThumbnails) {
                      return withDivider(
-                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                           <label className="font-bold text-gray-600 text-sm w-24 shrink-0">{variant.label}</label>
-                          <div className="flex gap-3 flex-wrap flex-1">
+                          <div className="flex gap-2 flex-wrap flex-1">
                              {variant.options.map((opt) => {
                                // Prefer resource (uploaded image) over legacy thumbnail
                                const imageUrl = opt.resource && !opt.resource.startsWith('#') ? opt.resource : opt.thumbnail;

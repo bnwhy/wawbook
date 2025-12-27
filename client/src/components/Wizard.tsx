@@ -465,13 +465,28 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
              {/* FORM CONTENT */}
              <div className="p-4 space-y-6 overflow-y-auto flex-1">
-                {activeTab && activeTab.variants.map(variant => {
+                {activeTab && activeTab.variants.map((variant, index) => {
                   const currentValue = selections[activeTabId]?.[variant.id];
+                  const isLast = index === activeTab.variants.length - 1;
+
+                  // Wrapper function to add divider after each section except the last one
+                  const withDivider = (content: React.ReactNode) => (
+                    <div key={variant.id} className="space-y-6">
+                       {content}
+                       {!isLast && (
+                          <div className="flex items-center gap-4 py-2 opacity-50">
+                             <div className="h-px bg-gray-200 flex-1"></div>
+                             <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                             <div className="h-px bg-gray-200 flex-1"></div>
+                          </div>
+                       )}
+                    </div>
+                  );
 
                   // --- RENDER: TEXT INPUT ---
                   if (variant.type === 'text') {
-                    return (
-                      <div key={variant.id} className="space-y-1">
+                    return withDivider(
+                      <div className="space-y-1">
                          <label className="font-bold text-gray-600 text-sm">
                             {variant.label} *
                          </label>
@@ -496,8 +511,8 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   if (variant.type === 'checkbox') {
                     // Checkbox handling (using first option or defaulting if no option exists)
                     const isChecked = !!currentValue;
-                    return (
-                        <div key={variant.id} className="flex items-center space-x-3 bg-white p-4 rounded-lg border border-gray-200">
+                    return withDivider(
+                        <div className="flex items-center space-x-3 bg-white p-4 rounded-lg border border-gray-200">
                             <div className="relative flex items-center">
                                 <input
                                     type="checkbox"
@@ -518,8 +533,8 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   }
 
                   if (isColorPicker) {
-                    return (
-                      <div key={variant.id} className="space-y-2">
+                    return withDivider(
+                      <div className="space-y-2">
                          <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
                          <div className="flex gap-3 flex-wrap">
                             {variant.options.map((opt) => (
@@ -537,8 +552,8 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   }
 
                   if (hasThumbnails) {
-                     return (
-                       <div key={variant.id} className="space-y-2">
+                     return withDivider(
+                       <div className="space-y-2">
                           <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
                           <div className="flex gap-3 flex-wrap">
                              {variant.options.map((opt) => {
@@ -565,8 +580,8 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   }
 
                   // Default Button Grid/List
-                  return (
-                    <div key={variant.id} className="space-y-2">
+                  return withDivider(
+                    <div className="space-y-2">
                        <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
                        <div className={`grid ${isGrid ? 'grid-cols-4' : 'grid-cols-2'} gap-2`}>
                           {variant.options.map((opt) => (

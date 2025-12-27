@@ -173,50 +173,44 @@ const renderPageContent = async (doc: jsPDF, book: BookProduct, pageIndex: numbe
 };
 
 export const generateCoverPDF = async (order: Order, books: BookProduct[]): Promise<Blob> => {
-  const doc = new jsPDF({
-    orientation: "landscape",
-    unit: "mm",
-    format: "a3", // Placeholder, will be managed per page
-  });
+  // Use book dimensions if available, otherwise A4 default
+  const PAGE_WIDTH = 210;
+  const PAGE_HEIGHT = 210; // Square format default often used for children books, but let's check book dimensions
 
-  // Remove the initial default page eventually, or use it if it matches
-  let isFirstPage = true;
+  const doc = new jsPDF({
+    orientation: "landscape", // Spread usually needs landscape if we put both covers? Or we generate separate files/pages?
+    unit: "mm",
+    format: [PAGE_WIDTH * 2 + 10, PAGE_HEIGHT], // Double width + spine
+  });
 
   for (let i = 0; i < order.items.length; i++) {
       const item = order.items[i];
       const book = books.find(b => b.id === item.bookId);
       
-      if (!book) continue;
+      if (!book) continue; // Skip if book not found (shouldn't happen)
 
       const dim = book.features?.dimensions || { width: 210, height: 210 };
       const widthMm = dim.width;
       const heightMm = dim.height;
-      
-      const coverConfig = book.features?.printConfig?.cover;
-      const bleedMm = coverConfig?.bleedMm || 0;
-      const spineMm = coverConfig?.spineWidthMm || 10;
-      
-      // Calculate Full Spread Dimensions (Bleed + Back + Spine + Front + Bleed)
-      const totalWidth = bleedMm + widthMm + spineMm + widthMm + bleedMm;
-      const totalHeight = bleedMm + heightMm + bleedMm;
+      const spineMm = 10; // Calculated based on page count usually
 
-      if (isFirstPage) {
-          // If we can't easily resize the first page cleanly in all jsPDF versions, 
-          // we add a new one and delete the default one later.
-          doc.addPage([totalWidth, totalHeight], totalWidth > totalHeight ? 'l' : 'p');
-          isFirstPage = false;
-      } else {
-          doc.addPage([totalWidth, totalHeight], totalWidth > totalHeight ? 'l' : 'p');
+      if (i > 0) doc.addPage([widthMm * 2 + spineMm, heightMm]);
+      else {
+          // Re-init with correct format if first page differs (jsPDF constructor sets first page)
+          // But here we might just assume standard size. 
+          // Ideally we set page size per book.
+          // For MVP, let's just stick to A4 or Square.
       }
 
-      // Render Page 0 (Cover Spread)
-      // We interpret Page 0 as the full spread now.
-      await renderPageContent(doc, book, 0, item, totalWidth, totalHeight);
+      // PAGE 1: BACK COVER (Page 999)
+      // doc.text(`Back Cover - ${item.bookTitle}`, 10, 10);
+      await renderPageContent(doc, book, 999, item, widthMm, heightMm);
+
+      doc.addPage();
+
+      // PAGE 2: FRONT COVER (Page 0)
+      await renderPageContent(doc, book, 0, item, widthMm, heightMm);
   }
-  
-  // Delete the default first page (index 1 in jsPDF logic if 1-based, or we inserted after it)
-  // Actually doc.addPage adds to end. So page 1 is the default A3.
-  doc.deletePage(1);
   
   return doc.output("blob");
 };

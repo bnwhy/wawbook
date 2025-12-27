@@ -2322,9 +2322,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             </div>
                                             <div>
                                                <div className="font-bold text-slate-800 text-sm">Fichier Intérieur (PDF)</div>
-                                               <div className="text-xs text-slate-500">
-                                                  {order.status === 'pending' ? 'En attente de génération' : `Généré le ${new Date(order.createdAt).toLocaleDateString()} • 22.1 MB`}
-                                               </div>
                                             </div>
                                          </div>
                                          <button 

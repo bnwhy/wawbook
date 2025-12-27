@@ -1911,12 +1911,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <th className="px-6 py-4">Ville</th>
                                 <th className="px-6 py-4 text-center">Commandes</th>
                                 <th className="px-6 py-4 text-right">Total dépensé</th>
-                                <th className="px-6 py-4"></th>
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
                              {customers.map(customer => (
-                                <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
+                                <tr key={customer.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setSelectedCustomerId(customer.id)}>
                                    <td className="px-6 py-4">
                                       <div className="font-bold text-slate-900">{customer.firstName} {customer.lastName}</div>
                                       <div className="text-xs text-slate-400">Inscrit le {new Date(customer.createdAt).toLocaleDateString()}</div>
@@ -1933,14 +1932,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    </td>
                                    <td className="px-6 py-4 text-right font-bold text-slate-900">
                                       {customer.totalSpent.toFixed(2)} €
-                                   </td>
-                                   <td className="px-6 py-4 text-right">
-                                      <button 
-                                        onClick={() => setSelectedCustomerId(customer.id)}
-                                        className="text-indigo-600 hover:text-indigo-800 font-bold text-xs"
-                                      >
-                                         Voir
-                                      </button>
                                    </td>
                                 </tr>
                              ))}

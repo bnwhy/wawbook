@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useCart, CartItem } from '../context/CartContext';
+import { useBooks } from '../context/BooksContext';
 import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import BookPreview from '../components/BookPreview';
+import BookCover from '../components/BookCover';
 import { generateStoryText } from '../services/geminiService';
 import { Story } from '../types';
 
@@ -15,6 +17,7 @@ interface CartPageProps {
 
 const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
   const { items, removeFromCart, updateQuantity, total } = useCart();
+  const { books } = useBooks();
   const [, setLocation] = useLocation();
   const [previewItem, setPreviewItem] = useState<CartItem | null>(null);
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
@@ -80,7 +83,10 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
+            {items.map((item) => {
+              const book = books.find(b => b.id === item.productId || b.name === item.bookTitle);
+              
+              return (
               <div key={item.id} className="bg-white rounded-xl p-6 shadow-sm border border-stone-100 flex flex-col md:flex-row gap-6 relative">
                 
                 {/* Remove Button (Top Right) */}
@@ -93,38 +99,21 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
 
                 {/* Book Thumbnail */}
                 <div className="w-full md:w-32 md:h-32 bg-cloud-blue rounded-full shadow-inner flex-shrink-0 relative overflow-hidden self-center md:self-start border-4 border-white shadow-lg">
-                    {/* Only show cover image if present AND not a custom book with dynamic rendering */}
-                    {item.coverImage && !item.config ? (
-                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${item.coverImage})` }}></div>
-                    ) : item.config ? (
-                        <div className="absolute inset-0 overflow-hidden">
-                             {/* Attempt to render a mini-preview using the config */}
-                             {/* Since we can't easily inline the full Wizard render logic here without duplicating code, 
-                                 we will rely on the coverImage prop being populated with a snapshot if available, 
-                                 OR fallback to a generic visual.
-                                 
-                                 Ideally, the Wizard should have generated a snapshot and saved it to item.coverImage.
-                                 If that's missing, let's show a placeholder character.
-                             */}
-                             {item.coverImage ? (
-                                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${item.coverImage})` }}></div>
-                             ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center bg-[#f0f9ff] p-2">
-                                   <div className="text-[10px] text-cloud-blue font-bold text-center leading-tight mb-1">{item.config.childName}</div>
-                                   {/* Simple SVG Avatar Placeholder */}
-                                   <svg viewBox="0 0 100 100" className="w-16 h-16">
-                                      <circle cx="50" cy="50" r="40" fill="#FFE0BD" />
-                                      <path d="M30 60 Q50 80 70 60" fill="none" stroke="#333" strokeWidth="3" strokeLinecap="round" />
-                                      <circle cx="35" cy="45" r="4" fill="#333" />
-                                      <circle cx="65" cy="45" r="4" fill="#333" />
-                                   </svg>
-                                </div>
-                             )}
-                        </div>
+                    {book && item.config ? (
+                        <BookCover 
+                            book={book} 
+                            config={item.config} 
+                            className="w-full h-full"
+                        />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white text-xs text-center p-2 font-bold bg-cloud-light">
-                            {item.bookTitle}
-                        </div>
+                        // Fallback for legacy items or missing data
+                        item.coverImage ? (
+                            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${item.coverImage})` }}></div>
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white text-xs text-center p-2 font-bold bg-cloud-light">
+                                {item.bookTitle}
+                            </div>
+                        )
                     )}
                 </div>
                 
@@ -171,7 +160,8 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                     </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
             
             <div className="text-center py-4">
                  <p className="text-cloud-dark font-medium mb-6">Nous vous offrons 30 % de réduction sur votre deuxième livre avec le code <span className="font-black">BOOK30</span></p>

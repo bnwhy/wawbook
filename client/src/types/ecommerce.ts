@@ -54,3 +54,18 @@ export interface OrderLog {
   message: string;
   author?: string; // "System" or "Admin"
 }
+
+export interface ShippingMethod {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  estimatedDelay?: string;
+}
+
+export interface ShippingZone {
+  id: string;
+  name: string;
+  countries: string[]; // ISO codes or country names
+  methods: ShippingMethod[];
+}

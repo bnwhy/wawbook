@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Customer, Order, OrderStatus } from '../types/ecommerce';
+import { Customer, Order, OrderStatus, ShippingZone } from '../types/ecommerce';
 
 // Mock Data Generation
 const MOCK_CUSTOMERS: Customer[] = [
@@ -169,9 +169,30 @@ const MOCK_ORDERS: Order[] = [
   }
 ];
 
+const MOCK_SHIPPING_ZONES: ShippingZone[] = [
+  {
+    id: 'zone-fr',
+    name: 'France Métropolitaine',
+    countries: ['France'],
+    methods: [
+      { id: 'm1', name: 'Livraison Standard', price: 4.90, estimatedDelay: '3-5 jours' },
+      { id: 'm2', name: 'Livraison Express', price: 12.90, estimatedDelay: '24-48h' }
+    ]
+  },
+  {
+    id: 'zone-eu',
+    name: 'Union Européenne',
+    countries: ['Belgique', 'Allemagne', 'Italie', 'Espagne'],
+    methods: [
+      { id: 'm3', name: 'Standard International', price: 14.90, estimatedDelay: '5-7 jours' }
+    ]
+  }
+];
+
 interface EcommerceContextType {
   customers: Customer[];
   orders: Order[];
+  shippingZones: ShippingZone[];
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   updateOrderTracking: (orderId: string, trackingNumber: string) => void;
   getCustomerById: (id: string) => Customer | undefined;
@@ -180,6 +201,9 @@ interface EcommerceContextType {
   updateCustomer: (customerId: string, data: Partial<Customer>) => void;
   addCustomer: (customer: Customer) => void;
   addOrderLog: (orderId: string, message: string, type?: 'comment' | 'status_change' | 'system') => void;
+  addShippingZone: (zone: ShippingZone) => void;
+  updateShippingZone: (id: string, zone: Partial<ShippingZone>) => void;
+  deleteShippingZone: (id: string) => void;
 }
 
 const EcommerceContext = createContext<EcommerceContextType | undefined>(undefined);
@@ -206,6 +230,16 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   });
 
+  const [shippingZones, setShippingZones] = useState<ShippingZone[]>(() => {
+    try {
+      const saved = localStorage.getItem('ecommerce_shipping_zones');
+      return saved ? JSON.parse(saved) : MOCK_SHIPPING_ZONES;
+    } catch (e) {
+      console.error('Error parsing shipping zones data', e);
+      return MOCK_SHIPPING_ZONES;
+    }
+  });
+
   // Persist to localStorage whenever state changes
   React.useEffect(() => {
     try {
@@ -222,6 +256,14 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       console.error('Error saving orders data', e);
     }
   }, [orders]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('ecommerce_shipping_zones', JSON.stringify(shippingZones));
+    } catch (e) {
+      console.error('Error saving shipping zones data', e);
+    }
+  }, [shippingZones]);
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
     setOrders(prev => prev.map(o => {
@@ -372,10 +414,23 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
   
   const getOrdersByCustomer = (customerId: string) => orders.filter(o => o.customerId === customerId);
 
+  const addShippingZone = (zone: ShippingZone) => {
+    setShippingZones(prev => [...prev, zone]);
+  };
+
+  const updateShippingZone = (id: string, zone: Partial<ShippingZone>) => {
+    setShippingZones(prev => prev.map(z => z.id === id ? { ...z, ...zone } : z));
+  };
+
+  const deleteShippingZone = (id: string) => {
+    setShippingZones(prev => prev.filter(z => z.id !== id));
+  };
+
   return (
     <EcommerceContext.Provider value={{ 
       customers, 
       orders, 
+      shippingZones,
       updateOrderStatus, 
       updateOrderTracking,
       getCustomerById,
@@ -383,7 +438,10 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       createOrder,
       updateCustomer,
       addCustomer,
-      addOrderLog
+      addOrderLog,
+      addShippingZone,
+      updateShippingZone,
+      deleteShippingZone
     }}>
       {children}
     </EcommerceContext.Provider>

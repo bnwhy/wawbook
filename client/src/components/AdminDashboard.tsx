@@ -1744,7 +1744,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       <h3 className="font-bold text-slate-800">Statut</h3>
                                       {pendingOrderChanges && (
                                          <button
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                               e.stopPropagation(); // Empêcher la propagation si nécessaire
                                                if (!selectedOrderId) return;
                                                const originalOrder = orders.find(o => o.id === selectedOrderId);
                                                if (!originalOrder) return;
@@ -1756,10 +1757,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                setPendingOrderChanges(null);
                                                toast.success('Modifications enregistrées');
                                             }}
-                                            className="bg-brand-coral text-white p-1.5 rounded-md hover:bg-brand-coral/90 transition-colors shadow-sm animate-in fade-in zoom-in duration-200"
+                                            className="bg-brand-coral text-white p-2 rounded-lg hover:bg-brand-coral/90 transition-colors shadow-md animate-in fade-in zoom-in duration-200 flex items-center justify-center"
                                             title="Enregistrer toutes les modifications"
                                          >
-                                            <Save size={14} />
+                                            <Save size={18} />
                                          </button>
                                       )}
                                    </div>

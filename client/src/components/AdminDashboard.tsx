@@ -2318,22 +2318,34 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       ))}
                                    </div>
                                    <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
-                                      <div className="flex justify-between text-sm">
-                                         <span className="text-slate-500">Sous-total</span>
-                                         <span className="font-medium text-slate-900">{order.items.reduce((acc, i) => acc + (i.price * i.quantity), 0).toFixed(2)} €</span>
-                                      </div>
-                                      <div className="flex justify-between text-sm">
-                                         <span className="text-slate-500">Livraison</span>
-                                         <span className="font-medium text-slate-900">4.90 €</span>
-                                      </div>
-                                      <div className="flex justify-between text-sm">
-                                         <span className="text-slate-500">Réduction</span>
-                                         <span className="font-medium text-green-600">-0.00 €</span>
-                                      </div>
-                                      <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                                         <span className="font-bold text-slate-800">Total</span>
-                                         <span className="text-2xl font-bold text-slate-900">{(order.totalAmount + 4.90).toFixed(2)} €</span>
-                                      </div>
+                                      {(() => {
+                                          const subtotal = order.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+                                          const shipping = 4.90;
+                                          const discount = 0; // Pour l'instant, pas de gestion de réduction dans le modèle
+
+                                          return (
+                                              <>
+                                                  <div className="flex justify-between text-sm">
+                                                     <span className="text-slate-500">Sous-total</span>
+                                                     <span className="font-medium text-slate-900">{subtotal.toFixed(2)} €</span>
+                                                  </div>
+                                                  <div className="flex justify-between text-sm">
+                                                     <span className="text-slate-500">Livraison</span>
+                                                     <span className="font-medium text-slate-900">{shipping.toFixed(2)} €</span>
+                                                  </div>
+                                                  {discount > 0 && (
+                                                      <div className="flex justify-between text-sm">
+                                                         <span className="text-slate-500">Réduction</span>
+                                                         <span className="font-medium text-green-600">-{discount.toFixed(2)} €</span>
+                                                      </div>
+                                                  )}
+                                                  <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                                                     <span className="font-bold text-slate-800">Total</span>
+                                                     <span className="text-2xl font-bold text-slate-900">{(subtotal + shipping - discount).toFixed(2)} €</span>
+                                                  </div>
+                                              </>
+                                          );
+                                      })()}
                                    </div>
                                 </div>
 

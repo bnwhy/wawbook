@@ -4333,13 +4333,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           
                                                           {/* Back Cover Background */}
                                                           <div 
-                                                              className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center overflow-hidden"
+                                                              className="absolute top-0 bottom-0 bg-white border-r border-gray-200 flex items-center justify-center overflow-hidden"
                                                               style={{ left: '0%', width: `${leftPagePct}%` }}
                                                               onClick={(e) => {
                                                                   e.stopPropagation();
                                                                   setSelectedPageId(backCover.id);
                                                               }}
                                                           >
+                                                              <div className="absolute top-2 left-2 text-[10px] text-gray-400 font-medium uppercase tracking-wider pointer-events-none z-10">Dos (Arrière)</div>
                                                               {(() => {
                                                                  const bgImage = selectedBook.contentConfig.images.find(
                                                                     img => img.pageIndex === backCover.pageNumber && 
@@ -4352,21 +4353,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                           {/* Spine Background (Continuous/Gray) */}
                                                           <div 
-                                                              className="absolute top-0 bottom-0 bg-gray-100 flex items-center justify-center"
+                                                              className="absolute top-0 bottom-0 bg-gray-200 border-x border-gray-300 flex items-center justify-center"
                                                               style={{ left: `${leftPagePct}%`, width: `${spinePct}%` }}
                                                           >
-                                                              {/* Optional Spine Texture/Color */}
+                                                              {/* Spine Texture/Color */}
+                                                              <div className="w-full h-full opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, #000 2px, #000 4px)' }}></div>
                                                           </div>
 
                                                           {/* Front Cover Background */}
                                                           <div 
-                                                              className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center overflow-hidden"
+                                                              className="absolute top-0 bottom-0 bg-white border-l border-gray-200 flex items-center justify-center overflow-hidden"
                                                               style={{ left: `${rightPageOffsetPct}%`, width: `${rightPagePct}%` }}
                                                               onClick={(e) => {
                                                                   e.stopPropagation();
                                                                   setSelectedPageId(frontCover.id);
                                                               }}
                                                           >
+                                                              <div className="absolute top-2 right-2 text-[10px] text-gray-400 font-medium uppercase tracking-wider pointer-events-none z-10">Face (Avant)</div>
                                                               {(() => {
                                                                  const bgImage = selectedBook.contentConfig.images.find(
                                                                     img => img.pageIndex === frontCover.pageNumber && 

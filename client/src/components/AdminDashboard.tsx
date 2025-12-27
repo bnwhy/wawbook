@@ -1341,13 +1341,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                          <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-2 px-2">
                             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                                <button className="px-3 py-1.5 bg-slate-100 text-slate-800 text-xs font-bold rounded-md whitespace-nowrap">Tout</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Non traité</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Non payé</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Ouvert</button>
-                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Archivé</button>
-                               <button className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-md">
-                                  <Plus size={14} />
-                               </button>
+                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">En attente</button>
+                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">En cours</button>
+                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Expédiée</button>
+                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Livrée</button>
+                               <button className="px-3 py-1.5 hover:bg-slate-50 text-slate-600 text-xs font-medium rounded-md whitespace-nowrap transition-colors">Annulée</button>
                             </div>
                             <div className="relative">
                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />

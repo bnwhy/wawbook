@@ -3713,7 +3713,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                             <Filter size={16} />
                                                                         </button>
                                                                     </PopoverTrigger>
-                                                                    <PopoverContent className="w-80 p-4">
+                                                                    <PopoverContent className="w-80 p-4 bg-white">
                                                                         <div className="space-y-4">
                                                                             <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
                                                                                 <Filter size={14} /> Condition d'application

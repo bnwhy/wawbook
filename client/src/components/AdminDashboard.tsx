@@ -124,6 +124,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Fulfillment Tracking State
   const [fulfillmentTracking, setFulfillmentTracking] = useState('');
 
+  // Menu Dirty State Tracking
+  const [originalMainMenu, setOriginalMainMenu] = useState<MenuItem[]>([]);
+
+  // Update original menu state when entering the tab
+  React.useEffect(() => {
+    if (activeTab === 'menus') {
+        setOriginalMainMenu(JSON.parse(JSON.stringify(mainMenu)));
+    }
+  }, [activeTab]);
+
+  const handleSaveMenu = (idx: number) => {
+      const newOriginals = [...originalMainMenu];
+      newOriginals[idx] = JSON.parse(JSON.stringify(mainMenu[idx]));
+      setOriginalMainMenu(newOriginals);
+      toast.success('Menu enregistré avec succès');
+  };
+
   // Edit Customer State
   const [isEditingCustomer, setIsEditingCustomer] = useState(false);
   const [editCustomerForm, setEditCustomerForm] = useState({
@@ -3463,8 +3480,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   
                                   <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
                                       <button 
-                                          onClick={() => toast.success('Menu enregistré avec succès')}
-                                          className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm active:transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                          onClick={() => handleSaveMenu(idx)}
+                                          disabled={JSON.stringify(menu) === JSON.stringify(originalMainMenu[idx] || {})}
+                                          className={`px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors shadow-sm ${
+                                              JSON.stringify(menu) !== JSON.stringify(originalMainMenu[idx] || {})
+                                                  ? 'bg-slate-900 text-white hover:bg-slate-800' 
+                                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                          }`}
                                       >
                                           <Save size={16} /> Enregistrer le menu
                                       </button>

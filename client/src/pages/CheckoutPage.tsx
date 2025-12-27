@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle } from 'lucide-react';
@@ -44,6 +44,27 @@ const CheckoutPage = () => {
 
   // Shipping State
   const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<string | null>(null);
+
+  // Compute available countries from shipping zones
+  const availableCountries = useMemo(() => {
+      const countriesInZones = new Set(shippingZones.flatMap(z => z.countries));
+      // Filter ALL_COUNTRIES to keep the priority order, or just return the list if ALL_COUNTRIES is not comprehensive enough
+      // But since ALL_COUNTRIES is large, intersection is best.
+      const filtered = ALL_COUNTRIES.filter(c => countriesInZones.has(c));
+      
+      // If we have countries in zones that are NOT in our big list (e.g. typos or manual additions), add them at the end
+      const knownCountries = new Set(ALL_COUNTRIES);
+      const extraCountries = Array.from(countriesInZones).filter(c => !knownCountries.has(c)).sort();
+      
+      return [...filtered, ...extraCountries];
+  }, [shippingZones]);
+
+  // Ensure selected country is valid
+  useEffect(() => {
+      if (availableCountries.length > 0 && !availableCountries.includes(formData.country)) {
+          setFormData(prev => ({ ...prev, country: availableCountries[0] }));
+      }
+  }, [availableCountries, formData.country]);
 
   // Find applicable zone based on country
   const applicableZone = shippingZones.find(z => 
@@ -224,9 +245,13 @@ const CheckoutPage = () => {
                                             onChange={handleInputChange}
                                             className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer"
                                         >
-                                            {ALL_COUNTRIES.map(country => (
-                                                <option key={country} value={country}>{country}</option>
-                                            ))}
+                                            {availableCountries.length > 0 ? (
+                                                availableCountries.map(country => (
+                                                    <option key={country} value={country}>{country}</option>
+                                                ))
+                                            ) : (
+                                                <option value="">Aucun pays de livraison configuré</option>
+                                            )}
                                         </select>
                                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
                                     </div>

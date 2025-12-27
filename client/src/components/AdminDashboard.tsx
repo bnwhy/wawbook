@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
+import { Ruler } from './ui/ruler';
 
 import { generateCoverPDF, generateInteriorPDF } from '../utils/pdfGenerator';
 
@@ -30,36 +31,6 @@ const slugify = (text: string) => {
 const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or a direct list
 // Import font list from the package we just installed if available, or fallback to a larger list
 import googleFonts from 'google-fonts-complete';
-
-// Simple Ruler Component
-const Ruler = ({ sizeMm, orientation }: { sizeMm: number, orientation: 'horizontal' | 'vertical' }) => {
-    const ticks = [];
-    const step = 10; // 10mm steps
-    // Optimize for large sizes
-    for (let i = 0; i <= sizeMm; i += step) {
-        const pct = (i / sizeMm) * 100;
-        const isMajor = i % 50 === 0;
-        ticks.push(
-            <div 
-                key={i} 
-                className="absolute bg-gray-400"
-                style={{
-                    [orientation === 'horizontal' ? 'left' : 'top']: `${pct}%`,
-                    [orientation === 'horizontal' ? 'height' : 'width']: isMajor ? '100%' : '40%',
-                    [orientation === 'horizontal' ? 'bottom' : 'right']: 0,
-                    [orientation === 'horizontal' ? 'width' : 'height']: '1px',
-                }}
-            >
-                {isMajor && (
-                    <span className={`absolute text-[8px] text-gray-500 font-sans ${orientation === 'horizontal' ? 'top-0 left-1' : 'right-1 top-0 -translate-y-1/2 rotate-[-90deg] origin-right'}`}>
-                        {i}
-                    </span>
-                )}
-            </div>
-        );
-    }
-    return <div className="w-full h-full relative overflow-hidden">{ticks}</div>;
-};
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();

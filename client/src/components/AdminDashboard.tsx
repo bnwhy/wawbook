@@ -1533,8 +1533,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                    <div className="flex flex-col gap-4">
                       {books.map(book => (
                         <div key={book.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-6 group hover:shadow-md hover:border-brand-coral transition-all">
-                           <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center text-slate-300 shrink-0">
-                              <Book size={24} />
+                           <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden shrink-0 border border-slate-200 relative">
+                              {book.coverImage ? (
+                                <img src={book.coverImage} alt={book.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                   <Book size={24} />
+                                </div>
+                              )}
                            </div>
                            
                            <div className="flex-1 min-w-0">

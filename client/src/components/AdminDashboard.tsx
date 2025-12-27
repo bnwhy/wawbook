@@ -1646,7 +1646,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prénom</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prénom <span className="text-red-500">*</span></label>
                                         <input 
                                             type="text" 
                                             value={newOrderForm.customer.firstName}
@@ -1655,7 +1655,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nom</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nom <span className="text-red-500">*</span></label>
                                         <input 
                                             type="text" 
                                             value={newOrderForm.customer.lastName}
@@ -1664,7 +1664,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         />
                                     </div>
                                     <div className="col-span-2">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email <span className="text-red-500">*</span></label>
                                         <input 
                                             type="email" 
                                             value={newOrderForm.customer.email}
@@ -1691,7 +1691,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </h3>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rue</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rue <span className="text-red-500">*</span></label>
                                         <input 
                                             type="text" 
                                             value={newOrderForm.customer.address.street}
@@ -1701,7 +1701,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Code Postal</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Code Postal <span className="text-red-500">*</span></label>
                                             <input 
                                                 type="text" 
                                                 value={newOrderForm.customer.address.zipCode}
@@ -1710,7 +1710,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ville</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ville <span className="text-red-500">*</span></label>
                                             <input 
                                                 type="text" 
                                                 value={newOrderForm.customer.address.city}
@@ -1720,7 +1720,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Pays</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Pays <span className="text-red-500">*</span></label>
                                         <select 
                                             value={newOrderForm.customer.address.country}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, country: e.target.value}}})}
@@ -1745,7 +1745,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </h3>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Livre</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Livre <span className="text-red-500">*</span></label>
                                         <select 
                                             value={newOrderForm.items[0].bookId}
                                             onChange={(e) => {
@@ -1762,7 +1762,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Quantité</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Quantité <span className="text-red-500">*</span></label>
                                         <input 
                                             type="number" 
                                             min="1"

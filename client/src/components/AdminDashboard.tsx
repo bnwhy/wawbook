@@ -3617,15 +3617,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     />
                                     <p className="text-xs text-slate-500 mt-1">Poids moyen utilisé pour le calcul des frais de port.</p>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Frais de manutention (€)</label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                        defaultValue={0}
-                                    />
-                                    <p className="text-xs text-slate-500 mt-1">Ajouté automatiquement à chaque commande.</p>
-                                </div>
                             </div>
                         </div>
                     </div>

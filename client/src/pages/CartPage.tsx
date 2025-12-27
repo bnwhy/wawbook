@@ -125,15 +125,30 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                             <p className="text-stone-500 italic text-sm mb-3">({item.dedication || "C'est un endroit étrange"})</p>
                             
                             <div className="space-y-1 text-sm text-stone-600">
-                                <p>
-                                    <span className="font-medium">Noms:</span> <span className="font-bold text-cloud-dark">
-                                        {item.config.childName} ({item.config.gender === 'Garçon' ? 'Garçon' : 'Fille'})
-                                        {item.config.characters && Object.entries(item.config.characters)
-                                            .filter(([key]) => key !== 'child')
-                                            .map(([_, char]: [string, any]) => char.name ? `, ${char.name} (${char.gender === 'boy' || char.role === 'dad' ? 'Garçon' : 'Fille'})` : '')
-                                            .join('')}
-                                    </span>
-                                </p>
+                                {/* Dynamic Text Fields from Wizard Config */}
+                                {book?.wizardConfig?.tabs.flatMap(tab => 
+                                    tab.variants
+                                        .filter(v => v.type === 'text')
+                                        .map(v => {
+                                            const val = item.config.characters?.[tab.id]?.[v.id];
+                                            if (!val) return null;
+                                            return (
+                                                <p key={`${tab.id}-${v.id}`}>
+                                                    <span className="font-medium">{v.label}:</span> <span className="font-bold text-cloud-dark">{val}</span>
+                                                </p>
+                                            );
+                                        })
+                                )}
+
+                                {/* Fallback for legacy items without wizard config mapping */}
+                                {!book?.wizardConfig && item.config.childName && (
+                                    <p>
+                                        <span className="font-medium">Nom:</span> <span className="font-bold text-cloud-dark">
+                                            {item.config.childName}
+                                        </span>
+                                    </p>
+                                )}
+
                                 <p><span className="font-medium">Langue:</span> Français</p>
                                 <p><span className="font-medium">Format:</span> {item.format === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}</p>
                             </div>

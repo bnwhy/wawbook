@@ -3910,7 +3910,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 // Ensure minimal structure (Front + Back) exists if missing
                                 if (currentPages.length === 0) {
                                     currentPages = [
-                                        { id: `cover-front-${Date.now()}`, pageNumber: 0, label: 'Couverture' },
+                                        { id: `cover-front-${Date.now()}`, pageNumber: 0, label: 'Couverture Avant' },
                                         { id: `cover-back-${Date.now()}`, pageNumber: 999, label: 'Couverture Arrière' }
                                     ];
                                 } else if (currentPages.length === 1) {

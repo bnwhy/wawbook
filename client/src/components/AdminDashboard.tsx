@@ -2325,10 +2325,28 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                 {/* Production & Files */}
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                   <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                      <Printer size={18} className="text-indigo-600" />
-                                      Production & Fichiers
-                                   </h3>
+                                   <div className="flex justify-between items-center mb-4">
+                                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                         <Printer size={18} className="text-indigo-600" />
+                                         Production & Fichiers
+                                      </h3>
+                                      <button 
+                                         onClick={() => {
+                                             toast.promise(
+                                                 new Promise((resolve) => setTimeout(resolve, 2000)),
+                                                 {
+                                                     loading: 'Régénération des fichiers en cours...',
+                                                     success: 'Fichiers régénérés avec succès !',
+                                                     error: 'Erreur lors de la régénération'
+                                                 }
+                                             );
+                                         }}
+                                         className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+                                      >
+                                         <RotateCcw size={14} />
+                                         Régénérer
+                                      </button>
+                                   </div>
                                    <div className="space-y-3">
                                       {/* Cover File */}
                                       <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">

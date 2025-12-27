@@ -42,6 +42,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  
+  // New Order Form State
+  const [newOrderForm, setNewOrderForm] = useState({
+      customer: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          address: {
+              street: '',
+              zipCode: '',
+              city: '',
+              country: 'France'
+          }
+      },
+      items: [
+          {
+              bookId: '',
+              quantity: 1,
+              config: { name: '', gender: 'boy' }
+          }
+      ]
+  });
 
   // Order Filters State
   const [orderFilter, setOrderFilter] = useState<string | null>(null);
@@ -71,31 +95,59 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     toast.success(`${ordersToExport.length} commandes exportées avec succès`);
   };
 
-  // Mock Create Order
+  // Create Order Handler
   const handleCreateOrder = () => {
-     const mockCustomer = {
-         firstName: "Nouveau",
-         lastName: "Client",
-         email: `nouveau.client.${Date.now()}@example.com`,
-         phone: "06 99 88 77 66",
-         address: {
-             street: "10 Avenue des Champs-Élysées",
-             city: "Paris",
-             zipCode: "75008",
-             country: "France"
-         }
-     };
+     setIsCreatingOrder(true);
+  };
 
-     const mockItem = {
-         productId: books[0]?.id || 'explorer',
-         bookTitle: books[0]?.name || "Livre Personnalisé",
-         quantity: 1,
-         price: 29.90,
-         config: { name: 'Enfant Test', gender: 'boy' }
-     };
+  const submitNewOrder = () => {
+      // Validation simple
+      if (!newOrderForm.customer.lastName || !newOrderForm.customer.email) {
+          toast.error("Veuillez remplir les informations client obligatoires");
+          return;
+      }
+      
+      const selectedBook = books.find(b => b.id === newOrderForm.items[0].bookId) || books[0];
+      
+      const orderItems = newOrderForm.items.map(item => {
+          const book = books.find(b => b.id === item.bookId) || books[0];
+          return {
+              productId: book.id,
+              bookTitle: book.name,
+              quantity: item.quantity,
+              price: book.price,
+              config: item.config
+          };
+      });
 
-     createOrder(mockCustomer, [mockItem], 29.90);
-     toast.success("Nouvelle commande simulée créée !");
+      const totalAmount = orderItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+      createOrder(newOrderForm.customer, orderItems, totalAmount);
+      toast.success("Commande créée avec succès !");
+      setIsCreatingOrder(false);
+      
+      // Reset form
+      setNewOrderForm({
+          customer: {
+              firstName: '',
+              lastName: '',
+              email: '',
+              phone: '',
+              address: {
+                  street: '',
+                  zipCode: '',
+                  city: '',
+                  country: 'France'
+              }
+          },
+          items: [
+              {
+                  bookId: books[0]?.id || '',
+                  quantity: 1,
+                  config: { name: '', gender: 'boy' }
+              }
+          ]
+      });
   };
 
   React.useEffect(() => {
@@ -1374,7 +1426,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
 
               {/* --- VIEW: ORDERS --- */}
-              {activeTab === 'orders' && !selectedOrderId && (
+              {activeTab === 'orders' && !selectedOrderId && !isCreatingOrder && (
                 <div className="space-y-4">
                    <div className="flex flex-col gap-4">
                       <div className="flex justify-between items-center">
@@ -1563,6 +1615,234 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       </div>
                    </div>
                 </div>
+              )}
+
+              {/* --- VIEW: CREATE ORDER --- */}
+              {activeTab === 'orders' && isCreatingOrder && (
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="flex items-center gap-4 mb-4">
+                       <button onClick={() => setIsCreatingOrder(false)} className="text-slate-400 hover:text-slate-600">
+                          <ArrowUp className="-rotate-90" size={20} />
+                       </button>
+                       <h2 className="text-2xl font-bold text-slate-800">Nouvelle Commande</h2>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-6">
+                        {/* Customer Info */}
+                        <div className="col-span-2 space-y-6">
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <User size={18} className="text-indigo-600" />
+                                    Informations Client
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prénom</label>
+                                        <input 
+                                            type="text" 
+                                            value={newOrderForm.customer.firstName}
+                                            onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, firstName: e.target.value}})}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nom</label>
+                                        <input 
+                                            type="text" 
+                                            value={newOrderForm.customer.lastName}
+                                            onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, lastName: e.target.value}})}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+                                        <input 
+                                            type="email" 
+                                            value={newOrderForm.customer.email}
+                                            onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, email: e.target.value}})}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Téléphone</label>
+                                        <input 
+                                            type="tel" 
+                                            value={newOrderForm.customer.phone}
+                                            onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, phone: e.target.value}})}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Truck size={18} className="text-indigo-600" />
+                                    Adresse de Livraison
+                                </h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Rue</label>
+                                        <input 
+                                            type="text" 
+                                            value={newOrderForm.customer.address.street}
+                                            onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, street: e.target.value}}})}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Code Postal</label>
+                                            <input 
+                                                type="text" 
+                                                value={newOrderForm.customer.address.zipCode}
+                                                onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, zipCode: e.target.value}}})}
+                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ville</label>
+                                            <input 
+                                                type="text" 
+                                                value={newOrderForm.customer.address.city}
+                                                onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, city: e.target.value}}})}
+                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Pays</label>
+                                        <select 
+                                            value={newOrderForm.customer.address.country}
+                                            onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, country: e.target.value}}})}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                        >
+                                            <option value="France">France</option>
+                                            <option value="Belgique">Belgique</option>
+                                            <option value="Suisse">Suisse</option>
+                                            <option value="Canada">Canada</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Order Items */}
+                        <div className="space-y-6">
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Book size={18} className="text-indigo-600" />
+                                    Article
+                                </h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Livre</label>
+                                        <select 
+                                            value={newOrderForm.items[0].bookId}
+                                            onChange={(e) => {
+                                                const newItems = [...newOrderForm.items];
+                                                newItems[0].bookId = e.target.value;
+                                                setNewOrderForm({...newOrderForm, items: newItems});
+                                            }}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                        >
+                                            <option value="">Sélectionner un livre...</option>
+                                            {books.map(book => (
+                                                <option key={book.id} value={book.id}>{book.name} - {book.price}€</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Quantité</label>
+                                        <input 
+                                            type="number" 
+                                            min="1"
+                                            value={newOrderForm.items[0].quantity}
+                                            onChange={(e) => {
+                                                const newItems = [...newOrderForm.items];
+                                                newItems[0].quantity = parseInt(e.target.value) || 1;
+                                                setNewOrderForm({...newOrderForm, items: newItems});
+                                            }}
+                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                        />
+                                    </div>
+                                    
+                                    <div className="pt-4 border-t border-gray-100">
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Personnalisation</h4>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="block text-xs text-slate-500 mb-1">Prénom de l'enfant</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={newOrderForm.items[0].config.name}
+                                                    onChange={(e) => {
+                                                        const newItems = [...newOrderForm.items];
+                                                        newItems[0].config.name = e.target.value;
+                                                        setNewOrderForm({...newOrderForm, items: newItems});
+                                                    }}
+                                                    className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-slate-500 mb-1">Genre</label>
+                                                <div className="flex gap-4">
+                                                    <label className="flex items-center gap-2 text-sm">
+                                                        <input 
+                                                            type="radio" 
+                                                            name="gender" 
+                                                            checked={newOrderForm.items[0].config.gender === 'boy'}
+                                                            onChange={() => {
+                                                                const newItems = [...newOrderForm.items];
+                                                                newItems[0].config.gender = 'boy';
+                                                                setNewOrderForm({...newOrderForm, items: newItems});
+                                                            }}
+                                                            className="text-brand-coral focus:ring-brand-coral"
+                                                        />
+                                                        Garçon
+                                                    </label>
+                                                    <label className="flex items-center gap-2 text-sm">
+                                                        <input 
+                                                            type="radio" 
+                                                            name="gender" 
+                                                            checked={newOrderForm.items[0].config.gender === 'girl'}
+                                                            onChange={() => {
+                                                                const newItems = [...newOrderForm.items];
+                                                                newItems[0].config.gender = 'girl';
+                                                                setNewOrderForm({...newOrderForm, items: newItems});
+                                                            }}
+                                                            className="text-brand-coral focus:ring-brand-coral"
+                                                        />
+                                                        Fille
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="font-bold text-slate-700">Total</span>
+                                    <span className="text-xl font-bold text-slate-900">
+                                        {(() => {
+                                            const book = books.find(b => b.id === newOrderForm.items[0].bookId);
+                                            const price = book ? book.price : 0;
+                                            return (price * newOrderForm.items[0].quantity).toFixed(2);
+                                        })()} €
+                                    </span>
+                                </div>
+                                <button 
+                                    onClick={submitNewOrder}
+                                    className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-md flex items-center justify-center gap-2"
+                                >
+                                    <Save size={18} />
+                                    Créer la commande
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
               )}
 
               {/* --- VIEW: ORDER DETAIL --- */}

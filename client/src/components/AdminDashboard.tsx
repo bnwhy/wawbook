@@ -4214,42 +4214,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    
                                    {/* CANVAS AREA */}
                                    <div className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative">
-                                      <div className="relative">
-                                          {/* RULERS */}
-                                          {showGrid && (() => {
-                                             const pageIndex = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
-                                             const isCover = pageIndex === 0 || pageIndex === selectedBook.contentConfig.pages.length - 1;
-                                             
-                                             let rulerW = selectedBook.features?.dimensions?.width || 210;
-                                             let rulerH = selectedBook.features?.dimensions?.height || 210;
-
-                                             if (viewMode === 'spread' && isCover) {
-                                                const config = selectedBook.features?.printConfig?.cover;
-                                                const bleed = config?.bleedMm || 0;
-                                                const spine = config?.spineWidthMm || 0;
-                                                rulerW = bleed + rulerW + spine + rulerW + bleed;
-                                                rulerH = bleed + rulerH + bleed;
-                                             } else if (viewMode === 'spread') {
-                                                 rulerW = rulerW * 2;
-                                             }
-                                             
-                                             return (
-                                                 <>
-                                                     <div className="absolute -top-6 left-0 right-0 h-6 bg-white/80 backdrop-blur border-b border-gray-300 z-10">
-                                                         <Ruler sizeMm={rulerW} orientation="horizontal" />
-                                                     </div>
-                                                     <div className="absolute top-0 -left-6 bottom-0 w-6 bg-white/80 backdrop-blur border-r border-gray-300 z-10">
-                                                         <Ruler sizeMm={rulerH} orientation="vertical" />
-                                                     </div>
-                                                     <div className="absolute -top-6 -left-6 w-6 h-6 bg-white border-r border-b border-gray-300 z-20 flex items-center justify-center text-[8px] text-gray-400 font-bold select-none">mm</div>
-                                                 </>
-                                             );
-                                          })()}
-                                          
-                                          {/* Page Container */}
-                                          <div 
-                                             ref={canvasRef}
-                                         className="transition-all duration-300 flex gap-0 shadow-2xl bg-white"
+                                      {/* Page Container */}
+                                      <div 
+                                         ref={canvasRef}
+                                         className="transition-all duration-300 flex gap-0 shadow-2xl bg-white relative"
                                          style={{
                                             // Force single aspect ratio if viewing cover (since we now treat cover as single page)
                                             aspectRatio: (() => {
@@ -4282,7 +4250,37 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             maxHeight: '100%'
                                          }}
                                       >
-                                         
+                                          {/* RULERS - Placed inside Page Container but positioned outside */}
+                                          {showGrid && (() => {
+                                             const pageIndex = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
+                                             const isCover = pageIndex === 0 || pageIndex === selectedBook.contentConfig.pages.length - 1;
+                                             
+                                             let rulerW = selectedBook.features?.dimensions?.width || 210;
+                                             let rulerH = selectedBook.features?.dimensions?.height || 210;
+
+                                             if (viewMode === 'spread' && isCover) {
+                                                const config = selectedBook.features?.printConfig?.cover;
+                                                const bleed = config?.bleedMm || 0;
+                                                const spine = config?.spineWidthMm || 0;
+                                                rulerW = bleed + rulerW + spine + rulerW + bleed;
+                                                rulerH = bleed + rulerH + bleed;
+                                             } else if (viewMode === 'spread') {
+                                                 rulerW = rulerW * 2;
+                                             }
+                                             
+                                             return (
+                                                 <>
+                                                     <div className="absolute -top-6 left-0 right-0 h-6 bg-white/80 backdrop-blur border-b border-gray-300 z-10">
+                                                         <Ruler sizeMm={rulerW} orientation="horizontal" />
+                                                     </div>
+                                                     <div className="absolute top-0 -left-6 bottom-0 w-6 bg-white/80 backdrop-blur border-r border-gray-300 z-10">
+                                                         <Ruler sizeMm={rulerH} orientation="vertical" />
+                                                     </div>
+                                                     <div className="absolute -top-6 -left-6 w-6 h-6 bg-white border-r border-b border-gray-300 z-20 flex items-center justify-center text-[8px] text-gray-400 font-bold select-none">mm</div>
+                                                 </>
+                                             );
+                                          })()}
+
                                          {/* PAGE RENDERER */}
                                          {(() => {
                                             const currentPage = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
@@ -4746,7 +4744,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                );
                                          });
                                       })()}
-                                      </div>
                                       </div>
                                    </div>
 

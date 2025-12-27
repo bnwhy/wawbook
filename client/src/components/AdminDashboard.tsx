@@ -3567,11 +3567,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
 
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 bg-slate-50/50">
+                        <div className="p-6 border-b border-gray-100 bg-slate-50/50 flex justify-between items-center">
                             <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
                                 <Globe size={20} className="text-indigo-600" />
                                 Zones d'expédition
                             </h3>
+                            
+                            <div className="flex items-center gap-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase">Tarif par défaut:</label>
+                                <div className="relative w-24">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+                                    <input 
+                                        type="number" 
+                                        defaultValue={5.90}
+                                        className="w-full text-sm border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none text-right font-bold text-slate-800"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="group relative">
+                                    <HelpCircle size={16} className="text-slate-400 cursor-help" />
+                                    <div className="absolute right-0 bottom-full mb-2 w-64 bg-slate-800 text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                                        Ce tarif sera affiché dans le panier avant que le client ne renseigne son adresse de livraison.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div className="divide-y divide-gray-100">
                              {shippingZones.map(zone => (

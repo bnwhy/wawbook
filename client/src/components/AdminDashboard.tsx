@@ -126,6 +126,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Grid & Precision State
   const [showGrid, setShowGrid] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const [gridSizeMm, setGridSizeMm] = useState(10); // 10mm grid default
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [avatarFilters, setAvatarFilters] = useState<Record<string, string[]>>({}); // Top-level state for avatar filters, string[] for multiselect
@@ -3759,24 +3760,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       <label className="text-[10px] text-gray-500">Largeur (mm)</label>
                                                       <input 
                                                           type="number" 
-                                                          step="0.01"
                                                           value={selectedBook.features?.dimensions?.width || 210}
                                                           onChange={(e) => {
-                                                              const val = parseFloat(parseFloat(e.target.value).toFixed(2));
                                                               handleSaveBook({
                                                                   ...selectedBook,
                                                                   features: {
                                                                       ...selectedBook.features,
                                                                       dimensions: {
                                                                           ...selectedBook.features?.dimensions,
-                                                                          width: val || 210
+                                                                          width: parseInt(e.target.value) || 210
                                                                       }
                                                                   } as any
                                                               });
-                                                          }}
-                                                          onBlur={(e) => {
-                                                              const val = parseFloat(e.target.value).toFixed(2);
-                                                              e.target.value = val;
                                                           }}
                                                           className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
                                                       />
@@ -3785,24 +3780,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                       <label className="text-[10px] text-gray-500">Hauteur (mm)</label>
                                                       <input 
                                                           type="number" 
-                                                          step="0.01"
                                                           value={selectedBook.features?.dimensions?.height || 210}
                                                           onChange={(e) => {
-                                                              const val = parseFloat(parseFloat(e.target.value).toFixed(2));
                                                               handleSaveBook({
                                                                   ...selectedBook,
                                                                   features: {
                                                                       ...selectedBook.features,
                                                                       dimensions: {
                                                                           ...selectedBook.features?.dimensions,
-                                                                          height: val || 210
+                                                                          height: parseInt(e.target.value) || 210
                                                                       }
                                                                   } as any
                                                               });
-                                                          }}
-                                                          onBlur={(e) => {
-                                                              const val = parseFloat(e.target.value).toFixed(2);
-                                                              e.target.value = val;
                                                           }}
                                                           className="w-full text-xs border border-gray-300 rounded px-2 py-1.5"
                                                       />
@@ -3815,10 +3804,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   <label className="text-xs font-semibold text-slate-900">Fonds perdus (mm)</label>
                                                   <input 
                                                       type="number" 
-                                                      step="0.01"
-                                                      value={selectedBook.features?.printConfig?.interior?.bleedMm || 3.175}
+                                                      value={selectedBook.features?.printConfig?.interior?.bleedMm || 3}
                                                       onChange={(e) => {
-                                                          const val = parseFloat(parseFloat(e.target.value).toFixed(2));
+                                                          const val = parseInt(e.target.value);
                                                           handleSaveBook({
                                                               ...selectedBook,
                                                               features: {
@@ -3830,10 +3818,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               }
                                                           });
                                                       }}
-                                                      onBlur={(e) => {
-                                                          const val = parseFloat(e.target.value).toFixed(2);
-                                                          e.target.value = val;
-                                                      }}
                                                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
                                                   />
                                               </div>
@@ -3841,10 +3825,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   <label className="text-xs font-semibold text-slate-900">Marge de sécurité (mm)</label>
                                                   <input 
                                                       type="number" 
-                                                      step="0.01"
                                                       value={selectedBook.features?.printConfig?.interior?.safeMarginMm || 10}
                                                       onChange={(e) => {
-                                                          const val = parseFloat(parseFloat(e.target.value).toFixed(2));
+                                                          const val = parseInt(e.target.value);
                                                           handleSaveBook({
                                                               ...selectedBook,
                                                               features: {
@@ -3855,10 +3838,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   } as any
                                                               }
                                                           });
-                                                      }}
-                                                      onBlur={(e) => {
-                                                          const val = parseFloat(e.target.value).toFixed(2);
-                                                          e.target.value = val;
                                                       }}
                                                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white text-slate-900"
                                                   />
@@ -4163,6 +4142,36 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       
                                       {/* Show View Mode Toggle ONLY for interior pages (not cover) */}
                                       <div className="flex items-center gap-2 mr-4">
+                                          {/* Zoom Controls */}
+                                          <div className="flex items-center bg-gray-100 rounded-lg p-1 mr-2">
+                                             <button 
+                                                onClick={() => setZoomLevel(Math.max(0.2, zoomLevel - 0.1))}
+                                                className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded transition-all"
+                                                title="Zoom Arrière"
+                                             >
+                                                <Search size={14} className="transform scale-75" />
+                                                <span className="sr-only">Zoom Out</span>
+                                             </button>
+                                             <span className="text-[10px] font-bold text-slate-600 w-8 text-center select-none">
+                                                {Math.round(zoomLevel * 100)}%
+                                             </span>
+                                             <button 
+                                                onClick={() => setZoomLevel(Math.min(3, zoomLevel + 0.1))}
+                                                className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded transition-all"
+                                                title="Zoom Avant"
+                                             >
+                                                <Search size={14} />
+                                                <span className="sr-only">Zoom In</span>
+                                             </button>
+                                             <button 
+                                                onClick={() => setZoomLevel(1)}
+                                                className="ml-1 p-1 text-xs font-bold text-slate-400 hover:text-brand-coral"
+                                                title="Réinitialiser le zoom"
+                                             >
+                                                R
+                                             </button>
+                                          </div>
+
                                           <button
                                               onClick={() => setShowGrid(!showGrid)}
                                               className={`p-1.5 rounded text-xs font-bold flex items-center gap-1 transition-colors ${showGrid ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : 'bg-white text-slate-500 border border-gray-200 hover:bg-gray-50'}`}
@@ -4209,8 +4218,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       {/* Page Container */}
                                       <div 
                                          ref={canvasRef}
-                                         className="transition-all duration-300 flex gap-0 shadow-2xl bg-white"
+                                         className="transition-all duration-300 flex gap-0 shadow-2xl bg-white origin-center"
                                          style={{
+                                            transform: `scale(${zoomLevel})`,
                                             // Force single aspect ratio if viewing cover (since we now treat cover as single page)
                                             aspectRatio: (() => {
                                                 if (viewMode === 'spread') {

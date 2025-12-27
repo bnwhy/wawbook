@@ -1457,41 +1457,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* --- VIEW: ORDER DETAIL --- */}
               {activeTab === 'orders' && selectedOrderId && !showFulfillment && (
                  <div className="max-w-4xl mx-auto space-y-6">
-                    {/* Floating Save Bar */}
-                    {pendingOrderChanges && (
-                       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-6 z-50 animate-in slide-in-from-bottom-4 duration-300 border border-slate-700">
-                          <div className="flex flex-col">
-                             <span className="font-bold text-sm">Modifications en attente</span>
-                             <span className="text-xs text-slate-400">Vous avez des changements non enregistrés</span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                             <button 
-                                onClick={() => setPendingOrderChanges(null)}
-                                className="px-4 py-2 hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors"
-                             >
-                                Annuler
-                             </button>
-                             <button 
-                                onClick={() => {
-                                   if (!selectedOrderId) return;
-                                   const originalOrder = orders.find(o => o.id === selectedOrderId);
-                                   if (!originalOrder) return;
-                                   
-                                   updateOrder({
-                                      ...originalOrder,
-                                      ...pendingOrderChanges
-                                   });
-                                   setPendingOrderChanges(null);
-                                   toast.success('Modifications enregistrées');
-                                }}
-                                className="px-4 py-2 bg-brand-coral text-white rounded-lg text-sm font-bold shadow-lg hover:bg-brand-coral/90 transition-colors flex items-center gap-2"
-                             >
-                                <Save size={16} /> Enregistrer les modifications
-                             </button>
-                          </div>
-                       </div>
-                    )}
-
                     <div className="flex items-center gap-4 mb-4">
                        <button onClick={() => setSelectedOrderId(null)} className="text-slate-400 hover:text-slate-600">
                           <ArrowUp className="-rotate-90" size={20} />
@@ -1777,6 +1742,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                    <div className="flex justify-between items-center mb-4">
                                       <h3 className="font-bold text-slate-800">Statut</h3>
+                                      {pendingOrderChanges && (
+                                         <button
+                                            onClick={() => {
+                                               if (!selectedOrderId) return;
+                                               const originalOrder = orders.find(o => o.id === selectedOrderId);
+                                               if (!originalOrder) return;
+                                               
+                                               updateOrder({
+                                                  ...originalOrder,
+                                                  ...pendingOrderChanges
+                                               });
+                                               setPendingOrderChanges(null);
+                                               toast.success('Modifications enregistrées');
+                                            }}
+                                            className="bg-brand-coral text-white p-1.5 rounded-md hover:bg-brand-coral/90 transition-colors shadow-sm animate-in fade-in zoom-in duration-200"
+                                            title="Enregistrer toutes les modifications"
+                                         >
+                                            <Save size={14} />
+                                         </button>
+                                      )}
                                    </div>
                                    <div className="space-y-2">
                                       {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => {

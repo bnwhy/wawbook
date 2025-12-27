@@ -1860,7 +1860,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                                 <button 
                                     onClick={submitNewOrder}
-                                    className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-md flex items-center justify-center gap-2"
+                                    disabled={!(
+                                        newOrderForm.customer.firstName && 
+                                        newOrderForm.customer.lastName && 
+                                        newOrderForm.customer.email && 
+                                        newOrderForm.customer.address.street && 
+                                        newOrderForm.customer.address.zipCode && 
+                                        newOrderForm.customer.address.city && 
+                                        newOrderForm.customer.address.country && 
+                                        newOrderForm.items[0].bookId && 
+                                        newOrderForm.items[0].quantity > 0
+                                    )}
+                                    className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-slate-900"
                                 >
                                     <Save size={18} />
                                     Créer la commande

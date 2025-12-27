@@ -2776,7 +2776,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             </button>
                             <button 
                                 onClick={submitNewCustomer}
-                                className="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-indigo-500/20"
+                                disabled={!newCustomerForm.firstName || !newCustomerForm.lastName || !newCustomerForm.email || !newCustomerForm.phone || !newCustomerForm.address.street || !newCustomerForm.address.zipCode || !newCustomerForm.address.city}
+                                className={`px-6 py-2.5 rounded-lg font-bold transition-colors shadow-lg shadow-indigo-500/20 ${
+                                  !newCustomerForm.firstName || !newCustomerForm.lastName || !newCustomerForm.email || !newCustomerForm.phone || !newCustomerForm.address.street || !newCustomerForm.address.zipCode || !newCustomerForm.address.city
+                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                                  : 'bg-slate-900 text-white hover:bg-slate-800'
+                                }`}
                             >
                                 Créer le client
                             </button>

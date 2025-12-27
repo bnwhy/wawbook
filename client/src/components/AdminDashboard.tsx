@@ -3584,12 +3584,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         placeholder="0.00"
                                     />
                                 </div>
-                                <div className="group relative">
-                                    <HelpCircle size={16} className="text-slate-400 cursor-help" />
-                                    <div className="absolute right-0 bottom-full mb-2 w-64 bg-slate-800 text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
-                                        Ce tarif sera affiché dans le panier avant que le client ne renseigne son adresse de livraison.
-                                    </div>
-                                </div>
                             </div>
                         </div>
                         <div className="divide-y divide-gray-100">

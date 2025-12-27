@@ -3087,7 +3087,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                           // Mock upload - create object URL
                                                                           const url = URL.createObjectURL(file);
                                                                           const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                          newTabs[idx].variants[vIdx].options[oIdx].thumbnail = url;
+                                                                          newTabs[idx].variants[vIdx].options![oIdx].thumbnail = url;
                                                                           handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                                        }
                                                                     }}
@@ -3110,7 +3110,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                           // Mock upload - create object URL
                                                                           const url = URL.createObjectURL(file);
                                                                           const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                          newTabs[idx].variants[vIdx].options[oIdx].resource = url;
+                                                                          newTabs[idx].variants[vIdx].options![oIdx].resource = url;
                                                                           handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                                        }
                                                                     }}
@@ -3127,7 +3127,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  onChange={(e) => {
                                                                     const newLabel = e.target.value;
                                                                     const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                    const currentOption = newTabs[idx].variants[vIdx].options[oIdx];
+                                                                    const currentOption = newTabs[idx].variants[vIdx].options![oIdx];
 
                                                                     // Auto-update ID logic
                                                                     const oldSlug = slugify(currentOption.label);
@@ -3137,11 +3137,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     const isDefaultId = /^\d+$/.test(currentId) || currentId.startsWith('opt_') || currentId.startsWith('nouvelle_option');
                                                                     const isSyncedId = currentId === oldSlug;
 
-                                                                    newTabs[idx].variants[vIdx].options[oIdx].label = newLabel;
+                                                                    newTabs[idx].variants[vIdx].options![oIdx].label = newLabel;
 
                                                                     if ((isDefaultId || isSyncedId || currentId === '') && newLabel.trim() !== '') {
                                                                         const baseId = slugify(newLabel);
-                                                                        const otherIds = newTabs[idx].variants[vIdx].options
+                                                                        const otherIds = newTabs[idx].variants[vIdx].options!
                                                                            .filter((_, i) => i !== oIdx)
                                                                            .map(o => o.id);
                                                                         
@@ -3151,7 +3151,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                             uniqueId = `${baseId}_${counter}`;
                                                                             counter++;
                                                                         }
-                                                                        newTabs[idx].variants[vIdx].options[oIdx].id = uniqueId;
+                                                                        newTabs[idx].variants[vIdx].options![oIdx].id = uniqueId;
                                                                     }
 
                                                                     handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
@@ -3167,14 +3167,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                        value={option.id}
                                                                        onChange={(e) => {
                                                                           const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                          newTabs[idx].variants[vIdx].options[oIdx].id = e.target.value;
+                                                                          newTabs[idx].variants[vIdx].options![oIdx].id = e.target.value;
                                                                           handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                                        }}
                                                                        onBlur={(e) => {
                                                                           const val = e.target.value.trim();
                                                                           if (!val) return;
                                                                           const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                          const otherIds = newTabs[idx].variants[vIdx].options.filter((_, i) => i !== oIdx).map(o => o.id);
+                                                                          const otherIds = newTabs[idx].variants[vIdx].options!.filter((_, i) => i !== oIdx).map(o => o.id);
                                                                           
                                                                           let uniqueId = val;
                                                                           let counter = 2;
@@ -3184,7 +3184,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                           }
                                                                           
                                                                           if (uniqueId !== val) {
-                                                                              newTabs[idx].variants[vIdx].options[oIdx].id = uniqueId;
+                                                                              newTabs[idx].variants[vIdx].options![oIdx].id = uniqueId;
                                                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                                               toast.info(`ID corrigé pour l'unicité: ${uniqueId}`);
                                                                           }
@@ -3199,7 +3199,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            <button 
                                                               onClick={() => {
                                                                  const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                 newTabs[idx].variants[vIdx].options = newTabs[idx].variants[vIdx].options.filter(o => o.id !== option.id);
+                                                                 newTabs[idx].variants[vIdx].options = newTabs[idx].variants[vIdx].options!.filter(o => o.id !== option.id);
                                                                  handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                               }}
                                                               className="text-gray-300 hover:text-red-400 p-1 opacity-0 group-hover/option:opacity-100 transition-opacity"
@@ -3482,11 +3482,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                                        {combinations.map((combo) => {
+                                        {combinations.map((combo, comboIdx) => {
                                            const existingAvatar = selectedBook.wizardConfig.avatarMappings?.[combo.key];
                                            
                                            return (
-                                              <div key={combo.key} className="bg-slate-50 rounded-xl border border-gray-200 overflow-hidden group hover:shadow-md transition-all">
+                                              <div key={`${combo.key}_${comboIdx}`} className="bg-slate-50 rounded-xl border border-gray-200 overflow-hidden group hover:shadow-md transition-all">
                                                  <div className="aspect-square bg-white relative flex items-center justify-center border-b border-gray-100">
                                                     {existingAvatar ? (
                                                        <img src={existingAvatar} alt="Avatar" className="w-full h-full object-contain p-4" />
@@ -4390,9 +4390,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   }}
                                                                   className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
                                                                   style={{
-                                                                     left: `${el.position.x * (leftPagePct/100)}%`,
+                                                                     left: `${(el.position.x || 0) * (leftPagePct/100)}%`,
                                                                      top: `${el.position.y}%`,
-                                                                     width: `${el.position.width * (leftPagePct/100)}%`,
+                                                                     width: `${(el.position.width || 0) * (leftPagePct/100)}%`,
                                                                      height: el.position.height ? `${el.position.height}%` : 'auto',
                                                                      transform: `rotate(${el.position.rotation || 0}deg)`
                                                                   }}
@@ -4423,7 +4423,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   }}
                                                                   className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                                   style={{
-                                                                     left: `${text.position.x * (leftPagePct/100)}%`,
+                                                                     left: `${(text.position.x || 0) * (leftPagePct/100)}%`,
                                                                      top: `${text.position.y}%`,
                                                                      width: `${(text.position.width || 30) * (leftPagePct/100)}%`,
                                                                      height: text.position.height ? `${text.position.height}%` : 'auto',
@@ -4493,9 +4493,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   }}
                                                                   className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
                                                                   style={{
-                                                                     left: `${rightPageOffsetPct + (el.position.x * (rightPagePct/100))}%`,
+                                                                     left: `${rightPageOffsetPct + ((el.position.x || 0) * (rightPagePct/100))}%`,
                                                                      top: `${el.position.y}%`,
-                                                                     width: `${el.position.width * (rightPagePct/100)}%`,
+                                                                     width: `${(el.position.width || 0) * (rightPagePct/100)}%`,
                                                                      height: el.position.height ? `${el.position.height}%` : 'auto',
                                                                      transform: `rotate(${el.position.rotation || 0}deg)`
                                                                   }}
@@ -4526,7 +4526,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   }}
                                                                   className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                                   style={{
-                                                                     left: `${rightPageOffsetPct + (text.position.x * (rightPagePct/100))}%`,
+                                                                     left: `${rightPageOffsetPct + ((text.position.x || 0) * (rightPagePct/100))}%`,
                                                                      top: `${text.position.y}%`,
                                                                      width: `${(text.position.width || 30) * (rightPagePct/100)}%`,
                                                                      height: text.position.height ? `${text.position.height}%` : 'auto',

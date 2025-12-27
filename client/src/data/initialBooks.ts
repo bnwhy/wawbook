@@ -254,7 +254,7 @@ const RICH_CONTENT_CONFIG = {
       type: 'fixed' as const,
       content: "L'Aventurier du Monde",
       position: { pageIndex: 0, zoneId: 'body', x: 10, y: 15, width: 80, rotation: 0 },
-      style: { fontSize: '48px', fontFamily: 'serif', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' }
+      style: { fontSize: '48px', fontFamily: 'serif', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' as const }
     },
     {
       id: 't-cover-subtitle',
@@ -262,7 +262,7 @@ const RICH_CONTENT_CONFIG = {
       type: 'variable' as const,
       content: "Une aventure de {childName}",
       position: { pageIndex: 0, zoneId: 'body', x: 10, y: 25, width: 80, rotation: 0 },
-      style: { fontSize: '24px', fontFamily: 'sans-serif', fontWeight: 'normal', color: '#f0f0f0', textAlign: 'center' }
+      style: { fontSize: '24px', fontFamily: 'sans-serif', fontWeight: 'normal', color: '#f0f0f0', textAlign: 'center' as const }
     },
     // Page 1 (Dedication)
     {
@@ -271,7 +271,7 @@ const RICH_CONTENT_CONFIG = {
       type: 'fixed' as const,
       content: "Pour {childName},\n\nQue ce livre t'inspire à explorer le monde avec curiosité et courage.\n\nAvec tout notre amour.",
       position: { pageIndex: 1, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
-      style: { fontSize: '18px', fontFamily: 'serif', fontStyle: 'italic', color: '#333333', textAlign: 'center' }
+      style: { fontSize: '18px', fontFamily: 'serif', fontStyle: 'italic', color: '#333333', textAlign: 'center' as const }
     },
     // Page 2 (Story)
     {
@@ -280,7 +280,7 @@ const RICH_CONTENT_CONFIG = {
       type: 'fixed' as const,
       content: "Il était une fois, un jeune explorateur nommé {childName}. Depuis sa fenêtre, {childName} rêvait de terres lointaines et de montagnes mystérieuses.",
       position: { pageIndex: 2, zoneId: 'body', x: 10, y: 70, width: 80, rotation: 0 },
-      style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
+      style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' as const }
     },
     // Page 3 (Story)
     {
@@ -289,7 +289,7 @@ const RICH_CONTENT_CONFIG = {
       type: 'fixed' as const,
       content: "Un beau matin, {childName} prépara son sac à dos. 'Je suis prêt pour l'aventure !' s'écria-t-il avec enthousiasme.",
       position: { pageIndex: 3, zoneId: 'body', x: 10, y: 10, width: 80, rotation: 0 },
-      style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' }
+      style: { fontSize: '20px', fontFamily: 'serif', color: '#000000', textAlign: 'justify' as const }
     },
     // Back Cover
     {
@@ -298,7 +298,7 @@ const RICH_CONTENT_CONFIG = {
       type: 'fixed' as const,
       content: "Découvrez l'histoire incroyable d'un enfant qui part à la découverte du monde. Une épopée pleine de surprises et de rencontres inoubliables.",
       position: { pageIndex: 4, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
-      style: { fontSize: '16px', fontFamily: 'sans-serif', color: '#ffffff', textAlign: 'center' }
+      style: { fontSize: '16px', fontFamily: 'sans-serif', color: '#ffffff', textAlign: 'center' as const }
     }
   ],
   images: [
@@ -313,7 +313,7 @@ const RICH_CONTENT_CONFIG = {
     {
       id: 'img-p2-char',
       label: 'Personnage Principal',
-      type: 'static',
+      type: 'static' as const,
       url: boyBlondAvatar,
       position: { pageIndex: 2, x: 60, y: 40, width: 30, height: 30, rotation: 0 }
     },
@@ -321,7 +321,7 @@ const RICH_CONTENT_CONFIG = {
     {
       id: 'img-p3-char',
       label: 'Personnage Marche',
-      type: 'static',
+      type: 'static' as const,
       url: boyBlondAvatar,
       position: { pageIndex: 3, x: 10, y: 50, width: 40, height: 40, rotation: 10 }
     }
@@ -351,13 +351,13 @@ const DEFAULT_FEATURES = {
     cover: {
       bleedMm: 20, 
       safeMarginMm: 8,
-      paperType: 'coated_standard',
+      paperType: 'coated_standard' as const,
       spineWidthMm: 8.5
     },
     interior: {
       bleedMm: 3,
       safeMarginMm: 10,
-      paperType: 'coated_standard'
+      paperType: 'coated_standard' as const
     }
   }
 };

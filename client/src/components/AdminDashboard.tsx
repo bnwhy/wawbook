@@ -4331,7 +4331,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         {/* --- BACKGROUNDS --- */}
                                                         {/* Back Cover Background */}
                                                         <div 
-                                                            className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center overflow-hidden"
+                                                            className="absolute top-0 bottom-0 bg-white flex items-center justify-center overflow-hidden"
                                                             style={{ left: '0%', width: `${leftPagePct}%` }}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -4349,14 +4349,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         </div>
                                                         {/* Spine Background (Continuous/Gray) */}
                                                         <div 
-                                                            className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center"
+                                                            className="absolute top-0 bottom-0 bg-white flex items-center justify-center"
                                                             style={{ left: `${leftPagePct}%`, width: `${spinePct}%` }}
                                                         >
                                                             {/* Optional Spine Texture/Color */}
                                                         </div>
                                                         {/* Front Cover Background */}
                                                         <div 
-                                                            className="absolute top-0 bottom-0 bg-gray-50 flex items-center justify-center overflow-hidden"
+                                                            className="absolute top-0 bottom-0 bg-white flex items-center justify-center overflow-hidden"
                                                             style={{ left: `${rightPageOffsetPct}%`, width: `${rightPagePct}%` }}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();

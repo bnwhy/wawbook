@@ -4438,8 +4438,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            {/* Uploads */}
                                                            <div className="flex gap-3">
                                                               <div className="text-center group/upload cursor-pointer relative">
-                                                                 <div className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-colors mb-1 ${option.resource ? 'border-blue-200 bg-blue-50 text-blue-500' : 'border-gray-200 bg-gray-50 group-hover/upload:border-blue-500 group-hover/upload:text-blue-500 text-gray-300'}`}>
-                                                                    <Box size={16} />
+                                                                 <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors mb-1 overflow-hidden ${option.resource ? 'border-blue-200 bg-blue-50 text-blue-500' : 'border-gray-200 bg-gray-50 group-hover/upload:border-blue-500 group-hover/upload:text-blue-500 text-gray-300'}`}>
+                                                                    {option.resource ? (
+                                                                       <img src={option.resource} alt="Res" className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                       <Box size={16} />
+                                                                    )}
                                                                  </div>
                                                                  <div className={`text-[9px] font-bold ${option.resource ? 'text-blue-600' : 'text-gray-400 group-hover/upload:text-blue-500'}`}>Ressource</div>
 

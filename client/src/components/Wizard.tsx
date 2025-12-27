@@ -512,8 +512,19 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     // Checkbox handling (using first option or defaulting if no option exists)
                     const isChecked = !!currentValue;
                     return withDivider(
-                        <div className="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200">
-                            <div className="relative flex items-center">
+                        <div className="flex items-center justify-between space-x-3 bg-white p-3 rounded-lg border border-gray-200">
+                             <label htmlFor={`checkbox-${variant.id}`} className="font-bold text-gray-700 text-sm cursor-pointer select-none">
+                                {variant.label}
+                            </label>
+                            <div 
+                              className={`relative w-11 h-6 transition-colors rounded-full cursor-pointer ${isChecked ? 'bg-cloud-dark' : 'bg-gray-200'}`}
+                              onClick={() => {
+                                handleSelectionChange(activeTabId, variant.id, !isChecked ? 'true' : '');
+                              }}
+                            >
+                                <span 
+                                  className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform transform ${isChecked ? 'translate-x-5' : 'translate-x-0'}`}
+                                />
                                 <input
                                     type="checkbox"
                                     id={`checkbox-${variant.id}`}
@@ -522,12 +533,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
                                         // If checked, store 'true', if unchecked, store empty string (falsy)
                                         handleSelectionChange(activeTabId, variant.id, e.target.checked ? 'true' : '');
                                     }}
-                                    className="h-5 w-5 rounded border-gray-300 text-cloud-dark focus:ring-cloud-dark transition-colors cursor-pointer"
+                                    className="sr-only"
                                 />
                             </div>
-                            <label htmlFor={`checkbox-${variant.id}`} className="font-bold text-gray-700 text-sm cursor-pointer select-none flex-1">
-                                {variant.label}
-                            </label>
                         </div>
                     );
                   }

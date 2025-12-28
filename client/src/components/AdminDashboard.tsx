@@ -933,8 +933,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     // We create a clean object with only the properties that define the book's content/configuration
     const exportData = {
       wizardConfig: selectedBook.wizardConfig,
-      contentConfig: cleanContentConfig,
-      features: selectedBook.features
+      contentConfig: cleanContentConfig
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });

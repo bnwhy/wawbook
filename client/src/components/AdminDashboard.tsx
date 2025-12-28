@@ -5496,15 +5496,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               <input 
                                                                   type="number" 
                                                                   step="0.01"
-                                                                  value={selectedBook.features?.dimensions?.width || 210}
+                                                                  value={selectedBook.features?.printConfig?.cover?.widthMm || selectedBook.features?.dimensions?.width || 210}
                                                                   onChange={(e) => {
                                                                       handleSaveBook({
                                                                           ...selectedBook,
                                                                           features: {
                                                                               ...selectedBook.features,
-                                                                              dimensions: {
-                                                                                  ...selectedBook.features?.dimensions,
-                                                                                  width: parseFloat(e.target.value) || 210
+                                                                              printConfig: {
+                                                                                  ...selectedBook.features?.printConfig,
+                                                                                  cover: { 
+                                                                                      ...selectedBook.features?.printConfig?.cover, 
+                                                                                      widthMm: parseFloat(e.target.value) || 210 
+                                                                                  }
                                                                               }
                                                                           } as any
                                                                       });
@@ -5518,15 +5521,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               <input 
                                                                   type="number" 
                                                                   step="0.01"
-                                                                  value={selectedBook.features?.dimensions?.height || 210}
+                                                                  value={selectedBook.features?.printConfig?.cover?.heightMm || selectedBook.features?.dimensions?.height || 210}
                                                                   onChange={(e) => {
                                                                       handleSaveBook({
                                                                           ...selectedBook,
                                                                           features: {
                                                                               ...selectedBook.features,
-                                                                              dimensions: {
-                                                                                  ...selectedBook.features?.dimensions,
-                                                                                  height: parseFloat(e.target.value) || 210
+                                                                              printConfig: {
+                                                                                  ...selectedBook.features?.printConfig,
+                                                                                  cover: { 
+                                                                                      ...selectedBook.features?.printConfig?.cover, 
+                                                                                      heightMm: parseFloat(e.target.value) || 210 
+                                                                                  }
                                                                               }
                                                                           } as any
                                                                       });
@@ -6096,9 +6102,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     
                                                     if (isCover) {
                                                         const spineW = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;
-                                                        // Use bookDimensions from state, safe guard against 0 height
-                                                        const h = bookDimensions.height || 210;
-                                                        const w = bookDimensions.width || 210;
+                                                        // Use cover dimensions if available, otherwise fallback to book dimensions
+                                                        const h = selectedBook.features?.printConfig?.cover?.heightMm || bookDimensions.height || 210;
+                                                        const w = selectedBook.features?.printConfig?.cover?.widthMm || bookDimensions.width || 210;
                                                         const totalW = (w * 2) + spineW;
                                                         return `${totalW / h}/1`;
                                                     }
@@ -6164,8 +6170,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                    const backCover = selectedBook.contentConfig.pages[selectedBook.contentConfig.pages.length - 1];
                                                    const frontCover = selectedBook.contentConfig.pages[0];
                                                    
-                                                   const trimWidth = selectedBook.features?.dimensions?.width || 210;
-                                                  const trimHeight = selectedBook.features?.dimensions?.height || 210;
+                                                   const trimWidth = selectedBook.features?.printConfig?.cover?.widthMm || selectedBook.features?.dimensions?.width || 210;
+                                                  const trimHeight = selectedBook.features?.printConfig?.cover?.heightMm || selectedBook.features?.dimensions?.height || 210;
                                                   
                                                   // Default to 10mm for visualization if 0, but show warning
                                                   const rawSpineWidth = selectedBook.features?.printConfig?.cover?.spineWidthMm || 0;

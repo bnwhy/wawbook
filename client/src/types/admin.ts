@@ -22,6 +22,8 @@ export interface BookProduct {
     printConfig?: {
         bindingType: 'hardcover' | 'softcover' | 'saddle_stitch' | 'coil';
         cover: {
+            widthMm?: number; // Spread width (flat)
+            heightMm?: number; // Height
             bleedMm: number;
             safeMarginMm: number;
             paperType?: 'coated_standard' | 'coated_premium';

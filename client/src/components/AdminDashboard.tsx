@@ -957,7 +957,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     toast.success('Configuration exportée (Extraction brute nettoyée)');
   };
 
-  const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedBook) return;
 
@@ -965,7 +965,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const importedData = JSON.parse(content);
+        let importedData: any;
+
+        // Try to detect if it's our HTML master template
+        if (content.trim().toLowerCase().startsWith('<!doctype html') || content.includes('<html')) {
+             const parser = new DOMParser();
+             const doc = parser.parseFromString(content, 'text/html');
+             const scriptContent = doc.getElementById('book-config')?.textContent;
+             
+             if (scriptContent) {
+                 importedData = JSON.parse(scriptContent);
+                 toast.success('Configuration extraite du Template HTML Maître');
+             } else {
+                 throw new Error('Script JSON #book-config introuvable dans le fichier HTML');
+             }
+        } else {
+            // Assume standard JSON file
+            importedData = JSON.parse(content);
+        }
 
         // Validation: Check if the essential parts exist
         if (!importedData.wizardConfig || !importedData.contentConfig) {
@@ -988,18 +1005,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             // PRESERVE IDENTITY (Do not overwrite)
             id: selectedBook.id,
-            name: selectedBook.name,
-            description: selectedBook.description,
-            price: selectedBook.price,
-            theme: selectedBook.theme,
-            category: selectedBook.category,
+            name: importedData.productInfo?.name || selectedBook.name, // Allow overwrite name if in master template
+            description: importedData.productInfo?.description || selectedBook.description,
+            price: importedData.productInfo?.price || selectedBook.price,
+            theme: importedData.productInfo?.theme || selectedBook.theme,
+            category: importedData.productInfo?.category || selectedBook.category,
             coverImage: selectedBook.coverImage
           });
           toast.success('Configuration importée avec succès');
         }
       } catch (error) {
         console.error('Import error:', error);
-        toast.error('Erreur lors de l\'import du fichier JSON');
+        toast.error('Erreur lors de l\'import du fichier : ' + (error as Error).message);
       }
       
       // Reset input
@@ -5732,7 +5749,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   type="file" 
                                   ref={fileInputRef}
                                   onChange={handleImportContent}
-                                  accept=".json"
+                                  accept=".json,.html"
                                   className="hidden"
                               />
                           </div>

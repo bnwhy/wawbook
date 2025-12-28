@@ -5289,9 +5289,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 className="h-7 text-xs border border-gray-200 rounded px-2 font-medium bg-white focus:ring-brand-coral focus:border-brand-coral w-48 max-w-[200px]"
                                 title={selectedVariant}
                              >
-                                {currentCombinations.map(c => (
-                                   <option key={c} value={c}>{c}</option>
-                                ))}
+                                {currentCombinations.map(c => {
+                                   const parts = c.split('_');
+                                   // Try to map back to readable format
+                                   // Format is typically: Option1_Option2_Option3...
+                                   // We want: "Option1 - Option2 - Option3"
+                                   // And handle known keys like 'boy', 'girl' etc if possible or just capitalize
+                                   
+                                   const readable = parts.map(p => {
+                                       // Basic cleanup
+                                       return p.charAt(0).toUpperCase() + p.slice(1);
+                                   }).join(' - ');
+
+                                   return <option key={c} value={c}>{readable.replace(/-/g, ' ')}</option>
+                                })}
                              </select>
                           </div>
 

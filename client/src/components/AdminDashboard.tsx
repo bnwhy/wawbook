@@ -36,6 +36,7 @@ const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or
 import googleFonts from 'google-fonts-complete';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
   const { 
@@ -6941,23 +6942,111 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               </div>
                                                               <div className="flex gap-1">
                                                                   <button 
-                                                                      onClick={() => updateLayer({style: {...(layer as any).style, fontWeight: (layer as any).style?.fontWeight === 'bold' ? 'normal' : 'bold'}})}
+                                                                      onClick={() => {
+                                                                           const textarea = textAreaRef.current;
+                                                                           if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+                                                                               const start = textarea.selectionStart;
+                                                                               const end = textarea.selectionEnd;
+                                                                               const text = textarea.value;
+                                                                               const before = text.substring(0, start);
+                                                                               const selected = text.substring(start, end);
+                                                                               const after = text.substring(end);
+                                                                               const newText = before + `<b>${selected}</b>` + after;
+                                                                               
+                                                                               // DEHYDRATE LOGIC
+                                                                               let val = newText;
+                                                                               val = val.replace(/\[Prénom\]/g, '{childName}');
+                                                                               val = val.replace(/\[Dédicace\]/g, '{dedication}');
+                                                                               val = val.replace(/\[([^:]+): ([^\]]+)\]/g, (match, tabLabel, varLabel) => {
+                                                                                  const tab = selectedBook.wizardConfig.tabs.find(t => t.label === tabLabel);
+                                                                                  if (tab) {
+                                                                                       const variant = tab.variants.find(v => v.label === varLabel);
+                                                                                       if (variant) {
+                                                                                           return `{${tab.id}.${variant.id}}`;
+                                                                                       }
+                                                                                  }
+                                                                                  return match;
+                                                                               });
+                                                                               updateLayer({content: val});
+                                                                           } else {
+                                                                               // Fallback to global style toggle if no selection or ref
+                                                                               updateLayer({style: {...(layer as any).style, fontWeight: (layer as any).style?.fontWeight === 'bold' ? 'normal' : 'bold'}});
+                                                                           }
+                                                                      }}
                                                                       className={`flex-1 py-1.5 border rounded text-xs font-bold transition-colors ${(layer as any).style?.fontWeight === 'bold' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                                                                      title="Gras"
+                                                                      title="Gras (Sélectionnez du texte pour appliquer partiellement)"
                                                                   >
                                                                       B
                                                                   </button>
                                                                   <button 
-                                                                      onClick={() => updateLayer({style: {...(layer as any).style, fontStyle: (layer as any).style?.fontStyle === 'italic' ? 'normal' : 'italic'}})}
+                                                                      onClick={() => {
+                                                                           const textarea = textAreaRef.current;
+                                                                           if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+                                                                               const start = textarea.selectionStart;
+                                                                               const end = textarea.selectionEnd;
+                                                                               const text = textarea.value;
+                                                                               const before = text.substring(0, start);
+                                                                               const selected = text.substring(start, end);
+                                                                               const after = text.substring(end);
+                                                                               const newText = before + `<i>${selected}</i>` + after;
+                                                                               
+                                                                               // DEHYDRATE LOGIC
+                                                                               let val = newText;
+                                                                               val = val.replace(/\[Prénom\]/g, '{childName}');
+                                                                               val = val.replace(/\[Dédicace\]/g, '{dedication}');
+                                                                               val = val.replace(/\[([^:]+): ([^\]]+)\]/g, (match, tabLabel, varLabel) => {
+                                                                                  const tab = selectedBook.wizardConfig.tabs.find(t => t.label === tabLabel);
+                                                                                  if (tab) {
+                                                                                       const variant = tab.variants.find(v => v.label === varLabel);
+                                                                                       if (variant) {
+                                                                                           return `{${tab.id}.${variant.id}}`;
+                                                                                       }
+                                                                                  }
+                                                                                  return match;
+                                                                               });
+                                                                               updateLayer({content: val});
+                                                                           } else {
+                                                                               updateLayer({style: {...(layer as any).style, fontStyle: (layer as any).style?.fontStyle === 'italic' ? 'normal' : 'italic'}});
+                                                                           }
+                                                                      }}
                                                                       className={`flex-1 py-1.5 border rounded text-xs italic transition-colors ${(layer as any).style?.fontStyle === 'italic' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                                                                      title="Italique"
+                                                                      title="Italique (Sélectionnez du texte pour appliquer partiellement)"
                                                                   >
                                                                       I
                                                                   </button>
                                                                   <button 
-                                                                      onClick={() => updateLayer({style: {...(layer as any).style, textDecoration: (layer as any).style?.textDecoration === 'underline' ? 'none' : 'underline'}})}
+                                                                      onClick={() => {
+                                                                           const textarea = textAreaRef.current;
+                                                                           if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+                                                                               const start = textarea.selectionStart;
+                                                                               const end = textarea.selectionEnd;
+                                                                               const text = textarea.value;
+                                                                               const before = text.substring(0, start);
+                                                                               const selected = text.substring(start, end);
+                                                                               const after = text.substring(end);
+                                                                               const newText = before + `<u>${selected}</u>` + after;
+                                                                               
+                                                                               // DEHYDRATE LOGIC
+                                                                               let val = newText;
+                                                                               val = val.replace(/\[Prénom\]/g, '{childName}');
+                                                                               val = val.replace(/\[Dédicace\]/g, '{dedication}');
+                                                                               val = val.replace(/\[([^:]+): ([^\]]+)\]/g, (match, tabLabel, varLabel) => {
+                                                                                  const tab = selectedBook.wizardConfig.tabs.find(t => t.label === tabLabel);
+                                                                                  if (tab) {
+                                                                                       const variant = tab.variants.find(v => v.label === varLabel);
+                                                                                       if (variant) {
+                                                                                           return `{${tab.id}.${variant.id}}`;
+                                                                                       }
+                                                                                  }
+                                                                                  return match;
+                                                                               });
+                                                                               updateLayer({content: val});
+                                                                           } else {
+                                                                               updateLayer({style: {...(layer as any).style, textDecoration: (layer as any).style?.textDecoration === 'underline' ? 'none' : 'underline'}});
+                                                                           }
+                                                                      }}
                                                                       className={`flex-1 py-1.5 border rounded text-xs underline transition-colors ${(layer as any).style?.textDecoration === 'underline' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                                                                      title="Souligné"
+                                                                      title="Souligné (Sélectionnez du texte pour appliquer partiellement)"
                                                                   >
                                                                       U
                                                                   </button>
@@ -7060,6 +7149,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  </div>
 
                                                                  <textarea 
+                                                                    ref={textAreaRef}
                                                                     value={(() => {
                                                                        // HYDRATE: ID -> Friendly Label
                                                                        const text = (layer as any).content || '';

@@ -6801,36 +6801,42 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                                   return (
                                                      <>
-                                                        {/* Common Props */}
-                                                        <div>
-                                                           <label className="text-[10px] font-bold text-gray-500 uppercase">Label</label>
-                                                           <input 
-                                                              type="text" 
-                                                              value={layer.label}
-                                                              onChange={(e) => updateLayer({label: e.target.value})}
-                                                              className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1"
-                                                           />
-                                                        </div>
-                                                        {/* Type Selector (Fixed vs Variable) - Only for images */}
-                                                        {!isText && (
-                                                           <div>
-                                                              <label className="text-[10px] font-bold text-gray-500 uppercase">Type de contenu</label>
-                                                              <div className="flex bg-white rounded border border-gray-300 mt-1 p-0.5">
-                                                                 <button 
-                                                                    onClick={() => updateLayer({type: 'static'})}
-                                                                    className={`flex-1 py-1 text-xs font-medium rounded ${layer.type === 'static' ? 'bg-gray-100 text-slate-800' : 'text-gray-400'}`}
-                                                                 >
-                                                                    Fixe
-                                                                 </button>
-                                                                 <button 
-                                                                    onClick={() => updateLayer({type: 'variable'})}
-                                                                    className={`flex-1 py-1 text-xs font-medium rounded ${layer.type === 'variable' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400'}`}
-                                                                 >
-                                                                    Variable
-                                                                 </button>
-                                                              </div>
-                                                           </div>
-                                                        )}
+                                                       {/* Common Props */}
+                                                       <div>
+                                                          <label className="text-[10px] font-bold text-gray-500 uppercase">Label</label>
+                                                          <input 
+                                                             type="text" 
+                                                             value={layer.label}
+                                                             onChange={(e) => updateLayer({label: e.target.value})}
+                                                             className="w-full text-xs border border-gray-300 rounded px-2 py-1 mt-1"
+                                                          />
+                                                       </div>
+                                                       {/* Type Selector (Fixed vs Variable) - Now also for Text */}
+                                                       <div>
+                                                          <label className="text-[10px] font-bold text-gray-500 uppercase">Type de contenu</label>
+                                                          <div className="flex bg-white rounded border border-gray-300 mt-1 p-0.5">
+                                                             <button 
+                                                                onClick={() => updateLayer({type: 'static'})} // "static" works for images, but for text default is usually "fixed" or just not "variable"
+                                                                // Actually for text the type is 'fixed' vs 'variable', for images it's 'static' vs 'variable'
+                                                                // Let's normalize or handle both
+                                                                // The type definition says: type: 'fixed' | 'variable' for text, 'static' | 'variable' for image
+                                                                // We need to be careful.
+                                                                className={`flex-1 py-1 text-xs font-medium rounded ${
+                                                                   (isText && layer.type === 'fixed') || (!isText && layer.type === 'static') 
+                                                                   ? 'bg-gray-100 text-slate-800' 
+                                                                   : 'text-gray-400'
+                                                                }`}
+                                                             >
+                                                                Fixe
+                                                             </button>
+                                                             <button 
+                                                                onClick={() => updateLayer({type: 'variable'})}
+                                                                className={`flex-1 py-1 text-xs font-medium rounded ${layer.type === 'variable' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-400'}`}
+                                                             >
+                                                                Variable
+                                                             </button>
+                                                          </div>
+                                                       </div>
                                                         {/* Text Styling Options */}
                                                         {isText && (
                                                            <div>

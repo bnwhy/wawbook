@@ -917,30 +917,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleExportContent = () => {
     if (!selectedBook) return;
 
-    // Export ONLY content configuration (variants, pages, elements, dimensions)
+    // Export content configuration (variants, pages, elements, dimensions)
     const exportData = {
       version: '1.2',
       timestamp: new Date().toISOString(),
       sourceBookId: selectedBook.id, // Only ID for reference
-      // Export ONLY configuration parts, NOT product identity (id, name, price, etc.)
-      wizardConfig: {
-        avatarStyle: selectedBook.wizardConfig.avatarStyle,
-        tabs: selectedBook.wizardConfig.tabs.map(tab => ({
-          id: tab.id,
-          label: tab.label,
-          type: tab.type,
-          variants: tab.variants.map(v => ({
-             id: v.id,
-             label: v.label,
-             type: v.type,
-             options: v.options,
-             minLength: v.minLength,
-             maxLength: v.maxLength
-             // Thumbnail excluded from export
-          }))
-        })),
-        avatarMappings: selectedBook.wizardConfig.avatarMappings
-      }, // Variants & Options
+      // Export configuration parts
+      wizardConfig: selectedBook.wizardConfig, // Export full wizard config including thumbnails/resources
       contentConfig: selectedBook.contentConfig, // Layers, Texts, Images, Pages
       features: {
         dimensions: selectedBook.features?.dimensions || { width: 210, height: 210 },
@@ -957,7 +940,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Configuration Storyboard exportée (sans données produit)');
+    toast.success('Configuration complète exportée (Pages, Textes, Images, Variantes)');
   };
 
   const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -917,11 +917,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleExportContent = () => {
     if (!selectedBook) return;
 
-    // Export raw configuration exactly as it is in the state
+    // Filter out orphaned elements (elements pointing to non-existent pages)
+    // We strictly use pageNumber as the reference since that's what we use in rendering
+    const validPageNumbers = new Set(selectedBook.contentConfig.pages.map(p => p.pageNumber));
+    
+    // Create a clean copy of content config removing orphaned items
+    const cleanContentConfig = {
+      ...selectedBook.contentConfig,
+      texts: selectedBook.contentConfig.texts.filter(t => validPageNumbers.has(t.position.pageIndex)),
+      images: selectedBook.contentConfig.images.filter(i => validPageNumbers.has(i.pageIndex)),
+      imageElements: (selectedBook.contentConfig.imageElements || []).filter(i => validPageNumbers.has(i.position.pageIndex))
+    };
+
+    // Export raw configuration exactly as it is in the state (cleaned of orphans)
     // We create a clean object with only the properties that define the book's content/configuration
     const exportData = {
       wizardConfig: selectedBook.wizardConfig,
-      contentConfig: selectedBook.contentConfig,
+      contentConfig: cleanContentConfig,
       features: selectedBook.features
     };
 
@@ -934,7 +946,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Configuration exportée (Extraction brute)');
+    toast.success('Configuration exportée (Extraction brute nettoyée)');
   };
 
   const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {

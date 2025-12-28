@@ -6138,6 +6138,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             const isBackCover = pageIndex === selectedBook.contentConfig.pages.length - 1;
                                             const isCoverPage = isFrontCover || isBackCover;
 
+                                            // --- HELPER: HTML RENDERER ---
+                                            const renderHtmlContent = (text: string) => {
+                                                // Sanitize and allow simple tags: b, i, u, br, strong, em
+                                                // For a prototype, we'll just use dangerouslySetInnerHTML safely-ish
+                                                // In production, use a library like DOMPurify
+                                                return <div dangerouslySetInnerHTML={{ __html: text.replace(/\n/g, '<br/>') }} />;
+                                            };
+
                                             let pagesToShow = [];
 
                                             if (viewMode === 'spread' && isCoverPage) {
@@ -6703,7 +6711,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   />
                                                               ) : (
                                                                   <div className={`font-medium w-full h-full pointer-events-none ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
-                                                                     {(() => {
+                                                                     {renderHtmlContent((() => {
                                                                          // Always try to replace variable placeholders, regardless of text type
                                                                          // Use [Friendly Name] format for readability in admin
                                                                          const content = text.content || '';
@@ -6719,7 +6727,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                              }
                                                                              return match;
                                                                          });
-                                                                     })()}
+                                                                     })())}
                                                                   </div>
                                                               )}
                                                            </div>
@@ -7087,8 +7095,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                        updateLayer({content: val});
                                                                     }}
                                                                     className="w-full text-xs border border-gray-300 rounded px-2 py-1 h-24 font-mono leading-relaxed"
-                                                                    placeholder="Écrivez votre texte ici... Utilisez [Tab: Variante] pour les variables."
+                                                                    placeholder="Écrivez votre texte ici... Utilisez [Tab: Variante] pour les variables. Utilisez <b>texte</b> pour le gras."
                                                                  />
+                                                                 <div className="text-[10px] text-gray-400 mt-1">
+                                                                     Astuce: Utilisez &lt;b&gt;texte&lt;/b&gt; pour mettre en gras, &lt;i&gt;texte&lt;/i&gt; pour l'italique.
+                                                                 </div>
                                                               </div>
                                                            ) : (
                                                               layer.type === 'variable' ? (

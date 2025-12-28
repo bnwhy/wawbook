@@ -4218,19 +4218,83 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                        <div className="grid grid-cols-2 gap-6">
                           <div className="col-span-2 md:col-span-1">
-                             <label className="block text-sm font-bold text-slate-700 mb-2">Langues (séparées par virgule)</label>
-                             <textarea 
-                               value={selectedBook.features?.languages?.join(', ') || ''}
-                               onChange={(e) => {
-                                  const langs = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                                  handleSaveBook({
-                                     ...selectedBook, 
-                                     features: { ...selectedBook.features, languages: langs }
-                                  });
-                               }}
-                               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none h-24 text-sm resize-none"
-                               placeholder="Français, Anglais..."
-                             />
+                             <label className="block text-sm font-bold text-slate-700 mb-2">Langues disponibles</label>
+                             <div className="border border-gray-300 rounded-lg p-3 h-48 overflow-y-auto bg-white space-y-2">
+                                {(!selectedBook.features?.languages || selectedBook.features.languages.length === 0) && (
+                                    <div className="text-gray-400 text-xs italic p-2 text-center">Aucune langue configurée</div>
+                                )}
+                                
+                                {(selectedBook.features?.languages || []).map((lang, idx) => {
+                                    // Safety check if we still have strings during migration
+                                    const code = typeof lang === 'string' ? '??' : lang.code;
+                                    const label = typeof lang === 'string' ? lang : lang.label;
+                                    
+                                    return (
+                                      <div key={idx} className="flex items-center gap-2">
+                                          <input 
+                                              type="text" 
+                                              value={code} 
+                                              onChange={(e) => {
+                                                  const newLangs = [...(selectedBook.features?.languages || [])];
+                                                  // @ts-ignore
+                                                  if (typeof newLangs[idx] === 'string') newLangs[idx] = { code: e.target.value, label: newLangs[idx] };
+                                                  else newLangs[idx] = { ...newLangs[idx], code: e.target.value };
+                                                  
+                                                  handleSaveBook({
+                                                      ...selectedBook,
+                                                      features: { ...selectedBook.features, languages: newLangs as any }
+                                                  });
+                                              }}
+                                              className="w-16 border border-gray-200 rounded px-2 py-1 text-xs font-mono uppercase focus:ring-1 focus:ring-brand-coral outline-none"
+                                              placeholder="FR"
+                                          />
+                                          <input 
+                                              type="text" 
+                                              value={label}
+                                              onChange={(e) => {
+                                                  const newLangs = [...(selectedBook.features?.languages || [])];
+                                                  // @ts-ignore
+                                                  if (typeof newLangs[idx] === 'string') newLangs[idx] = { code: '??', label: e.target.value };
+                                                  else newLangs[idx] = { ...newLangs[idx], label: e.target.value };
+                                                  
+                                                  handleSaveBook({
+                                                      ...selectedBook,
+                                                      features: { ...selectedBook.features, languages: newLangs as any }
+                                                  });
+                                              }}
+                                              className="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-coral outline-none"
+                                              placeholder="Nom de la langue"
+                                          />
+                                          <button 
+                                              onClick={() => {
+                                                  const newLangs = (selectedBook.features?.languages || []).filter((_, i) => i !== idx);
+                                                  handleSaveBook({
+                                                      ...selectedBook,
+                                                      features: { ...selectedBook.features, languages: newLangs }
+                                                  });
+                                              }}
+                                              className="text-gray-400 hover:text-red-500 p-1"
+                                              title="Supprimer"
+                                          >
+                                              <Trash2 size={14} />
+                                          </button>
+                                      </div>
+                                    );
+                                })}
+                             </div>
+                             <button 
+                                onClick={() => {
+                                     const newLangs = [...(selectedBook.features?.languages || [])];
+                                     newLangs.push({ code: '', label: '' });
+                                     handleSaveBook({
+                                         ...selectedBook,
+                                         features: { ...selectedBook.features, languages: newLangs as any }
+                                     });
+                                }}
+                                className="mt-2 text-xs text-brand-coral font-bold flex items-center gap-1 hover:text-red-600 transition-colors"
+                             >
+                                <Plus size={14} /> Ajouter une langue
+                             </button>
                           </div>
                           
                           <div className="col-span-2 md:col-span-1">

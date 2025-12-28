@@ -341,7 +341,22 @@ const FAMILY_CONTENT_CONFIG = {
 };
 
 const DEFAULT_FEATURES = {
-  languages: ['Français', 'Allemand', 'Anglais', 'Espagnol', 'Italien', 'Norvégien', 'Suédois', 'Luxembourgeois', 'Turc', 'Portugais', 'Catalan', 'Galicien', 'Basque', 'Néerlandais'],
+  languages: [
+    { code: 'fr', label: 'Français' },
+    { code: 'de', label: 'Allemand' },
+    { code: 'en', label: 'Anglais' },
+    { code: 'es', label: 'Espagnol' },
+    { code: 'it', label: 'Italien' },
+    { code: 'no', label: 'Norvégien' },
+    { code: 'sv', label: 'Suédois' },
+    { code: 'lb', label: 'Luxembourgeois' },
+    { code: 'tr', label: 'Turc' },
+    { code: 'pt', label: 'Portugais' },
+    { code: 'ca', label: 'Catalan' },
+    { code: 'gl', label: 'Galicien' },
+    { code: 'eu', label: 'Basque' },
+    { code: 'nl', label: 'Néerlandais' }
+  ],
   customization: ['Nom', 'Genre', 'Couleur de peau', 'Cheveux', 'Coiffure', 'Barbe', 'Vêtements', 'Lunettes'],
   pages: 40,
   formats: ['Broché : 21,5 x 25,8 cm', 'Relié : 22,2 x 26,5 cm'],

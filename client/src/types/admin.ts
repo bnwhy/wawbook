@@ -14,7 +14,7 @@ export interface BookProduct {
   oldPrice?: number;
   isHidden?: boolean;
   features?: {
-    languages?: string[];
+    languages?: { code: string; label: string; }[];
     customization?: string[];
     pages?: number;
     formats?: string[];

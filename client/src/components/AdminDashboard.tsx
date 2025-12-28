@@ -917,13 +917,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleExportContent = () => {
     if (!selectedBook) return;
 
-    // EXPORT DIRECTLY THE EXACT CONFIGURATION OBJECTS FROM THE BOOK
-    // No "exportData" wrapper with versions, no restructuring.
-    // We export exactly what the user sees in the editor.
+    // Export raw configuration exactly as it is in the state
+    // We create a clean object with only the properties that define the book's content/configuration
     const exportData = {
       wizardConfig: selectedBook.wizardConfig,
       contentConfig: selectedBook.contentConfig,
-      features: selectedBook.features || {}
+      features: selectedBook.features
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -935,7 +934,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Configuration exportée avec succès');
+    toast.success('Configuration exportée (Extraction brute)');
   };
 
   const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,0 +1,215 @@
+{
+  "wizardConfig": {
+    "avatarStyle": "watercolor",
+    "tabs": [
+      {
+        "id": "enfant",
+        "label": "Enfant",
+        "type": "character",
+        "variants": [
+          {
+            "id": "nom",
+            "label": "Nom",
+            "type": "text"
+          },
+          {
+            "id": "peau",
+            "label": "Peau",
+            "type": "options",
+            "options": [
+              {
+                "id": "claire",
+                "label": "Claire"
+              },
+              {
+                "id": "foncee",
+                "label": "Foncée"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pere",
+        "label": "Père",
+        "type": "character",
+        "variants": [
+          {
+            "id": "nom",
+            "label": "Nom",
+            "type": "text"
+          },
+          {
+            "id": "peau",
+            "label": "Peau",
+            "type": "options",
+            "options": [
+              {
+                "id": "claire",
+                "label": "Claire"
+              },
+              {
+                "id": "foncee",
+                "label": "Foncée"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "contentConfig": {
+    "pages": [
+      {
+        "id": "cover-front-1766908538159",
+        "pageNumber": 0,
+        "label": "Couverture Avant"
+      },
+      {
+        "id": "1766908538159",
+        "pageNumber": 1,
+        "label": "Page 1"
+      },
+      {
+        "id": "cover-back-1766908538159",
+        "pageNumber": 999,
+        "label": "Couverture Arrière"
+      }
+    ],
+    "texts": [
+      {
+        "id": "text-back",
+        "label": "Remerciement",
+        "type": "fixed",
+        "content": "Merci d’avoir lu cette histoire !",
+        "position": {
+          "pageIndex": 994,
+          "zoneId": "body",
+          "x": 10,
+          "y": 12,
+          "width": 80
+        }
+      },
+      {
+        "id": "text-1766884100579",
+        "label": "Texte",
+        "type": "fixed",
+        "content": "Nouveau texte",
+        "combinationKey": "default",
+        "position": {
+          "pageIndex": 996,
+          "zoneId": "body",
+          "x": 20,
+          "y": 20,
+          "width": 30
+        }
+      },
+      {
+        "id": "text-1766908542728",
+        "label": "Texte",
+        "type": "fixed",
+        "content": "kxkx",
+        "combinationKey": "default",
+        "position": {
+          "pageIndex": 0,
+          "zoneId": "body",
+          "x": 20,
+          "y": 20,
+          "width": 30
+        }
+      },
+      {
+        "id": "text-1766908557827",
+        "label": "Texte",
+        "type": "fixed",
+        "content": "clair foncé",
+        "combinationKey": "claire_foncee",
+        "position": {
+          "pageIndex": 0,
+          "zoneId": "body",
+          "x": 20,
+          "y": 20,
+          "width": 30
+        }
+      },
+      {
+        "id": "text-1766908580614",
+        "label": "Texte",
+        "type": "fixed",
+        "content": "Clair-Clair",
+        "combinationKey": "claire_claire",
+        "position": {
+          "pageIndex": 0,
+          "zoneId": "body",
+          "x": 20.799999999999997,
+          "y": 20.4,
+          "width": 30
+        }
+      }
+    ],
+    "images": [],
+    "imageElements": [
+      {
+        "id": "img-1766884101475",
+        "label": "Nouvelle Image",
+        "type": "static",
+        "combinationKey": "default",
+        "position": {
+          "pageIndex": 996,
+          "x": 0,
+          "y": 0,
+          "width": 20,
+          "height": 20
+        }
+      }
+    ]
+  },
+  "features": {
+    "languages": [
+      "Français",
+      "Allemand",
+      "Anglais",
+      "Espagnol",
+      "Italien",
+      "Norvégien",
+      "Suédois",
+      "Luxembourgeois",
+      "Turc",
+      "Portugais",
+      "Catalan",
+      "Galicien",
+      "Basque",
+      "Néerlandais"
+    ],
+    "customization": [
+      "Nom",
+      "Genre",
+      "Couleur de peau",
+      "Cheveux",
+      "Coiffure",
+      "Barbe",
+      "Vêtements",
+      "Lunettes"
+    ],
+    "pages": 40,
+    "formats": [
+      "Broché : 21,5 x 25,8 cm",
+      "Relié : 22,2 x 26,5 cm"
+    ],
+    "dimensions": {
+      "width": 250,
+      "height": 250
+    },
+    "printConfig": {
+      "cover": {
+        "spineWidthMm": 15,
+        "bleedMm": 20,
+        "safeMarginMm": 15
+      },
+      "interior": {
+        "bleedMm": 20,
+        "safeMarginMm": 15
+      }
+    }
+  }
+}

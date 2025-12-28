@@ -913,6 +913,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const wizardFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleExportContent = () => {
     if (!selectedBook) return;
@@ -938,23 +939,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       imageElements: (selectedBook.contentConfig.imageElements || []).filter(i => validPageNumbers.has(i.position.pageIndex))
     };
 
-    // Export raw configuration exactly as it is in the state (cleaned of orphans)
-    // We create a clean object with only the properties that define the book's content/configuration
+    // Export ONLY content config + features (dimensions)
+    // EXCLUDING wizardConfig to respect scope
     const exportData = {
-      wizardConfig: selectedBook.wizardConfig,
-      contentConfig: cleanContentConfig
+      type: 'content_config',
+      timestamp: new Date().toISOString(),
+      contentConfig: cleanContentConfig,
+      features: selectedBook.features // Features (dimensions) are critical for content
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${slugify(selectedBook.name || 'book')}_config_${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `${slugify(selectedBook.name || 'book')}_content_config_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Configuration exportée (Extraction brute nettoyée)');
+    toast.success('Configuration Contenu exportée (Pages, Textes, Images)');
   };
 
     const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -984,35 +987,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             importedData = JSON.parse(content);
         }
 
-        // Validation: Check if the essential parts exist
-        if (!importedData.wizardConfig || !importedData.contentConfig) {
-          toast.error('Format invalide : Ce fichier ne contient pas une configuration de livre valide');
+        // Validation: Check if contentConfig exists
+        if (!importedData.contentConfig) {
+          toast.error('Format invalide : Ce fichier ne contient pas une configuration de contenu valide');
           return;
         }
 
-        if (confirm('Attention : Cette action va remplacer TOTALEMENT la configuration du contenu (Pages, Textes, Images, Variantes). Les informations du produit (Nom, Prix, ID) seront conservées. Voulez-vous continuer ?')) {
+        if (confirm('Attention : Cette action va remplacer la configuration du CONTENU (Pages, Textes, Images). Le Wizard (Personnages) ne sera PAS modifié. Voulez-vous continuer ?')) {
           
           handleSaveBook({
             ...selectedBook,
-            // 1. Wizard Configuration (Variants, Tabs, Avatars)
-            wizardConfig: importedData.wizardConfig,
-            
-            // 2. Content Configuration (Pages, Texts, Images, Elements)
+            // ONLY Update Content + Features
             contentConfig: importedData.contentConfig,
-            
-            // 3. Features (Dimensions, Print Config)
             features: importedData.features || selectedBook.features,
-
-            // PRESERVE IDENTITY (Do not overwrite)
-            id: selectedBook.id,
-            name: importedData.productInfo?.name || selectedBook.name, // Allow overwrite name if in master template
-            description: importedData.productInfo?.description || selectedBook.description,
-            price: importedData.productInfo?.price || selectedBook.price,
-            theme: importedData.productInfo?.theme || selectedBook.theme,
-            category: importedData.productInfo?.category || selectedBook.category,
-            coverImage: selectedBook.coverImage
+            
+            // PRESERVE Wizard
+            wizardConfig: selectedBook.wizardConfig
           });
-          toast.success('Configuration importée avec succès');
+          toast.success('Configuration Contenu importée avec succès');
         }
       } catch (error) {
         console.error('Import error:', error);
@@ -1023,6 +1015,52 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       if (event.target) event.target.value = '';
     };
     reader.readAsText(file);
+  };
+
+  // --- WIZARD HANDLERS (Scoped to Wizard Tab) ---
+  const handleExportWizard = () => {
+      if (!selectedBook) return;
+      const exportData = {
+          type: 'wizard_config',
+          timestamp: new Date().toISOString(),
+          wizardConfig: selectedBook.wizardConfig
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${slugify(selectedBook.name || 'book')}_wizard_config_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Configuration Wizard exportée');
+  };
+
+  const handleImportWizard = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file || !selectedBook) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+          try {
+              const imported = JSON.parse(e.target?.result as string);
+              if (!imported.wizardConfig) {
+                  toast.error('Format invalide (wizardConfig manquant)');
+                  return;
+              }
+              if (confirm('Remplacer toute la configuration du Wizard (Personnages, Variantes) ?')) {
+                  handleSaveBook({
+                      ...selectedBook,
+                      wizardConfig: imported.wizardConfig
+                  });
+                  toast.success('Configuration Wizard importée');
+              }
+          } catch (err) {
+              toast.error('Erreur de lecture du fichier');
+          }
+          if (event.target) event.target.value = '';
+      };
+      reader.readAsText(file);
   };
 
   return (
@@ -4444,6 +4482,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </h2>
                           
                           <div className="flex items-center gap-3">
+                              {/* New Wizard Buttons */}
+                              <div className="flex items-center gap-2 border-r border-gray-200 pr-3 mr-1">
+                                  <button 
+                                      onClick={handleExportWizard}
+                                      className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                      title="Exporter la config Wizard (JSON)"
+                                  >
+                                      <Download size={16} />
+                                  </button>
+                                  <button 
+                                      onClick={() => wizardFileInputRef.current?.click()}
+                                      className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
+                                      title="Importer la config Wizard (JSON)"
+                                  >
+                                      <Upload size={16} />
+                                  </button>
+                                  <input 
+                                      type="file" 
+                                      ref={wizardFileInputRef}
+                                      onChange={handleImportWizard}
+                                      accept=".json"
+                                      className="hidden"
+                                  />
+                             </div>
+
                               <button 
                                 onClick={() => {
                                    const baseLabel = 'Nouveau Perso';

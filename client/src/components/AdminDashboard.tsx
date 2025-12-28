@@ -4444,36 +4444,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </h2>
                           
                           <div className="flex items-center gap-3">
-                             {/* Export/Import for Wizard Config */}
-                             <div className="flex items-center gap-2 border-r border-gray-200 pr-3 mr-1">
-                                  <button 
-                                      onClick={() => {
-                                          if (!selectedBook) return;
-                                          const exportData = {
-                                              version: '1.0',
-                                              type: 'wizard_config',
-                                              timestamp: new Date().toISOString(),
-                                              bookId: selectedBook.id,
-                                              wizardConfig: selectedBook.wizardConfig
-                                          };
-                                          const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                                          const url = URL.createObjectURL(blob);
-                                          const link = document.createElement('a');
-                                          link.href = url;
-                                          link.download = `${slugify(selectedBook.name || 'book')}_wizard_export_${new Date().toISOString().slice(0, 10)}.json`;
-                                          document.body.appendChild(link);
-                                          link.click();
-                                          document.body.removeChild(link);
-                                          URL.revokeObjectURL(url);
-                                          toast.success('Configuration Wizard exportée');
-                                      }}
-                                      className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
-                                      title="Exporter la config Wizard (JSON)"
-                                  >
-                                      <Download size={16} />
-                                  </button>
-                             </div>
-
                               <button 
                                 onClick={() => {
                                    const baseLabel = 'Nouveau Perso';

@@ -6965,6 +6965,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                        }}
                                                                     >
                                                                        <option value="">Insérer une variable...</option>
+                                                                       <option value="{dedication}">Dédicace</option>
                                                                        {selectedBook.wizardConfig.tabs.map(tab => {
                                                                           // Filter only text variants
                                                                           const textVariants = tab.variants.filter(v => v.type === 'text');
@@ -6988,6 +6989,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                        // HYDRATE: ID -> Friendly Label
                                                                        const text = (layer as any).content || '';
                                                                        let processed = text.replace(/\{childName\}/g, '[Prénom]');
+                                                                       processed = processed.replace(/\{dedication\}/g, '[Dédicace]');
                                                                        return processed.replace(/\{(\d+\.\d+)\}/g, (match: string, key: string) => {
                                                                           const [tabId, variantId] = key.split('.');
                                                                           const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
@@ -7004,6 +7006,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                        // DEHYDRATE: Friendly Label -> ID
                                                                        let val = e.target.value;
                                                                        val = val.replace(/\[Prénom\]/g, '{childName}');
+                                                                       val = val.replace(/\[Dédicace\]/g, '{dedication}');
                                                                        val = val.replace(/\[([^:]+): ([^\]]+)\]/g, (match, tabLabel, varLabel) => {
                                                                           const tab = selectedBook.wizardConfig.tabs.find(t => t.label === tabLabel);
                                                                           if (tab) {

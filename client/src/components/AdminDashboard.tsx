@@ -922,19 +922,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     // We strictly use pageNumber as the reference since that's what we use in rendering
     const validPageNumbers = new Set(selectedBook.contentConfig.pages.map(p => p.pageNumber));
     
-    // Create a clean copy of content config removing orphaned items and stripping 'type' and 'zoneId' from texts
+    // Create a clean copy of content config removing orphaned items and stripping 'zoneId' from position
     const cleanContentConfig = {
       ...selectedBook.contentConfig,
       texts: selectedBook.contentConfig.texts
           .filter(t => validPageNumbers.has(t.position.pageIndex))
-          .map(({ type, position, ...rest }) => {
+          .map(({ position, ...rest }) => {
             // Remove 'zoneId' from position object
             const { zoneId, ...cleanPosition } = position;
             return {
-              ...rest,
+              ...rest, // This includes 'type', 'style' (font, size, etc.), 'content', etc.
               position: cleanPosition
             };
-          }), // Remove 'type' property and 'zoneId' from position
+          }),
       images: selectedBook.contentConfig.images.filter(i => validPageNumbers.has(i.pageIndex)),
       imageElements: (selectedBook.contentConfig.imageElements || []).filter(i => validPageNumbers.has(i.position.pageIndex))
     };

@@ -917,30 +917,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleExportContent = () => {
     if (!selectedBook) return;
 
-    // Export content configuration (variants, pages, elements, dimensions)
+    // EXPORT DIRECTLY THE EXACT CONFIGURATION OBJECTS FROM THE BOOK
+    // No "exportData" wrapper with versions, no restructuring.
+    // We export exactly what the user sees in the editor.
     const exportData = {
-      version: '1.2',
-      timestamp: new Date().toISOString(),
-      sourceBookId: selectedBook.id, // Only ID for reference
-      // Export configuration parts
-      wizardConfig: selectedBook.wizardConfig, // Export full wizard config including thumbnails/resources
-      contentConfig: selectedBook.contentConfig, // Layers, Texts, Images, Pages
-      features: {
-        dimensions: selectedBook.features?.dimensions || { width: 210, height: 210 },
-        printConfig: selectedBook.features?.printConfig
-      } // ONLY Dimensions & Print Settings
+      wizardConfig: selectedBook.wizardConfig,
+      contentConfig: selectedBook.contentConfig,
+      features: selectedBook.features || {}
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${slugify(selectedBook.name || 'book')}_storyboard_${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `${slugify(selectedBook.name || 'book')}_config_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Configuration complète exportée (Pages, Textes, Images, Variantes)');
+    toast.success('Configuration exportée avec succès');
   };
 
   const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -953,28 +948,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         const content = e.target?.result as string;
         const importedData = JSON.parse(content);
 
-        // Basic validation
+        // Validation: Check if the essential parts exist
         if (!importedData.wizardConfig || !importedData.contentConfig) {
-          toast.error('Format de fichier invalide: Configuration manquante');
+          toast.error('Format invalide : Ce fichier ne contient pas une configuration de livre valide');
           return;
         }
 
-        if (confirm('Attention : Cette action va remplacer la configuration du contenu (variantes, pages, calques). Les métadonnées du produit (Nom, Prix, ID) ne seront PAS modifiées. Voulez-vous continuer ?')) {
+        if (confirm('Attention : Cette action va remplacer TOTALEMENT la configuration du contenu (Pages, Textes, Images, Variantes). Les informations du produit (Nom, Prix, ID) seront conservées. Voulez-vous continuer ?')) {
           
-          // Merge features carefully: Only overwrite dimensions/printConfig, keep others (marketing)
-          const newFeatures = {
-             ...selectedBook.features,
-             ...(importedData.features?.dimensions ? { dimensions: importedData.features.dimensions } : {}),
-             ...(importedData.features?.printConfig ? { printConfig: importedData.features.printConfig } : {})
-          };
-
           handleSaveBook({
             ...selectedBook,
-            // Overwrite ONLY configuration parts
+            // 1. Wizard Configuration (Variants, Tabs, Avatars)
             wizardConfig: importedData.wizardConfig,
+            
+            // 2. Content Configuration (Pages, Texts, Images, Elements)
             contentConfig: importedData.contentConfig,
-            features: newFeatures,
-            // Explicitly PRESERVE product identity
+            
+            // 3. Features (Dimensions, Print Config)
+            features: importedData.features || selectedBook.features,
+
+            // PRESERVE IDENTITY (Do not overwrite)
             id: selectedBook.id,
             name: selectedBook.name,
             description: selectedBook.description,
@@ -983,11 +976,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             category: selectedBook.category,
             coverImage: selectedBook.coverImage
           });
-          toast.success('Configuration Storyboard importée avec succès');
+          toast.success('Configuration importée avec succès');
         }
       } catch (error) {
         console.error('Import error:', error);
-        toast.error('Erreur lors de l\'import du fichier');
+        toast.error('Erreur lors de l\'import du fichier JSON');
       }
       
       // Reset input

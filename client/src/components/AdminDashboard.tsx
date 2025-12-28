@@ -6507,10 +6507,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      <div 
                                                          className="absolute flex items-center justify-center bg-gray-50"
                                                          style={{
-                                                            top: '0',
-                                                            left: '0',
-                                                            right: '0',
-                                                            bottom: '0',
+                                                            top: `${-(selectedBook.features?.printConfig?.cover?.bleedMm || 3)}mm`,
+                                                            left: `${-(selectedBook.features?.printConfig?.cover?.bleedMm || 3)}mm`,
+                                                            right: `${-(selectedBook.features?.printConfig?.cover?.bleedMm || 3)}mm`,
+                                                            bottom: `${-(selectedBook.features?.printConfig?.cover?.bleedMm || 3)}mm`,
                                                          }}
                                                      >
                                                         {/* Find image for current variant & page */}

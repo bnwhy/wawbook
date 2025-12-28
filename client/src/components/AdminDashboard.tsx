@@ -6341,7 +6341,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                       />
                                                                   ) : (
                                                                       <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
-                                                                          {(() => {
+                                                                          {renderHtmlContent((() => {
                                                                               const content = text.content || '';
                                                                               let processed = content.replace(/\{childName\}/g, '[Prénom]');
                                                                               return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
@@ -6355,7 +6355,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                   }
                                                                                   return match;
                                                                               });
-                                                                          })()}
+                                                                          })())}
                                                                       </div>
                                                                   )}
                                                                </div>
@@ -6444,7 +6444,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                       />
                                                                   ) : (
                                                                       <div className={`font-medium w-full h-full ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
-                                                                          {(() => {
+                                                                          {renderHtmlContent((() => {
                                                                               const content = text.content || '';
                                                                               let processed = content.replace(/\{childName\}/g, '[Prénom]');
                                                                               return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
@@ -6458,7 +6458,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                   }
                                                                                   return match;
                                                                               });
-                                                                          })()}
+                                                                          })())}
                                                                       </div>
                                                                   )}
                                                                </div>

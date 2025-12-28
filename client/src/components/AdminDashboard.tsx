@@ -5291,17 +5291,91 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              >
                                 {currentCombinations.map(c => {
                                    const parts = c.split('_');
-                                   // Try to map back to readable format
-                                   // Format is typically: Option1_Option2_Option3...
-                                   // We want: "Option1 - Option2 - Option3"
-                                   // And handle known keys like 'boy', 'girl' etc if possible or just capitalize
                                    
-                                   const readable = parts.map(p => {
-                                       // Basic cleanup
-                                       return p.charAt(0).toUpperCase() + p.slice(1);
-                                   }).join(' - ');
+                                   // Try to format as requested: idperso_choix...-idperso_choix
+                                   // We need to parse the variant string which is typically "perso_value_perso_value"
+                                   // and group them. Since we don't strictly know the schema here, we'll try a best effort grouping
+                                   // or just display it in a technical but cleaner way.
+                                   
+                                   // Actually, based on the user request "idperso_choix...-idperso_choix", 
+                                   // if the string is like "child_boy_skin_light", they probably want "child_boy-skin_light"
+                                   // But typically the combination key IS just values joined by underscores.
+                                   // The user seems to want a specific technical format.
+                                   // Let's assume the combination key 'c' is already the value they want, or close to it.
+                                   // If they want "idperso_choix", maybe they mean grouping by character ID?
+                                   
+                                   // Let's look at how currentCombinations are built. They are just strings.
+                                   // If the input is "child_boy_skin_light", maybe they want it to look like that?
+                                   // The previous implementation was: {c}
+                                   
+                                   // The user says: "Nom des variables plus claire perso_choix...-perso_choix"
+                                   // And "Je veux un nom technique type idperso_choix...-idperso_choix"
+                                   
+                                   // If the data is stored as flat strings, we might just need to replace underscores with dashes 
+                                   // between groups, but we don't know the groups.
+                                   // However, looking at the previous user message example: "Claire   ClaireClaire   FonceeFoncee"
+                                   // It seems my previous "Capitalize" logic made it weird if the keys were simple.
+                                   
+                                   // Let's go with a raw technical display but perhaps slightly formatted if needed,
+                                   // or simply revert to the raw string if that's what "nom technique" implies, 
+                                   // possibly just ensuring it fits the "idperso_choix" pattern.
+                                   
+                                   // Actually, looking at the user's specific request: "idperso_choix...-idperso_choix"
+                                   // It implies they want to see the ID of the person/variable and the choice selected.
+                                   // Since `c` is likely just the combination string (e.g. "boy_light"), 
+                                   // we might just want to display `c` directly but maybe replace separators?
+                                   
+                                   // If `c` is "child_boy_skin_light", and they want "child_boy-skin_light", 
+                                   // we need to know where to split.
+                                   // Without metadata, we can't perfectly split.
+                                   
+                                   // BUT, maybe the user just wants the RAW value back because my "Readable" version was too "Clean"?
+                                   // "Claire Claire" is confusing. "claire_claire" is technical.
+                                   
+                                   // Let's try to format it as "key: value" if we can, or just return the raw string `c` 
+                                   // but maybe with a separator if we can detect pairs.
+                                   
+                                   // If we assume the format is value_value_value (as generated by generateCombinations),
+                                   // and we don't have the keys here easily (they are in `tabs`), we can't easily reconstruction "idperso".
+                                   
+                                   // However, the user provided example "idperso_choix...-idperso_choix".
+                                   // This looks like they want to see the variable names too?
+                                   
+                                   // Let's revert to a "technical" view which is likely just the raw string, 
+                                   // but maybe we can make it slightly better by replacing underscores with dashes 
+                                   // if that helps readability, or just keeping underscores.
+                                   
+                                   // Re-reading: "Je veux un nom technique type idperso_choix...-idperso_choix"
+                                   // This suggests `idperso` is the variable name (e.g. 'child') and `choix` is the value (e.g. 'boy').
+                                   // The current `c` might just be values "boy_light".
+                                   // If `c` DOES NOT contain the keys, we can't invent them.
+                                   
+                                   // Wait, `currentCombinations` comes from `generateCombinations`.
+                                   // If it's just values, we can't add keys without looking up `wizardConfig`.
+                                   
+                                   // Let's try to look up keys if possible, or just revert to `c` if that's "technical" enough compared to "Claire Claire".
+                                   // The user's complaint "Claire ClaireClaire Foncee..." suggests my previous code did a bad job 
+                                   // (it printed "Claire - Claire" etc).
+                                   
+                                   // If I just revert to `{c}`, it prints "claire_claire" (assuming snake case).
+                                   // The user wants "idperso_choix".
+                                   
+                                   // Let's try to inspect `selectedBook.wizardConfig.tabs` to build a better string.
+                                   // We have `selectedBook` in scope.
+                                   
+                                   let technicalName = c;
+                                   
+                                   // Attempt to reconstruct "key_value" format if we have the config
+                                   if (selectedBook && selectedBook.wizardConfig && selectedBook.wizardConfig.tabs) {
+                                       const values = c.split('_');
+                                       if (values.length === selectedBook.wizardConfig.tabs.length) {
+                                            technicalName = selectedBook.wizardConfig.tabs.map((tab, idx) => {
+                                                return `${tab.id}_${values[idx]}`;
+                                            }).join('-');
+                                       }
+                                   }
 
-                                   return <option key={c} value={c}>{readable.replace(/-/g, ' ')}</option>
+                                   return <option key={c} value={c}>{technicalName}</option>
                                 })}
                              </select>
                           </div>

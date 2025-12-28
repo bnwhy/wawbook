@@ -7078,23 +7078,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                
                                                {/* Delete Layer Button - Fixed at bottom of properties panel */}
                                                <div className="mt-auto p-4 border-t border-gray-200 bg-white">
-                                                  <button
-                                                      onClick={() => {
-                                                          if (!confirm('Voulez-vous vraiment supprimer ce calque ?')) return;
-                                                          
-                                                          if (isText) {
-                                                              const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== layer.id);
-                                                              handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
-                                                          } else {
-                                                              const newImgs = (selectedBook.contentConfig.imageElements || []).filter(i => i.id !== layer.id);
-                                                              handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
-                                                          }
-                                                          setActiveLayerId(null);
-                                                      }}
-                                                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors border border-red-200"
-                                                  >
-                                                      <Trash2 size={14} /> Supprimer le calque
-                                                  </button>
+                                                  
                                                </div>
                                                </>
                                             ) : (

@@ -278,9 +278,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             ...text.style
                         }}
                     >
-                        <div className="font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center">
-                            {resolveTextVariable(text.content)}
-                        </div>
+                        <div 
+                            className="font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center"
+                            dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
+                        />
                     </div>
                 ))}
             </div>
@@ -359,9 +360,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                     ...text.style
                                 }}
                             >
-                                <div className="font-display font-medium text-lg leading-relaxed text-balance text-center" style={{ color: text.style?.color || 'inherit', fontSize: text.style?.fontSize ? `${text.style.fontSize}px` : undefined }}>
-                                    {resolveTextVariable(text.content)}
-                                </div>
+                                <div 
+                                    className="font-display font-medium text-lg leading-relaxed text-balance text-center" 
+                                    style={{ color: text.style?.color || 'inherit', fontSize: text.style?.fontSize ? `${text.style.fontSize}px` : undefined }}
+                                    dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
+                                />
                             </div>
                         ))}
                     </div>
@@ -495,9 +498,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                            ...text.style
                                        }}
                                    >
-                                       <div className="font-display font-medium text-lg leading-relaxed text-balance text-center" style={{ color: text.style?.color || 'inherit', fontSize: text.style?.fontSize ? `${text.style.fontSize}px` : undefined }}>
-                                           {resolveTextVariable(text.content)}
-                                       </div>
+                                       <div 
+                                           className="font-display font-medium text-lg leading-relaxed text-balance text-center" 
+                                           style={{ color: text.style?.color || 'inherit', fontSize: text.style?.fontSize ? `${text.style.fontSize}px` : undefined }}
+                                           dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
+                                       />
                                    </div>
                                ))}
                             </div>

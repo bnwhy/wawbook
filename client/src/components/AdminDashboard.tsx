@@ -1601,6 +1601,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           >
                              <Trash2 size={16} /> Réinitialiser toutes les données
                           </button>
+                          <button 
+                             onClick={() => {
+                                if (confirm('Attention : Tous vos livres seront supprimés et réinitialisés aux valeurs par défaut. Voulez-vous continuer ?')) {
+                                   localStorage.removeItem('admin_books');
+                                   window.location.reload();
+                                }
+                             }}
+                             className="bg-white border border-orange-200 text-orange-600 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-orange-50 transition-colors shadow-sm mt-3"
+                          >
+                             <Book size={16} /> Réinitialiser uniquement les livres
+                          </button>
                        </div>
                     </div>
                  </div>

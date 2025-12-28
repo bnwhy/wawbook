@@ -941,11 +941,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     // Export ONLY content config + features (dimensions)
     // EXCLUDING wizardConfig to respect scope
+    // We strictly filter features to only export layout-related data (dimensions, printConfig)
     const exportData = {
       type: 'content_config',
       timestamp: new Date().toISOString(),
       contentConfig: cleanContentConfig,
-      features: selectedBook.features // Features (dimensions) are critical for content
+      features: {
+          dimensions: selectedBook.features?.dimensions,
+          printConfig: selectedBook.features?.printConfig
+      }
     };
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -997,9 +1001,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           
           handleSaveBook({
             ...selectedBook,
-            // ONLY Update Content + Features
+            // ONLY Update Content + Features (Layout related only)
             contentConfig: importedData.contentConfig,
-            features: importedData.features || selectedBook.features,
+            features: {
+                ...selectedBook.features, // Preserve existing features (languages, formats, customization)
+                ...(importedData.features ? {
+                    dimensions: importedData.features.dimensions,
+                    printConfig: importedData.features.printConfig
+                } : {})
+            },
             
             // PRESERVE Wizard
             wizardConfig: selectedBook.wizardConfig

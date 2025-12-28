@@ -4472,42 +4472,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   >
                                       <Download size={16} />
                                   </button>
-                                  <button 
-                                      onClick={() => {
-                                          const input = document.createElement('input');
-                                          input.type = 'file';
-                                          input.accept = '.json';
-                                          input.onchange = (e: any) => {
-                                              const file = e.target.files?.[0];
-                                              if (!file) return;
-                                              const reader = new FileReader();
-                                              reader.onload = (re: any) => {
-                                                  try {
-                                                      const imported = JSON.parse(re.target.result);
-                                                      if (!imported.wizardConfig) {
-                                                          toast.error('Format invalide (wizardConfig manquant)');
-                                                          return;
-                                                      }
-                                                      if (confirm('Remplacer toute la configuration des personnages ?')) {
-                                                          handleSaveBook({
-                                                              ...selectedBook,
-                                                              wizardConfig: imported.wizardConfig
-                                                          });
-                                                          toast.success('Configuration Wizard importée');
-                                                      }
-                                                  } catch (err) {
-                                                      toast.error('Erreur de lecture du fichier');
-                                                  }
-                                              };
-                                              reader.readAsText(file);
-                                          };
-                                          input.click();
-                                      }}
-                                      className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
-                                      title="Importer la config Wizard (JSON)"
-                                  >
-                                      <Upload size={16} />
-                                  </button>
                              </div>
 
                               <button 

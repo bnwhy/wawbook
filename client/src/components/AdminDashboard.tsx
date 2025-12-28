@@ -6850,7 +6850,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   <div className="flex-1 min-w-0">
                                                      <div className="text-xs font-bold text-slate-700 truncate">{layer.label}</div>
                                                      <div className="text-[10px] text-gray-400 truncate">
-                                                        {layer._kind === 'text' ? (layer as any).content : (layer as any).type}
+                                                        {layer._kind === 'text' ? ((layer as any).content || '').replace(/<[^>]*>?/gm, '') : (layer as any).type}
                                                      </div>
                                                   </div>
                                                   <button 

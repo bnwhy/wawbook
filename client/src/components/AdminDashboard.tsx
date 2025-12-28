@@ -6586,11 +6586,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   
                                                   const newText: TextElement = {
                                                      id: `text-${Date.now()}`,
-                                                     label: 'Nouveau Texte',
+                                                     label: 'Texte',
                                                      type: 'fixed',
-                                                     content: 'Texte ici...',
+                                                     content: 'Nouveau texte',
                                                      combinationKey: selectedVariant, // Strictly bind to current variant
-                                                     position: { pageIndex: currentPage.pageNumber, zoneId: 'body', x: 0, y: 0, width: 30 }
+                                                     position: { pageIndex: currentPage.pageNumber, zoneId: 'body', x: 20, y: 20, width: 30 }
                                                   };
                                                   const newTexts = [...selectedBook.contentConfig.texts, newText];
                                                   handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});

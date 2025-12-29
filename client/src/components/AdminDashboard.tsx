@@ -6405,7 +6405,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                      setDragStartPos({ x: e.clientX, y: e.clientY });
                                                                      setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
                                                                   }}
-                                                                  className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap text-slate-800 ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                  className={`absolute cursor-move border transition-all overflow-hidden break-words whitespace-pre-wrap text-slate-800 ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                                   style={{
                                                                      left: `${rightPageOffsetPct + ((text.position.x || 0) * (rightPagePct/100))}%`,
                                                                      top: `${text.position.y}%`,
@@ -6663,7 +6663,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                           setDragStartPos({ x: e.clientX, y: e.clientY });
                                                                           setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
                                                                        }}
-                                                                       className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap text-slate-800 ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                       className={`absolute cursor-move border transition-all overflow-hidden break-words whitespace-pre-wrap text-slate-800 ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                                        style={{
                                                                           left: `${text.position.x}%`,
                                                                           top: `${text.position.y}%`,

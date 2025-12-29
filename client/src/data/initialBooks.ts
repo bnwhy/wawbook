@@ -247,32 +247,8 @@ const RICH_CONTENT_CONFIG = {
     { id: 'p4', pageNumber: 4, label: 'Couverture Arrière', description: 'Dos de la couverture' }
   ],
   texts: [
-    // Front Cover
-    {
-      id: 't-cover-title',
-      label: 'Titre du livre',
-      type: 'fixed' as const,
-      content: "L'Aventurier du Monde",
-      position: { pageIndex: 0, zoneId: 'body', x: 10, y: 15, width: 80, rotation: 0 },
-      style: { fontSize: '48px', fontFamily: 'serif', fontWeight: 'bold', color: '#ffffff', textAlign: 'center' as const }
-    },
-    {
-      id: 't-cover-subtitle',
-      label: 'Sous-titre',
-      type: 'variable' as const,
-      content: "Une aventure de {childName}",
-      position: { pageIndex: 0, zoneId: 'body', x: 10, y: 25, width: 80, rotation: 0 },
-      style: { fontSize: '24px', fontFamily: 'sans-serif', fontWeight: 'normal', color: '#f0f0f0', textAlign: 'center' as const }
-    },
-    // Page 1 (Dedication)
-    {
-      id: 't-p1-dedication',
-      label: 'Dédicace',
-      type: 'fixed' as const,
-      content: "Pour {childName},\n\nQue ce livre t'inspire à explorer le monde avec curiosité et courage.\n\nAvec tout notre amour.",
-      position: { pageIndex: 1, zoneId: 'body', x: 20, y: 30, width: 60, rotation: 0 },
-      style: { fontSize: '18px', fontFamily: 'serif', fontStyle: 'italic', color: '#333333', textAlign: 'center' as const }
-    },
+    // Front Cover texts removed to avoid duplication with the image which already contains the title
+    
     // Page 2 (Story)
     {
       id: 't-p2-story',

@@ -269,7 +269,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {pageTexts.map(text => (
                     <div 
                         key={text.id}
-                        className="absolute z-20 text-cloud-dark"
+                        className="absolute z-20 text-cloud-dark p-2 overflow-hidden break-words whitespace-pre-wrap"
                         style={{
                             left: `${text.position.x}%`,
                             top: `${text.position.y}%`,
@@ -279,7 +279,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         }}
                     >
                         <div 
-                            className="font-display font-medium text-lg leading-relaxed text-balance text-center"
+                            className="font-medium w-full h-full"
                             dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                         />
                     </div>
@@ -351,7 +351,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         {coverTexts.map(text => (
                             <div 
                                 key={text.id}
-                                className="absolute z-20"
+                                className="absolute z-20 p-2 overflow-hidden break-words whitespace-pre-wrap"
                                 style={{
                                     left: `${text.position.x}%`,
                                     top: `${text.position.y}%`,
@@ -361,7 +361,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                 }}
                             >
                                 <div 
-                                    className="font-display font-medium text-lg leading-relaxed text-balance text-center" 
+                                    className="font-medium w-full h-full" 
                                     dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                                 />
                             </div>
@@ -488,7 +488,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                {backCoverTexts.map(text => (
                                    <div 
                                        key={text.id}
-                                       className="absolute z-20"
+                                       className="absolute z-20 p-2 overflow-hidden break-words whitespace-pre-wrap"
                                        style={{
                                            left: `${text.position.x}%`,
                                            top: `${text.position.y}%`,
@@ -498,7 +498,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                        }}
                                    >
                                        <div 
-                                           className="font-display font-medium text-lg leading-relaxed text-balance text-center" 
+                                           className="font-medium w-full h-full" 
                                            dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                                        />
                                    </div>

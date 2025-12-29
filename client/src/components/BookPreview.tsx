@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Loader2 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Story, BookConfig } from '../types';
 import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
+import { generateBookPages } from '../utils/imageGenerator';
 import Navigation from './Navigation';
 import hardcoverIcon from '@assets/generated_images/hardcover_teal_book_isometric.png';
 import softcoverIcon from '@assets/generated_images/softcover_teal_book_isometric.png';
@@ -32,6 +33,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
   const [dedication, setDedication] = useState(config.dedication || '');
   const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
+  const [generatedPages, setGeneratedPages] = useState<Record<number, string>>({});
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // --- HELPER: Resolve Variables ---
   const resolveTextVariable = (text: string) => {
@@ -69,6 +72,26 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   const currentCombinationKey = getCombinationKey();
+
+  // --- GENERATE PAGES EFFECT ---
+  useEffect(() => {
+    if (book) {
+        setIsGenerating(true);
+        // Add a small delay to allow UI to render first
+        const timer = setTimeout(() => {
+            generateBookPages(book, config, currentCombinationKey)
+                .then(pages => {
+                    setGeneratedPages(pages);
+                    setIsGenerating(false);
+                })
+                .catch(err => {
+                    console.error("Failed to generate pages", err);
+                    setIsGenerating(false);
+                });
+        }, 100);
+        return () => clearTimeout(timer);
+    }
+  }, [book, config, currentCombinationKey]);
 
   // --- DIMENSIONS & SCALE ---
   // Default to Square 210x210 if not specified
@@ -241,117 +264,35 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   const renderPageContent = (pageIndex: number, isLeft: boolean) => {
-      // 1. Check if we have Admin Config
-      if (book?.contentConfig?.pages) {
-          const pageDef = book.contentConfig.pages.find(p => p.pageNumber === pageIndex);
-          
-          if (!pageDef) {
-             return <div className="w-full h-full bg-white"></div>;
-          }
-
-          // Background Image
-          const bgImage = book.contentConfig.images.find(
-             img => img.pageIndex === pageIndex && 
-                   (img.combinationKey === currentCombinationKey || img.combinationKey === 'default')
-          );
-
-          // Texts
-          const pageTexts = book.contentConfig.texts.filter(t => t.position.pageIndex === pageIndex)
-            .map(t => ({...t, _kind: 'text'}));
-
-          // Images (Stickers)
-          const pageImages = (book.contentConfig.imageElements || []).filter(i => i.position.pageIndex === pageIndex)
-            .map(i => ({...i, _kind: 'image'}));
-
-          // Sort by Z-Index (Ascending for rendering)
-          const allLayers = [...pageImages, ...pageTexts].sort((a, b) => {
-              const aLayer = a.position.layer !== undefined ? a.position.layer : (a._kind === 'text' ? 1000 : 0);
-              const bLayer = b.position.layer !== undefined ? b.position.layer : (b._kind === 'text' ? 1000 : 0);
-              return aLayer - bLayer;
-          });
-
-          // Calculate Bleed Scale to exclude bleed from preview
-          const widthMm = book?.features?.dimensions?.width || 210;
-          const heightMm = book?.features?.dimensions?.height || 210;
-          const bleedMm = book?.features?.printConfig?.interior?.bleedMm || 0;
-          
-          const scaleX = (widthMm + 2 * bleedMm) / widthMm;
-          const scaleY = (heightMm + 2 * bleedMm) / heightMm;
-
+      // 1. Check if we have generated image
+      if (generatedPages[pageIndex]) {
           return (
-            <div className="w-full h-full relative overflow-hidden bg-white">
-                {/* Background */}
-                {bgImage?.imageUrl ? (
-                    <img 
-                        src={bgImage.imageUrl} 
-                        className="absolute inset-0 w-full h-full object-cover" 
-                        alt="Background" 
-                        style={{
-                            transform: `scale(${scaleX}, ${scaleY})`,
-                            transformOrigin: 'center center'
-                        }}
-                    />
-                ) : (
-                    <div className="absolute inset-0 bg-white">
-                    </div>
-                )}
-
-                {/* Mixed Layers */}
-                {allLayers.map(layer => {
-                    if (layer._kind === 'image') {
-                        const el = layer as ImageElement;
-                        const imageUrl = resolveImageUrl(el);
-                        return (
-                            <div 
-                                key={el.id}
-                                className="absolute z-10"
-                                style={{
-                                    left: `${el.position.x}%`,
-                                    top: `${el.position.y}%`,
-                                    width: `${el.position.width}%`,
-                                    height: el.position.height ? `${el.position.height}%` : 'auto',
-                                    transform: `rotate(${el.position.rotation || 0}deg)`
-                                }}
-                            >
-                                {imageUrl && <img src={imageUrl} className="w-full h-full object-contain" alt={el.label} />}
-                            </div>
-                        );
-                    } else {
-                        const text = layer as TextElement;
-                        return (
-                            <div 
-                                key={text.id}
-                                className="absolute z-10 text-slate-800 overflow-hidden break-words whitespace-pre-wrap pointer-events-none"
-                                style={{
-                                    left: `${text.position.x}%`,
-                                    top: `${text.position.y}%`,
-                                    width: `${text.position.width || 30}%`,
-                                    transform: `rotate(${text.position.rotation || 0}deg)`,
-                                    ...text.style
-                                }}
-                            >
-                                <div 
-                                    className="font-medium w-full h-full"
-                                    style={{ 
-                                        color: text.style?.color,
-                                        fontFamily: text.style?.fontFamily,
-                                        fontSize: text.style?.fontSize,
-                                        fontWeight: text.style?.fontWeight,
-                                        fontStyle: text.style?.fontStyle,
-                                        textDecoration: text.style?.textDecoration,
-                                        textAlign: text.style?.textAlign as any
-                                    }}
-                                    dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
-                                />
-                            </div>
-                        );
-                    }
-                })}
-            </div>
+             <div className="w-full h-full relative overflow-hidden bg-white">
+                 <img 
+                    src={generatedPages[pageIndex]} 
+                    className="w-full h-full object-contain" 
+                    alt={`Page ${pageIndex}`} 
+                 />
+             </div>
+          );
+      }
+      
+      // 2. Loading State
+      if (isGenerating) {
+          return (
+             <div className="w-full h-full flex items-center justify-center bg-white text-gray-300">
+                <Loader2 className="animate-spin" size={32} />
+             </div>
           );
       }
 
-      // 2. Fallback to Simple Story (Legacy) -> REMOVED (Strict Config Mode)
+      // 3. Check if we have Admin Config but not yet generated (fallback to empty)
+      if (book?.contentConfig?.pages) {
+          return <div className="w-full h-full bg-white flex items-center justify-center text-gray-100"><BookOpen size={40} /></div>;
+      }
+
+      // 4. Fallback to Simple Story (Legacy)
+      // Only if no content config is present at all
       return <div className="w-full h-full bg-white"></div>;
   };
 
@@ -369,13 +310,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       // Check if we have a custom cover configuration from Admin
       const hasCustomCover = coverTexts.length > 0 || coverImages.length > 0 || !!coverBg;
 
-      // Sort by Z-Index (Ascending for rendering)
-      const allCoverLayers = [...coverImages, ...coverTexts].sort((a, b) => {
-          const aLayer = a.position.layer !== undefined ? a.position.layer : (a._kind === 'text' ? 1000 : 0);
-          const bLayer = b.position.layer !== undefined ? b.position.layer : (b._kind === 'text' ? 1000 : 0);
-          return aLayer - bLayer;
-      });
-
       return {
         left: <div className="w-full h-full bg-transparent" />, // Empty space left of cover
         right: (
@@ -387,8 +321,15 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
              {/* Cover Thickness (Right Edge) */}
              <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-black/20 to-transparent z-20 pointer-events-none"></div>
 
-             {hasCustomCover ? (
-                /* RENDER CUSTOM ADMIN CONTENT FOR COVER */
+             {generatedPages[0] ? (
+                 <img 
+                    src={generatedPages[0]} 
+                    className="absolute inset-0 w-full h-full object-cover" 
+                    style={{ marginLeft: '12px', width: 'calc(100% - 12px)' }} 
+                    alt="Cover" 
+                 />
+             ) : hasCustomCover ? (
+                /* RENDER CUSTOM ADMIN CONTENT FOR COVER (Fallback if generation pending) */
                 (<>
                     {/* Background */}
                     {coverBg ? (
@@ -398,51 +339,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${book.coverImage})`, marginLeft: '12px', width: 'calc(100% - 12px)' }}></div>
                          )
                     )}
-                    <div className="absolute inset-0 z-10" style={{ marginLeft: '12px', width: 'calc(100% - 12px)' }}>
-                        {/* Mixed Layers */}
-                        {allCoverLayers.map(layer => {
-                            if (layer._kind === 'image') {
-                                const el = layer as ImageElement;
-                                const imageUrl = resolveImageUrl(el);
-                                return (
-                                    <div 
-                                        key={el.id}
-                                        className="absolute z-10"
-                                        style={{
-                                            left: `${el.position.x}%`,
-                                            top: `${el.position.y}%`,
-                                            width: `${el.position.width}%`,
-                                            height: el.position.height ? `${el.position.height}%` : 'auto',
-                                            transform: `rotate(${el.position.rotation || 0}deg)`
-                                        }}
-                                    >
-                                        {imageUrl && <img src={imageUrl} className="w-full h-full object-contain" alt={el.label} />}
-                                    </div>
-                                );
-                            } else {
-                                const text = layer as TextElement;
-                                return (
-                                    <div 
-                                        key={text.id}
-                                        className="absolute z-20 text-slate-800 overflow-hidden break-words whitespace-pre-wrap pointer-events-none"
-                                        style={{
-                                            left: `${text.position.x}%`,
-                                            top: `${text.position.y}%`,
-                                            width: `${text.position.width || 30}%`,
-                                            transform: `rotate(${text.position.rotation || 0}deg)`,
-                                            ...text.style
-                                        }}
-                                    >
-                                        <div 
-                                            className="font-medium w-full h-full" 
-                                            style={{ color: text.style?.color }}
-                                            dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
-                                        />
-                                    </div>
-                                );
-                            }
-                        })}
-                    </div>
+                    {/* Loading overlay if generating */}
+                    {isGenerating && (
+                        <div className="absolute inset-0 z-50 bg-white/50 flex items-center justify-center" style={{ marginLeft: '12px' }}>
+                            <Loader2 className="animate-spin text-cloud-blue" />
+                        </div>
+                    )}
                 </>)
              ) : (
                 /* EMPTY COVER IF NOT CONFIGURED */
@@ -532,7 +434,14 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                      {/* Cover Thickness (Left Edge) */}
                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-black/20 to-transparent z-20 pointer-events-none"></div>
         
-                     {showCustomBack ? (
+                     {generatedPages[999] ? (
+                        <img 
+                            src={generatedPages[999]} 
+                            className="absolute inset-0 w-full h-full object-cover" 
+                            style={{ marginRight: '12px', width: 'calc(100% - 12px)' }} 
+                            alt="Back Cover" 
+                         />
+                     ) : showCustomBack ? (
                         /* Custom Admin Back Cover Content */
                         (<>
                             {/* Background */}

@@ -90,6 +90,32 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       computedH = MAX_W / spreadAspectRatio;
   }
 
+  // Effect to load all fonts used in the book (since BookPreview might be used standalone)
+  useEffect(() => {
+    // Collect all texts from all pages (and cover/back cover if configured)
+    const texts: TextElement[] = [];
+    if (book?.contentConfig?.texts) {
+        texts.push(...book.contentConfig.texts);
+    }
+    
+    const usedFonts = new Set<string>();
+    texts.forEach(text => {
+        if (text.style?.fontFamily) {
+            usedFonts.add(text.style.fontFamily);
+        }
+    });
+
+    usedFonts.forEach(font => {
+         const href = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}&display=swap`;
+         if (!document.querySelector(`link[href="${href}"]`)) {
+             const link = document.createElement('link');
+             link.href = href;
+             link.rel = 'stylesheet';
+             document.head.appendChild(link);
+         }
+    });
+  }, [book]);
+
   const handleAddToCart = () => {
     // Add to cart functionality
     const itemData = {
@@ -280,7 +306,15 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     >
                         <div 
                             className="font-medium w-full h-full"
-                            style={{ color: text.style?.color }}
+                            style={{ 
+                                color: text.style?.color,
+                                fontFamily: text.style?.fontFamily,
+                                fontSize: text.style?.fontSize,
+                                fontWeight: text.style?.fontWeight,
+                                fontStyle: text.style?.fontStyle,
+                                textDecoration: text.style?.textDecoration,
+                                textAlign: text.style?.textAlign as any
+                            }}
                             dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                         />
                     </div>

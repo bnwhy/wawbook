@@ -370,6 +370,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   }, []);
 
+
   // Effect to dynamically load selected font
   const loadFont = (fontFamily: string) => {
     if (!fontFamily) return;
@@ -421,6 +422,29 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const contextBook = books.find(b => b.id === selectedBookId);
   const [draftBook, setDraftBook] = useState<BookProduct | null>(null);
   const selectedBook = draftBook || contextBook;
+  
+  // Effect to load all fonts used in the book
+  React.useEffect(() => {
+    if (!selectedBook?.contentConfig?.texts) return;
+    
+    const usedFonts = new Set<string>();
+    selectedBook.contentConfig.texts.forEach(text => {
+        if (text.style?.fontFamily) {
+            usedFonts.add(text.style.fontFamily);
+        }
+    });
+
+    usedFonts.forEach(font => {
+         const href = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}&display=swap`;
+         if (!document.querySelector(`link[href="${href}"]`)) {
+             const link = document.createElement('link');
+             link.href = href;
+             link.rel = 'stylesheet';
+             document.head.appendChild(link);
+         }
+    });
+  }, [selectedBook?.contentConfig?.texts]);
+
   const [activeRightTab, setActiveRightTab] = useState<'layers' | 'properties'>('layers');
 
   // Drag & Drop State
@@ -6417,7 +6441,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                >
                                                                   {renderTransformHandles(text.id, text.position)}
                                                                   <div className={`font-medium w-full h-full pointer-events-none ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : ''}`}>
-                                                                     <div style={{ color: text.style?.color }} dangerouslySetInnerHTML={{ __html: ((() => {
+                                                                     <div style={{ 
+                                                                                color: text.style?.color,
+                                                                                fontFamily: text.style?.fontFamily,
+                                                                                fontSize: text.style?.fontSize,
+                                                                                fontWeight: text.style?.fontWeight,
+                                                                                fontStyle: text.style?.fontStyle,
+                                                                                textDecoration: text.style?.textDecoration,
+                                                                                textAlign: text.style?.textAlign as any
+                                                                             }} dangerouslySetInnerHTML={{ __html: ((() => {
                                                                          const content = text.content || '';
                                                                          let processed = content.replace(/\{childName\}/g, '[Prénom]');
                                                                          return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
@@ -6675,7 +6707,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     >
                                                                        {renderTransformHandles(text.id, text.position)}
                                                                            <div className={`font-medium w-full h-full pointer-events-none ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : ''}`}>
-                                                                              <div style={{ color: text.style?.color }} dangerouslySetInnerHTML={{ __html: ((() => {
+                                                                              <div style={{ 
+                                                                                color: text.style?.color,
+                                                                                fontFamily: text.style?.fontFamily,
+                                                                                fontSize: text.style?.fontSize,
+                                                                                fontWeight: text.style?.fontWeight,
+                                                                                fontStyle: text.style?.fontStyle,
+                                                                                textDecoration: text.style?.textDecoration,
+                                                                                textAlign: text.style?.textAlign as any
+                                                                             }} dangerouslySetInnerHTML={{ __html: ((() => {
                                                                                   const content = text.content || '';
                                                                                   let processed = content.replace(/\{childName\}/g, '[Prénom]');
                                                                                   return processed.replace(/\{(\d+\.\d+)\}/g, (match: string, key: string) => {

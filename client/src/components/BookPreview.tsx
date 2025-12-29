@@ -195,17 +195,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   const totalSpreads = Math.ceil(pageCount / 2); 
   
-  // Check if we have custom content to decide on Intro spread visibility
-  const hasCustomContent = true; // Always true for strict config mode
-  
   // 0: Cover
-  // 1: Intro (ONLY if !hasCustomContent)
   // [Offset]: Spreads
-  // N+1: End Page (ONLY if !hasCustomContent)
-  // N+2: Closed Back
-  const introViewCount = hasCustomContent ? 0 : 1;
-  const endViewCount = hasCustomContent ? 0 : 1;
-  const totalViews = 1 + introViewCount + totalSpreads + endViewCount + 1;
+  // N+1: Closed Back
+  const totalViews = 1 + totalSpreads + 1;
 
   const handleNext = () => {
     if (currentView < totalViews - 1 && !isFlipping) {
@@ -299,6 +292,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const getSpreadContent = (index: number) => {
     // 0: Cover
     if (index === 0) {
+      // ... (Cover Logic preserved) ...
       // Find configured cover elements if available
       const coverTexts = (book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [])
         .map(t => ({...t, _kind: 'text'}));
@@ -350,54 +344,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 /* EMPTY COVER IF NOT CONFIGURED */
                 (<div className="absolute inset-0 bg-white" style={{ marginLeft: '12px' }}></div>)
              )}
-          </div>
-        )
-      };
-    }
-
-    // 1: Intro - Only show if NO custom content is configured (legacy mode)
-    if (index === 1 && !hasCustomContent) {
-      return {
-        left: (
-          <div className="w-full h-full flex items-center justify-center p-12 bg-cloud-lightest relative shadow-inner">
-             <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/5 to-transparent pointer-events-none"></div>
-             <div className="text-center opacity-80">
-                <h3 className="font-hand text-2xl text-accent-melon mb-2 font-bold">Cette histoire appartient à</h3>
-                <div className="font-display text-4xl text-cloud-dark font-black my-4 border-b-2 border-cloud-dark/10 pb-2 inline-block min-w-[200px]">{config.childName}</div>
-                <p className="font-display text-lg text-cloud-dark/60 italic mt-8 px-4 whitespace-pre-wrap">
-                    "{dedication || config.dedication || `Pour ${config.childName}, que tes rêves soient aussi grands que ton imagination.`}"
-                </p>
-             </div>
-          </div>
-        ),
-        right: (
-          <div className="w-full h-full flex flex-col items-center justify-center p-12 bg-white relative shadow-inner">
-             <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/5 to-transparent pointer-events-none"></div>
-             <h1 className="font-display font-black text-4xl text-cloud-dark mb-4 text-center leading-tight">{story.title}</h1>
-             <div className="w-20 h-1.5 bg-accent-sun rounded-full mb-8"></div>
-             <div className="text-cloud-blue font-bold text-xl">Écrit pour {config.childName}</div>
-          </div>
-        )
-      };
-    }
-
-    // N-1: Back Cover (End Page) - Legacy only
-    if (!hasCustomContent && index === totalViews - 2) {
-      return {
-        left: (
-          <div className="w-full h-full bg-cloud-blue flex flex-col items-center justify-center text-white p-8 text-center shadow-inner">
-             <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/5 to-transparent pointer-events-none"></div>
-             <h2 className="font-display font-black text-4xl mb-6">Fin</h2>
-             <p className="text-white/80 text-lg mb-8">Merci d'avoir lu cette histoire !</p>
-             <button onClick={onReset} className="bg-white text-cloud-blue px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
-                 Créer un autre livre
-             </button>
-          </div>
-        ),
-        right: (
-          <div className="w-full h-full bg-cloud-dark flex items-center justify-center shadow-inner">
-             <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/5 to-transparent pointer-events-none"></div>
-             <Cloud size={64} className="text-white/20" />
           </div>
         )
       };
@@ -520,11 +466,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     }
 
     // Story Spreads
-    // index starts at 2 (0=cover, 1=intro)
-    // page 1 is at index 2 (left) if we want spread view
-    // But page numbers in book are 1, 2, 3...
+    // index starts at 1 (0=cover)
     // Spread 1: Page 1 (Left), Page 2 (Right)
-    const spreadOffset = hasCustomContent ? 1 : 2;
+    const spreadOffset = 1;
     const spreadIndex = index - spreadOffset;
     const leftPageNum = spreadIndex * 2 + 1;
     const rightPageNum = spreadIndex * 2 + 2;

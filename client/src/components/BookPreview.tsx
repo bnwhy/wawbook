@@ -269,7 +269,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {pageTexts.map(text => (
                     <div 
                         key={text.id}
-                        className="absolute z-20 text-cloud-dark overflow-hidden break-words whitespace-pre-wrap"
+                        className="absolute z-20 text-slate-800 overflow-hidden break-words whitespace-pre-wrap pointer-events-none"
                         style={{
                             left: `${text.position.x}%`,
                             top: `${text.position.y}%`,
@@ -352,7 +352,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         {coverTexts.map(text => (
                             <div 
                                 key={text.id}
-                                className="absolute z-20 overflow-hidden break-words whitespace-pre-wrap"
+                                className="absolute z-20 text-slate-800 overflow-hidden break-words whitespace-pre-wrap pointer-events-none"
                                 style={{
                                     left: `${text.position.x}%`,
                                     top: `${text.position.y}%`,
@@ -490,7 +490,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                {backCoverTexts.map(text => (
                                    <div 
                                        key={text.id}
-                                       className="absolute z-20 overflow-hidden break-words whitespace-pre-wrap"
+                                       className="absolute z-20 text-slate-800 overflow-hidden break-words whitespace-pre-wrap pointer-events-none"
                                        style={{
                                            left: `${text.position.x}%`,
                                            top: `${text.position.y}%`,

@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Download, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Story, BookConfig } from '../types';
 import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
 import Navigation from './Navigation';
-import html2canvas from 'html2canvas';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 import hardcoverIcon from '@assets/generated_images/hardcover_teal_book_isometric.png';
 import softcoverIcon from '@assets/generated_images/softcover_teal_book_isometric.png';
 
@@ -35,78 +32,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
   const [dedication, setDedication] = useState(config.dedication || '');
   const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
-
-  // Export State
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportQueue, setExportQueue] = useState<number[]>([]);
-  const [currentExportPage, setCurrentExportPage] = useState<number | null>(null);
-  const exportContainerRef = useRef<HTMLDivElement>(null);
-  const exportZipRef = useRef<JSZip | null>(null);
-
-  // --- EXPORT LOGIC ---
-  const handleStartExport = () => {
-      const pagesToExport = [0]; // Cover
-      
-      // Content Pages
-      const pages = getContentPages();
-      const maxPage = Math.max(...pages.map(p => p.pageNumber), 0);
-      for (let i = 1; i <= maxPage; i++) {
-          pagesToExport.push(i);
-      }
-      
-      pagesToExport.push(999); // Back Cover
-
-      setExportQueue(pagesToExport);
-      setCurrentExportPage(pagesToExport[0]);
-      setIsExporting(true);
-      exportZipRef.current = new JSZip();
-  };
-
-  useEffect(() => {
-      if (!isExporting || currentExportPage === null || !exportContainerRef.current) return;
-
-      const processPage = async () => {
-          // Wait for images to load/render
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          if (exportContainerRef.current) {
-              try {
-                  const canvas = await html2canvas(exportContainerRef.current, {
-                      useCORS: true,
-                      scale: 2, // Better quality
-                      logging: false
-                  });
-                  
-                  const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
-                  if (blob && exportZipRef.current) {
-                      const fileName = `page_${currentExportPage.toString().padStart(3, '0')}.jpg`;
-                      exportZipRef.current.file(fileName, blob);
-                  }
-              } catch (err) {
-                  console.error("Error capturing page", currentExportPage, err);
-              }
-          }
-
-          // Move to next
-          const nextQueue = exportQueue.slice(1);
-          setExportQueue(nextQueue);
-          
-          if (nextQueue.length > 0) {
-              setCurrentExportPage(nextQueue[0]);
-          } else {
-              // Finish
-              if (exportZipRef.current) {
-                  const content = await exportZipRef.current.generateAsync({ type: "blob" });
-                  saveAs(content, `flipbook-images-${story.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.zip`);
-              }
-              setIsExporting(false);
-              setCurrentExportPage(null);
-              exportZipRef.current = null;
-          }
-      };
-
-      processPage();
-  }, [currentExportPage, isExporting]);
 
   // --- HELPER: Resolve Variables ---
   const resolveTextVariable = (text: string) => {
@@ -968,48 +893,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
             }
             .animate-drop-in { animation: drop-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
           `}</style>
-          {/* HIDDEN EXPORT CONTAINER */}
-          {isExporting && currentExportPage !== null && (
-              <div 
-                ref={exportContainerRef}
-                style={{
-                    position: 'fixed',
-                    left: '-9999px',
-                    top: '0',
-                    width: '800px', // High resolution base
-                    height: '800px',
-                    background: 'white',
-                    zIndex: -1
-                }}
-              >
-                 {/* Render content scaled to fit if needed, but here we just render raw */}
-                 {renderPageContent(currentExportPage, false)}
-              </div>
-          )}
-
-          {/* EXPORT BUTTON OVERLAY */}
-          {!isModal && (
-              <div className="absolute top-4 right-4 z-50">
-                  <button 
-                    onClick={handleStartExport}
-                    disabled={isExporting}
-                    className="bg-white/90 backdrop-blur text-slate-700 hover:text-cloud-blue px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2 text-sm border border-slate-200 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-wait"
-                  >
-                      {isExporting ? (
-                          <>
-                            <Loader2 size={16} className="animate-spin" />
-                            Génération {exportQueue.length > 0 ? `${exportQueue[0]}/${exportQueue[exportQueue.length-1]}` : '...'}
-                          </>
-                      ) : (
-                          <>
-                            <Download size={16} />
-                            Télécharger Images
-                          </>
-                      )}
-                  </button>
-              </div>
-          )}
-
       </div>
   );
 };

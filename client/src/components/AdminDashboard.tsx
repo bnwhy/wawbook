@@ -6695,7 +6695,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                           setDragStartPos({ x: e.clientX, y: e.clientY });
                                                                           setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
                                                                        }}
-                                                                       className={`absolute cursor-move transition-all overflow-hidden break-words whitespace-pre-wrap text-slate-800 ${activeLayerId === text.id ? 'ring-1 ring-brand-coral z-50' : 'z-20'}`}
+                                                                       className={`absolute cursor-move transition-all overflow-hidden break-words whitespace-pre-wrap text-slate-800 ${activeLayerId === text.id ? 'ring-1 ring-brand-coral z-50' : 'z-10'}`}
                                                                        style={{
                                                                           left: `${text.position.x}%`,
                                                                           top: `${text.position.y}%`,

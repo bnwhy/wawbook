@@ -305,7 +305,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         return (
                             <div 
                                 key={text.id}
-                                className="absolute z-20 text-slate-800 overflow-hidden break-words whitespace-pre-wrap pointer-events-none"
+                                className="absolute z-10 text-slate-800 overflow-hidden break-words whitespace-pre-wrap pointer-events-none"
                                 style={{
                                     left: `${text.position.x}%`,
                                     top: `${text.position.y}%`,

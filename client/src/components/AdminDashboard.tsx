@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileQuestion } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { ShippingZone, ShippingMethod } from '../types/ecommerce';
@@ -6318,27 +6318,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          {/* PAGE RENDERER */}
                                          {(() => {
                                             const currentPage = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
-                                            
-                                            // Fallback if page is deleted or not found
-                                            if (!currentPage) {
-                                                return (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 p-8 border-2 border-dashed border-gray-300 rounded-lg">
-                                                        <FileQuestion size={48} className="mb-2 opacity-50" />
-                                                        <p className="font-medium">Page introuvable</p>
-                                                        <p className="text-xs mb-4">Cette page a peut-être été supprimée.</p>
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const firstPage = selectedBook.contentConfig.pages[0];
-                                                                if (firstPage) setSelectedPageId(firstPage.id);
-                                                            }}
-                                                            className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 text-xs font-bold transition-colors"
-                                                        >
-                                                            Retour au début
-                                                        </button>
-                                                    </div>
-                                                );
-                                            }
+                                            if (!currentPage) return null;
                                             
                                             const pageIndex = selectedBook.contentConfig.pages.findIndex(p => p.id === selectedPageId);
                                             const isFrontCover = pageIndex === 0;

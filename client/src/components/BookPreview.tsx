@@ -279,16 +279,18 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           const scaleY = (heightMm + 2 * bleedMm) / heightMm;
 
           return (
-            <div 
-                className="w-full h-full relative overflow-hidden bg-white"
-                style={{
-                    transform: `scale(${scaleX}, ${scaleY})`,
-                    transformOrigin: 'center center'
-                }}
-            >
+            <div className="w-full h-full relative overflow-hidden bg-white">
                 {/* Background */}
                 {bgImage?.imageUrl ? (
-                    <img src={bgImage.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Background" />
+                    <img 
+                        src={bgImage.imageUrl} 
+                        className="absolute inset-0 w-full h-full object-cover" 
+                        alt="Background" 
+                        style={{
+                            transform: `scale(${scaleX}, ${scaleY})`,
+                            transformOrigin: 'center center'
+                        }}
+                    />
                 ) : (
                     <div className="absolute inset-0 bg-white">
                     </div>

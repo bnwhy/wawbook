@@ -6592,85 +6592,102 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            return null;
                                                         })()}
                                                      </div>
-                                                     {/* 2. IMAGE LAYERS (Stickers/Overlays) */}
-                                                     {(selectedBook.contentConfig.imageElements || [])
-                                                        .filter(el => el.position.pageIndex === page.pageNumber && el.combinationKey === selectedVariant)
-                                                        .map(el => (
-                                                           <div
-                                                              key={el.id}
-                                                              onMouseDown={(e) => {
-                                                                 e.stopPropagation();
-                                                                 e.preventDefault();
-                                                                 setActiveLayerId(el.id);
-                                                                 setIsDragging(true);
-                                                                 setDragStartPos({ x: e.clientX, y: e.clientY });
-                                                                 setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
-                                                              }}
-                                                              className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
-                                                              style={{
-                                                                 left: `${el.position.x}%`,
-                                                                 top: `${el.position.y}%`,
-                                                                 width: `${el.position.width}%`,
-                                                                 height: el.position.height ? `${el.position.height}%` : 'auto',
-                                                                 transform: `rotate(${el.position.rotation || 0}deg)`
-                                                              }}
-                                                           >
-                                                              {renderTransformHandles(el.id, el.position)}
-                                                              {el.type === 'static' && el.url ? (
-                                                                 <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
-                                                              ) : (
-                                                                 <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
-                                                                    {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
-                                                                 </div>
-                                                              )}
-                                                           </div>
-                                                        ))
-                                                     }
-                                                     {/* 3. TEXT LAYERS */}
-                                                     {selectedBook.contentConfig.texts
-                                                        .filter(t => t.position.pageIndex === page.pageNumber && t.combinationKey === selectedVariant)
-                                                        .map(text => (
-                                                           <div 
-                                                              key={text.id}
-                                                              onMouseDown={(e) => {
-                                                                 e.stopPropagation();
-                                                                 e.preventDefault();
-                                                                 setActiveLayerId(text.id);
-                                                                 setIsDragging(true);
-                                                                 setDragStartPos({ x: e.clientX, y: e.clientY });
-                                                                 setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
-                                                              }}
-                                                              className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
-                                                              style={{
-                                                                 left: `${text.position.x}%`,
-                                                                 top: `${text.position.y}%`,
-                                                                 width: `${text.position.width || 30}%`,
-                                                                 height: text.position.height ? `${text.position.height}%` : 'auto',
-                                                                 transform: `rotate(${text.position.rotation || 0}deg)`,
-                                                                 ...text.style
-                                                              }}
-                                                           >
-                                                              {renderTransformHandles(text.id, text.position)}
-                                                                  <div className={`font-medium w-full h-full pointer-events-none ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
-                                                                     <div dangerouslySetInnerHTML={{ __html: ((() => {
-                                                                         const content = text.content || '';
-                                                                         let processed = content.replace(/\{childName\}/g, '[Prénom]');
-                                                                         return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
-                                                                             const [tabId, variantId] = key.split('.');
-                                                                             const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
-                                                                             if (tab) {
-                                                                                 const variant = tab.variants.find(v => v.id === variantId);
-                                                                                 if (variant) {
-                                                                                     return `[${tab.label}: ${variant.label}]`;
-                                                                                 }
-                                                                             }
-                                                                             return match;
-                                                                         }).replace(/\n/g, '<br/>');
-                                                                     })()) }} />
-                                                                  </div>
-                                                           </div>
-                                                        ))
-                                                     }
+                                                     {/* 2. MIXED LAYERS (Image + Text) - Sorted by Z-Index */}
+                                                     {(() => {
+                                                         const textLayers = selectedBook.contentConfig.texts
+                                                            .filter(t => t.position.pageIndex === page.pageNumber && t.combinationKey === selectedVariant)
+                                                            .map(t => ({...t, _kind: 'text'}));
+                                                         
+                                                         const imgLayers = (selectedBook.contentConfig.imageElements || [])
+                                                            .filter(el => el.position.pageIndex === page.pageNumber && el.combinationKey === selectedVariant)
+                                                            .map(i => ({...i, _kind: 'image'}));
+
+                                                         // ASCENDING Z-INDEX for Rendering
+                                                         const allLayers = [...imgLayers, ...textLayers].sort((a, b) => {
+                                                             const aLayer = a.position.layer !== undefined ? a.position.layer : (a._kind === 'text' ? 1000 : 0);
+                                                             const bLayer = b.position.layer !== undefined ? b.position.layer : (b._kind === 'text' ? 1000 : 0);
+                                                             return aLayer - bLayer;
+                                                         });
+
+                                                         return allLayers.map(layer => {
+                                                             if (layer._kind === 'image') {
+                                                                 const el = layer as ImageElement & { _kind: 'image' };
+                                                                 return (
+                                                                    <div
+                                                                       key={el.id}
+                                                                       onMouseDown={(e) => {
+                                                                          e.stopPropagation();
+                                                                          e.preventDefault();
+                                                                          setActiveLayerId(el.id);
+                                                                          setIsDragging(true);
+                                                                          setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                          setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
+                                                                       }}
+                                                                       className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
+                                                                       style={{
+                                                                          left: `${el.position.x}%`,
+                                                                          top: `${el.position.y}%`,
+                                                                          width: `${el.position.width}%`,
+                                                                          height: el.position.height ? `${el.position.height}%` : 'auto',
+                                                                          transform: `rotate(${el.position.rotation || 0}deg)`
+                                                                       }}
+                                                                    >
+                                                                       {renderTransformHandles(el.id, el.position)}
+                                                                       {el.type === 'static' && el.url ? (
+                                                                          <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
+                                                                       ) : (
+                                                                          <div className="w-full h-full bg-blue-100/50 flex items-center justify-center text-[10px] text-blue-800 font-bold border border-blue-200">
+                                                                             {el.variableKey ? `{IMG:${el.variableKey}}` : 'Image'}
+                                                                          </div>
+                                                                       )}
+                                                                    </div>
+                                                                 );
+                                                             } else {
+                                                                 const text = layer as TextElement & { _kind: 'text' };
+                                                                 return (
+                                                                    <div 
+                                                                       key={text.id}
+                                                                       onMouseDown={(e) => {
+                                                                          e.stopPropagation();
+                                                                          e.preventDefault();
+                                                                          setActiveLayerId(text.id);
+                                                                          setIsDragging(true);
+                                                                          setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                          setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
+                                                                       }}
+                                                                       className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                       style={{
+                                                                          left: `${text.position.x}%`,
+                                                                          top: `${text.position.y}%`,
+                                                                          width: `${text.position.width || 30}%`,
+                                                                          height: text.position.height ? `${text.position.height}%` : 'auto',
+                                                                          transform: `rotate(${text.position.rotation || 0}deg)`,
+                                                                          ...text.style
+                                                                       }}
+                                                                    >
+                                                                       {renderTransformHandles(text.id, text.position)}
+                                                                           <div className={`font-medium w-full h-full pointer-events-none ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : 'text-slate-800'}`}>
+                                                                              <div dangerouslySetInnerHTML={{ __html: ((() => {
+                                                                                  const content = text.content || '';
+                                                                                  let processed = content.replace(/\{childName\}/g, '[Prénom]');
+                                                                                  return processed.replace(/\{(\d+\.\d+)\}/g, (match: string, key: string) => {
+                                                                                      const [tabId, variantId] = key.split('.');
+                                                                                      const tab = selectedBook.wizardConfig.tabs.find(t => t.id === tabId);
+                                                                                      if (tab) {
+                                                                                          const variant = tab.variants.find(v => v.id === variantId);
+                                                                                          if (variant) {
+                                                                                              return `[${tab.label}: ${variant.label}]`;
+                                                                                          }
+                                                                                      }
+                                                                                      return match;
+                                                                                  }).replace(/\n/g, '<br/>');
+                                                                              })()) }} />
+                                                                           </div>
+                                                                    </div>
+                                                                 );
+                                                             }
+                                                         });
+                                                     })()}
                                                   </div>
                                                );
                                          });
@@ -6771,17 +6788,88 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                .filter(i => i.position.pageIndex === currentPage.pageNumber && i.combinationKey === selectedVariant)
                                                .map(i => ({...i, _kind: 'image'}));
                                             
-                                            const allLayers = [...textLayers, ...imgLayers]; // Should sort by z-index ideally
+                                            // SORTING: DESCENDING for UI (Top layer first)
+                                            const allLayers = [...imgLayers, ...textLayers].sort((a, b) => {
+                                                const aLayer = a.position.layer !== undefined ? a.position.layer : (a._kind === 'text' ? 1000 : 0);
+                                                const bLayer = b.position.layer !== undefined ? b.position.layer : (b._kind === 'text' ? 1000 : 0);
+                                                return bLayer - aLayer;
+                                            });
 
-                                            return allLayers.map(layer => (
+                                            const moveLayer = (layerId: string, direction: 'up' | 'down') => {
+                                                // Get full list in ASCENDING order for logic
+                                                let fullList = [...imgLayers, ...textLayers].sort((a, b) => {
+                                                    const aLayer = a.position.layer !== undefined ? a.position.layer : (a._kind === 'text' ? 1000 : 0);
+                                                    const bLayer = b.position.layer !== undefined ? b.position.layer : (b._kind === 'text' ? 1000 : 0);
+                                                    return aLayer - bLayer;
+                                                });
+                                                
+                                                // Normalize Z-indexes
+                                                fullList = fullList.map((l, idx) => {
+                                                    if (l._kind === 'text') {
+                                                        const text = l as TextElement & {_kind: 'text'};
+                                                        return { ...text, position: { ...text.position, layer: idx } };
+                                                    } else {
+                                                        const img = l as ImageElement & {_kind: 'image'};
+                                                        return { ...img, position: { ...img.position, layer: idx } };
+                                                    }
+                                                });
+                                                
+                                                const idx = fullList.findIndex(l => l.id === layerId);
+                                                if (idx === -1) return;
+                                                
+                                                if (direction === 'up' && idx < fullList.length - 1) {
+                                                     // Move visually UP means HIGHER Z-index (towards end of array)
+                                                     const temp = fullList[idx];
+                                                     fullList[idx] = fullList[idx + 1];
+                                                     fullList[idx + 1] = temp;
+                                                } else if (direction === 'down' && idx > 0) {
+                                                     const temp = fullList[idx];
+                                                     fullList[idx] = fullList[idx - 1];
+                                                     fullList[idx - 1] = temp;
+                                                } else {
+                                                    return;
+                                                }
+                                                
+                                                // Re-assign layers
+                                                fullList.forEach((l, i) => { l.position.layer = i; });
+                                                
+                                                // Save
+                                                let newTexts = [...selectedBook.contentConfig.texts];
+                                                let newImages = [...(selectedBook.contentConfig.imageElements || [])];
+                                                
+                                                fullList.forEach(l => {
+                                                    if (l._kind === 'text') {
+                                                        const tIdx = newTexts.findIndex(t => t.id === l.id);
+                                                        if (tIdx >= 0) {
+                                                            const current = newTexts[tIdx];
+                                                            newTexts[tIdx] = { 
+                                                                ...current, 
+                                                                position: { ...current.position, layer: l.position.layer } 
+                                                            };
+                                                        }
+                                                    } else {
+                                                        const iIdx = newImages.findIndex(i => i.id === l.id);
+                                                        if (iIdx >= 0) {
+                                                            const current = newImages[iIdx];
+                                                            newImages[iIdx] = { 
+                                                                ...current, 
+                                                                position: { ...current.position, layer: l.position.layer } 
+                                                            };
+                                                        }
+                                                    }
+                                                });
+                                                
+                                                handleSaveBook({
+                                                    ...selectedBook,
+                                                    contentConfig: { ...selectedBook.contentConfig, texts: newTexts, imageElements: newImages }
+                                                });
+                                            };
+
+                                            return allLayers.map((layer, index) => (
                                                <div 
                                                   key={layer.id}
-                                                  onClick={() => {
-                                                      setActiveLayerId(layer.id);
-                                                      // Optional: auto-switch to properties? Maybe better to stay on layers to manage order
-                                                      // setActiveRightTab('properties'); 
-                                                  }}
-                                                  className={`flex items-center gap-3 p-2 rounded border cursor-pointer group ${activeLayerId === layer.id ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
+                                                  onClick={() => setActiveLayerId(layer.id)}
+                                                  className={`flex items-center gap-2 p-2 rounded border cursor-pointer group ${activeLayerId === layer.id ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-white border-gray-100 hover:bg-gray-50'}`}
                                                >
                                                   {layer._kind === 'text' ? <Type size={14} className="text-slate-400" /> : <Image size={14} className="text-slate-400" />}
                                                   <div className="flex-1 min-w-0">
@@ -6790,10 +6878,27 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         {layer._kind === 'text' ? ((layer as any).content || '').replace(/<[^>]*>?/gm, '') : (layer as any).type}
                                                      </div>
                                                   </div>
+                                                  <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                      <button 
+                                                        onClick={(e) => { e.stopPropagation(); moveLayer(layer.id, 'up'); }}
+                                                        disabled={index === 0}
+                                                        className="p-0.5 hover:bg-gray-100 rounded text-gray-500 disabled:opacity-30"
+                                                        title="Monter (Premier plan)"
+                                                      >
+                                                        <ArrowUp size={10} />
+                                                      </button>
+                                                      <button 
+                                                        onClick={(e) => { e.stopPropagation(); moveLayer(layer.id, 'down'); }}
+                                                        disabled={index === allLayers.length - 1}
+                                                        className="p-0.5 hover:bg-gray-100 rounded text-gray-500 disabled:opacity-30"
+                                                        title="Descendre (Arrière plan)"
+                                                      >
+                                                        <ArrowDown size={10} />
+                                                      </button>
+                                                  </div>
                                                   <button 
                                                      onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // Delete logic
                                                         if (layer._kind === 'text') {
                                                            const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== layer.id);
                                                            handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
@@ -6803,7 +6908,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         }
                                                         if (activeLayerId === layer.id) setActiveLayerId(null);
                                                      }}
-                                                     className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 p-1"
+                                                     className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 p-1 ml-1"
                                                   >
                                                      <Trash2 size={14} />
                                                   </button>

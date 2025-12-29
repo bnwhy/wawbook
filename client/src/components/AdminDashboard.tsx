@@ -4677,10 +4677,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             {/* Variant Row */}
                                             <div className="flex items-center gap-4 py-3 px-3">
                                                <button 
-                                                  onClick={() => toggleVariantExpand(variant.id)}
+                                                  onClick={() => toggleVariantExpand(`${tab.id}.${variant.id}`)}
                                                   className="text-gray-400 hover:text-indigo-600 transition-colors"
                                                >
-                                                  {expandedVariantIds.has(variant.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                  {expandedVariantIds.has(`${tab.id}.${variant.id}`) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                                </button>
                                                
                                                <div className="text-gray-300 cursor-move hover:text-gray-500">
@@ -4797,7 +4797,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      <option value="checkbox">Case à cocher</option>
                                                   </select>
                                                   
-                                                  {variant.type === 'text' && expandedVariantIds.has(variant.id) && (
+                                                  {variant.type === 'text' && expandedVariantIds.has(`${tab.id}.${variant.id}`) && (
                                                      <div className="flex gap-2 mt-2">
                                                         <input 
                                                            type="number" 
@@ -4840,7 +4840,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             </div>
 
                                             {/* Options Area (Nested) - Collapsible */}
-                                            {expandedVariantIds.has(variant.id) && (variant.type === 'options' || !variant.type) && (
+                                            {expandedVariantIds.has(`${tab.id}.${variant.id}`) && (variant.type === 'options' || !variant.type) && (
                                                <div className="px-4 pb-4">
                                                   <div className="bg-gray-50/50 rounded-lg border border-gray-100 p-4 relative">
                                                   {/* Vertical Connector Line */}

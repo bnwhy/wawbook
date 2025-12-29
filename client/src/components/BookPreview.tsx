@@ -280,6 +280,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     >
                         <div 
                             className="font-medium w-full h-full"
+                            style={{ color: text.style?.color }}
                             dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                         />
                     </div>
@@ -362,6 +363,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             >
                                 <div 
                                     className="font-medium w-full h-full" 
+                                    style={{ color: text.style?.color }}
                                     dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                                 />
                             </div>
@@ -499,6 +501,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                    >
                                        <div 
                                            className="font-medium w-full h-full" 
+                                           style={{ color: text.style?.color }}
                                            dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                                        />
                                    </div>

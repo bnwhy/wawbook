@@ -6417,7 +6417,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                >
                                                                   {renderTransformHandles(text.id, text.position)}
                                                                   <div className={`font-medium w-full h-full pointer-events-none ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : ''}`}>
-                                                                     <div dangerouslySetInnerHTML={{ __html: ((() => {
+                                                                     <div style={{ color: text.style?.color }} dangerouslySetInnerHTML={{ __html: ((() => {
                                                                          const content = text.content || '';
                                                                          let processed = content.replace(/\{childName\}/g, '[Prénom]');
                                                                          return processed.replace(/\{(\d+\.\d+)\}/g, (match, key) => {
@@ -6675,7 +6675,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     >
                                                                        {renderTransformHandles(text.id, text.position)}
                                                                            <div className={`font-medium w-full h-full pointer-events-none ${text.type === 'variable' ? 'text-purple-600 bg-purple-50/80 px-1 rounded inline-block' : ''}`}>
-                                                                              <div dangerouslySetInnerHTML={{ __html: ((() => {
+                                                                              <div style={{ color: text.style?.color }} dangerouslySetInnerHTML={{ __html: ((() => {
                                                                                   const content = text.content || '';
                                                                                   let processed = content.replace(/\{childName\}/g, '[Prénom]');
                                                                                   return processed.replace(/\{(\d+\.\d+)\}/g, (match: string, key: string) => {

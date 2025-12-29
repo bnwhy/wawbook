@@ -4798,30 +4798,44 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   </select>
                                                   
                                                   {variant.type === 'text' && expandedVariantIds.has(`${tab.id}.${variant.id}`) && (
-                                                     <div className="flex gap-2 mt-2">
+                                                     <div className="flex flex-col gap-2 mt-2">
+                                                        <div className="flex gap-2">
+                                                           <input 
+                                                              type="number" 
+                                                              placeholder="Min" 
+                                                              value={variant.minLength || ''}
+                                                              onChange={(e) => {
+                                                                 const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                 newTabs[idx].variants[vIdx].minLength = parseInt(e.target.value) || undefined;
+                                                                 handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                              }}
+                                                              className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
+                                                              title="Longueur minimum"
+                                                           />
+                                                           <input 
+                                                              type="number" 
+                                                              placeholder="Max" 
+                                                              value={variant.maxLength || ''}
+                                                              onChange={(e) => {
+                                                                 const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                 newTabs[idx].variants[vIdx].maxLength = parseInt(e.target.value) || undefined;
+                                                                 handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                              }}
+                                                              className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
+                                                              title="Longueur maximum"
+                                                           />
+                                                        </div>
                                                         <input 
-                                                           type="number" 
-                                                           placeholder="Min" 
-                                                           value={variant.minLength || ''}
+                                                           type="text" 
+                                                           placeholder="Unité (ex: ans, cm)" 
+                                                           value={variant.unit || ''}
                                                            onChange={(e) => {
                                                               const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                              newTabs[idx].variants[vIdx].minLength = parseInt(e.target.value) || undefined;
+                                                              newTabs[idx].variants[vIdx].unit = e.target.value;
                                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                            }}
                                                            className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
-                                                           title="Longueur minimum"
-                                                        />
-                                                        <input 
-                                                           type="number" 
-                                                           placeholder="Max" 
-                                                           value={variant.maxLength || ''}
-                                                           onChange={(e) => {
-                                                              const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                              newTabs[idx].variants[vIdx].maxLength = parseInt(e.target.value) || undefined;
-                                                              handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
-                                                           }}
-                                                           className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
-                                                           title="Longueur maximum"
+                                                           title="Unité affichée dans le wizard"
                                                         />
                                                      </div>
                                                   )}

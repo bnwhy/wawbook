@@ -60,6 +60,7 @@ export interface WizardVariant {
   type: 'options' | 'text' | 'checkbox';
   minLength?: number;
   maxLength?: number;
+  unit?: string;
   thumbnail?: string;
   resource?: string;
   options?: WizardOption[];

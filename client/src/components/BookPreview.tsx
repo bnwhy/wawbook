@@ -270,8 +270,22 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
               return aLayer - bLayer;
           });
 
+          // Calculate Bleed Scale to exclude bleed from preview
+          const widthMm = book?.features?.dimensions?.width || 210;
+          const heightMm = book?.features?.dimensions?.height || 210;
+          const bleedMm = book?.features?.printConfig?.interior?.bleedMm || 0;
+          
+          const scaleX = (widthMm + 2 * bleedMm) / widthMm;
+          const scaleY = (heightMm + 2 * bleedMm) / heightMm;
+
           return (
-            <div className="w-full h-full relative overflow-hidden bg-white">
+            <div 
+                className="w-full h-full relative overflow-hidden bg-white"
+                style={{
+                    transform: `scale(${scaleX}, ${scaleY})`,
+                    transformOrigin: 'center center'
+                }}
+            >
                 {/* Background */}
                 {bgImage?.imageUrl ? (
                     <img src={bgImage.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Background" />

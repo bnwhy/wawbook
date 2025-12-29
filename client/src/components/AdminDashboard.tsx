@@ -6013,6 +6013,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        {/* Main Editor Area */}
                        <div className="flex-1 bg-gray-50 rounded-xl border border-gray-200 overflow-hidden flex flex-col relative">
                           {selectedPageId ? (
+                           <>
                              <div className="flex-1 flex flex-col h-full">
                                 
                                 {/* Editor Toolbar */}
@@ -7307,7 +7308,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                
                                                {/* Delete Layer Button - Fixed at bottom of properties panel */}
                                                <div className="mt-auto p-4 border-t border-gray-200 bg-white">
-                                                  
+                                                  <button
+                                                     onClick={() => {
+                                                        if(!confirm('Supprimer ce calque ?')) return;
+                                                        
+                                                        const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
+                                                        const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
+                                                        const layer = textLayer || imgLayer;
+                                                        const isText = !!textLayer;
+                                                        
+                                                        if (!layer) return;
+                                                        
+                                                        if (isText) {
+                                                            const newTexts = selectedBook.contentConfig.texts.filter(t => t.id !== layer.id);
+                                                            handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, texts: newTexts}});
+                                                        } else {
+                                                            const newImgs = (selectedBook.contentConfig.imageElements || []).filter(i => i.id !== layer.id);
+                                                            handleSaveBook({...selectedBook, contentConfig: {...selectedBook.contentConfig, imageElements: newImgs}});
+                                                        }
+                                                        setActiveLayerId(null);
+                                                     }}
+                                                     className="w-full flex items-center justify-center gap-2 p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded border border-red-200 transition-colors text-xs font-bold"
+                                                  >
+                                                     <Trash2 size={14} />
+                                                     Supprimer le calque
+                                                  </button>
                                                </div>
                                                </>
                                             ) : (
@@ -7324,6 +7349,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                 </div>
                              </div>
+                           </>
                           ) : (
                              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
                                 <Layers size={64} className="mb-4 opacity-50" />

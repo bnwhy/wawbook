@@ -35,7 +35,10 @@ const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or
 // Import font list from the package we just installed if available, or fallback to a larger list
 import googleFonts from 'google-fonts-complete';
 
+import { readPsd } from 'ag-psd';
+
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const psdInputRef = React.useRef<HTMLInputElement>(null);
   const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -5503,6 +5506,143 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
 
                            {/* Print Settings Dialog */}
+                           <input
+                              type="file"
+                              ref={psdInputRef}
+                              className="hidden"
+                              accept=".psd"
+                              onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file || !selectedBook) return;
+                                  
+                                  try {
+                                      toast.info("Lecture du PSD en cours...");
+                                      const buffer = await file.arrayBuffer();
+                                      const psd = readPsd(buffer);
+                                      
+                                      const newTexts: TextElement[] = [];
+                                      const newImages: ImageElement[] = [];
+                                      const { width, height } = psd;
+                                      
+                                      // Helper to process a layer
+                                      const processLayer = (layer: any, pageIndex: number) => {
+                                          if (layer.hidden) return;
+                                          
+                                          // Calculate % positions
+                                          // Note: ag-psd positions are from top-left.
+                                          const x = (layer.left / width) * 100;
+                                          const y = (layer.top / height) * 100;
+                                          const w = (layer.width / width) * 100;
+                                          const h = (layer.height / height) * 100;
+                                          
+                                          // Clean layer name for labels
+                                          const cleanLabel = (layer.name || 'Element').substring(0, 20);
+
+                                          if (layer.text) {
+                                              newTexts.push({
+                                                  id: `text-psd-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                                                  label: cleanLabel,
+                                                  type: 'fixed',
+                                                  content: layer.text.text,
+                                                  combinationKey: selectedVariant && selectedVariant !== 'all' ? selectedVariant : 'default',
+                                                  style: {
+                                                      color: layer.text.style?.fillColor ? `rgba(${layer.text.style.fillColor.r}, ${layer.text.style.fillColor.g}, ${layer.text.style.fillColor.b}, 1)` : '#000000',
+                                                      fontSize: layer.text.style?.fontSize ? `${Math.round(layer.text.style.fontSize)}px` : '16px',
+                                                      fontFamily: 'serif', // Default, hard to map fonts perfectly
+                                                      textAlign: 'left'
+                                                  },
+                                                  position: {
+                                                      pageIndex,
+                                                      zoneId: 'body',
+                                                      x, y, width: w, // Text width is tricky, use layer width
+                                                      rotation: 0
+                                                  }
+                                              });
+                                          } else if (layer.canvas) {
+                                              // Image layer (if canvas is populated)
+                                              const dataUrl = layer.canvas.toDataURL();
+                                              newImages.push({
+                                                  id: `img-psd-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                                                  label: cleanLabel,
+                                                  type: 'static',
+                                                  url: dataUrl,
+                                                  combinationKey: selectedVariant && selectedVariant !== 'all' ? selectedVariant : 'default',
+                                                  position: {
+                                                      pageIndex,
+                                                      x, y, width: w, height: h,
+                                                      rotation: 0
+                                                  }
+                                              });
+                                          }
+                                      };
+                                      
+                                      // Scan for "Page X" groups
+                                      let hasPages = false;
+                                      if (psd.children) {
+                                          psd.children.forEach(child => {
+                                              // Check if it's a group named "Page X" or "Couverture"
+                                              const lowerName = (child.name || '').toLowerCase();
+                                              if (child.children) {
+                                                  let targetPage = -1;
+                                                  
+                                                  if (lowerName.includes('couverture') || lowerName.includes('cover')) {
+                                                      targetPage = 0;
+                                                  } else {
+                                                      const match = lowerName.match(/page\s*(\d+)/);
+                                                      if (match) {
+                                                          targetPage = parseInt(match[1], 10);
+                                                      }
+                                                  }
+                                                  
+                                                  if (targetPage !== -1) {
+                                                      hasPages = true;
+                                                      child.children.forEach((sub: any) => processLayer(sub, targetPage));
+                                                  }
+                                              }
+                                          });
+                                      }
+                                      
+                                      // If no structure found, put everything on Page 1 (or 0 if it looks like a cover?)
+                                      if (!hasPages && psd.children) {
+                                          // Default to Page 1
+                                          psd.children.forEach(child => processLayer(child, 1));
+                                      }
+                                      
+                                      if (newTexts.length === 0 && newImages.length === 0) {
+                                          toast.warning("Aucun élément compatible trouvé (Textes ou Images)");
+                                          return;
+                                      }
+                                      
+                                      handleSaveBook({
+                                          ...selectedBook,
+                                          contentConfig: {
+                                              ...selectedBook.contentConfig,
+                                              texts: [...(selectedBook.contentConfig.texts || []), ...newTexts],
+                                              imageElements: [...(selectedBook.contentConfig.imageElements || []), ...newImages]
+                                          }
+                                      });
+                                      
+                                      toast.success(`Importé: ${newTexts.length} textes, ${newImages.length} images`);
+                                      
+                                  } catch (err) {
+                                      console.error(err);
+                                      toast.error("Erreur lors de l'import PSD");
+                                  }
+                                  
+                                  // Reset input
+                                  e.target.value = '';
+                              }}
+                           />
+                           
+                           <button 
+                               onClick={() => psdInputRef.current?.click()}
+                               className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 flex items-center gap-2" 
+                               title="Importer PSD comme Template"
+                           >
+                               <Upload size={18} />
+                               <span className="text-xs font-bold">Import PSD</span>
+                           </button>
+
                            <Dialog>
                               <DialogTrigger asChild>
                                   <button className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" title="Paramètres d'impression">

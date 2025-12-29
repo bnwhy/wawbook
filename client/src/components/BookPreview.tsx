@@ -269,7 +269,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {pageTexts.map(text => (
                     <div 
                         key={text.id}
-                        className="absolute z-20"
+                        className="absolute z-20 text-cloud-dark"
                         style={{
                             left: `${text.position.x}%`,
                             top: `${text.position.y}%`,
@@ -279,7 +279,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         }}
                     >
                         <div 
-                            className="font-display font-medium text-lg leading-relaxed text-cloud-dark text-balance text-center"
+                            className="font-display font-medium text-lg leading-relaxed text-balance text-center"
                             dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                         />
                     </div>
@@ -362,7 +362,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             >
                                 <div 
                                     className="font-display font-medium text-lg leading-relaxed text-balance text-center" 
-                                    style={{ color: text.style?.color || 'inherit', fontSize: text.style?.fontSize ? `${text.style.fontSize}px` : undefined }}
                                     dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                                 />
                             </div>
@@ -500,7 +499,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                    >
                                        <div 
                                            className="font-display font-medium text-lg leading-relaxed text-balance text-center" 
-                                           style={{ color: text.style?.color || 'inherit', fontSize: text.style?.fontSize ? `${text.style.fontSize}px` : undefined }}
                                            dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
                                        />
                                    </div>

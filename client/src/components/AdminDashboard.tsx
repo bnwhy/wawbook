@@ -36,11 +36,9 @@ const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or
 import googleFonts from 'google-fonts-complete';
 
 import { readPsd } from 'ag-psd';
-import { IDML } from 'idml';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const psdInputRef = React.useRef<HTMLInputElement>(null);
-  const idmlInputRef = React.useRef<HTMLInputElement>(null);
   const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -5643,126 +5641,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            >
                                <Upload size={18} />
                                <span className="text-xs font-bold">Import PSD</span>
-                           </button>
-
-                           {/* IDML Import */}
-                           <input
-                              type="file"
-                              ref={idmlInputRef}
-                              className="hidden"
-                              accept=".idml"
-                              onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file || !selectedBook) return;
-                                  
-                                  try {
-                                      toast.info("Analyse du fichier IDML...");
-                                      const buffer = await file.arrayBuffer();
-                                      // @ts-ignore - Library types might be missing or loose
-                                      const idml = new IDML(new Uint8Array(buffer));
-                                      
-                                      // @ts-ignore
-                                      idml.addEventListener('ready', async () => {
-                                          try {
-                                              // @ts-ignore
-                                              const spreads = idml.getSpreads();
-                                              const newTexts: TextElement[] = [];
-                                              
-                                              // Iterate through spreads (pages)
-                                              // @ts-ignore
-                                              spreads.forEach((spread: any, spreadIndex: number) => {
-                                                  // @ts-ignore
-                                                  const sprites = spread.getSprites ? spread.getSprites() : [];
-                                                  
-                                                  // @ts-ignore
-                                                  sprites.forEach((sprite: any) => {
-                                                      // Check for text frames
-                                                      // The structure is complex, we look for anything with a story
-                                                      try {
-                                                          if (sprite.getStory) {
-                                                              const story = sprite.getStory();
-                                                              if (story) {
-                                                                  // Try to extract text from paragraphs
-                                                                  // @ts-ignore
-                                                                  const paragraphs = story.getParagraphs ? story.getParagraphs() : [];
-                                                                  // @ts-ignore
-                                                                  const content = paragraphs.map((p: any) => {
-                                                                      // @ts-ignore
-                                                                      return p.features ? p.features.map((f: any) => f.content).join('') : '';
-                                                                  }).join('\n');
-                                                                  
-                                                                  if (content && content.trim()) {
-                                                                    newTexts.push({
-                                                                        id: `text-idml-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                                                                        label: 'Texte IDML',
-                                                                        type: 'fixed',
-                                                                        content: content.trim(),
-                                                                        combinationKey: 'default',
-                                                                        style: {
-                                                                            fontSize: '16px',
-                                                                            color: '#000000',
-                                                                            fontFamily: 'serif',
-                                                                            textAlign: 'left'
-                                                                        },
-                                                                        position: {
-                                                                            pageIndex: spreadIndex,
-                                                                            zoneId: 'body',
-                                                                            x: 10, 
-                                                                            y: 10 + ((newTexts.length % 5) * 10), 
-                                                                            width: 30, 
-                                                                            rotation: 0
-                                                                        }
-                                                                    });
-                                                                  }
-                                                              }
-                                                          }
-                                                      } catch (e) {
-                                                          // Ignore non-text sprites
-                                                      }
-                                                  });
-                                              });
-
-                                              if (newTexts.length > 0) {
-                                                  handleSaveBook({
-                                                      ...selectedBook,
-                                                      contentConfig: {
-                                                          ...selectedBook.contentConfig,
-                                                          texts: [...(selectedBook.contentConfig.texts || []), ...newTexts]
-                                                      }
-                                                  });
-                                                  toast.success(`Import IDML partiel réussi : ${newTexts.length} blocs texte extraits`);
-                                              } else {
-                                                  toast.warning("Aucun texte extractible trouvé dans l'IDML");
-                                              }
-
-                                          } catch (err) {
-                                              console.error("Erreur structure IDML", err);
-                                              toast.error("Erreur lors de l'analyse du contenu IDML");
-                                          }
-                                      });
-                                      
-                                      // @ts-ignore
-                                      idml.addEventListener('error', (err: any) => {
-                                          console.error(err);
-                                          toast.error("Le fichier IDML semble corrompu ou illisible");
-                                      });
-
-                                  } catch (err) {
-                                      console.error(err);
-                                      toast.error("Erreur d'import IDML");
-                                  }
-                                  
-                                  e.target.value = '';
-                              }}
-                           />
-
-                           <button 
-                               onClick={() => idmlInputRef.current?.click()}
-                               className="ml-2 p-2 bg-indigo-50 hover:bg-indigo-100 rounded text-indigo-600 flex items-center gap-2 border border-indigo-200" 
-                               title="Importer IDML (Expérimental - Textes uniquement)"
-                           >
-                               <FileText size={18} />
-                               <span className="text-xs font-bold">Import IDML</span>
                            </button>
 
                            <Dialog>

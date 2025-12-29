@@ -15,7 +15,8 @@ const BooksContext = createContext<BooksContextType | undefined>(undefined);
 export const BooksProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [books, setBooks] = useState<BookProduct[]>(() => {
     try {
-      const savedBooks = localStorage.getItem('admin_books');
+      // Changed key to force refresh of data structure with new image generation logic
+      const savedBooks = localStorage.getItem('admin_books_v3');
       return savedBooks ? JSON.parse(savedBooks) : INITIAL_BOOKS;
     } catch (error) {
       console.error('Failed to load books from localStorage:', error);
@@ -26,7 +27,7 @@ export const BooksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Persist to localStorage whenever books change
   React.useEffect(() => {
     try {
-      localStorage.setItem('admin_books', JSON.stringify(books));
+      localStorage.setItem('admin_books_v3', JSON.stringify(books));
     } catch (error) {
       console.error('Failed to save books to localStorage:', error);
     }

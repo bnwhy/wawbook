@@ -6105,11 +6105,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <div className="flex-1 flex overflow-hidden">
                                    
                                    {/* CANVAS AREA */}
-                                   <div className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative">
+                                   <div 
+                                      className="flex-1 bg-slate-100 overflow-auto p-8 flex items-center justify-center relative"
+                                      onClick={() => setActiveLayerId(null)}
+                                   >
                                       {/* Page Container */}
                                       <div 
                                          ref={canvasRef}
                                          className="transition-all duration-300 flex gap-0 shadow-2xl bg-white origin-center"
+                                         onClick={(e) => {
+                                             // If clicking on the page background (not caught by layer), deselect layers
+                                             setActiveLayerId(null);
+                                         }}
                                          style={{
                                             transform: `scale(${zoomLevel})`,
                                             // Force single aspect ratio if viewing cover (since we now treat cover as single page)

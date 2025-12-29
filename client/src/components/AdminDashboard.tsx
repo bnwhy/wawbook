@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Moveable from 'react-moveable';
-import Selecto from 'react-selecto';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle } from 'lucide-react';
 import { Theme } from '../types';
@@ -6299,12 +6297,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             .map(text => (
                                                                <div 
                                                                   key={text.id}
-                                                                  id={text.id}
-                                                                  onClick={(e) => {
+                                                                  onMouseDown={(e) => {
                                                                      e.stopPropagation();
+                                                                     e.preventDefault();
                                                                      setActiveLayerId(text.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
                                                                   }}
-                                                                  className={`absolute p-2 cursor-pointer border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                  className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                                   style={{
                                                                      left: `${(text.position.x || 0) * (leftPagePct/100)}%`,
                                                                      top: `${text.position.y}%`,
@@ -6314,6 +6315,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                      ...text.style
                                                                   }}
                                                                >
+                                                                  {renderTransformHandles(text.id, text.position)}
                                                                   {activeLayerId === text.id ? (
                                                                       <textarea
                                                                           value={text.content}
@@ -6365,12 +6367,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             .map(el => (
                                                                <div
                                                                   key={el.id}
-                                                                  id={el.id}
-                                                                  onClick={(e) => {
+                                                                  onMouseDown={(e) => {
                                                                      e.stopPropagation();
+                                                                     e.preventDefault();
                                                                      setActiveLayerId(el.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
                                                                   }}
-                                                                  className={`absolute cursor-pointer border-2 transition-all ${activeLayerId === el.id ? 'z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
+                                                                  className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
                                                                   style={{
                                                                      left: `${rightPageOffsetPct + ((el.position.x || 0) * (rightPagePct/100))}%`,
                                                                      top: `${el.position.y}%`,
@@ -6379,6 +6384,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                      transform: `rotate(${el.position.rotation || 0}deg)`
                                                                   }}
                                                                >
+                                                                  {renderTransformHandles(el.id, el.position)}
                                                                   {el.type === 'static' && el.url ? (
                                                                      <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
                                                                   ) : (
@@ -6394,12 +6400,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             .map(text => (
                                                                <div 
                                                                   key={text.id}
-                                                                  id={text.id}
-                                                                  onClick={(e) => {
+                                                                  onMouseDown={(e) => {
                                                                      e.stopPropagation();
+                                                                     e.preventDefault();
                                                                      setActiveLayerId(text.id);
+                                                                     setIsDragging(true);
+                                                                     setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                     setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
                                                                   }}
-                                                                  className={`absolute p-2 cursor-pointer border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                                  className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                                   style={{
                                                                      left: `${rightPageOffsetPct + ((text.position.x || 0) * (rightPagePct/100))}%`,
                                                                      top: `${text.position.y}%`,
@@ -6409,6 +6418,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                      ...text.style
                                                                   }}
                                                                >
+                                                                  {renderTransformHandles(text.id, text.position)}
                                                                   {activeLayerId === text.id ? (
                                                                       <textarea
                                                                           value={text.content}
@@ -6624,12 +6634,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         .map(el => (
                                                            <div
                                                               key={el.id}
-                                                              id={el.id}
-                                                              onClick={(e) => {
+                                                              onMouseDown={(e) => {
                                                                  e.stopPropagation();
+                                                                 e.preventDefault();
                                                                  setActiveLayerId(el.id);
+                                                                 setIsDragging(true);
+                                                                 setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                 setDragStartElementPos({ x: el.position.x || 0, y: el.position.y || 0 });
                                                               }}
-                                                              className={`absolute cursor-pointer border-2 transition-all ${activeLayerId === el.id ? 'z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
+                                                              className={`absolute cursor-move border-2 transition-all ${activeLayerId === el.id ? 'border-brand-coral z-50' : 'border-transparent hover:border-blue-300 z-10'}`}
                                                               style={{
                                                                  left: `${el.position.x}%`,
                                                                  top: `${el.position.y}%`,
@@ -6638,6 +6651,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  transform: `rotate(${el.position.rotation || 0}deg)`
                                                               }}
                                                            >
+                                                              {renderTransformHandles(el.id, el.position)}
                                                               {el.type === 'static' && el.url ? (
                                                                  <img src={el.url} className="w-full h-full object-contain" alt={el.label} />
                                                               ) : (
@@ -6654,12 +6668,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         .map(text => (
                                                            <div 
                                                               key={text.id}
-                                                              id={text.id}
-                                                              onClick={(e) => {
+                                                              onMouseDown={(e) => {
                                                                  e.stopPropagation();
+                                                                 e.preventDefault();
                                                                  setActiveLayerId(text.id);
+                                                                 setIsDragging(true);
+                                                                 setDragStartPos({ x: e.clientX, y: e.clientY });
+                                                                 setDragStartElementPos({ x: text.position.x || 0, y: text.position.y || 0 });
                                                               }}
-                                                              className={`absolute p-2 cursor-pointer border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
+                                                              className={`absolute p-2 cursor-move border-2 transition-all overflow-hidden break-words whitespace-pre-wrap ${activeLayerId === text.id ? 'border-brand-coral bg-white/10 z-50' : 'border-transparent hover:border-blue-300 hover:bg-white/5 z-20'}`}
                                                               style={{
                                                                  left: `${text.position.x}%`,
                                                                  top: `${text.position.y}%`,
@@ -6669,6 +6686,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  ...text.style
                                                               }}
                                                            >
+                                                              {renderTransformHandles(text.id, text.position)}
                                                               {activeLayerId === text.id ? (
                                                                   <textarea
                                                                       value={text.content}
@@ -6720,109 +6738,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                );
                                          });
                                       })()}
-                                      {activeLayerId && (
-                                        <Moveable
-                                          target={document.getElementById(activeLayerId)}
-                                          container={canvasRef.current}
-                                          draggable={true}
-                                          resizable={true}
-                                          rotatable={true}
-                                          snappable={true}
-                                          bounds={{"left":0,"top":0,"right":0,"bottom":0,"position":"css"}}
-                                          onDrag={({ target, transform }) => {
-                                            target.style.transform = transform;
-                                          }}
-                                          onDragEnd={({ isDrag, lastEvent }) => {
-                                            if (!isDrag || !lastEvent || !activeLayerId || !canvasRef.current) return;
-                                            
-                                            const text = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
-                                            const img = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
-                                            const el = text || img;
-                                            if (!el) return;
-
-                                            const containerRect = canvasRef.current.getBoundingClientRect();
-                                            const [translateX, translateY] = lastEvent.translate;
-                                            
-                                            const dxPct = (translateX / containerRect.width) * 100;
-                                            const dyPct = (translateY / containerRect.height) * 100;
-                                            
-                                            const newX = (el.position.x || 0) + dxPct;
-                                            const newY = (el.position.y || 0) + dyPct;
-
-                                            if (text) {
-                                                const newTexts = selectedBook.contentConfig.texts.map(t => 
-                                                    t.id === activeLayerId ? { ...t, position: { ...t.position, x: newX, y: newY } } : t
-                                                );
-                                                handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, texts: newTexts } });
-                                            } else if (img) {
-                                                const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => 
-                                                    i.id === activeLayerId ? { ...i, position: { ...i.position, x: newX, y: newY } } : i
-                                                );
-                                                handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, imageElements: newImgs } });
-                                            }
-                                          }}
-                                          onResize={({ target, width, height, drag }) => {
-                                            target.style.width = `${width}px`;
-                                            target.style.height = `${height}px`;
-                                            target.style.transform = `translate(${drag.beforeTranslate[0]}px, ${drag.beforeTranslate[1]}px)`;
-                                          }}
-                                          onResizeEnd={({ isDrag, lastEvent }) => {
-                                            if (!isDrag || !lastEvent || !activeLayerId || !canvasRef.current) return;
-                                            
-                                            const text = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
-                                            const img = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
-                                            const el = text || img;
-                                            if (!el) return;
-
-                                            const containerRect = canvasRef.current.getBoundingClientRect();
-                                            const [translateX, translateY] = lastEvent.drag.translate;
-                                            
-                                            const newWidthPct = (lastEvent.width / containerRect.width) * 100;
-                                            const newHeightPct = (lastEvent.height / containerRect.height) * 100;
-                                            
-                                            const dxPct = (translateX / containerRect.width) * 100;
-                                            const dyPct = (translateY / containerRect.height) * 100;
-                                            
-                                            const newX = (el.position.x || 0) + dxPct;
-                                            const newY = (el.position.y || 0) + dyPct;
-
-                                            if (text) {
-                                                const newTexts = selectedBook.contentConfig.texts.map(t => 
-                                                    t.id === activeLayerId ? { ...t, position: { ...t.position, x: newX, y: newY, width: newWidthPct, height: newHeightPct } } : t
-                                                );
-                                                handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, texts: newTexts } });
-                                            } else if (img) {
-                                                const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => 
-                                                    i.id === activeLayerId ? { ...i, position: { ...i.position, x: newX, y: newY, width: newWidthPct, height: newHeightPct } } : i
-                                                );
-                                                handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, imageElements: newImgs } });
-                                            }
-                                          }}
-                                          onRotate={({ target, transform }) => {
-                                            target.style.transform = transform;
-                                          }}
-                                          onRotateEnd={({ isDrag, lastEvent }) => {
-                                            if (!isDrag || !lastEvent || !activeLayerId) return;
-                                            
-                                            const newRotation = lastEvent.rotate;
-                                            
-                                            const text = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
-                                            const img = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
-                                            
-                                            if (text) {
-                                                const newTexts = selectedBook.contentConfig.texts.map(t => 
-                                                    t.id === activeLayerId ? { ...t, position: { ...t.position, rotation: newRotation } } : t
-                                                );
-                                                handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, texts: newTexts } });
-                                            } else if (img) {
-                                                const newImgs = (selectedBook.contentConfig.imageElements || []).map(i => 
-                                                    i.id === activeLayerId ? { ...i, position: { ...i.position, rotation: newRotation } } : i
-                                                );
-                                                handleSaveBook({ ...selectedBook, contentConfig: { ...selectedBook.contentConfig, imageElements: newImgs } });
-                                            }
-                                          }}
-                                        />
-                                      )}
                                       </div>
                                    </div>
 

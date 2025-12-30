@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
 import { ShippingZone, ShippingMethod } from '../types/ecommerce';
@@ -90,7 +91,68 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setSortConfig({ key, direction });
   };
 
-  const sensors = useSensors(
+    const handleCapturePreview = async () => {
+        const iframe = document.querySelector('iframe[title="HTML Preview"]') as HTMLIFrameElement;
+        if (!iframe || !iframe.contentDocument || !iframe.contentDocument.body) {
+            toast.error("Impossible de trouver le contenu de l'aperçu");
+            return;
+        }
+    
+        try {
+            toast.info("Génération de l'image (JPEG) en cours...");
+            
+            const canvas = await html2canvas(iframe.contentDocument.body, {
+                scale: 2, 
+                useCORS: true,
+                logging: false,
+                width: iframe.contentDocument.documentElement.scrollWidth,
+                height: iframe.contentDocument.documentElement.scrollHeight,
+                windowWidth: iframe.contentDocument.documentElement.scrollWidth,
+                windowHeight: iframe.contentDocument.documentElement.scrollHeight
+            });
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            // Determine target page index
+            let targetPageIndex = 1;
+            if (pendingImportPageId && selectedBook) {
+                 const p = selectedBook.contentConfig.pages.find(page => page.id === pendingImportPageId);
+                 if (p) targetPageIndex = p.pageNumber;
+            }
+            
+            const newImage: ImageElement = {
+                id: `img-capture-${Date.now()}`,
+                label: 'Capture HTML',
+                type: 'static',
+                url: dataUrl,
+                combinationKey: 'default',
+                position: {
+                    pageIndex: targetPageIndex,
+                    x: 0, y: 0, 
+                    width: 100, height: 100, 
+                    rotation: 0,
+                    layer: 10 
+                }
+            };
+    
+            if (selectedBook) {
+                handleSaveBook({
+                    ...selectedBook,
+                    contentConfig: {
+                        ...selectedBook.contentConfig,
+                        imageElements: [...(selectedBook.contentConfig.imageElements || []), newImage]
+                    }
+                });
+                toast.success("Capture ajoutée au livre !");
+            }
+    
+        } catch (e) {
+            console.error("Capture failed", e);
+            toast.error("Erreur lors de la capture");
+        }
+    };
+
+    const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
@@ -5675,12 +5737,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <div className="flex-1 bg-gray-100 p-4 rounded-xl overflow-auto border border-gray-200">
                             <div className="flex justify-between items-center mb-2">
                                 <h3 className="text-sm font-bold text-gray-700">Aperçu du modèle importé</h3>
-                                <button 
-                                    onClick={() => setPreviewHtml(null)}
-                                    className="text-xs text-gray-500 hover:text-red-500"
-                                >
-                                    Fermer l'aperçu
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handleCapturePreview}
+                                        className="flex items-center gap-1 px-2 py-1 bg-brand-coral/10 hover:bg-brand-coral/20 text-brand-coral text-xs font-bold rounded"
+                                    >
+                                        <Camera size={14} />
+                                        Générer JPEG
+                                    </button>
+                                    <button 
+                                        onClick={() => setPreviewHtml(null)}
+                                        className="text-xs text-gray-500 hover:text-red-500"
+                                    >
+                                        Fermer l'aperçu
+                                    </button>
+                                </div>
                             </div>
                             <div className="bg-white p-4 shadow-sm rounded border border-gray-200 min-h-[400px]">
                                 <iframe 

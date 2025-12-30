@@ -5507,53 +5507,73 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
 
                            {/* Print Settings Dialog */}
-                           <input
-                              type="file"
-                              ref={importInputRef}
-                              className="hidden"
-                              accept=".html,.htm"
-                              onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file || !selectedBook) return;
-                                  
-                                  try {
-                                      toast.info("Lecture du fichier HTML en cours...");
-                                      const defaultW = selectedBook.features?.dimensions?.width || 800;
-                                      const defaultH = selectedBook.features?.dimensions?.height || 600;
-                                      
-                                      const { texts: newTexts, images: newImages } = await parseHtmlFile(file, defaultW, defaultH);
-                                      
-                                      if (newTexts.length === 0 && newImages.length === 0) {
-                                          toast.warning("Aucun élément compatible trouvé");
-                                          return;
-                                      }
-                                      
-                                      handleSaveBook({
-                                          ...selectedBook,
-                                          contentConfig: {
-                                              ...selectedBook.contentConfig,
-                                              texts: [...(selectedBook.contentConfig.texts || []), ...newTexts],
-                                              imageElements: [...(selectedBook.contentConfig.imageElements || []), ...newImages]
-                                          }
-                                      });
-                                      
-                                      toast.success(`Importé: ${newTexts.length} textes, ${newImages.length} images`);
-                                  } catch (err) {
-                                      console.error(err);
-                                      toast.error("Erreur lors de l'import HTML");
-                                  }
-                                  e.target.value = '';
-                              }}
-                           />
-                           
-                           <button 
-                               onClick={() => importInputRef.current?.click()}
-                               className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 flex items-center gap-2" 
-                               title="Importer HTML/in5 comme Template"
-                           >
-                               <Upload size={18} />
-                               <span className="text-xs font-bold">Import HTML</span>
-                           </button>
+                          <input
+                             type="file"
+                             ref={importInputRef}
+                             className="hidden"
+                             accept=".html,.htm"
+                             onChange={async (e) => {
+                                 const file = e.target.files?.[0];
+                                 if (!file || !selectedBook) return;
+                                 
+                                 try {
+                                     toast.info("Lecture du fichier HTML en cours...");
+                                     const defaultW = selectedBook.features?.dimensions?.width || 800;
+                                     const defaultH = selectedBook.features?.dimensions?.height || 600;
+                                     
+                                     const { texts: newTexts, images: newImages } = await parseHtmlFile(file, defaultW, defaultH);
+                                     
+                                     if (newTexts.length === 0 && newImages.length === 0) {
+                                         toast.warning("Aucun élément compatible trouvé");
+                                         return;
+                                     }
+
+                                     // Determine target page index
+                                     let targetPageIndex = -1;
+                                     if (selectedPageId) {
+                                         const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
+                                         if (page) {
+                                             targetPageIndex = page.pageNumber;
+                                         }
+                                     }
+
+                                     // If a specific page is selected, force all elements to that page
+                                     // otherwise keep auto-detected pages
+                                     const finalTexts = targetPageIndex !== -1 
+                                         ? newTexts.map(t => ({ ...t, position: { ...t.position, pageIndex: targetPageIndex } }))
+                                         : newTexts;
+                                         
+                                     const finalImages = targetPageIndex !== -1
+                                         ? newImages.map(i => ({ ...i, position: { ...i.position, pageIndex: targetPageIndex } }))
+                                         : newImages;
+                                     
+                                     handleSaveBook({
+                                         ...selectedBook,
+                                         contentConfig: {
+                                             ...selectedBook.contentConfig,
+                                             texts: [...(selectedBook.contentConfig.texts || []), ...finalTexts],
+                                             imageElements: [...(selectedBook.contentConfig.imageElements || []), ...finalImages]
+                                         }
+                                     });
+                                     
+                                     const targetPageName = targetPageIndex !== -1 ? `Page ${targetPageIndex}` : "Auto-detect";
+                                     toast.success(`Importé sur ${targetPageName}: ${finalTexts.length} textes, ${finalImages.length} images`);
+                                 } catch (err) {
+                                     console.error(err);
+                                     toast.error("Erreur lors de l'import HTML");
+                                 }
+                                 e.target.value = '';
+                             }}
+                          />
+                          
+                          <button 
+                              onClick={() => importInputRef.current?.click()}
+                              className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 flex items-center gap-2" 
+                              title={selectedPageId ? "Importer HTML sur la page actuelle" : "Importer HTML (Multi-pages)"}
+                          >
+                              <Upload size={18} />
+                              <span className="text-xs font-bold">{selectedPageId ? "Import Page" : "Import HTML"}</span>
+                          </button>
 
                            <Dialog>
                               <DialogTrigger asChild>

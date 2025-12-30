@@ -72,6 +72,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [isCustomerSearchOpen, setIsCustomerSearchOpen] = useState(false);
 
+  // Import State
+  const [pendingImportPageId, setPendingImportPageId] = useState<string | null>(null);
+
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
 
@@ -5528,10 +5531,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          return;
                                      }
 
-                                     // Determine target page index
+                                 // Determine target page index
                                      let targetPageIndex = -1;
-                                     if (selectedPageId) {
-                                         const page = selectedBook.contentConfig.pages.find(p => p.id === selectedPageId);
+                                     const effectivePageId = pendingImportPageId || selectedPageId;
+
+                                     if (effectivePageId) {
+                                         const page = selectedBook.contentConfig.pages.find(p => p.id === effectivePageId);
                                          if (page) {
                                              targetPageIndex = page.pageNumber;
                                          }
@@ -5562,7 +5567,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                      console.error(err);
                                      toast.error("Erreur lors de l'import HTML");
                                  }
+                                 
                                  e.target.value = '';
+                                 setPendingImportPageId(null);
                              }}
                           />
                           
@@ -5967,6 +5974,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       </div>
                                       <div className="text-[10px] text-gray-400 truncate">Dos + Face Avant</div>
                                    </div>
+                                  
+                                   <button
+                                      onClick={(e) => {
+                                         e.stopPropagation();
+                                         if (importInputRef.current) {
+                                            setPendingImportPageId(frontCover.id); // Typically Page 0
+                                            importInputRef.current.click();
+                                         }
+                                      }}
+                                      className="p-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+                                      title="Importer HTML sur la couverture"
+                                   >
+                                      <Upload size={14} />
+                                   </button>
                                    
                                    <button
                                       onClick={(e) => {
@@ -6049,6 +6070,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    </div>
                                    <div className="text-[10px] text-gray-400 truncate">{page.description || "Sans description"}</div>
                                 </div>
+                                
+                                <button
+                                  onClick={(e) => {
+                                     e.stopPropagation();
+                                     if (importInputRef.current) {
+                                         setPendingImportPageId(page.id);
+                                         importInputRef.current.click();
+                                     }
+                                  }}
+                                  className="p-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded opacity-0 group-hover:opacity-100 transition-opacity mr-1"
+                                  title="Importer HTML sur cette page"
+                                >
+                                  <Upload size={14} />
+                                </button>
                                 
                                 <button
                                   onClick={(e) => {

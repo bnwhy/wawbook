@@ -74,6 +74,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Import State
   const [pendingImportPageId, setPendingImportPageId] = useState<string | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
 
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -5531,7 +5532,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          result = await parseHtmlFile(file, defaultW, defaultH);
                                      }
                                      
-                                     const { texts: newTexts, images: newImages } = result;
+                                     const { texts: newTexts, images: newImages, htmlContent } = result;
+
+                                     if (htmlContent) {
+                                         setPreviewHtml(htmlContent);
+                                     }
                                      
                                      if (newTexts.length === 0 && newImages.length === 0) {
                                          toast.warning("Aucun élément compatible trouvé");
@@ -5666,6 +5671,27 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                     </div>
 
+                    {previewHtml && (
+                        <div className="flex-1 bg-gray-100 p-4 rounded-xl overflow-auto border border-gray-200">
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="text-sm font-bold text-gray-700">Aperçu du modèle importé</h3>
+                                <button 
+                                    onClick={() => setPreviewHtml(null)}
+                                    className="text-xs text-gray-500 hover:text-red-500"
+                                >
+                                    Fermer l'aperçu
+                                </button>
+                            </div>
+                            <div className="bg-white p-4 shadow-sm rounded border border-gray-200 min-h-[400px]">
+                                <iframe 
+                                    srcDoc={previewHtml}
+                                    className="w-full h-[600px] border-0"
+                                    title="HTML Preview"
+                                    sandbox="allow-same-origin" 
+                                />
+                            </div>
+                        </div>
+                    )}
                     
                  </div>
                  </div>

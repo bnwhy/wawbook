@@ -12,7 +12,7 @@ interface ParsedPage {
 // Map of filename -> Blob URL
 type ImageMap = Record<string, string>;
 
-export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[] }> => {
+export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string }> => {
     const zip = new JSZip();
     const contents = await zip.loadAsync(file);
     
@@ -74,12 +74,81 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
     });
     await Promise.all(cssPromises);
     
-    return parseHtmlContent(htmlContent, defaultWidth, defaultHeight, imageMap, file.name, cssContent);
+    const parsed = parseHtmlContent(htmlContent, defaultWidth, defaultHeight, imageMap, file.name, cssContent);
+    
+    // Generate Preview HTML with injected CSS and Blob URLs for images
+    let previewHtml = htmlContent;
+    
+    // 1. Inject CSS
+    if (cssContent) {
+        if (previewHtml.includes('</head>')) {
+            previewHtml = previewHtml.replace('</head>', `<style>\n${cssContent}\n</style></head>`);
+        } else {
+            previewHtml = `<style>\n${cssContent}\n</style>` + previewHtml;
+        }
+    }
+    
+    // 2. Replace Images using DOM manipulation to ensure correct targeting
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(previewHtml, 'text/html');
+        
+        // Replace images
+        const imgElements = doc.querySelectorAll('img');
+        imgElements.forEach(img => {
+            const src = img.getAttribute('src');
+            if (src) {
+                // Try to find in imageMap
+                let replacement = '';
+                if (imageMap[src]) {
+                    replacement = imageMap[src];
+                } else {
+                    const parts = src.split('/');
+                    const filename = parts[parts.length - 1];
+                    if (imageMap[filename]) {
+                        replacement = imageMap[filename];
+                    }
+                }
+                
+                if (replacement) {
+                    img.setAttribute('src', replacement);
+                }
+            }
+        });
+        
+        // Replace background images in inline styles
+        const allElements = doc.querySelectorAll('*');
+        allElements.forEach(el => {
+            if (el instanceof HTMLElement) {
+                const style = el.getAttribute('style');
+                if (style && style.includes('url(')) {
+                    let newStyle = style;
+                    for (const [name, blobUrl] of Object.entries(imageMap)) {
+                         // Basic replacement - checking if the filename exists in the style string
+                         // This might be risky if filename is common word, but for ZIP assets usually fine
+                         if (newStyle.includes(name)) {
+                             newStyle = newStyle.replace(name, blobUrl);
+                         }
+                    }
+                    if (newStyle !== style) {
+                        el.setAttribute('style', newStyle);
+                    }
+                }
+            }
+        });
+
+        previewHtml = doc.documentElement.outerHTML;
+    } catch (e) {
+        console.warn("Failed to process preview HTML images", e);
+    }
+    
+    return { ...parsed, htmlContent: previewHtml };
 };
 
-export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[] }> => {
+export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string }> => {
   const text = await file.text();
-  return parseHtmlContent(text, defaultWidth, defaultHeight, {}, file.name);
+  const parsed = parseHtmlContent(text, defaultWidth, defaultHeight, {}, file.name);
+  return { ...parsed, htmlContent: text };
 };
 
 const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight: number, imageMap: ImageMap, sourceName: string, cssContent: string = ''): { texts: TextElement[], images: ImageElement[] } => {

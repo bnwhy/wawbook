@@ -5555,24 +5555,42 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                      const finalTexts = targetPageIndex !== -1 
                                          ? newTexts.map(t => ({ 
                                              ...t, 
-                                             position: { ...t.position, pageIndex: targetPageIndex },
+                                             position: { 
+                                                 ...t.position, 
+                                                 pageIndex: targetPageIndex,
+                                                 layer: 50 // Force high z-index
+                                             },
                                              combinationKey: selectedVariant 
                                            }))
                                          : newTexts.map(t => ({ 
                                              ...t, 
+                                             position: { 
+                                                 ...t.position, 
+                                                 layer: 50 // Force high z-index
+                                             },
                                              combinationKey: selectedVariant 
                                            }));
                                          
                                      const finalImages = targetPageIndex !== -1
                                          ? newImages.map(i => ({ 
                                              ...i, 
-                                             position: { ...i.position, pageIndex: targetPageIndex },
+                                             position: { 
+                                                 ...i.position, 
+                                                 pageIndex: targetPageIndex,
+                                                 layer: 50 // Force high z-index
+                                             },
                                              combinationKey: selectedVariant 
                                            }))
                                          : newImages.map(i => ({ 
                                              ...i, 
+                                             position: { 
+                                                 ...i.position, 
+                                                 layer: 50 // Force high z-index
+                                             },
                                              combinationKey: selectedVariant 
                                            }));
+                                           
+                                     console.log('Final import payload:', { finalTexts, finalImages });
                                      
                                      handleSaveBook({
                                          ...selectedBook,

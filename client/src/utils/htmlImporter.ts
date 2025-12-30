@@ -121,12 +121,30 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
         children.forEach(el => {
             if (!(el instanceof HTMLElement)) return;
             const style = el.style;
-            const left = parseFloat(style.left || '0');
-            const top = parseFloat(style.top || '0');
+            let left = parseFloat(style.left || '0');
+            let top = parseFloat(style.top || '0');
             const width = parseFloat(style.width || '0');
             const height = parseFloat(style.height || '0');
+
+            // Check transforms
+            if (style.transform) {
+                const translateMatch = style.transform.match(/translate\(([^,]+)(?:,\s*([^)]+))?\)/);
+                if (translateMatch) {
+                    const tx = parseFloat(translateMatch[1]) || 0;
+                    const ty = parseFloat(translateMatch[2]) || 0;
+                    left += tx;
+                    top += ty;
+                }
+                const matrixMatch = style.transform.match(/matrix\([^,]+,\s*[^,]+,\s*[^,]+,\s*[^,]+,\s*([^,]+),\s*([^)]+)\)/);
+                if (matrixMatch) {
+                     const tx = parseFloat(matrixMatch[1]) || 0;
+                     const ty = parseFloat(matrixMatch[2]) || 0;
+                     left += tx;
+                     top += ty;
+                }
+            }
             
-            if (left || top) {
+            if (left || top || width || height) {
                 maxX = Math.max(maxX, left + width);
                 maxY = Math.max(maxY, top + height);
                 found = true;
@@ -224,9 +242,22 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
         const cleanLabel = (el.id || el.className || el.tagName).substring(0, 20);
 
         // IS IT AN IMAGE?
-        if (el.tagName.toLowerCase() === 'img') {
-            const imgEl = el as HTMLImageElement;
-            let src = imgEl.getAttribute('src') || '';
+        // Also check background-image on DIVs
+        const bgImage = style.backgroundImage;
+        if (el.tagName.toLowerCase() === 'img' || (el.tagName.toLowerCase() === 'div' && bgImage && bgImage !== 'none')) {
+            let src = '';
+            let isBg = false;
+
+            if (el.tagName.toLowerCase() === 'img') {
+                src = (el as HTMLImageElement).getAttribute('src') || '';
+            } else if (bgImage) {
+                // Extract url(...)
+                const match = bgImage.match(/url\(['"]?(.*?)['"]?\)/);
+                if (match) {
+                    src = match[1];
+                    isBg = true;
+                }
+            }
 
             // Try to resolve from imageMap
             // 1. Exact match

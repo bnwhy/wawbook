@@ -5739,8 +5739,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
 
               {previewHtml && (
-                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-8 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="w-full mt-4">
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                         <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
                             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                 <FileCode className="text-brand-coral" size={20} />
@@ -5754,7 +5754,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-auto bg-gray-100 p-6 flex justify-center">
+                        <div className="bg-gray-100 p-6 flex justify-center">
                              <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200"> 
                                 <iframe 
                                     srcDoc={previewHtml}

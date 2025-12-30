@@ -5739,49 +5739,49 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
 
               {previewHtml && (
-                <div className="w-full -mt-20 relative z-20">
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                        <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
+                <div className="absolute inset-0 z-50 bg-gray-50 flex flex-col">
+                    <div className="bg-white border-b border-gray-200 shadow-sm flex-none">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                 <FileCode className="text-brand-coral" size={20} />
                                 Aperçu du modèle importé
                             </h3>
                             <button 
                                 onClick={() => setPreviewHtml(null)}
-                                className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-500 hover:text-red-500"
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-red-500"
                             >
-                                <X size={20} />
+                                <X size={24} />
                             </button>
                         </div>
+                    </div>
 
-                        <div className="bg-gray-100 p-6 flex justify-center">
-                             <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200"> 
-                                <iframe 
-                                    srcDoc={previewHtml}
-                                    className="w-[800px] h-[600px] border-0 bg-white" 
-                                    title="HTML Preview"
-                                    sandbox="allow-same-origin" 
-                                />
-                            </div>
+                    <div className="flex-1 overflow-auto bg-gray-100 p-8 flex justify-center items-start">
+                         <div className="bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200"> 
+                            <iframe 
+                                srcDoc={previewHtml}
+                                className="w-[800px] h-[600px] border-0 bg-white" 
+                                title="HTML Preview"
+                                sandbox="allow-same-origin" 
+                            />
                         </div>
+                    </div>
 
-                        <div className="p-4 border-t border-gray-100 bg-white flex justify-end gap-3">
-                             <button 
-                                type="button"
-                                onClick={() => setPreviewHtml(null)}
-                                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                Fermer
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleCapturePreview}
-                                className="flex items-center gap-2 px-4 py-2 bg-brand-coral hover:bg-brand-coral/90 text-white font-bold rounded-lg shadow-lg shadow-brand-coral/20 transition-all active:scale-95"
-                            >
-                                <Camera size={18} />
-                                <span>Générer JPEG et Ajouter au Livre</span>
-                            </button>
-                        </div>
+                    <div className="p-4 border-t border-gray-200 bg-white flex justify-end gap-3 flex-none shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                         <button 
+                            type="button"
+                            onClick={() => setPreviewHtml(null)}
+                            className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            Fermer
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleCapturePreview}
+                            className="flex items-center gap-2 px-4 py-2 bg-brand-coral hover:bg-brand-coral/90 text-white font-bold rounded-lg shadow-lg shadow-brand-coral/20 transition-all active:scale-95"
+                        >
+                            <Camera size={18} />
+                            <span>Générer JPEG et Ajouter au Livre</span>
+                        </button>
                     </div>
                 </div>
               )}

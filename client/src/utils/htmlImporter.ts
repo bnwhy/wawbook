@@ -111,6 +111,31 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
     let pageWidth = defaultWidth;
     let pageHeight = defaultHeight;
     
+    // Attempt to calculate page dimensions from content if not explicit
+    const calculateBounds = (container: Element): { width: number, height: number } | null => {
+        const children = Array.from(container.querySelectorAll('*'));
+        let maxX = 0;
+        let maxY = 0;
+        let found = false;
+
+        children.forEach(el => {
+            if (!(el instanceof HTMLElement)) return;
+            const style = el.style;
+            const left = parseFloat(style.left || '0');
+            const top = parseFloat(style.top || '0');
+            const width = parseFloat(style.width || '0');
+            const height = parseFloat(style.height || '0');
+            
+            if (left || top) {
+                maxX = Math.max(maxX, left + width);
+                maxY = Math.max(maxY, top + height);
+                found = true;
+            }
+        });
+        
+        return found ? { width: maxX, height: maxY } : null;
+    };
+
     if (pageEl instanceof HTMLElement) {
         // We can't use getBoundingClientRect on a detached DOM node easily without rendering it.
         // We have to parse inline styles or attributes.
@@ -126,6 +151,13 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
              if (attrW && attrH) {
                  pageWidth = parseFloat(attrW);
                  pageHeight = parseFloat(attrH);
+             } else {
+                 // Try to guess from content bounds
+                 const bounds = calculateBounds(pageEl);
+                 if (bounds) {
+                     pageWidth = Math.max(defaultWidth, bounds.width);
+                     pageHeight = Math.max(defaultHeight, bounds.height);
+                 }
              }
         }
     }
@@ -137,16 +169,48 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
         if (!(el instanceof HTMLElement)) return;
         
         // Check if it has positioning (inline style usually for exports)
-        // We are looking for "left" and "top".
+        // We are looking for "left" and "top", OR "transform: translate"
         const style = el.style;
-        const leftStr = style.left;
-        const topStr = style.top;
+        let leftStr = style.left;
+        let topStr = style.top;
         
-        // Heuristic: Must have left/top to be considered a positioned element worth importing
-        if (!leftStr || !topStr) return;
+        // Handle transform: translate(x, y) or matrix
+        let transformX = 0;
+        let transformY = 0;
+        if (style.transform) {
+             const translateMatch = style.transform.match(/translate\(([^,]+)(?:,\s*([^)]+))?\)/);
+             if (translateMatch) {
+                 transformX = parseFloat(translateMatch[1]) || 0;
+                 transformY = parseFloat(translateMatch[2]) || 0;
+             }
+             // Simple matrix support: matrix(1, 0, 0, 1, x, y)
+             const matrixMatch = style.transform.match(/matrix\([^,]+,\s*[^,]+,\s*[^,]+,\s*[^,]+,\s*([^,]+),\s*([^)]+)\)/);
+             if (matrixMatch) {
+                 transformX = parseFloat(matrixMatch[1]) || 0;
+                 transformY = parseFloat(matrixMatch[2]) || 0;
+             }
+        }
 
-        const xPx = parseFloat(leftStr);
-        const yPx = parseFloat(topStr);
+        // Convert bottom/right to top/left if needed
+        if (!leftStr && style.right) {
+             // We need parent width, assume page width for direct children
+             // This is an approximation
+             const right = parseFloat(style.right);
+             const width = parseFloat(style.width) || 0;
+             leftStr = `${pageWidth - right - width}px`;
+        }
+        
+        if (!topStr && style.bottom) {
+             const bottom = parseFloat(style.bottom);
+             const height = parseFloat(style.height) || 0;
+             topStr = `${pageHeight - bottom - height}px`;
+        }
+
+        // Heuristic: Must have left/top OR transform to be considered a positioned element worth importing
+        if ((!leftStr && !transformX) || (!topStr && !transformY)) return;
+
+        const xPx = (parseFloat(leftStr || '0') + transformX);
+        const yPx = (parseFloat(topStr || '0') + transformY);
         const wPx = parseFloat(style.width) || 100; // Default width if missing
         const hPx = parseFloat(style.height) || 50; // Default height if missing
 

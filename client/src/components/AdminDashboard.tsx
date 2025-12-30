@@ -5616,13 +5616,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
 
                           <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
-                              <button
-                                  onClick={() => importInputRef.current?.click()}
-                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0"
-                                  title="Importer contenu (HTML/ZIP)"
-                              >
-                                  <FileText size={18} />
-                              </button>
                               <button 
                                   onClick={handleExportContent}
                                   className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
@@ -5666,93 +5659,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                     </div>
 
-                    {/* Content Preview Area - Displays imported content */}
-                    <div className="flex-1 overflow-y-auto p-4 bg-gray-50 border border-gray-200 rounded-xl mt-4">
-                        {selectedBook.contentConfig.pages.length === 0 ? (
-                             <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                                <FileText size={48} className="mb-4 opacity-20" />
-                                <p>Aucun contenu. Importez un fichier HTML ou ZIP pour commencer.</p>
-                             </div>
-                        ) : (
-                             <div className="space-y-8">
-                                {selectedBook.contentConfig.pages.map((page, pageIndex) => (
-                                    <div key={page.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                                        <h3 className="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-gray-100 flex justify-between items-center">
-                                            <span>{page.label}</span>
-                                            <span className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-500">Page {page.pageNumber}</span>
-                                        </h3>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {/* Texts */}
-                                            <div>
-                                                <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider flex items-center gap-2">
-                                                    <Type size={14} /> Textes
-                                                </h4>
-                                                <div className="space-y-2">
-                                                    {(selectedBook.contentConfig.texts || [])
-                                                        .filter(t => t.position.pageIndex === page.pageNumber)
-                                                        .map(text => (
-                                                            <div key={text.id} className="p-3 bg-slate-50 rounded border border-slate-100 text-sm">
-                                                                <div className="font-medium text-slate-700 mb-1">{text.content}</div>
-                                                                <div className="text-xs text-slate-400 flex gap-2">
-                                                                    <span>ID: {text.id}</span>
-                                                                    <span>•</span>
-                                                                    <span>Pos: {Math.round(text.position.x || 0)}, {Math.round(text.position.y || 0)}</span>
-                                                                    {text.combinationKey && (
-                                                                        <>
-                                                                            <span>•</span>
-                                                                            <span className="text-blue-500">{text.combinationKey}</span>
-                                                                        </>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    {!(selectedBook.contentConfig.texts || []).some(t => t.position.pageIndex === page.pageNumber) && (
-                                                        <p className="text-xs text-gray-400 italic">Aucun texte</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Images */}
-                                            <div>
-                                                <h4 className="text-sm font-bold text-slate-500 mb-3 uppercase tracking-wider flex items-center gap-2">
-                                                    <Image size={14} /> Images
-                                                </h4>
-                                                <div className="space-y-2">
-                                                    {(selectedBook.contentConfig.imageElements || [])
-                                                        .filter(img => img.position.pageIndex === page.pageNumber)
-                                                        .map(img => (
-                                                            <div key={img.id} className="p-3 bg-slate-50 rounded border border-slate-100 text-sm flex gap-3">
-                                                                <div className="w-16 h-16 bg-white rounded border border-gray-200 overflow-hidden shrink-0">
-                                                                    <img src={img.url} alt="Element" className="w-full h-full object-contain" />
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="text-xs text-slate-500 mb-1 truncate" title={img.url}>{img.url}</div>
-                                                                    <div className="text-xs text-slate-400 flex flex-wrap gap-2">
-                                                                        <span>ID: {img.id}</span>
-                                                                        <span>•</span>
-                                                                        <span>Pos: {Math.round(img.position.x || 0)}, {Math.round(img.position.y || 0)}</span>
-                                                                        {img.combinationKey && (
-                                                                            <>
-                                                                                <span>•</span>
-                                                                                <span className="text-blue-500">{img.combinationKey}</span>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    {!(selectedBook.contentConfig.imageElements || []).some(img => img.position.pageIndex === page.pageNumber) && (
-                                                        <p className="text-xs text-gray-400 italic">Aucune image</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                             </div>
-                        )}
-                    </div>
+                    
                  </div>
                  </div>
               )}

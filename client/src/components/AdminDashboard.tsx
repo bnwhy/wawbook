@@ -5553,12 +5553,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                      // If a specific page is selected, force all elements to that page
                                      // otherwise keep auto-detected pages
                                      const finalTexts = targetPageIndex !== -1 
-                                         ? newTexts.map(t => ({ ...t, position: { ...t.position, pageIndex: targetPageIndex } }))
-                                         : newTexts;
+                                         ? newTexts.map(t => ({ 
+                                             ...t, 
+                                             position: { ...t.position, pageIndex: targetPageIndex },
+                                             combinationKey: selectedVariant 
+                                           }))
+                                         : newTexts.map(t => ({ 
+                                             ...t, 
+                                             combinationKey: selectedVariant 
+                                           }));
                                          
                                      const finalImages = targetPageIndex !== -1
-                                         ? newImages.map(i => ({ ...i, position: { ...i.position, pageIndex: targetPageIndex } }))
-                                         : newImages;
+                                         ? newImages.map(i => ({ 
+                                             ...i, 
+                                             position: { ...i.position, pageIndex: targetPageIndex },
+                                             combinationKey: selectedVariant 
+                                           }))
+                                         : newImages.map(i => ({ 
+                                             ...i, 
+                                             combinationKey: selectedVariant 
+                                           }));
                                      
                                      handleSaveBook({
                                          ...selectedBook,

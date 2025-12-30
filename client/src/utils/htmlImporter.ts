@@ -93,23 +93,46 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
         const parser = new DOMParser();
         const doc = parser.parseFromString(previewHtml, 'text/html');
         
+        // Helper to find image in map
+        const findImage = (src: string) => {
+            if (!src) return null;
+            
+            // 1. Try exact match
+            if (imageMap[src]) return imageMap[src];
+            
+            // 2. Try decoded match
+            try {
+                const decoded = decodeURIComponent(src);
+                if (imageMap[decoded]) return imageMap[decoded];
+            } catch (e) {
+                // ignore
+            }
+
+            // 3. Try cleaning relative path prefixes like ./
+            const cleanSrc = src.replace(/^\.\//, '');
+            if (imageMap[cleanSrc]) return imageMap[cleanSrc];
+
+            // 4. Try just filename
+            const parts = src.split('/');
+            const filename = parts[parts.length - 1];
+            if (imageMap[filename]) return imageMap[filename];
+            
+            try {
+                const decodedFilename = decodeURIComponent(filename);
+                if (imageMap[decodedFilename]) return imageMap[decodedFilename];
+            } catch (e) {
+                // ignore
+            }
+            
+            return null;
+        };
+        
         // Replace images
         const imgElements = doc.querySelectorAll('img');
         imgElements.forEach(img => {
             const src = img.getAttribute('src');
             if (src) {
-                // Try to find in imageMap
-                let replacement = '';
-                if (imageMap[src]) {
-                    replacement = imageMap[src];
-                } else {
-                    const parts = src.split('/');
-                    const filename = parts[parts.length - 1];
-                    if (imageMap[filename]) {
-                        replacement = imageMap[filename];
-                    }
-                }
-                
+                const replacement = findImage(src);
                 if (replacement) {
                     img.setAttribute('src', replacement);
                 }
@@ -122,16 +145,19 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
             if (el instanceof HTMLElement) {
                 const style = el.getAttribute('style');
                 if (style && style.includes('url(')) {
-                    let newStyle = style;
-                    for (const [name, blobUrl] of Object.entries(imageMap)) {
-                         // Basic replacement - checking if the filename exists in the style string
-                         // This might be risky if filename is common word, but for ZIP assets usually fine
-                         if (newStyle.includes(name)) {
-                             newStyle = newStyle.replace(name, blobUrl);
-                         }
-                    }
-                    if (newStyle !== style) {
-                        el.setAttribute('style', newStyle);
+                    // Extract URL from style
+                    // match url('...') or url("...") or url(...)
+                    const urlMatch = style.match(/url\(['"]?(.*?)['"]?\)/);
+                    if (urlMatch && urlMatch[1]) {
+                        const originalUrl = urlMatch[1];
+                        const replacement = findImage(originalUrl);
+                        
+                        if (replacement) {
+                            // Replace only the specific URL to avoid messing up other parts of style or partial matches
+                            // We need to be careful about escaping if we use replace with string
+                            const newStyle = style.replace(originalUrl, replacement);
+                            el.setAttribute('style', newStyle);
+                        }
                     }
                 }
             }

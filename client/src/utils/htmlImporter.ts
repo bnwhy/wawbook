@@ -60,7 +60,21 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
     }
     
     const htmlContent = await htmlFile.async('string');
-    return parseHtmlContent(htmlContent, defaultWidth, defaultHeight, imageMap, file.name);
+    
+    // Extract CSS files content
+    let cssContent = '';
+    const cssPromises: Promise<void>[] = [];
+    zip.forEach((relativePath, zipEntry) => {
+        if (!zipEntry.dir && relativePath.endsWith('.css')) {
+            const promise = zipEntry.async('string').then(content => {
+                cssContent += content + '\n';
+            });
+            cssPromises.push(promise);
+        }
+    });
+    await Promise.all(cssPromises);
+    
+    return parseHtmlContent(htmlContent, defaultWidth, defaultHeight, imageMap, file.name, cssContent);
 };
 
 export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[] }> => {
@@ -68,7 +82,7 @@ export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeigh
   return parseHtmlContent(text, defaultWidth, defaultHeight, {}, file.name);
 };
 
-const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight: number, imageMap: ImageMap, sourceName: string): { texts: TextElement[], images: ImageElement[] } => {
+const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight: number, imageMap: ImageMap, sourceName: string, cssContent: string = ''): { texts: TextElement[], images: ImageElement[] } => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlText, 'text/html');
 
@@ -107,11 +121,74 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
         }
     }
 
+    // 0. Extract CSS styles if present in the ZIP
+    // We expect cssContent to be a concatenated string of all CSS files or a map.
+    // For simplicity, let's assume we pass a combined CSS string or try to parse <style> blocks or <link> tags if we can't get external CSS easily here yet.
+    // Ideally, parseZipFile should have passed the CSS content.
+    // Let's modify the signature of parseHtmlContent to accept cssMap (filename -> content) or just cssContent.
+    
+    // Simple CSS Parser to map selectors to styles
+    const cssRules: Record<string, any> = {};
+    if (cssContent) {
+        // Very basic parser: selector { property: value; }
+        // Remove comments
+        const cleanCss = cssContent.replace(/\/\*[\s\S]*?\*\//g, '');
+        const ruleRegex = /([^{]+)\{([^}]+)\}/g;
+        let match;
+        while ((match = ruleRegex.exec(cleanCss)) !== null) {
+            const selectors = match[1].split(',').map(s => s.trim());
+            const declarations = match[2].split(';').map(d => d.trim()).filter(Boolean);
+            const styleObj: any = {};
+            declarations.forEach(decl => {
+                const [prop, val] = decl.split(':').map(s => s.trim());
+                if (prop && val) styleObj[prop] = val;
+            });
+            
+            selectors.forEach(sel => {
+                cssRules[sel] = { ...cssRules[sel], ...styleObj };
+            });
+        }
+    }
+
+    // Helper to get computed style from inline + matched CSS rules
+    const getComputedStyleMock = (el: Element): any => {
+        const style: any = { ...(el as HTMLElement).style }; // Inline styles have priority? Actually inline > ID > Class > Tag
+        // But for this simple importer, we'll merge: CSS Rules first, then Inline overrides.
+        
+        // 1. Tag name
+        const tag = el.tagName.toLowerCase();
+        if (cssRules[tag]) Object.assign(style, cssRules[tag]);
+        
+        // 2. Classes
+        if (el.classList && el.classList.length > 0) {
+            el.classList.forEach(cls => {
+                if (cssRules[`.${cls}`]) Object.assign(style, cssRules[`.${cls}`]);
+            });
+        }
+        
+        // 3. ID
+        if (el.id) {
+            if (cssRules[`#${el.id}`]) Object.assign(style, cssRules[`#${el.id}`]);
+        }
+        
+        // 4. Inline (already in style object if we iterated it, but let's explicity overwrite)
+        const inlineStyle = (el as HTMLElement).style;
+        for (let i = 0; i < inlineStyle.length; i++) {
+            const prop = inlineStyle[i];
+            style[prop] = inlineStyle.getPropertyValue(prop);
+        }
+        
+        // Also map standard properties that might be on the style object directly (like .left, .top)
+        // If they were set via CSS string "left: 10px", they are in style['left'] now.
+        
+        return style;
+    };
+    
+
     // Determine dimensions of this page
     let pageWidth = defaultWidth;
     let pageHeight = defaultHeight;
-    
-    // Attempt to calculate page dimensions from content if not explicit
+
     const calculateBounds = (container: Element): { width: number, height: number } | null => {
         const children = Array.from(container.querySelectorAll('*'));
         let maxX = 0;
@@ -120,7 +197,7 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
 
         children.forEach(el => {
             if (!(el instanceof HTMLElement)) return;
-            const style = el.style;
+            const style = getComputedStyleMock(el);
             let left = parseFloat(style.left || '0');
             let top = parseFloat(style.top || '0');
             const width = parseFloat(style.width || '0');
@@ -157,8 +234,9 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
     if (pageEl instanceof HTMLElement) {
         // We can't use getBoundingClientRect on a detached DOM node easily without rendering it.
         // We have to parse inline styles or attributes.
-        const styleWidth = pageEl.style.width;
-        const styleHeight = pageEl.style.height;
+        const pageStyle = getComputedStyleMock(pageEl);
+        const styleWidth = pageStyle.width;
+        const styleHeight = pageStyle.height;
         if (styleWidth && styleHeight) {
             pageWidth = parseFloat(styleWidth);
             pageHeight = parseFloat(styleHeight);
@@ -188,7 +266,7 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
         
         // Check if it has positioning (inline style usually for exports)
         // We are looking for "left" and "top", OR "transform: translate"
-        const style = el.style;
+        const style = getComputedStyleMock(el);
         let leftStr = style.left;
         let topStr = style.top;
         

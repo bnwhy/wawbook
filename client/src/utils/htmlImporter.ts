@@ -1,4 +1,5 @@
 import { TextElement, ImageElement } from '../types/admin';
+import JSZip from 'jszip';
 
 interface ParsedPage {
   pageIndex: number;
@@ -8,10 +9,68 @@ interface ParsedPage {
   images: ImageElement[];
 }
 
+// Map of filename -> Blob URL
+type ImageMap = Record<string, string>;
+
+export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[] }> => {
+    const zip = new JSZip();
+    const contents = await zip.loadAsync(file);
+    
+    // Find images and create Blob URLs
+    const imageMap: ImageMap = {};
+    const imagePromises: Promise<void>[] = [];
+    
+    zip.forEach((relativePath, zipEntry) => {
+        if (!zipEntry.dir && (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath))) {
+            const promise = zipEntry.async('blob').then(blob => {
+                const url = URL.createObjectURL(blob);
+                // Store with just the filename, and maybe relative path? 
+                // Usually HTML exports might reference "images/foo.jpg" or just "foo.jpg".
+                // We'll store both full relative path and just filename to be safe.
+                imageMap[relativePath] = url;
+                const parts = relativePath.split('/');
+                const filename = parts[parts.length - 1];
+                imageMap[filename] = url;
+            });
+            imagePromises.push(promise);
+        }
+    });
+    
+    await Promise.all(imagePromises);
+
+    // Find HTML file
+    // We look for index.html or the first html file we find
+    let htmlFile: JSZip.JSZipObject | null = null;
+    
+    // Check for index.html first
+    const files = Object.keys(contents.files);
+    const indexHtml = files.find(f => f.match(/index\.html?$/i));
+    if (indexHtml) {
+        htmlFile = contents.files[indexHtml];
+    } else {
+        // Fallback to first html file
+        const anyHtml = files.find(f => f.match(/\.html?$/i));
+        if (anyHtml) {
+            htmlFile = contents.files[anyHtml];
+        }
+    }
+    
+    if (!htmlFile) {
+        throw new Error("No HTML file found in ZIP");
+    }
+    
+    const htmlContent = await htmlFile.async('string');
+    return parseHtmlContent(htmlContent, defaultWidth, defaultHeight, imageMap, file.name);
+};
+
 export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[] }> => {
   const text = await file.text();
+  return parseHtmlContent(text, defaultWidth, defaultHeight, {}, file.name);
+};
+
+const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight: number, imageMap: ImageMap, sourceName: string): { texts: TextElement[], images: ImageElement[] } => {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(text, 'text/html');
+  const doc = parser.parseFromString(htmlText, 'text/html');
 
   const texts: TextElement[] = [];
   const images: ImageElement[] = [];
@@ -38,7 +97,7 @@ export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeigh
     let pageIndex = index + 1; // Default to starting at Page 1
     
     // Check for "Cover" in filename or ID
-    if (file.name.toLowerCase().includes('cover') || pageEl.id.toLowerCase().includes('cover')) {
+    if (sourceName.toLowerCase().includes('cover') || pageEl.id.toLowerCase().includes('cover')) {
         pageIndex = 0;
     } else {
         // Try to extract from ID (e.g., "page12")
@@ -103,17 +162,38 @@ export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeigh
         // IS IT AN IMAGE?
         if (el.tagName.toLowerCase() === 'img') {
             const imgEl = el as HTMLImageElement;
-            if (imgEl.src) {
+            let src = imgEl.getAttribute('src') || '';
+
+            // Try to resolve from imageMap
+            // 1. Exact match
+            if (imageMap[src]) {
+                src = imageMap[src];
+            } else {
+                // 2. Decode URI component (spaces etc)
+                const decoded = decodeURIComponent(src);
+                if (imageMap[decoded]) {
+                    src = imageMap[decoded];
+                } else {
+                   // 3. Just filename
+                   const parts = src.split('/');
+                   const filename = parts[parts.length - 1];
+                   if (imageMap[filename]) {
+                       src = imageMap[filename];
+                   }
+                }
+            }
+
+            if (src) {
                  // Note: If src is relative, it might be broken. Ideally user drops a self-contained HTML or we can't fetch resources.
                  // But assuming Data URI or absolute URL for now.
                  // If it's a file path reference, we can't really read it unless it's a Data URI.
                  // We'll skip images that aren't data URIs or http links.
-                 if (imgEl.src.startsWith('data:') || imgEl.src.startsWith('http')) {
+                 if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('blob:')) {
                     images.push({
                         id: `img-html-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                         label: cleanLabel,
                         type: 'static',
-                        url: imgEl.src,
+                        url: src,
                         combinationKey: 'default',
                         position: {
                             pageIndex,

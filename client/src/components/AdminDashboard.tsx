@@ -36,7 +36,7 @@ const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or
 import googleFonts from 'google-fonts-complete';
 
 import { readPsd } from 'ag-psd';
-import { parseHtmlFile } from '../utils/htmlImporter';
+import { parseHtmlFile, parseZipFile } from '../utils/htmlImporter';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const importInputRef = React.useRef<HTMLInputElement>(null);
@@ -5514,17 +5514,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              type="file"
                              ref={importInputRef}
                              className="hidden"
-                             accept=".html,.htm"
+                             accept=".html,.htm,.zip"
                              onChange={async (e) => {
                                  const file = e.target.files?.[0];
                                  if (!file || !selectedBook) return;
                                  
                                  try {
-                                     toast.info("Lecture du fichier HTML en cours...");
+                                     toast.info(file.name.endsWith('.zip') ? "Lecture du fichier ZIP en cours..." : "Lecture du fichier HTML en cours...");
                                      const defaultW = selectedBook.features?.dimensions?.width || 800;
                                      const defaultH = selectedBook.features?.dimensions?.height || 600;
                                      
-                                     const { texts: newTexts, images: newImages } = await parseHtmlFile(file, defaultW, defaultH);
+                                     let result;
+                                     if (file.name.toLowerCase().endsWith('.zip')) {
+                                         result = await parseZipFile(file, defaultW, defaultH);
+                                     } else {
+                                         result = await parseHtmlFile(file, defaultW, defaultH);
+                                     }
+                                     
+                                     const { texts: newTexts, images: newImages } = result;
                                      
                                      if (newTexts.length === 0 && newImages.length === 0) {
                                          toast.warning("Aucun élément compatible trouvé");

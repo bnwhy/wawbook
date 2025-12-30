@@ -38,18 +38,34 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
     // Find HTML file
     let htmlFile: JSZip.JSZipObject | null = null;
     const files = Object.keys(contents.files);
-    const indexHtml = files.find(f => f.match(/index\.html?$/i));
+    
+    // EPUB Support: Check for .xhtml files
+    // EPUBs usually have OEBPS/content.opf and OEBPS/*.xhtml
+    // For this simple importer, we'll try to find the "first" xhtml file that looks like content
+    // Ideally we should parse the OPF, but for now let's find the largest XHTML or index.xhtml
+    
+    // 1. Try index.html or index.xhtml
+    const indexHtml = files.find(f => f.match(/index\.(html?|xhtml)$/i));
+    
     if (indexHtml) {
         htmlFile = contents.files[indexHtml];
     } else {
-        const anyHtml = files.find(f => f.match(/\.html?$/i));
-        if (anyHtml) {
-            htmlFile = contents.files[anyHtml];
+        // 2. Try any html/xhtml file
+        // Filter out common non-content files if possible, or just pick the first one
+        const candidates = files.filter(f => f.match(/\.(html?|xhtml)$/i) && !f.startsWith('__MACOSX'));
+        
+        if (candidates.length > 0) {
+            // Sort by name might help if they are numbered (page01.xhtml, page02.xhtml)
+            candidates.sort();
+            htmlFile = contents.files[candidates[0]];
+            
+            // TODO: In the future, we should probably support importing ALL pages from the EPUB/ZIP
+            // For now, we take the first one.
         }
     }
     
     if (!htmlFile) {
-        throw new Error("No HTML file found in ZIP");
+        throw new Error("No HTML/XHTML file found in Archive");
     }
     
     const rawHtmlContent = await htmlFile.async('string');

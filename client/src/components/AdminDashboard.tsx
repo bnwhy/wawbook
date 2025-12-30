@@ -5515,18 +5515,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              type="file"
                              ref={importInputRef}
                              className="hidden"
-                             accept=".html,.htm,.zip"
+                             accept=".html,.htm,.zip,.epub"
                              onChange={async (e) => {
                                  const file = e.target.files?.[0];
                                  if (!file || !selectedBook) return;
                                  
                                  try {
-                                     toast.info(file.name.endsWith('.zip') ? "Lecture du fichier ZIP en cours..." : "Lecture du fichier HTML en cours...");
+                                     toast.info(file.name.endsWith('.zip') || file.name.endsWith('.epub') ? "Lecture de l'archive en cours..." : "Lecture du fichier HTML en cours...");
                                      const defaultW = selectedBook.features?.dimensions?.width || 800;
                                      const defaultH = selectedBook.features?.dimensions?.height || 600;
                                      
                                      let result;
-                                     if (file.name.toLowerCase().endsWith('.zip')) {
+                                     if (file.name.toLowerCase().endsWith('.zip') || file.name.toLowerCase().endsWith('.epub')) {
                                          result = await parseZipFile(file, defaultW, defaultH);
                                      } else {
                                          result = await parseHtmlFile(file, defaultW, defaultH);
@@ -5638,7 +5638,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               <button 
                                   onClick={() => importInputRef.current?.click()}
                                   className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
-                                  title="Importer Template HTML (.zip/.html)"
+                                  title="Importer Template HTML (.zip/.html/.epub)"
                               >
                                   <FileCode size={18} />
                               </button>

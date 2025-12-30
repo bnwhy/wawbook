@@ -5574,18 +5574,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              }}
                           />
                           
-                          <button 
-                              onClick={() => {
-                                  // Global import only
-                                  setPendingImportPageId(null);
-                                  importInputRef.current?.click();
-                              }}
-                              className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 flex items-center gap-2" 
-                              title="Importer HTML (Multi-pages, détection automatique)"
-                          >
-                              <Upload size={18} />
-                              <span className="text-xs font-bold">Import HTML</span>
-                          </button>
 
                            <Dialog>
                               <DialogTrigger asChild>

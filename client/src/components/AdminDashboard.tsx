@@ -5713,7 +5713,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </div>
                     </div>
 
-                    <div className="flex gap-6 flex-1 overflow-hidden">
+                    
                        
                        {/* Pages List (Sidebar) */}
                        <div className="w-64 overflow-y-auto bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-2 shrink-0">

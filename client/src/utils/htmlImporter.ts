@@ -1,0 +1,164 @@
+import { TextElement, ImageElement } from '../types/admin';
+
+interface ParsedPage {
+  pageIndex: number;
+  width: number;
+  height: number;
+  texts: TextElement[];
+  images: ImageElement[];
+}
+
+export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[] }> => {
+  const text = await file.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, 'text/html');
+
+  const texts: TextElement[] = [];
+  const images: ImageElement[] = [];
+
+  // 1. Attempt to identify "Pages"
+  // in5 often uses <ul id="slider"><li>...</li></ul> or similar structures, or just a flat list of divs.
+  // We'll look for top-level containers that might be pages.
+  // If no clear page structure, we assume single page (Page 1).
+
+  // Strategy: Find all elements that look like "containers" (large divs) or treat the body as one page.
+  // For simplicity in this v1, let's try to find elements with class "page" or "spread", or fall back to analyzing all absolute positioned elements.
+
+  // Let's assume the user exports "Current Page" or a specific spread, or we treat the whole HTML as one "Page 1" context if explicit pages aren't found.
+  
+  // IN5 Specifics: usually puts content in <div class="page">
+  const pageElements = Array.from(doc.querySelectorAll('.page'));
+  
+  // If no .page class, maybe it's a simple export, let's treat body as the container
+  const pagesToProcess = pageElements.length > 0 ? pageElements : [doc.body];
+
+  pagesToProcess.forEach((pageEl, index) => {
+    // Determine page index. If we found .page, use index+1. If not, default to 1.
+    // However, if the file name contains "cover", we might default to 0.
+    let pageIndex = index + 1; // Default to starting at Page 1
+    
+    // Check for "Cover" in filename or ID
+    if (file.name.toLowerCase().includes('cover') || pageEl.id.toLowerCase().includes('cover')) {
+        pageIndex = 0;
+    } else {
+        // Try to extract from ID (e.g., "page12")
+        const match = pageEl.id.match(/page[-_]?(\d+)/i);
+        if (match) {
+            pageIndex = parseInt(match[1], 10);
+        }
+    }
+
+    // Determine dimensions of this page
+    let pageWidth = defaultWidth;
+    let pageHeight = defaultHeight;
+    
+    if (pageEl instanceof HTMLElement) {
+        // We can't use getBoundingClientRect on a detached DOM node easily without rendering it.
+        // We have to parse inline styles or attributes.
+        const styleWidth = pageEl.style.width;
+        const styleHeight = pageEl.style.height;
+        if (styleWidth && styleHeight) {
+            pageWidth = parseFloat(styleWidth);
+            pageHeight = parseFloat(styleHeight);
+        } else {
+            // Try attributes
+             const attrW = pageEl.getAttribute('width');
+             const attrH = pageEl.getAttribute('height');
+             if (attrW && attrH) {
+                 pageWidth = parseFloat(attrW);
+                 pageHeight = parseFloat(attrH);
+             }
+        }
+    }
+
+    // Now find all absolute elements inside this page
+    const elements = Array.from(pageEl.querySelectorAll('*'));
+    
+    elements.forEach(el => {
+        if (!(el instanceof HTMLElement)) return;
+        
+        // Check if it has positioning (inline style usually for exports)
+        // We are looking for "left" and "top".
+        const style = el.style;
+        const leftStr = style.left;
+        const topStr = style.top;
+        
+        // Heuristic: Must have left/top to be considered a positioned element worth importing
+        if (!leftStr || !topStr) return;
+
+        const xPx = parseFloat(leftStr);
+        const yPx = parseFloat(topStr);
+        const wPx = parseFloat(style.width) || 100; // Default width if missing
+        const hPx = parseFloat(style.height) || 50; // Default height if missing
+
+        // Convert to Percentages
+        const x = (xPx / pageWidth) * 100;
+        const y = (yPx / pageHeight) * 100;
+        const w = (wPx / pageWidth) * 100;
+        const h = (hPx / pageHeight) * 100;
+
+        // Clean label
+        const cleanLabel = (el.id || el.className || el.tagName).substring(0, 20);
+
+        // IS IT AN IMAGE?
+        if (el.tagName.toLowerCase() === 'img') {
+            const imgEl = el as HTMLImageElement;
+            if (imgEl.src) {
+                 // Note: If src is relative, it might be broken. Ideally user drops a self-contained HTML or we can't fetch resources.
+                 // But assuming Data URI or absolute URL for now.
+                 // If it's a file path reference, we can't really read it unless it's a Data URI.
+                 // We'll skip images that aren't data URIs or http links.
+                 if (imgEl.src.startsWith('data:') || imgEl.src.startsWith('http')) {
+                    images.push({
+                        id: `img-html-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                        label: cleanLabel,
+                        type: 'static',
+                        url: imgEl.src,
+                        combinationKey: 'default',
+                        position: {
+                            pageIndex,
+                            x, y, width: w, height: h,
+                            rotation: 0
+                        }
+                    });
+                 }
+            }
+        }
+        // IS IT TEXT?
+        // We look for headings, paragraphs, spans, divs that contain direct text
+        else if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'DIV'].includes(el.tagName)) {
+             const textContent = el.innerText.trim();
+             if (textContent.length > 0 && el.children.length === 0) {
+                 // Basic style extraction
+                 const fontSizeStr = style.fontSize;
+                 const colorStr = style.color;
+                 const fontFamilyStr = style.fontFamily;
+                 const textAlignStr = style.textAlign;
+                 
+                 texts.push({
+                      id: `text-html-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                      label: cleanLabel,
+                      type: 'fixed',
+                      content: textContent,
+                      combinationKey: 'default',
+                      style: {
+                          color: colorStr || '#000000',
+                          fontSize: fontSizeStr || '16px',
+                          fontFamily: fontFamilyStr?.replace(/['"]/g, '') || 'serif',
+                          textAlign: (textAlignStr as any) || 'left'
+                      },
+                      position: {
+                          pageIndex,
+                          zoneId: 'body',
+                          x, y, width: w,
+                          rotation: 0
+                      }
+                 });
+             }
+        }
+    });
+
+  });
+
+  return { texts, images };
+};

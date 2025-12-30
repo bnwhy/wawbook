@@ -36,9 +36,10 @@ const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or
 import googleFonts from 'google-fonts-complete';
 
 import { readPsd } from 'ag-psd';
+import { parseHtmlFile } from '../utils/htmlImporter';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const psdInputRef = React.useRef<HTMLInputElement>(null);
+  const importInputRef = React.useRef<HTMLInputElement>(null);
   const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
@@ -5508,108 +5509,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            {/* Print Settings Dialog */}
                            <input
                               type="file"
-                              ref={psdInputRef}
+                              ref={importInputRef}
                               className="hidden"
-                              accept=".psd"
+                              accept=".html,.htm"
                               onChange={async (e) => {
                                   const file = e.target.files?.[0];
                                   if (!file || !selectedBook) return;
                                   
                                   try {
-                                      toast.info("Lecture du PSD en cours...");
-                                      const buffer = await file.arrayBuffer();
-                                      const psd = readPsd(buffer);
+                                      toast.info("Lecture du fichier HTML en cours...");
+                                      const defaultW = selectedBook.features?.dimensions?.width || 800;
+                                      const defaultH = selectedBook.features?.dimensions?.height || 600;
                                       
-                                      const newTexts: TextElement[] = [];
-                                      const newImages: ImageElement[] = [];
-                                      const { width, height } = psd;
-                                      
-                                      // Helper to process a layer
-                                      const processLayer = (layer: any, pageIndex: number) => {
-                                          if (layer.hidden) return;
-                                          
-                                          // Calculate % positions
-                                          // Note: ag-psd positions are from top-left.
-                                          const x = (layer.left / width) * 100;
-                                          const y = (layer.top / height) * 100;
-                                          const w = (layer.width / width) * 100;
-                                          const h = (layer.height / height) * 100;
-                                          
-                                          // Clean layer name for labels
-                                          const cleanLabel = (layer.name || 'Element').substring(0, 20);
-
-                                          if (layer.text) {
-                                              newTexts.push({
-                                                  id: `text-psd-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                                                  label: cleanLabel,
-                                                  type: 'fixed',
-                                                  content: layer.text.text,
-                                                  combinationKey: selectedVariant && selectedVariant !== 'all' ? selectedVariant : 'default',
-                                                  style: {
-                                                      color: layer.text.style?.fillColor ? `rgba(${layer.text.style.fillColor.r}, ${layer.text.style.fillColor.g}, ${layer.text.style.fillColor.b}, 1)` : '#000000',
-                                                      fontSize: layer.text.style?.fontSize ? `${Math.round(layer.text.style.fontSize)}px` : '16px',
-                                                      fontFamily: 'serif', // Default, hard to map fonts perfectly
-                                                      textAlign: 'left'
-                                                  },
-                                                  position: {
-                                                      pageIndex,
-                                                      zoneId: 'body',
-                                                      x, y, width: w, // Text width is tricky, use layer width
-                                                      rotation: 0
-                                                  }
-                                              });
-                                          } else if (layer.canvas) {
-                                              // Image layer (if canvas is populated)
-                                              const dataUrl = layer.canvas.toDataURL();
-                                              newImages.push({
-                                                  id: `img-psd-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                                                  label: cleanLabel,
-                                                  type: 'static',
-                                                  url: dataUrl,
-                                                  combinationKey: selectedVariant && selectedVariant !== 'all' ? selectedVariant : 'default',
-                                                  position: {
-                                                      pageIndex,
-                                                      x, y, width: w, height: h,
-                                                      rotation: 0
-                                                  }
-                                              });
-                                          }
-                                      };
-                                      
-                                      // Scan for "Page X" groups
-                                      let hasPages = false;
-                                      if (psd.children) {
-                                          psd.children.forEach(child => {
-                                              // Check if it's a group named "Page X" or "Couverture"
-                                              const lowerName = (child.name || '').toLowerCase();
-                                              if (child.children) {
-                                                  let targetPage = -1;
-                                                  
-                                                  if (lowerName.includes('couverture') || lowerName.includes('cover')) {
-                                                      targetPage = 0;
-                                                  } else {
-                                                      const match = lowerName.match(/page\s*(\d+)/);
-                                                      if (match) {
-                                                          targetPage = parseInt(match[1], 10);
-                                                      }
-                                                  }
-                                                  
-                                                  if (targetPage !== -1) {
-                                                      hasPages = true;
-                                                      child.children.forEach((sub: any) => processLayer(sub, targetPage));
-                                                  }
-                                              }
-                                          });
-                                      }
-                                      
-                                      // If no structure found, put everything on Page 1 (or 0 if it looks like a cover?)
-                                      if (!hasPages && psd.children) {
-                                          // Default to Page 1
-                                          psd.children.forEach(child => processLayer(child, 1));
-                                      }
+                                      const { texts: newTexts, images: newImages } = await parseHtmlFile(file, defaultW, defaultH);
                                       
                                       if (newTexts.length === 0 && newImages.length === 0) {
-                                          toast.warning("Aucun élément compatible trouvé (Textes ou Images)");
+                                          toast.warning("Aucun élément compatible trouvé");
                                           return;
                                       }
                                       
@@ -5623,24 +5538,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       });
                                       
                                       toast.success(`Importé: ${newTexts.length} textes, ${newImages.length} images`);
-                                      
                                   } catch (err) {
                                       console.error(err);
-                                      toast.error("Erreur lors de l'import PSD");
+                                      toast.error("Erreur lors de l'import HTML");
                                   }
-                                  
-                                  // Reset input
                                   e.target.value = '';
                               }}
                            />
                            
                            <button 
-                               onClick={() => psdInputRef.current?.click()}
+                               onClick={() => importInputRef.current?.click()}
                                className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 flex items-center gap-2" 
-                               title="Importer PSD comme Template"
+                               title="Importer HTML/in5 comme Template"
                            >
                                <Upload size={18} />
-                               <span className="text-xs font-bold">Import PSD</span>
+                               <span className="text-xs font-bold">Import HTML</span>
                            </button>
 
                            <Dialog>

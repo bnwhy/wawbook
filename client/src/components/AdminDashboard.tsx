@@ -5739,15 +5739,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <h3 className="text-sm font-bold text-gray-700">Aperçu du modèle importé</h3>
                                 <div className="flex items-center gap-2">
                                     <button
+                                        type="button"
                                         onClick={handleCapturePreview}
-                                        className="flex items-center gap-1 px-2 py-1 bg-brand-coral/10 hover:bg-brand-coral/20 text-brand-coral text-xs font-bold rounded"
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-brand-coral/10 hover:bg-brand-coral/20 text-brand-coral text-xs font-bold rounded whitespace-nowrap transition-colors"
                                     >
-                                        <Camera size={14} />
-                                        Générer JPEG
+                                        <Camera size={14} className="shrink-0" />
+                                        <span>Générer JPEG</span>
                                     </button>
                                     <button 
+                                        type="button"
                                         onClick={() => setPreviewHtml(null)}
-                                        className="text-xs text-gray-500 hover:text-red-500"
+                                        className="text-xs text-gray-500 hover:text-red-500 whitespace-nowrap transition-colors"
                                     >
                                         Fermer l'aperçu
                                     </button>

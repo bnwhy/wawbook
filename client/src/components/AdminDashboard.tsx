@@ -5531,9 +5531,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          return;
                                      }
 
-                                 // Determine target page index
+                                     // Determine target page index
                                      let targetPageIndex = -1;
-                                     const effectivePageId = pendingImportPageId || selectedPageId;
+                                     // Only use specific pending ID (from sidebar buttons) - NOT global selectedPageId
+                                     const effectivePageId = pendingImportPageId;
 
                                      if (effectivePageId) {
                                          const page = selectedBook.contentConfig.pages.find(p => p.id === effectivePageId);
@@ -5574,12 +5575,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           />
                           
                           <button 
-                              onClick={() => importInputRef.current?.click()}
+                              onClick={() => {
+                                  // Global import only
+                                  setPendingImportPageId(null);
+                                  importInputRef.current?.click();
+                              }}
                               className="ml-4 p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 flex items-center gap-2" 
-                              title={selectedPageId ? "Importer HTML sur la page actuelle" : "Importer HTML (Multi-pages)"}
+                              title="Importer HTML (Multi-pages, détection automatique)"
                           >
                               <Upload size={18} />
-                              <span className="text-xs font-bold">{selectedPageId ? "Import Page" : "Import HTML"}</span>
+                              <span className="text-xs font-bold">Import HTML</span>
                           </button>
 
                            <Dialog>

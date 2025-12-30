@@ -5738,53 +5738,71 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  </div>
               )}
 
-              {previewHtml && (
-                <div className="w-full -mt-20 relative z-20">
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                        <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
-                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                <FileCode className="text-brand-coral" size={20} />
-                                Aperçu du modèle importé
-                            </h3>
-                            <button 
-                                onClick={() => setPreviewHtml(null)}
-                                className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-500 hover:text-red-500"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+              {previewHtml && (() => {
+                  const dims = selectedBook?.features?.dimensions || { width: 210, height: 297 };
+                  const ratio = dims.width / dims.height;
+                  const maxW = 800;
+                  const maxH = 600;
+                  const previewRatio = maxW / maxH;
+                  
+                  let w = maxW;
+                  let h = maxW / ratio;
 
-                        <div className="bg-gray-100 p-6 flex justify-center">
-                             <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200"> 
-                                <iframe 
-                                    srcDoc={previewHtml}
-                                    className="w-[800px] h-[600px] border-0 bg-white" 
-                                    title="HTML Preview"
-                                    sandbox="allow-same-origin" 
-                                />
+                  // If height exceeds maxH, scale down by height
+                  if (h > maxH) {
+                      h = maxH;
+                      w = h * ratio;
+                  }
+
+                  return (
+                    <div className="w-full -mt-20 relative z-20">
+                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                            <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    <FileCode className="text-brand-coral" size={20} />
+                                    Aperçu du modèle importé
+                                </h3>
+                                <button 
+                                    onClick={() => setPreviewHtml(null)}
+                                    className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-500 hover:text-red-500"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="bg-gray-100 p-6 flex justify-center">
+                                <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200"> 
+                                    <iframe 
+                                        srcDoc={previewHtml}
+                                        className="border-0 bg-white"
+                                        style={{ width: `${w}px`, height: `${h}px` }}
+                                        title="HTML Preview"
+                                        sandbox="allow-same-origin" 
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="p-4 border-t border-gray-100 bg-white flex justify-end gap-3">
+                                <button 
+                                    type="button"
+                                    onClick={() => setPreviewHtml(null)}
+                                    className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Fermer
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCapturePreview}
+                                    className="flex items-center gap-2 px-4 py-2 bg-brand-coral hover:bg-brand-coral/90 text-white font-bold rounded-lg shadow-lg shadow-brand-coral/20 transition-all active:scale-95"
+                                >
+                                    <Camera size={18} />
+                                    <span>Générer JPEG et Ajouter au Livre</span>
+                                </button>
                             </div>
                         </div>
-
-                        <div className="p-4 border-t border-gray-100 bg-white flex justify-end gap-3">
-                             <button 
-                                type="button"
-                                onClick={() => setPreviewHtml(null)}
-                                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                Fermer
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleCapturePreview}
-                                className="flex items-center gap-2 px-4 py-2 bg-brand-coral hover:bg-brand-coral/90 text-white font-bold rounded-lg shadow-lg shadow-brand-coral/20 transition-all active:scale-95"
-                            >
-                                <Camera size={18} />
-                                <span>Générer JPEG et Ajouter au Livre</span>
-                            </button>
-                        </div>
                     </div>
-                </div>
-              )}
+                  );
+              })()}
               {draftStatus && draftStatus !== (orders.find(o => o.id === selectedOrderId)?.status) && (
                  <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 border border-slate-700/50 backdrop-blur-md bg-slate-900/90">
                     <div className="flex items-center gap-2">

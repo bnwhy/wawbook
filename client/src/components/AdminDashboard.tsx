@@ -5737,23 +5737,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <div className="flex-1 bg-gray-100 p-4 rounded-xl overflow-auto border border-gray-200">
                             <div className="flex justify-between items-center mb-2">
                                 <h3 className="text-sm font-bold text-gray-700">Aperçu du modèle importé</h3>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={handleCapturePreview}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-brand-coral/10 hover:bg-brand-coral/20 text-brand-coral text-xs font-bold rounded whitespace-nowrap transition-colors"
-                                    >
-                                        <Camera size={14} className="shrink-0" />
-                                        <span>Générer JPEG</span>
-                                    </button>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setPreviewHtml(null)}
-                                        className="text-xs text-gray-500 hover:text-red-500 whitespace-nowrap transition-colors"
-                                    >
-                                        Fermer l'aperçu
-                                    </button>
-                                </div>
                             </div>
                             <div className="bg-white p-4 shadow-sm rounded border border-gray-200 min-h-[400px]">
                                 <iframe 
@@ -5762,6 +5745,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     title="HTML Preview"
                                     sandbox="allow-same-origin" 
                                 />
+                            </div>
+                            <div className="flex justify-end items-center gap-2 mt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleCapturePreview}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-brand-coral/10 hover:bg-brand-coral/20 text-brand-coral text-xs font-bold rounded whitespace-nowrap transition-colors"
+                                >
+                                    <Camera size={14} className="shrink-0" />
+                                    <span>Générer JPEG</span>
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={() => setPreviewHtml(null)}
+                                    className="text-xs text-gray-500 hover:text-red-500 whitespace-nowrap transition-colors"
+                                >
+                                    Fermer l'aperçu
+                                </button>
                             </div>
                         </div>
                     )}

@@ -24,9 +24,6 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
         if (!zipEntry.dir && (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath))) {
             const promise = zipEntry.async('blob').then(blob => {
                 const url = URL.createObjectURL(blob);
-                // Store with just the filename, and maybe relative path? 
-                // Usually HTML exports might reference "images/foo.jpg" or just "foo.jpg".
-                // We'll store both full relative path and just filename to be safe.
                 imageMap[relativePath] = url;
                 const parts = relativePath.split('/');
                 const filename = parts[parts.length - 1];
@@ -39,16 +36,12 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
     await Promise.all(imagePromises);
 
     // Find HTML file
-    // We look for index.html or the first html file we find
     let htmlFile: JSZip.JSZipObject | null = null;
-    
-    // Check for index.html first
     const files = Object.keys(contents.files);
     const indexHtml = files.find(f => f.match(/index\.html?$/i));
     if (indexHtml) {
         htmlFile = contents.files[indexHtml];
     } else {
-        // Fallback to first html file
         const anyHtml = files.find(f => f.match(/\.html?$/i));
         if (anyHtml) {
             htmlFile = contents.files[anyHtml];
@@ -59,7 +52,7 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
         throw new Error("No HTML file found in ZIP");
     }
     
-    const htmlContent = await htmlFile.async('string');
+    const rawHtmlContent = await htmlFile.async('string');
     
     // Extract CSS files content
     let cssContent = '';
@@ -74,10 +67,10 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
     });
     await Promise.all(cssPromises);
     
-    const parsed = parseHtmlContent(htmlContent, defaultWidth, defaultHeight, imageMap, file.name, cssContent);
+    const parsed = parseHtmlContent(rawHtmlContent, defaultWidth, defaultHeight, imageMap, file.name, cssContent);
     
-    // Generate Preview HTML with injected CSS and Blob URLs for images
-    let previewHtml = htmlContent;
+    // Use the cleaned HTML from parseHtmlContent as the base for the preview
+    let previewHtml = parsed.cleanedHtml;
     
     // 1. Inject CSS
     if (cssContent) {
@@ -88,7 +81,7 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
         }
     }
     
-    // 2. Replace Images using DOM manipulation to ensure correct targeting
+    // 2. Replace Images using DOM manipulation
     try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(previewHtml, 'text/html');
@@ -96,34 +89,20 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
         // Helper to find image in map
         const findImage = (src: string) => {
             if (!src) return null;
-            
-            // 1. Try exact match
             if (imageMap[src]) return imageMap[src];
-            
-            // 2. Try decoded match
             try {
                 const decoded = decodeURIComponent(src);
                 if (imageMap[decoded]) return imageMap[decoded];
-            } catch (e) {
-                // ignore
-            }
-
-            // 3. Try cleaning relative path prefixes like ./
+            } catch (e) {}
             const cleanSrc = src.replace(/^\.\//, '');
             if (imageMap[cleanSrc]) return imageMap[cleanSrc];
-
-            // 4. Try just filename
             const parts = src.split('/');
             const filename = parts[parts.length - 1];
             if (imageMap[filename]) return imageMap[filename];
-            
             try {
                 const decodedFilename = decodeURIComponent(filename);
                 if (imageMap[decodedFilename]) return imageMap[decodedFilename];
-            } catch (e) {
-                // ignore
-            }
-            
+            } catch (e) {}
             return null;
         };
         
@@ -139,22 +118,17 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
             }
         });
         
-        // Replace background images in inline styles
+        // Replace background images
         const allElements = doc.querySelectorAll('*');
         allElements.forEach(el => {
             if (el instanceof HTMLElement) {
                 const style = el.getAttribute('style');
                 if (style && style.includes('url(')) {
-                    // Extract URL from style
-                    // match url('...') or url("...") or url(...)
                     const urlMatch = style.match(/url\(['"]?(.*?)['"]?\)/);
                     if (urlMatch && urlMatch[1]) {
                         const originalUrl = urlMatch[1];
                         const replacement = findImage(originalUrl);
-                        
                         if (replacement) {
-                            // Replace only the specific URL to avoid messing up other parts of style or partial matches
-                            // We need to be careful about escaping if we use replace with string
                             const newStyle = style.replace(originalUrl, replacement);
                             el.setAttribute('style', newStyle);
                         }
@@ -174,15 +148,31 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
 export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string }> => {
   const text = await file.text();
   const parsed = parseHtmlContent(text, defaultWidth, defaultHeight, {}, file.name);
-  return { ...parsed, htmlContent: text };
+  return { ...parsed, htmlContent: parsed.cleanedHtml };
 };
 
-const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight: number, imageMap: ImageMap, sourceName: string, cssContent: string = ''): { texts: TextElement[], images: ImageElement[] } => {
+const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight: number, imageMap: ImageMap, sourceName: string, cssContent: string = ''): { texts: TextElement[], images: ImageElement[], cleanedHtml: string } => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlText, 'text/html');
 
   const texts: TextElement[] = [];
   const images: ImageElement[] = [];
+  const keepSet = new Set<Element>();
+
+  const markKeep = (el: Element) => {
+      let current: Element | null = el;
+      while (current && !keepSet.has(current)) {
+          keepSet.add(current);
+          current = current.parentElement;
+      }
+  };
+  
+  // Always keep body, head, html
+  markKeep(doc.body);
+  if (doc.head) markKeep(doc.head);
+  if (doc.documentElement) markKeep(doc.documentElement);
+
+  // ... (rest of extraction logic)
 
   // 1. Attempt to identify "Pages"
   // in5 often uses <ul id="slider"><li>...</li></ul> or similar structures, or just a flat list of divs.
@@ -469,6 +459,7 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
                             rotation: 0
                         }
                     });
+                    markKeep(el);
                  }
             }
         }
@@ -502,11 +493,28 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
                           rotation: 0
                       }
                  });
+                 markKeep(el);
              }
         }
     });
 
   });
 
-  return { texts, images };
+  // Filter DOM to remove non-kept elements
+  const allNodes = Array.from(doc.querySelectorAll('body *'));
+  allNodes.forEach(node => {
+      // Keep style tags
+      if (node.tagName === 'STYLE' || (node.tagName === 'LINK' && (node as HTMLLinkElement).rel === 'stylesheet')) {
+          return; 
+      }
+      
+      if (!keepSet.has(node)) {
+          // Check if it's already removed (parent removed)
+          if (node.parentNode) {
+              node.remove();
+          }
+      }
+  });
+
+  return { texts, images, cleanedHtml: doc.documentElement.outerHTML };
 };

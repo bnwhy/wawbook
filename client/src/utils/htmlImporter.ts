@@ -387,8 +387,8 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
              topStr = `${pageHeight - bottom - height}px`;
         }
 
-        // Heuristic: Must have left/top OR transform to be considered a positioned element worth importing
-        if ((!leftStr && !transformX) || (!topStr && !transformY)) return;
+        // Heuristic: Removed strict positioning check to support flow-based HTML
+        // if ((!leftStr && !transformX) || (!topStr && !transformY)) return;
 
         const xPx = (parseFloat(leftStr || '0') + transformX);
         const yPx = (parseFloat(topStr || '0') + transformY);

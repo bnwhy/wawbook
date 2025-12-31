@@ -5462,7 +5462,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
               {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
               {activeTab === 'content' && selectedBookId && selectedBook && (
-                 <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
+                 <div className="flex flex-col gap-2 h-[calc(100vh-180px)]">
                     
                     {/* Toolbar */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex justify-between items-center shrink-0">

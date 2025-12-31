@@ -38,7 +38,21 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   // --- HELPER: Resolve Variables ---
   const resolveTextVariable = (text: string) => {
-    return text.replace(/\{([^}]+)\}/g, (match, key) => {
+    // 1. Handle {{variable}} style
+    let content = text.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+        const k = key.trim();
+        if (k === 'childName') return config.childName || "l'enfant";
+        if (k === 'dedication') return config.dedication || '';
+        if (k === 'age') return config.age?.toString() || '';
+        if (k === 'heroName') return config.childName || 'Héros';
+        if (k === 'city') return config.city || '';
+        if (k === 'gender') return config.gender === 'girl' ? 'Fille' : 'Garçon';
+
+        return match;
+    });
+
+    // 2. Legacy {variable} style
+    content = content.replace(/\{([^}]+)\}/g, (match, key) => {
         if (key === 'childName') return config.childName || "l'enfant";
         
         // Handle {tabId.variantId}
@@ -48,6 +62,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         }
         return match;
     });
+    
+    return content;
   };
 
   const getCombinationKey = () => {

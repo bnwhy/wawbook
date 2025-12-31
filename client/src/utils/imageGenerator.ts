@@ -101,12 +101,30 @@ export const generateBookPages = async (
   // Helper to replace text variables
   const resolveText = (text: string) => {
       let content = text;
-      // Replace standard variables
+      
+      // 1. Handle {{variable}} style (Admin Dashboard standard)
+      content = content.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+          const k = key.trim();
+          if (k === 'childName') return config.childName || 'Enfant';
+          if (k === 'age') return config.age?.toString() || '';
+          if (k === 'dedication') return config.dedication || '';
+          if (k === 'heroName') return config.childName || 'Héros';
+          if (k === 'city') return config.city || '';
+          if (k === 'gender') return config.gender === 'girl' ? 'Fille' : 'Garçon';
+          
+          // Try to find in custom characters config if it matches a variant ID
+          // Structure: config.characters[tabId] = selectedValue (for options) or value (for text)
+          // But here we only have the variant ID (k). We'd need to know which tab it belongs to.
+          // For now, let's assume standard variables are the main use case.
+          
+          return match;
+      });
+
+      // 2. Handle legacy [variable] style
       content = content.replace(/\[childName\]/gi, config.childName || 'Enfant');
       content = content.replace(/\[age\]/gi, config.age?.toString() || '');
       content = content.replace(/\[dedication\]/gi, config.dedication || '');
       
-      // We could add more complex replacements here
       return content;
   };
 

@@ -1450,7 +1450,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              <div className="text-green-500 bg-green-50 px-2 py-1 rounded text-xs font-bold">+12%</div>
                           </div>
                           <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {orders.reduce((acc, order) => acc + order.totalAmount, 0).toFixed(2)} €
+                             {orders.reduce((acc, order) => acc + Number(order.totalAmount), 0).toFixed(2)} €
                           </div>
                           <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
                        </div>
@@ -1472,7 +1472,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              <div className="text-red-500 bg-red-50 px-2 py-1 rounded text-xs font-bold">-2%</div>
                           </div>
                           <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {orders.length > 0 ? (orders.reduce((acc, order) => acc + order.totalAmount, 0) / orders.length).toFixed(2) : '0.00'} €
+                             {orders.length > 0 ? (orders.reduce((acc, order) => acc + Number(order.totalAmount), 0) / orders.length).toFixed(2) : '0.00'} €
                           </div>
                           <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
                        </div>
@@ -1513,7 +1513,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 order.status === 'delivered' ? 'Livrée' : 'Annulée'}
                                             </span>
                                          </td>
-                                         <td className="px-6 py-4 text-right font-bold">{order.totalAmount.toFixed(2)} €</td>
+                                         <td className="px-6 py-4 text-right font-bold">{Number(order.totalAmount).toFixed(2)} €</td>
                                       </tr>
                                    ))}
                                    {orders.length === 0 && (
@@ -1866,7 +1866,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-3 mb-1">
                                  <h3 className="font-bold text-lg text-slate-900 truncate">{book.name}</h3>
-                                 <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{book.price.toFixed(2)} €</span>
+                                 <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{Number(book.price).toFixed(2)} €</span>
                               </div>
                               <p className="text-sm text-slate-500 line-clamp-1 mb-2">{book.description}</p>
                               <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
@@ -2112,7 +2112,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               <div className="font-medium text-slate-900">{order.customerName}</div>
                                            </td>
                                            <td className="px-4 py-3 text-right font-medium text-slate-900">
-                                              {order.totalAmount.toFixed(2)} €
+                                              {Number(order.totalAmount).toFixed(2)} €
                                            </td>
                                            <td className="px-4 py-3">
                                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${paymentColor}`}>
@@ -2539,7 +2539,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             <div className="flex-1">
                                                <div className="flex justify-between">
                                                   <h4 className="font-bold text-slate-900">{item.bookTitle}</h4>
-                                                  <span className="font-bold">{item.price.toFixed(2)} €</span>
+                                                  <span className="font-bold">{Number(item.price).toFixed(2)} €</span>
                                                </div>
                                                <p className="text-sm text-slate-500 mb-1">Quantité: {item.quantity}</p>
                                                <div className="text-xs text-slate-400 bg-slate-50 p-2 rounded inline-block">
@@ -3240,7 +3240,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       {customer.orderCount}
                                    </td>
                                    <td className="px-6 py-4 text-right font-bold text-slate-900">
-                                      {customer.totalSpent.toFixed(2)} €
+                                      {Number(customer.totalSpent).toFixed(2)} €
                                    </td>
                                 </tr>
                              ))}
@@ -3445,7 +3445,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          <div className="text-xs text-slate-500">Commandes</div>
                                       </div>
                                       <div className="text-center p-3 bg-slate-50 rounded-lg">
-                                         <div className="text-xl font-bold text-green-600">{customer.totalSpent.toFixed(2)}€</div>
+                                         <div className="text-xl font-bold text-green-600">{Number(customer.totalSpent).toFixed(2)}€</div>
                                          <div className="text-xs text-slate-500">Dépensé</div>
                                       </div>
                                    </div>
@@ -3485,7 +3485,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                <div className="text-sm text-slate-600">
                                                   {order.items.length} article(s) : {order.items.map(i => i.bookTitle).join(', ')}
                                                </div>
-                                               <div className="font-bold text-slate-900">{order.totalAmount.toFixed(2)} €</div>
+                                               <div className="font-bold text-slate-900">{Number(order.totalAmount).toFixed(2)} €</div>
                                             </div>
                                          </div>
                                       )) : (
@@ -4123,7 +4123,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <div className="text-sm font-bold text-slate-900">{method.price.toFixed(2)} €</div>
+                                                        <div className="text-sm font-bold text-slate-900">{Number(method.price).toFixed(2)} €</div>
                                                     </div>
                                                 ))}
                                                 {zone.methods.length === 0 && (

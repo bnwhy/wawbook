@@ -298,7 +298,7 @@ const CheckoutPage = () => {
                                                         </div>
                                                     </div>
                                                     <span className="text-sm font-bold text-stone-800">
-                                                        {method.price === 0 ? 'Gratuit' : `${method.price.toFixed(2)} €`}
+                                                        {Number(method.price) === 0 ? 'Gratuit' : `${Number(method.price).toFixed(2)} €`}
                                                     </span>
                                                 </label>
                                             ))}

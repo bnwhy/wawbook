@@ -34,7 +34,12 @@ export async function registerRoutes(
 
   app.post("/api/books", async (req, res) => {
     try {
-      const validationResult = insertBookSchema.safeParse(req.body);
+      const body = {
+        ...req.body,
+        price: req.body.price !== undefined ? String(req.body.price) : undefined,
+        oldPrice: req.body.oldPrice !== undefined ? String(req.body.oldPrice) : undefined,
+      };
+      const validationResult = insertBookSchema.safeParse(body);
       if (!validationResult.success) {
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
@@ -48,7 +53,12 @@ export async function registerRoutes(
 
   app.patch("/api/books/:id", async (req, res) => {
     try {
-      const book = await storage.updateBook(req.params.id, req.body);
+      const body = {
+        ...req.body,
+        price: req.body.price !== undefined ? String(req.body.price) : undefined,
+        oldPrice: req.body.oldPrice !== undefined ? String(req.body.oldPrice) : undefined,
+      };
+      const book = await storage.updateBook(req.params.id, body);
       if (!book) {
         return res.status(404).json({ error: "Book not found" });
       }
@@ -95,7 +105,11 @@ export async function registerRoutes(
 
   app.post("/api/customers", async (req, res) => {
     try {
-      const validationResult = insertCustomerSchema.safeParse(req.body);
+      const body = {
+        ...req.body,
+        totalSpent: req.body.totalSpent !== undefined ? String(req.body.totalSpent) : undefined,
+      };
+      const validationResult = insertCustomerSchema.safeParse(body);
       if (!validationResult.success) {
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
@@ -109,7 +123,11 @@ export async function registerRoutes(
 
   app.patch("/api/customers/:id", async (req, res) => {
     try {
-      const customer = await storage.updateCustomer(req.params.id, req.body);
+      const body = {
+        ...req.body,
+        totalSpent: req.body.totalSpent !== undefined ? String(req.body.totalSpent) : undefined,
+      };
+      const customer = await storage.updateCustomer(req.params.id, body);
       if (!customer) {
         return res.status(404).json({ error: "Customer not found" });
       }
@@ -166,7 +184,11 @@ export async function registerRoutes(
 
   app.post("/api/orders", async (req, res) => {
     try {
-      const validationResult = insertOrderSchema.safeParse(req.body);
+      const body = {
+        ...req.body,
+        totalAmount: req.body.totalAmount !== undefined ? String(req.body.totalAmount) : undefined,
+      };
+      const validationResult = insertOrderSchema.safeParse(body);
       if (!validationResult.success) {
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
@@ -180,7 +202,11 @@ export async function registerRoutes(
 
   app.patch("/api/orders/:id", async (req, res) => {
     try {
-      const order = await storage.updateOrder(req.params.id, req.body);
+      const body = {
+        ...req.body,
+        totalAmount: req.body.totalAmount !== undefined ? String(req.body.totalAmount) : undefined,
+      };
+      const order = await storage.updateOrder(req.params.id, body);
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }

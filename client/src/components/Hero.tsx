@@ -219,8 +219,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                      
                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && `${card.oldPrice.toFixed(2)} €`}</span>
-                            <span className="text-xl font-black text-accent-melon">{card.price.toFixed(2)} €</span>
+                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && `${Number(card.oldPrice).toFixed(2)} €`}</span>
+                            <span className="text-xl font-black text-accent-melon">{Number(card.price).toFixed(2)} €</span>
                         </div>
                         <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                             <PenTool size={14} />
@@ -270,8 +270,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                      
                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && `${card.oldPrice.toFixed(2)} €`}</span>
-                            <span className="text-xl font-black text-accent-melon">{card.price.toFixed(2)} €</span>
+                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && `${Number(card.oldPrice).toFixed(2)} €`}</span>
+                            <span className="text-xl font-black text-accent-melon">{Number(card.price).toFixed(2)} €</span>
                         </div>
                         <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                             <PenTool size={14} />
@@ -317,8 +317,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                        
                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                           <div className="flex flex-col">
-                              <span className="text-xs text-gray-400 font-bold line-through">{activity.oldPrice && `${activity.oldPrice.toFixed(2)} €`}</span>
-                              <span className="text-xl font-black text-accent-melon">{activity.price.toFixed(2)} €</span>
+                              <span className="text-xs text-gray-400 font-bold line-through">{activity.oldPrice && `${Number(activity.oldPrice).toFixed(2)} €`}</span>
+                              <span className="text-xl font-black text-accent-melon">{Number(activity.price).toFixed(2)} €</span>
                           </div>
                           <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                               <PenTool size={14} />
@@ -368,8 +368,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                        
                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                           <div className="flex flex-col">
-                              <span className="text-xs text-gray-400 font-bold line-through">{occasion.oldPrice && `${occasion.oldPrice.toFixed(2)} €`}</span>
-                              <span className="text-xl font-black text-accent-melon">{occasion.price.toFixed(2)} €</span>
+                              <span className="text-xs text-gray-400 font-bold line-through">{occasion.oldPrice && `${Number(occasion.oldPrice).toFixed(2)} €`}</span>
+                              <span className="text-xl font-black text-accent-melon">{Number(occasion.price).toFixed(2)} €</span>
                           </div>
                           <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                               <PenTool size={14} />

@@ -1,5 +1,5 @@
 import { BookProduct, ContentConfiguration, ImageElement, TextElement, ImageVariant } from '../types/admin';
-import { BookConfig, Gender } from '../types';
+import { BookConfig } from '../types';
 
 /**
  * Resolves the effective combination key based on user configuration and book wizard config.
@@ -110,7 +110,7 @@ export const generateBookPages = async (
           if (k === 'dedication') return config.dedication || '';
           if (k === 'heroName') return config.childName || 'Héros';
           if (k === 'city') return config.city || '';
-          if (k === 'gender') return config.gender === Gender.Girl ? 'Fille' : 'Garçon';
+          if (k === 'gender') return config.gender === 'girl' ? 'Fille' : 'Garçon';
           
           // Try to find in custom characters config if it matches a variant ID
           // Structure: config.characters[tabId] = selectedValue (for options) or value (for text)

@@ -5795,79 +5795,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                     </div>
 
-                    <div className="flex-1 min-h-0 flex gap-6">
-                        {previewHtml ? (
-                            /* HTML Preview Area (Import Mode) */
-                            <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm relative">
-                                <iframe 
-                                    srcDoc={previewHtml}
-                                    className="w-full h-full border-0 bg-white" 
-                                    title="HTML Preview"
-                                    sandbox="allow-same-origin" 
-                                />
-                                {importSessionDimensions && (
-                                    <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none font-mono">
-                                        DIMENSIONS: {Math.round(importSessionDimensions.width)} x {Math.round(importSessionDimensions.height)} px
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            /* Storyboard Grid (Default Mode) */
-                            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 rounded-xl border border-slate-200/50">
-                                {(!selectedBook.contentConfig.pages || selectedBook.contentConfig.pages.length === 0) ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
-                                        <div className="p-4 bg-slate-100 rounded-full">
-                                            <Layout size={32} className="opacity-50" />
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="font-medium text-slate-600">Aucune page configurée</p>
-                                            <p className="text-sm text-slate-400 mt-1">Utilisez le panneau d'import dans la barre d'outils pour commencer.</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                        {selectedBook.contentConfig.pages.sort((a: any, b: any) => a.pageNumber - b.pageNumber).map((page: any) => (
-                                            <div 
-                                                key={page.id}
-                                                className={`relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
-                                                    selectedPageId === page.id ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' : 'border-slate-100 hover:border-brand-coral/30'
-                                                }`}
-                                                onClick={() => setSelectedPageId(page.id)}
-                                            >
-                                                <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
-                                                    <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                                                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-mono">
-                                                            {page.pageNumber}
-                                                        </span>
-                                                        Page {page.pageNumber}
-                                                    </span>
-                                                </div>
-                                                <div className="aspect-[3/2] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
-                                                    <div className="text-center space-y-1">
-                                                        <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                            {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageNumber).length || 0} Textes
-                                                        </div>
-                                                        <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                            {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageNumber).length || 0} Images
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                 </div>
 
-                        {/* Variable Mapping Sidebar (Only visible when Preview is active) */}
-                        {previewHtml && (
-                        <div className="w-[450px] shrink-0 bg-white rounded-xl border border-gray-200 flex flex-col shadow-sm">
-                            <div className="flex flex-col gap-4 mb-4 shrink-0">
+                    {previewHtml && (
+                        <div className="mt-4 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 mx-6 mb-6">
+                            <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                     <FileCode className="text-brand-coral" size={20} />
                                     Aperçu et Mapping des Variables
                                 </h3>
-                                <div className="flex gap-2 self-start flex-wrap">
+                                <div className="flex gap-2">
                                     {importSessionTexts.length > 0 && (
                                         <button
                                             type="button"
@@ -5965,10 +5902,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
-                                {/* Preview removed from here, now on the left */}
-                                <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50 overflow-hidden">
-                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center shrink-0">
+                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4 h-[600px]">
+                                <div className="flex-1 border border-gray-200 rounded overflow-hidden bg-white relative">
+                                    <iframe 
+                                        srcDoc={previewHtml}
+                                        className="w-full h-full border-0 bg-white" 
+                                        title="HTML Preview"
+                                        sandbox="allow-same-origin" 
+                                    />
+                                    {importSessionDimensions && (
+                                        <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none font-mono">
+                                            DIMENSIONS: {Math.round(importSessionDimensions.width)} x {Math.round(importSessionDimensions.height)} px
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50">
+                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center">
                                         <span>TEXTES DÉTECTÉS ({importSessionTexts.length})</span>
                                         <span className="text-[10px] text-gray-400">Associez les textes aux variables</span>
                                     </div>
@@ -6040,10 +5989,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
                         </div>
-                        )}
-                    </div>
-                </div>
-            </div>
+                    )}
+
+                 </div>
               )}
 
               {draftStatus && draftStatus !== (orders.find(o => o.id === selectedOrderId)?.status) && (

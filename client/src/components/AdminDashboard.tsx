@@ -6030,48 +6030,95 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         ) : (
                             /* Storyboard Grid (Default Mode) */
                             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 rounded-xl border border-slate-200/50">
-                                {(!selectedBook.contentConfig.pages || selectedBook.contentConfig.pages.length === 0) ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
-                                        <div className="p-4 bg-slate-100 rounded-full">
-                                            <Layout size={32} className="opacity-50" />
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="font-medium text-slate-600">Aucune page configurée</p>
-                                            <p className="text-sm text-slate-400 mt-1">Utilisez le panneau d'import dans la barre d'outils pour commencer.</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                        {selectedBook.contentConfig.pages.sort((a: any, b: any) => a.pageNumber - b.pageNumber).map((page: any) => (
-                                            <div 
-                                                key={page.id}
-                                                className={`relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
-                                                    selectedPageId === page.id ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' : 'border-slate-100 hover:border-brand-coral/30'
-                                                }`}
-                                                onClick={() => setSelectedPageId(page.id)}
-                                            >
-                                                <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
-                                                    <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                                                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-mono">
-                                                            {page.pageNumber}
-                                                        </span>
-                                                        Page {page.pageNumber}
-                                                    </span>
+                                {(() => {
+                                    const hasLegacyPages = selectedBook.contentConfig.pages && selectedBook.contentConfig.pages.length > 0;
+                                    const hasRawHtmlPages = selectedBook.contentConfig.rawHtmlPages && selectedBook.contentConfig.rawHtmlPages.length > 0;
+                                    
+                                    if (!hasLegacyPages && !hasRawHtmlPages) {
+                                        return (
+                                            <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
+                                                <div className="p-4 bg-slate-100 rounded-full">
+                                                    <Layout size={32} className="opacity-50" />
                                                 </div>
-                                                <div className="aspect-[3/2] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
-                                                    <div className="text-center space-y-1">
-                                                        <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                            {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageNumber).length || 0} Textes
+                                                <div className="text-center">
+                                                    <p className="font-medium text-slate-600">Aucune page configurée</p>
+                                                    <p className="text-sm text-slate-400 mt-1">Utilisez le panneau d'import dans la barre d'outils pour commencer.</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    
+                                    if (hasRawHtmlPages) {
+                                        return (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                                {selectedBook.contentConfig.rawHtmlPages.sort((a: any, b: any) => a.pageIndex - b.pageIndex).map((page: any) => (
+                                                    <div 
+                                                        key={`raw-${page.pageIndex}`}
+                                                        className="relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 border-slate-100 hover:border-brand-coral/30"
+                                                    >
+                                                        <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
+                                                            <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                                                <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[10px] flex items-center justify-center font-mono">
+                                                                    {page.pageIndex}
+                                                                </span>
+                                                                Page {page.pageIndex} (EPUB)
+                                                            </span>
                                                         </div>
-                                                        <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                            {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageNumber).length || 0} Images
+                                                        <div className="aspect-[3/4] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
+                                                            <div className="text-center space-y-1 p-2">
+                                                                <div className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded shadow-sm border border-emerald-100">
+                                                                    Fixed Layout EPUB
+                                                                </div>
+                                                                <div className="text-xs text-slate-500">
+                                                                    {page.width}x{page.height}px
+                                                                </div>
+                                                                <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                                    {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0} Textes
+                                                                </div>
+                                                                <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                                    {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex).length || 0} Images
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    }
+                                    
+                                    return (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                            {selectedBook.contentConfig.pages.sort((a: any, b: any) => a.pageNumber - b.pageNumber).map((page: any) => (
+                                                <div 
+                                                    key={page.id}
+                                                    className={`relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
+                                                        selectedPageId === page.id ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' : 'border-slate-100 hover:border-brand-coral/30'
+                                                    }`}
+                                                    onClick={() => setSelectedPageId(page.id)}
+                                                >
+                                                    <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
+                                                        <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                                            <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-mono">
+                                                                {page.pageNumber}
+                                                            </span>
+                                                            Page {page.pageNumber}
+                                                        </span>
+                                                    </div>
+                                                    <div className="aspect-[3/2] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
+                                                        <div className="text-center space-y-1">
+                                                            <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                                {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageNumber).length || 0} Textes
+                                                            </div>
+                                                            <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                                {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageNumber).length || 0} Images
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>

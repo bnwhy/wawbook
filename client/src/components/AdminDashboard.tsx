@@ -5742,13 +5742,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         let w = maxW;
                         let h = maxW / ratio;
 
-                        // If height exceeds maxH, scale down by height
                         if (h > maxH) {
                             h = maxH;
                             w = h * ratio;
                         }
 
-                        // Always render the container, but show placeholder if no previewHtml
                         return (
                           <div className="w-full relative z-20 mt-0">
                               <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -5757,7 +5755,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           <FileCode className="text-brand-coral" size={20} />
                                           Aperçu du modèle importé
                                       </h3>
-                                      {/* Close button removed as requested to keep it always visible */}
                                   </div>
 
                                   <div className="bg-gray-100 p-6 flex justify-center">
@@ -5793,7 +5790,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   </div>
                               </div>
                           </div>
-                        );
+                        )
                     })()}
                  </div>
               )}

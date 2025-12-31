@@ -326,12 +326,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 /* RENDER CUSTOM ADMIN CONTENT FOR COVER (Fallback if generation pending) */
                 (<>
                     {/* Background */}
-                    {coverBg ? (
+                    {coverBg && (
                          <img src={coverBg.imageUrl} className="absolute inset-0 w-full h-full object-cover" style={{ marginLeft: '12px', width: 'calc(100% - 12px)' }} alt="Cover Background" />
-                    ) : (
-                         book?.coverImage && (
-                            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${book.coverImage})`, marginLeft: '12px', width: 'calc(100% - 12px)' }}></div>
-                         )
                     )}
                     {/* Loading overlay if generating */}
                     {isGenerating && (
@@ -440,21 +436,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                      ) : showCleanBack ? (
                         /* Clean White Back (when front is custom but back is empty) */
                          (null)
-                     ) : (
-                        /* Default / Legacy Mode */
-                        (<>
-                            {book?.coverImage ? (
-                                <>
-                                    <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginRight: '12px' }}></div>
-                                    <div className="absolute inset-0 bg-black/20" style={{ marginRight: '12px' }}></div>
-                                </>
-                            ) : (
-                                <div className="absolute inset-0 bg-cloud-blue" style={{ marginRight: '12px' }}>
-                                     <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
-                                </div>
-                            )}
-                        </>)
-                     )}
+                     ) : null}
             
                      {/* Branding removed as per strict config requirement */}
                      <div className="relative z-10 flex flex-col items-center pr-4">

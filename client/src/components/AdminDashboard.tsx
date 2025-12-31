@@ -1327,13 +1327,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     
                     <button 
                        onClick={() => {
+                          console.log("Save button clicked", { draftBook, selectedBook, selectedBookId });
                           const bookToSave = draftBook || selectedBook;
                           if (bookToSave) {
+                             console.log("Calling updateBook with:", bookToSave.id);
                              updateBook(bookToSave);
-                             // Force refresh draft from context after save to reset "unsaved" state cleanly
-                             // But keep it as separate object to allow new edits
                              setDraftBook(JSON.parse(JSON.stringify(bookToSave)));
                              toast.success("Modifications enregistrées");
+                          } else {
+                             console.log("No book to save - bookToSave is falsy");
                           }
                        }}
                        disabled={!selectedBook}

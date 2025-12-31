@@ -110,7 +110,26 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     return;
                 }
                 
-                // Priority 2: Fallback to canvas-based generation for non-EPUB books
+                // Priority 2: Render raw HTML pages with html2canvas (EPUB fixed layout)
+                const rawPages = book.contentConfig?.rawHtmlPages;
+                const cssContent = book.contentConfig?.cssContent || '';
+                
+                if (rawPages && rawPages.length > 0) {
+                    console.log(`Rendering ${rawPages.length} EPUB fixed layout pages with html2canvas...`);
+                    const pages = await renderAllPages(
+                        rawPages,
+                        cssContent,
+                        config,
+                        config.characters,
+                        undefined,
+                        (current, total) => console.log(`Rendered page ${current}/${total}`)
+                    );
+                    setGeneratedPages(pages);
+                    setIsGenerating(false);
+                    return;
+                }
+                
+                // Priority 3: Fallback to canvas-based generation for non-EPUB books
                 const pages = await generateBookPages(book, config, currentCombinationKey);
                 setGeneratedPages(pages);
                 setIsGenerating(false);

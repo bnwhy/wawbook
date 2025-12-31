@@ -7,6 +7,12 @@ export interface RenderedPage {
   dataUrl: string;
 }
 
+const decodeHtmlEntities = (html: string): string => {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = html;
+  return textarea.value;
+};
+
 const resolveVariables = (html: string, config: BookConfig, characters?: Record<string, Record<string, string>>): string => {
   let content = html;
 
@@ -63,7 +69,9 @@ export const renderHtmlPageToImage = async (
   container.style.overflow = 'hidden';
   container.style.backgroundColor = '#ffffff';
 
-  let html = resolveVariables(rawPage.html, config, characters);
+  // Decode HTML entities first (server may encode < > as &lt; &gt;)
+  let html = decodeHtmlEntities(rawPage.html);
+  html = resolveVariables(html, config, characters);
 
   if (imageMap) {
     for (const [key, url] of Object.entries(imageMap)) {

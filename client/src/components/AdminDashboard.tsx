@@ -5677,7 +5677,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              rawHtmlPages,
                                              cssContent: cssContentStr || ''
                                          };
-                                         updateBook(selectedBook.id, { contentConfig: updatedContentConfig });
+                                         updateBook({ ...selectedBook, contentConfig: updatedContentConfig });
                                          toast.info(`${rawHtmlPages.length} page(s) HTML stockée(s) pour le rendu.`);
                                      }
                                      

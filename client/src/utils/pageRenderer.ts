@@ -15,7 +15,28 @@ const decodeHtmlEntities = (html: string): string => {
 
 const resolveVariables = (html: string, config: BookConfig, characters?: Record<string, Record<string, string>>): string => {
   let content = html;
+  
+  console.log('[pageRenderer] resolveVariables - config.childName:', config.childName);
+  console.log('[pageRenderer] resolveVariables - characters:', JSON.stringify(characters));
 
+  // Helper to find value from characters (searches all tabs for the variant id)
+  const findInCharacters = (variantId: string): string | null => {
+    if (!characters) return null;
+    // Check if variantId contains a dot (tab.variant format)
+    if (variantId.includes('.')) {
+      const [tabId, vid] = variantId.split('.');
+      if (characters[tabId]?.[vid]) return characters[tabId][vid];
+    }
+    // Search in all tabs for the variant id
+    for (const tabId of Object.keys(characters)) {
+      if (characters[tabId]?.[variantId]) {
+        return characters[tabId][variantId];
+      }
+    }
+    return null;
+  };
+
+  // Handle {{variable}} format (double braces)
   content = content.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
     const k = key.trim();
     if (k === 'childName' || k === 'name') return config.childName || "l'enfant";
@@ -24,29 +45,36 @@ const resolveVariables = (html: string, config: BookConfig, characters?: Record<
     if (k === 'heroName') return config.childName || 'Héros';
     if (k === 'gender') return config.gender === Gender.Girl ? 'Fille' : 'Garçon';
 
-    if (characters) {
-      for (const tabId of Object.keys(characters)) {
-        if (characters[tabId]?.[k]) return characters[tabId][k];
-      }
-    }
+    const found = findInCharacters(k);
+    if (found) return found;
+    
     return match;
   });
 
+  // Handle {variable} format (single braces) - common in EPUB exports
   content = content.replace(/\{([^}]+)\}/g, (match, key) => {
     const k = key.trim();
-    if (k === 'childName' || k === 'nom_enfant') return config.childName || "l'enfant";
+    
+    // Standard mappings
+    if (k === 'childName') return config.childName || "l'enfant";
     if (k === 'age') return config.age?.toString() || '';
     
-    if (characters) {
-      const parts = k.split('.');
-      if (parts.length === 2) {
-        const [tabId, variantId] = parts;
-        if (characters[tabId]?.[variantId]) return characters[tabId][variantId];
-      }
-      for (const tabId of Object.keys(characters)) {
-        if (characters[tabId][k]) return characters[tabId][k];
-      }
+    // Special handling for nom_enfant - check characters first, then fallback to config.childName
+    if (k === 'nom_enfant') {
+      const found = findInCharacters('nom_enfant');
+      console.log('[pageRenderer] Found nom_enfant in characters:', found);
+      if (found) return found;
+      return config.childName || "l'enfant";
     }
+    
+    // Search in characters for any other variable
+    const found = findInCharacters(k);
+    if (found) {
+      console.log(`[pageRenderer] Resolved variable {${k}} to:`, found);
+      return found;
+    }
+    
+    console.log(`[pageRenderer] Variable {${k}} not found, keeping original`);
     return match;
   });
 

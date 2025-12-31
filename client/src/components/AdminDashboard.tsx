@@ -6339,7 +6339,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 <button
                                                                     onClick={async () => {
                                                                         try {
-                                                                            await updateBook(selectedBook.id, draftBook);
+                                                                            await updateBook(draftBook);
                                                                             setDraftBook(null);
                                                                             toast.success('Modifications sauvegardées');
                                                                         } catch (err) {

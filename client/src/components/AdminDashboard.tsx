@@ -5664,10 +5664,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          result = await parseHtmlFile(file, defaultW, defaultH);
                                      }
                                      
-                                     const { texts: newTexts, images: newImages, htmlContent, width, height } = result;
+                                     const { texts: newTexts, images: newImages, htmlContent, width, height, rawHtmlPages, cssContentStr } = result as any;
 
                                      if (htmlContent) {
                                          setPreviewHtml(htmlContent);
+                                     }
+                                     
+                                     // Store raw HTML pages and CSS for page rendering
+                                     if (rawHtmlPages && rawHtmlPages.length > 0) {
+                                         const updatedContentConfig = {
+                                             ...selectedBook.contentConfig,
+                                             rawHtmlPages,
+                                             cssContent: cssContentStr || ''
+                                         };
+                                         updateBook(selectedBook.id, { contentConfig: updatedContentConfig });
+                                         toast.info(`${rawHtmlPages.length} page(s) HTML stockée(s) pour le rendu.`);
                                      }
                                      
                                      if (width && height) {

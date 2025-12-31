@@ -79,6 +79,15 @@ export interface ContentConfiguration {
   texts: TextElement[];
   images: ImageVariant[];
   imageElements?: ImageElement[];
+  rawHtmlPages?: RawHtmlPage[];
+  cssContent?: string;
+}
+
+export interface RawHtmlPage {
+  pageIndex: number;
+  html: string;
+  width: number;
+  height: number;
 }
 
 export interface PageDefinition {

@@ -561,6 +561,8 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
   return { texts, images, cleanedHtml: doc.documentElement.outerHTML, width: finalWidth, height: finalHeight };
 };
 
+import { RawHtmlPage } from '../types/admin';
+
 // Parse ZIP data that was extracted on the server (with permanent image URLs)
 export const parseServerExtractedZip = async (
   serverData: { 
@@ -573,7 +575,7 @@ export const parseServerExtractedZip = async (
   defaultWidth = 800, 
   defaultHeight = 600,
   sourceName = 'server-extract'
-): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number }> => {
+): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number, rawHtmlPages: RawHtmlPage[], cssContentStr: string, imageMap: Record<string, string> }> => {
     
     const { images: imageMap, htmlFiles, htmlContent, cssContent } = serverData;
     
@@ -660,11 +662,46 @@ export const parseServerExtractedZip = async (
         console.error('Error replacing images in preview HTML:', e);
     }
     
+    // Build rawHtmlPages for all HTML files
+    const rawHtmlPages: RawHtmlPage[] = [];
+    const sortedFiles = [...htmlFiles].filter(f => !f.toLowerCase().includes('toc')).sort();
+    
+    for (let i = 0; i < sortedFiles.length; i++) {
+        const filePath = sortedFiles[i];
+        let fileHtml = htmlContent[filePath];
+        
+        // Replace image paths with permanent URLs
+        for (const [key, url] of Object.entries(imageMap)) {
+            const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            fileHtml = fileHtml.replace(new RegExp(`src=["']${escapedKey}["']`, 'gi'), `src="${url}"`);
+            fileHtml = fileHtml.replace(new RegExp(`src=["'][^"']*/${escapedKey}["']`, 'gi'), `src="${url}"`);
+        }
+        
+        // Extract page dimensions from body style or use defaults
+        let pageWidth = parsed.width || defaultWidth;
+        let pageHeight = parsed.height || defaultHeight;
+        
+        const widthMatch = fileHtml.match(/width[:\s]*(\d+)px/i);
+        const heightMatch = fileHtml.match(/height[:\s]*(\d+)px/i);
+        if (widthMatch) pageWidth = parseInt(widthMatch[1]);
+        if (heightMatch) pageHeight = parseInt(heightMatch[1]);
+        
+        rawHtmlPages.push({
+            pageIndex: i + 1,
+            html: fileHtml,
+            width: pageWidth,
+            height: pageHeight
+        });
+    }
+    
     return {
         texts: parsed.texts,
         images: parsed.images,
         htmlContent: previewHtml,
         width: parsed.width,
-        height: parsed.height
+        height: parsed.height,
+        rawHtmlPages,
+        cssContentStr: combinedCss,
+        imageMap
     };
 };

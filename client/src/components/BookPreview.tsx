@@ -6,6 +6,7 @@ import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
 import { generateBookPages } from '../utils/imageGenerator';
+import { renderAllPages } from '../utils/pageRenderer';
 import Navigation from './Navigation';
 import hardcoverIcon from '@assets/generated_images/hardcover_teal_book_isometric.png';
 import softcoverIcon from '@assets/generated_images/softcover_teal_book_isometric.png';
@@ -93,17 +94,33 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   useEffect(() => {
     if (book) {
         setIsGenerating(true);
-        // Add a small delay to allow UI to render first
-        const timer = setTimeout(() => {
-            generateBookPages(book, config, currentCombinationKey)
-                .then(pages => {
+        const timer = setTimeout(async () => {
+            try {
+                // Check if we have raw HTML pages (from EPUB import)
+                const rawPages = book.contentConfig?.rawHtmlPages;
+                const cssContent = book.contentConfig?.cssContent || '';
+                
+                if (rawPages && rawPages.length > 0) {
+                    console.log(`Rendering ${rawPages.length} HTML pages with html2canvas...`);
+                    const pages = await renderAllPages(
+                        rawPages,
+                        cssContent,
+                        config,
+                        config.characters,
+                        undefined,
+                        (current, total) => console.log(`Rendered page ${current}/${total}`)
+                    );
                     setGeneratedPages(pages);
-                    setIsGenerating(false);
-                })
-                .catch(err => {
-                    console.error("Failed to generate pages", err);
-                    setIsGenerating(false);
-                });
+                } else {
+                    // Fallback to canvas-based generation
+                    const pages = await generateBookPages(book, config, currentCombinationKey);
+                    setGeneratedPages(pages);
+                }
+                setIsGenerating(false);
+            } catch (err) {
+                console.error("Failed to generate pages", err);
+                setIsGenerating(false);
+            }
         }, 100);
         return () => clearTimeout(timer);
     }

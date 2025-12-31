@@ -152,6 +152,15 @@ export function registerObjectStorageRoutes(app: Express): void {
           const parts = relativePath.split('/');
           const justFilename = parts[parts.length - 1];
           imageMap[justFilename] = objectPath;
+          
+          // Also add partial paths (e.g., "image/1.png" from "OEBPS/image/1.png")
+          // This handles relative paths used in HTML files
+          for (let i = 1; i < parts.length; i++) {
+            const partialPath = parts.slice(i).join('/');
+            if (!imageMap[partialPath]) {
+              imageMap[partialPath] = objectPath;
+            }
+          }
         } else if (/\.(html?|xhtml)$/i.test(relativePath)) {
           htmlFiles.push(relativePath);
           const content = await zipEntry.async('string');

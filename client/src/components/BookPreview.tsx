@@ -114,19 +114,27 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 const rawPages = book.contentConfig?.rawHtmlPages;
                 const cssContent = book.contentConfig?.cssContent || '';
                 
+                console.log('[BookPreview] rawPages:', rawPages?.length, 'cssContent length:', cssContent?.length);
+                
                 if (rawPages && rawPages.length > 0) {
-                    console.log(`Rendering ${rawPages.length} EPUB fixed layout pages with html2canvas...`);
-                    const pages = await renderAllPages(
-                        rawPages,
-                        cssContent,
-                        config,
-                        config.characters,
-                        undefined,
-                        (current, total) => console.log(`Rendered page ${current}/${total}`)
-                    );
-                    setGeneratedPages(pages);
-                    setIsGenerating(false);
-                    return;
+                    console.log(`[BookPreview] Rendering ${rawPages.length} EPUB fixed layout pages with html2canvas...`);
+                    console.log('[BookPreview] First page HTML preview:', rawPages[0].html?.substring(0, 200));
+                    try {
+                        const pages = await renderAllPages(
+                            rawPages,
+                            cssContent,
+                            config,
+                            config.characters,
+                            undefined,
+                            (current, total) => console.log(`[BookPreview] Rendered page ${current}/${total}`)
+                        );
+                        console.log('[BookPreview] Rendered pages count:', Object.keys(pages).length);
+                        setGeneratedPages(pages);
+                        setIsGenerating(false);
+                        return;
+                    } catch (renderErr) {
+                        console.error('[BookPreview] html2canvas render failed:', renderErr);
+                    }
                 }
                 
                 // Priority 3: Fallback to canvas-based generation for non-EPUB books

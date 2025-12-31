@@ -60,6 +60,9 @@ export const renderHtmlPageToImage = async (
   characters?: Record<string, Record<string, string>>,
   imageMap?: Record<string, string>
 ): Promise<string> => {
+  console.log('[pageRenderer] Starting render for page', rawPage.pageIndex);
+  console.log('[pageRenderer] Raw HTML (first 100 chars):', rawPage.html?.substring(0, 100));
+  
   const container = document.createElement('div');
   container.style.position = 'absolute';
   container.style.left = '-9999px';
@@ -71,6 +74,7 @@ export const renderHtmlPageToImage = async (
 
   // Decode HTML entities first (server may encode < > as &lt; &gt;)
   let html = decodeHtmlEntities(rawPage.html);
+  console.log('[pageRenderer] After decode (first 100 chars):', html?.substring(0, 100));
   html = resolveVariables(html, config, characters);
 
   if (imageMap) {

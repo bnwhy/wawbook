@@ -122,6 +122,11 @@ export interface TextElement {
   };
 }
 
+export interface ImageCondition {
+  variantId: string;  // ID of the variant (e.g., "hair_color", "has_cape")
+  optionId: string;   // ID of the option (e.g., "blonde", "true" for checkbox)
+}
+
 export interface ImageElement {
   id: string;
   label: string;
@@ -129,6 +134,7 @@ export interface ImageElement {
   url?: string;
   variableKey?: string;
   variantImages?: Record<string, string>; // Maps option ID to image URL
+  conditions?: ImageCondition[]; // List of conditions that must all match for this image to show
   combinationKey?: string; // Optional: restrict to specific variant
   position: {
     pageIndex: number;

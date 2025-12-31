@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType, RawHtmlPage } from '../types/admin';
@@ -484,6 +484,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Content Editor State
   const [selectedVariant, setSelectedVariant] = useState<string>('default'); // Used for previewing specific combinations
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [selectedEpubPageIndex, setSelectedEpubPageIndex] = useState<number | null>(null);
   const [selectedAvatarTabId, setSelectedAvatarTabId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
@@ -6023,39 +6024,180 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     }
                                     
                                     if (hasRawHtmlPages) {
+                                        const pageTexts = selectedEpubPageIndex !== null 
+                                            ? selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === selectedEpubPageIndex) || []
+                                            : [];
+                                        const pageImages = selectedEpubPageIndex !== null
+                                            ? selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === selectedEpubPageIndex) || []
+                                            : [];
+                                        
                                         return (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                                {selectedBook.contentConfig.rawHtmlPages.sort((a: any, b: any) => a.pageIndex - b.pageIndex).map((page: any) => (
-                                                    <div 
-                                                        key={`raw-${page.pageIndex}`}
-                                                        className="relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 border-slate-100 hover:border-brand-coral/30"
-                                                    >
-                                                        <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
-                                                            <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                                                                <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 text-[10px] flex items-center justify-center font-mono">
-                                                                    {page.pageIndex}
+                                            <div className="flex gap-6 h-full">
+                                                {/* Pages Grid */}
+                                                <div className={`grid grid-cols-1 md:grid-cols-2 ${selectedEpubPageIndex !== null ? 'lg:grid-cols-2' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-4 ${selectedEpubPageIndex !== null ? 'flex-1' : 'w-full'}`}>
+                                                    {selectedBook.contentConfig.rawHtmlPages!.sort((a: any, b: any) => a.pageIndex - b.pageIndex).map((page: any) => (
+                                                        <div 
+                                                            key={`raw-${page.pageIndex}`}
+                                                            className={`relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
+                                                                selectedEpubPageIndex === page.pageIndex 
+                                                                    ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' 
+                                                                    : 'border-slate-100 hover:border-brand-coral/30'
+                                                            }`}
+                                                            onClick={() => setSelectedEpubPageIndex(
+                                                                selectedEpubPageIndex === page.pageIndex ? null : page.pageIndex
+                                                            )}
+                                                        >
+                                                            <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
+                                                                <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                                                    <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-mono ${
+                                                                        selectedEpubPageIndex === page.pageIndex 
+                                                                            ? 'bg-brand-coral text-white' 
+                                                                            : 'bg-emerald-100 text-emerald-600'
+                                                                    }`}>
+                                                                        {page.pageIndex}
+                                                                    </span>
+                                                                    Page {page.pageIndex}
                                                                 </span>
-                                                                Page {page.pageIndex} (EPUB)
-                                                            </span>
-                                                        </div>
-                                                        <div className="aspect-[3/4] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
-                                                            <div className="text-center space-y-1 p-2">
-                                                                <div className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded shadow-sm border border-emerald-100">
-                                                                    Fixed Layout EPUB
-                                                                </div>
-                                                                <div className="text-xs text-slate-500">
-                                                                    {page.width}x{page.height}px
-                                                                </div>
-                                                                <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                                    {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0} Textes
-                                                                </div>
-                                                                <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                                    {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex).length || 0} Images
+                                                                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded font-medium">EPUB</span>
+                                                            </div>
+                                                            <div className="aspect-[3/4] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
+                                                                <div className="text-center space-y-1 p-2">
+                                                                    <div className="text-xs text-slate-500">
+                                                                        {page.width}x{page.height}px
+                                                                    </div>
+                                                                    <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                                        {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0} Textes
+                                                                    </div>
+                                                                    <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                                        {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex).length || 0} Images
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                    ))}
+                                                </div>
+                                                
+                                                {/* Edit Panel */}
+                                                {selectedEpubPageIndex !== null && (
+                                                    <div className="w-96 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                                        <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-brand-coral/5 to-transparent">
+                                                            <div className="flex items-center justify-between">
+                                                                <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                                                    <Edit3 size={16} className="text-brand-coral" />
+                                                                    Page {selectedEpubPageIndex}
+                                                                </h3>
+                                                                <button 
+                                                                    onClick={() => setSelectedEpubPageIndex(null)}
+                                                                    className="p-1 hover:bg-slate-100 rounded transition-colors"
+                                                                >
+                                                                    <X size={16} className="text-slate-400" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                                            {/* Texts Section */}
+                                                            <div>
+                                                                <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                                                    <Type size={14} />
+                                                                    Textes ({pageTexts.length})
+                                                                </h4>
+                                                                {pageTexts.length === 0 ? (
+                                                                    <p className="text-xs text-slate-400 italic">Aucun texte sur cette page</p>
+                                                                ) : (
+                                                                    <div className="space-y-2">
+                                                                        {pageTexts.map((text: any, idx: number) => (
+                                                                            <div key={text.id || idx} className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                                                    <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
+                                                                                        {text.id || `text-${idx}`}
+                                                                                    </span>
+                                                                                    {text.variableId && (
+                                                                                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
+                                                                                            {text.variableId}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                                <div className="text-xs text-slate-600 line-clamp-2 mb-2">
+                                                                                    {text.content || text.text || '(vide)'}
+                                                                                </div>
+                                                                                <select
+                                                                                    value={text.variableId || ''}
+                                                                                    onChange={(e) => {
+                                                                                        const newVariableId = e.target.value || null;
+                                                                                        const updatedTexts = selectedBook.contentConfig.texts.map((t: any) =>
+                                                                                            t.id === text.id ? { ...t, variableId: newVariableId } : t
+                                                                                        );
+                                                                                        const updatedBook = {
+                                                                                            ...selectedBook,
+                                                                                            contentConfig: {
+                                                                                                ...selectedBook.contentConfig,
+                                                                                                texts: updatedTexts
+                                                                                            }
+                                                                                        };
+                                                                                        setDraftBook(updatedBook);
+                                                                                    }}
+                                                                                    className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral"
+                                                                                >
+                                                                                    {variableOptions.map(opt => (
+                                                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                                                    ))}
+                                                                                </select>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            
+                                                            {/* Images Section */}
+                                                            <div>
+                                                                <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                                                    <ImageIcon size={14} />
+                                                                    Images ({pageImages.length})
+                                                                </h4>
+                                                                {pageImages.length === 0 ? (
+                                                                    <p className="text-xs text-slate-400 italic">Aucune image sur cette page</p>
+                                                                ) : (
+                                                                    <div className="space-y-2">
+                                                                        {pageImages.map((img: any, idx: number) => (
+                                                                            <div key={img.id || idx} className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
+                                                                                        {img.id || `img-${idx}`}
+                                                                                    </span>
+                                                                                    <span className="text-[10px] text-slate-400">
+                                                                                        {img.position?.width || '?'}x{img.position?.height || '?'}px
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Save Button */}
+                                                        {draftBook && (
+                                                            <div className="p-4 border-t border-slate-100 bg-slate-50">
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            await updateBook(selectedBook.id, draftBook);
+                                                                            setDraftBook(null);
+                                                                            toast.success('Modifications sauvegardées');
+                                                                        } catch (err) {
+                                                                            toast.error('Erreur lors de la sauvegarde');
+                                                                        }
+                                                                    }}
+                                                                    className="w-full bg-brand-coral hover:bg-red-500 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                                                                >
+                                                                    <Save size={14} />
+                                                                    Sauvegarder
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ))}
+                                                )}
                                             </div>
                                         );
                                     }

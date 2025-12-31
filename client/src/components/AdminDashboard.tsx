@@ -5815,9 +5815,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     />
                                 </div>
                                 <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50">
-                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center">
+                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex flex-col items-start gap-1">
                                         <span>TEXTES DÉTECTÉS ({importSessionTexts.length})</span>
-                                        <span className="text-[10px] text-gray-400">Associez les textes aux variables</span>
+                                        <span className="text-[10px] text-gray-400 font-normal">Associez les textes aux variables</span>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                                         {importSessionTexts.length === 0 ? (

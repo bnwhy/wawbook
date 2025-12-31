@@ -68,13 +68,6 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           </span>
         </div>
 
-        {/* Admin Shortcut - Visible */}
-        <div className="hidden lg:block absolute left-4 top-20 z-50">
-            <Link href="/admin" className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-widest font-bold bg-white/80 px-2 py-1 rounded border border-gray-200 shadow-sm transition-colors">
-                Admin
-            </Link>
-        </div>
-
         {/* Desktop Menu */}
         <div className="hidden lg:flex items-center gap-1">
           {mainMenu.map((menu, idx) => (

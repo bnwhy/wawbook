@@ -1304,6 +1304,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        <Save size={14} />
                        {hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook)) ? 'Sauvegarder' : 'Enregistré'}
                     </button>
+
+                     <button
+                        onClick={() => {
+                           if (selectedBookId) {
+                               window.open(`/?preview_book=${selectedBook.id}`, '_blank');
+                           }
+                        }}
+                        className="w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer mt-3"
+                     >
+                        <Eye size={14} />
+                        Voir le site
+                     </button>
                  </div>
 
                  <div className="space-y-1">

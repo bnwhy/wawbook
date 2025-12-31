@@ -5796,12 +5796,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
 
                         <div className="flex-1 min-h-0 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 flex flex-col">
-                            <div className="flex justify-between items-center mb-4 shrink-0">
+                            <div className="flex flex-col gap-4 mb-4 shrink-0">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                     <FileCode className="text-brand-coral" size={20} />
                                     Aperçu et Mapping des Variables
                                 </h3>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 self-start flex-wrap">
                                     {importSessionTexts.length > 0 && (
                                         <button
                                             type="button"

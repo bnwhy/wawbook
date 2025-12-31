@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MenuItem } from '../types/menu';
+import { toast } from 'sonner';
 
 const INITIAL_MENU: MenuItem[] = [
   {
@@ -63,53 +65,118 @@ const INITIAL_MENU: MenuItem[] = [
   }
 ];
 
-const MenuContext = createContext<MenuContextType | undefined>(undefined);
-
 interface MenuContextType {
   mainMenu: MenuItem[];
+  isLoading: boolean;
   setMainMenu: (menu: MenuItem[]) => void;
-  updateMenuItem: (index: number, item: MenuItem) => void;
-  addMenuItem: (item: MenuItem) => void;
-  deleteMenuItem: (index: number) => void;
+  updateMenuItem: (index: number, item: MenuItem) => Promise<void>;
+  addMenuItem: (item: MenuItem) => Promise<void>;
+  deleteMenuItem: (index: number) => Promise<void>;
 }
 
+const MenuContext = createContext<MenuContextType | undefined>(undefined);
+
 export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [mainMenu, setMainMenu] = useState<MenuItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('admin_menus');
-      return saved ? JSON.parse(saved) : INITIAL_MENU;
-    } catch (e) {
-      console.error('Error parsing menu data', e);
-      return INITIAL_MENU;
-    }
+  const queryClient = useQueryClient();
+
+  // Fetch menus
+  const { data: mainMenu = [], isLoading } = useQuery({
+    queryKey: ['menus'],
+    queryFn: async () => {
+      const response = await fetch('/api/menus');
+      if (!response.ok) throw new Error('Failed to fetch menus');
+      const data = await response.json() as MenuItem[];
+      
+      // If no menus in DB, initialize with default menus
+      if (data.length === 0) {
+        await Promise.all(INITIAL_MENU.map(menu =>
+          fetch('/api/menus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(menu),
+          })
+        ));
+        return INITIAL_MENU;
+      }
+      return data;
+    },
   });
 
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('admin_menus', JSON.stringify(mainMenu));
-    } catch (e) {
-      console.error('Error saving menu data', e);
+  // Update menu mutation
+  const updateMenuMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: MenuItem }) => {
+      const response = await fetch(`/api/menus/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update menu');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menus'] });
+      toast.success('Menu mis à jour');
+    },
+  });
+
+  // Add menu mutation
+  const addMenuMutation = useMutation({
+    mutationFn: async (menu: MenuItem) => {
+      const response = await fetch('/api/menus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(menu),
+      });
+      if (!response.ok) throw new Error('Failed to add menu');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menus'] });
+      toast.success('Menu ajouté');
+    },
+  });
+
+  // Delete menu mutation
+  const deleteMenuMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/menus/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete menu');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menus'] });
+      toast.success('Menu supprimé');
+    },
+  });
+
+  const setMainMenu = (menu: MenuItem[]) => {
+    // Update all menus
+    Promise.all(menu.map((item, index) => {
+      if (mainMenu[index]?.id === item.id) {
+        return updateMenuMutation.mutateAsync({ id: item.id, data: item });
+      }
+      return Promise.resolve();
+    }));
+  };
+
+  const updateMenuItem = async (index: number, item: MenuItem) => {
+    await updateMenuMutation.mutateAsync({ id: item.id, data: item });
+  };
+
+  const addMenuItem = async (item: MenuItem) => {
+    await addMenuMutation.mutateAsync(item);
+  };
+
+  const deleteMenuItem = async (index: number) => {
+    const menu = mainMenu[index];
+    if (menu) {
+      await deleteMenuMutation.mutateAsync(menu.id);
     }
-  }, [mainMenu]);
-
-  const updateMenuItem = (index: number, item: MenuItem) => {
-    const newMenu = [...mainMenu];
-    newMenu[index] = item;
-    setMainMenu(newMenu);
-  };
-
-  const addMenuItem = (item: MenuItem) => {
-    setMainMenu([...mainMenu, item]);
-  };
-
-  const deleteMenuItem = (index: number) => {
-    const newMenu = [...mainMenu];
-    newMenu.splice(index, 1);
-    setMainMenu(newMenu);
   };
 
   return (
-    <MenuContext.Provider value={{ mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem }}>
+    <MenuContext.Provider value={{ mainMenu, isLoading, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem }}>
       {children}
     </MenuContext.Provider>
   );

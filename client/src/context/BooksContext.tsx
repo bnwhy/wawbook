@@ -1,48 +1,122 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookProduct } from '../types/admin';
 import { INITIAL_BOOKS } from '../data/initialBooks';
+import { toast } from 'sonner';
 
 interface BooksContextType {
   books: BookProduct[];
-  addBook: (book: BookProduct) => void;
-  updateBook: (book: BookProduct) => void;
-  deleteBook: (bookId: string) => void;
+  isLoading: boolean;
+  addBook: (book: BookProduct) => Promise<void>;
+  updateBook: (book: BookProduct) => Promise<void>;
+  deleteBook: (bookId: string) => Promise<void>;
   getBookById: (id: string) => BookProduct | undefined;
 }
 
 const BooksContext = createContext<BooksContextType | undefined>(undefined);
 
 export const BooksProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [books, setBooks] = useState<BookProduct[]>(() => {
-    try {
-      // Changed key to force refresh of data structure with new image generation logic
-      const savedBooks = localStorage.getItem('admin_books_v3');
-      return savedBooks ? JSON.parse(savedBooks) : INITIAL_BOOKS;
-    } catch (error) {
-      console.error('Failed to load books from localStorage:', error);
-      return INITIAL_BOOKS;
-    }
+  const queryClient = useQueryClient();
+
+  // Fetch all books
+  const { data: books = [], isLoading } = useQuery({
+    queryKey: ['books'],
+    queryFn: async () => {
+      const response = await fetch('/api/books');
+      if (!response.ok) {
+        throw new Error('Failed to fetch books');
+      }
+      const data = await response.json();
+      // If no books in DB, initialize with default books
+      if (data.length === 0) {
+        // Initialize DB with default books
+        await Promise.all(INITIAL_BOOKS.map(book =>
+          fetch('/api/books', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(book),
+          })
+        ));
+        return INITIAL_BOOKS;
+      }
+      return data as BookProduct[];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Persist to localStorage whenever books change
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('admin_books_v3', JSON.stringify(books));
-    } catch (error) {
-      console.error('Failed to save books to localStorage:', error);
-    }
-  }, [books]);
+  // Add book mutation
+  const addBookMutation = useMutation({
+    mutationFn: async (book: BookProduct) => {
+      const response = await fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(book),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to add book');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      toast.success('Livre ajouté avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur lors de l\'ajout du livre');
+    },
+  });
 
-  const addBook = (book: BookProduct) => {
-    setBooks(prev => [...prev, book]);
+  // Update book mutation
+  const updateBookMutation = useMutation({
+    mutationFn: async (book: BookProduct) => {
+      const response = await fetch(`/api/books/${book.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(book),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update book');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      toast.success('Livre mis à jour avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la mise à jour du livre');
+    },
+  });
+
+  // Delete book mutation
+  const deleteBookMutation = useMutation({
+    mutationFn: async (bookId: string) => {
+      const response = await fetch(`/api/books/${bookId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete book');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      toast.success('Livre supprimé avec succès');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la suppression du livre');
+    },
+  });
+
+  const addBook = async (book: BookProduct) => {
+    await addBookMutation.mutateAsync(book);
   };
 
-  const updateBook = (updatedBook: BookProduct) => {
-    setBooks(prev => prev.map(b => b.id === updatedBook.id ? updatedBook : b));
+  const updateBook = async (book: BookProduct) => {
+    await updateBookMutation.mutateAsync(book);
   };
 
-  const deleteBook = (bookId: string) => {
-    setBooks(prev => prev.filter(b => b.id !== bookId));
+  const deleteBook = async (bookId: string) => {
+    await deleteBookMutation.mutateAsync(bookId);
   };
 
   const getBookById = (id: string) => {
@@ -50,7 +124,7 @@ export const BooksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   return (
-    <BooksContext.Provider value={{ books, addBook, updateBook, deleteBook, getBookById }}>
+    <BooksContext.Provider value={{ books, isLoading, addBook, updateBook, deleteBook, getBookById }}>
       {children}
     </BooksContext.Provider>
   );

@@ -1,474 +1,356 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Customer, Order, OrderStatus, ShippingZone } from '../types/ecommerce';
-
-// Mock Data Generation
-const MOCK_CUSTOMERS: Customer[] = [
-  {
-    id: 'c1',
-    firstName: 'Sophie',
-    lastName: 'Martin',
-    email: 'sophie.martin@example.com',
-    phone: '06 12 34 56 78',
-    createdAt: '2023-11-15T10:30:00Z',
-    address: {
-      street: '12 Rue des Lilas',
-      city: 'Lyon',
-      zipCode: '69003',
-      country: 'France'
-    },
-    totalSpent: 89.70,
-    orderCount: 2
-  },
-  {
-    id: 'c2',
-    firstName: 'Thomas',
-    lastName: 'Dubois',
-    email: 'thomas.dubois@test.com',
-    createdAt: '2023-12-01T14:20:00Z',
-    address: {
-      street: '45 Avenue Jean Jaurès',
-      city: 'Paris',
-      zipCode: '75019',
-      country: 'France'
-    },
-    totalSpent: 29.90,
-    orderCount: 1
-  },
-  {
-    id: 'c3',
-    firstName: 'Marie',
-    lastName: 'Lefebvre',
-    email: 'marie.l@domain.fr',
-    phone: '07 89 12 34 56',
-    createdAt: '2024-01-10T09:15:00Z',
-    address: {
-      street: '8 Place du Marché',
-      city: 'Bordeaux',
-      zipCode: '33000',
-      country: 'France'
-    },
-    totalSpent: 59.80,
-    orderCount: 1
-  }
-];
-
-const MOCK_ORDERS: Order[] = [
-  {
-    id: 'ORD-2024-001',
-    customerId: 'c1',
-    customerName: 'Sophie Martin',
-    customerEmail: 'sophie.martin@example.com',
-    status: 'delivered',
-    createdAt: '2023-11-15T10:35:00Z',
-    totalAmount: 29.90,
-    shippingAddress: {
-      street: '12 Rue des Lilas',
-      city: 'Lyon',
-      zipCode: '69003',
-      country: 'France'
-    },
-    items: [
-      {
-        id: 'item1',
-        bookId: 'explorer',
-        bookTitle: "L'Aventurier du Monde",
-        quantity: 1,
-        price: 29.90,
-        configuration: { name: 'Léo', gender: 'boy' }
-      }
-    ],
-    logs: [
-      { id: 'l1', date: '2023-11-15T10:35:00Z', type: 'system', message: 'Commande créée', author: 'Système' },
-      { id: 'l2', date: '2023-11-15T10:36:00Z', type: 'status_change', message: 'Statut passé à En attente', author: 'Système' },
-      { id: 'l3', date: '2023-11-16T09:00:00Z', type: 'status_change', message: 'Statut passé à Livrée', author: 'Admin' }
-    ]
-  },
-  {
-    id: 'ORD-2024-002',
-    customerId: 'c1',
-    customerName: 'Sophie Martin',
-    customerEmail: 'sophie.martin@example.com',
-    status: 'shipped',
-    createdAt: '2023-12-20T16:45:00Z',
-    totalAmount: 59.80,
-    trackingNumber: 'FR123456789',
-    shippingAddress: {
-      street: '12 Rue des Lilas',
-      city: 'Lyon',
-      zipCode: '69003',
-      country: 'France'
-    },
-    items: [
-      {
-        id: 'item2',
-        bookId: 'magician',
-        bookTitle: "L'École des Sorciers",
-        quantity: 1,
-        price: 29.90,
-        configuration: { name: 'Léo', gender: 'boy' }
-      },
-      {
-        id: 'item3',
-        bookId: 'space',
-        bookTitle: "Mission Espace",
-        quantity: 1,
-        price: 29.90,
-        configuration: { name: 'Lucas', gender: 'boy' }
-      }
-    ]
-  },
-  {
-    id: 'ORD-2024-003',
-    customerId: 'c2',
-    customerName: 'Thomas Dubois',
-    customerEmail: 'thomas.dubois@test.com',
-    status: 'processing',
-    createdAt: '2023-12-01T14:25:00Z',
-    totalAmount: 29.90,
-    shippingAddress: {
-      street: '45 Avenue Jean Jaurès',
-      city: 'Paris',
-      zipCode: '75019',
-      country: 'France'
-    },
-    items: [
-      {
-        id: 'item4',
-        bookId: 'animals',
-        bookTitle: "Les Amis de la Forêt",
-        quantity: 1,
-        price: 29.90,
-        configuration: { name: 'Emma', gender: 'girl' }
-      }
-    ]
-  },
-  {
-    id: 'ORD-2024-004',
-    customerId: 'c3',
-    customerName: 'Marie Lefebvre',
-    customerEmail: 'marie.l@domain.fr',
-    status: 'pending',
-    createdAt: '2024-01-10T09:20:00Z',
-    totalAmount: 59.80,
-    shippingAddress: {
-      street: '8 Place du Marché',
-      city: 'Bordeaux',
-      zipCode: '33000',
-      country: 'France'
-    },
-    items: [
-      {
-        id: 'item5',
-        bookId: 'dad',
-        bookTitle: "Mon Papa & Moi",
-        quantity: 2,
-        price: 29.90,
-        configuration: { childName: 'Chloé', adultName: 'Papa' }
-      }
-    ]
-  }
-];
-
-const MOCK_SHIPPING_ZONES: ShippingZone[] = [
-  {
-    id: 'zone-fr',
-    name: 'France Métropolitaine',
-    countries: ['France'],
-    methods: [
-      { id: 'm1', name: 'Livraison Standard', price: 4.90, estimatedDelay: '3-5 jours' },
-      { id: 'm2', name: 'Livraison Express', price: 12.90, estimatedDelay: '24-48h' }
-    ]
-  },
-  {
-    id: 'zone-eu',
-    name: 'Union Européenne',
-    countries: ['Belgique', 'Allemagne', 'Italie', 'Espagne'],
-    methods: [
-      { id: 'm3', name: 'Standard International', price: 14.90, estimatedDelay: '5-7 jours' }
-    ]
-  }
-];
+import { toast } from 'sonner';
 
 interface EcommerceContextType {
   customers: Customer[];
   orders: Order[];
   shippingZones: ShippingZone[];
   defaultShippingRate: number;
-  updateDefaultShippingRate: (rate: number) => void;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
-  updateOrderTracking: (orderId: string, trackingNumber: string) => void;
-  getCustomerById: (id: string) => Customer | undefined;
+  isLoading: boolean;
+  
+  // Customers
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'totalSpent' | 'orderCount'>) => Promise<void>;
+  updateCustomer: (id: string, customer: Partial<Customer>) => Promise<void>;
+  
+  // Orders
+  createOrder: (
+    customer: { firstName: string; lastName: string; email: string; phone?: string; address: any },
+    items: any[],
+    totalAmount: number
+  ) => Promise<void>;
+  updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  updateOrderTracking: (orderId: string, trackingNumber: string) => Promise<void>;
   getOrdersByCustomer: (customerId: string) => Order[];
-  createOrder: (customerData: any, cartItems: any[], totalAmount: number) => void;
-  updateCustomer: (customerId: string, data: Partial<Customer>) => void;
-  addCustomer: (customer: Customer) => void;
-  addOrderLog: (orderId: string, message: string, type?: 'comment' | 'status_change' | 'system') => void;
-  addShippingZone: (zone: ShippingZone) => void;
-  updateShippingZone: (id: string, zone: Partial<ShippingZone>) => void;
-  deleteShippingZone: (id: string) => void;
+  addOrderLog: (orderId: string, log: { type: 'status_change' | 'comment' | 'system'; message: string; author?: string }) => Promise<void>;
+  
+  // Shipping Zones
+  addShippingZone: (zone: Omit<ShippingZone, 'id' | 'createdAt'>) => Promise<void>;
+  updateShippingZone: (id: string, zone: Partial<ShippingZone>) => Promise<void>;
+  deleteShippingZone: (id: string) => Promise<void>;
+  updateDefaultShippingRate: (rate: number) => void;
 }
 
 const EcommerceContext = createContext<EcommerceContextType | undefined>(undefined);
 
 export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Load initial state from localStorage if available, otherwise use MOCK data
-  const [customers, setCustomers] = useState<Customer[]>(() => {
-    try {
-      const saved = localStorage.getItem('ecommerce_customers');
-      return saved ? JSON.parse(saved) : MOCK_CUSTOMERS;
-    } catch (e) {
-      console.error('Error parsing customers data', e);
-      return MOCK_CUSTOMERS;
-    }
-  });
-  
-  const [orders, setOrders] = useState<Order[]>(() => {
-    try {
-      const saved = localStorage.getItem('ecommerce_orders');
-      return saved ? JSON.parse(saved) : MOCK_ORDERS;
-    } catch (e) {
-      console.error('Error parsing orders data', e);
-      return MOCK_ORDERS;
-    }
+  const queryClient = useQueryClient();
+
+  // Fetch customers
+  const { data: customers = [], isLoading: customersLoading } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const response = await fetch('/api/customers');
+      if (!response.ok) throw new Error('Failed to fetch customers');
+      return response.json() as Promise<Customer[]>;
+    },
   });
 
-  const [shippingZones, setShippingZones] = useState<ShippingZone[]>(() => {
-    try {
-      const saved = localStorage.getItem('ecommerce_shipping_zones');
-      return saved ? JSON.parse(saved) : MOCK_SHIPPING_ZONES;
-    } catch (e) {
-      console.error('Error parsing shipping zones data', e);
-      return MOCK_SHIPPING_ZONES;
-    }
+  // Fetch orders
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+    queryKey: ['orders'],
+    queryFn: async () => {
+      const response = await fetch('/api/orders');
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      return response.json() as Promise<Order[]>;
+    },
   });
 
-  const [defaultShippingRate, setDefaultShippingRate] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('ecommerce_default_shipping_rate');
-      return saved ? parseFloat(saved) : 5.90;
-    } catch (e) {
-      console.error('Error parsing default shipping rate', e);
-      return 5.90;
-    }
+  // Fetch shipping zones
+  const { data: shippingZones = [], isLoading: zonesLoading } = useQuery({
+    queryKey: ['shipping-zones'],
+    queryFn: async () => {
+      const response = await fetch('/api/shipping-zones');
+      if (!response.ok) throw new Error('Failed to fetch shipping zones');
+      return response.json() as Promise<ShippingZone[]>;
+    },
   });
 
-  // Persist to localStorage whenever state changes
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('ecommerce_customers', JSON.stringify(customers));
-    } catch (e) {
-      console.error('Error saving customers data', e);
-    }
-  }, [customers]);
+  // Fetch default shipping rate
+  const { data: defaultShippingData } = useQuery({
+    queryKey: ['settings', 'defaultShippingRate'],
+    queryFn: async () => {
+      const response = await fetch('/api/settings/defaultShippingRate');
+      if (response.status === 404) return { value: 5.99 };
+      if (!response.ok) throw new Error('Failed to fetch default shipping rate');
+      return response.json();
+    },
+  });
 
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('ecommerce_orders', JSON.stringify(orders));
-    } catch (e) {
-      console.error('Error saving orders data', e);
-    }
-  }, [orders]);
+  const defaultShippingRate = defaultShippingData?.value || 5.99;
+  const isLoading = customersLoading || ordersLoading || zonesLoading;
 
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('ecommerce_shipping_zones', JSON.stringify(shippingZones));
-    } catch (e) {
-      console.error('Error saving shipping zones data', e);
-    }
-  }, [shippingZones]);
+  // Mutations
+  const addCustomerMutation = useMutation({
+    mutationFn: async (customer: Omit<Customer, 'id' | 'createdAt' | 'totalSpent' | 'orderCount'>) => {
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: crypto.randomUUID(),
+          ...customer,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to add customer');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast.success('Client ajouté');
+    },
+  });
 
-  React.useEffect(() => {
-    try {
-      localStorage.setItem('ecommerce_default_shipping_rate', defaultShippingRate.toString());
-    } catch (e) {
-      console.error('Error saving default shipping rate', e);
-    }
-  }, [defaultShippingRate]);
+  const updateCustomerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Customer> }) => {
+      const response = await fetch(`/api/customers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update customer');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast.success('Client mis à jour');
+    },
+  });
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders(prev => prev.map(o => {
-      if (o.id === orderId) {
-        const newLog = {
-            id: `log-${Date.now()}`,
-            date: new Date().toISOString(),
-            type: 'status_change',
-            message: `Statut modifié vers ${status === 'pending' ? 'En attente' : status === 'processing' ? 'En cours' : status === 'shipped' ? 'Expédiée' : status === 'delivered' ? 'Livrée' : 'Annulée'}`,
-            author: 'Admin'
-        };
-        return { 
-            ...o, 
-            status,
-            logs: [...(o.logs || []), newLog] as any[]
-        };
-      }
-      return o;
-    }));
+  const createOrderMutation = useMutation({
+    mutationFn: async (order: any) => {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order),
+      });
+      if (!response.ok) throw new Error('Failed to create order');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast.success('Commande créée');
+    },
+  });
+
+  const updateOrderMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Order> }) => {
+      const response = await fetch(`/api/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update order');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+
+  const addShippingZoneMutation = useMutation({
+    mutationFn: async (zone: Omit<ShippingZone, 'id' | 'createdAt'>) => {
+      const response = await fetch('/api/shipping-zones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: `zone-${Date.now()}`,
+          ...zone,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to add shipping zone');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipping-zones'] });
+      toast.success('Zone d\'expédition ajoutée');
+    },
+  });
+
+  const updateShippingZoneMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ShippingZone> }) => {
+      const response = await fetch(`/api/shipping-zones/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update shipping zone');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipping-zones'] });
+      toast.success('Zone d\'expédition mise à jour');
+    },
+  });
+
+  const deleteShippingZoneMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/shipping-zones/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete shipping zone');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipping-zones'] });
+      toast.success('Zone d\'expédition supprimée');
+    },
+  });
+
+  // Context methods
+  const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt' | 'totalSpent' | 'orderCount'>) => {
+    await addCustomerMutation.mutateAsync(customer);
   };
 
-  const updateOrderTracking = (orderId: string, trackingNumber: string) => {
-    setOrders(prev => prev.map(o => {
-        if (o.id === orderId) {
-            const newLog = {
-                id: `log-${Date.now()}`,
-                date: new Date().toISOString(),
-                type: 'system',
-                message: `Numéro de suivi ajouté: ${trackingNumber}`,
-                author: 'Système'
-            };
-            const statusLog = {
-                id: `log-${Date.now()}-status`,
-                date: new Date().toISOString(),
-                type: 'status_change',
-                message: 'Statut modifié vers Expédiée',
-                author: 'Système'
-            };
-            return { 
-                ...o, 
-                trackingNumber, 
-                status: 'shipped',
-                logs: [...(o.logs || []), newLog, statusLog] as any[]
-            };
-        }
-        return o;
-    }));
+  const updateCustomer = async (id: string, customer: Partial<Customer>) => {
+    await updateCustomerMutation.mutateAsync({ id, data: customer });
   };
 
-  const addOrderLog = (orderId: string, message: string, type: 'comment' | 'status_change' | 'system' = 'comment') => {
-      setOrders(prev => prev.map(o => {
-          if (o.id === orderId) {
-              const newLog = {
-                  id: `log-${Date.now()}`,
-                  date: new Date().toISOString(),
-                  type,
-                  message,
-                  author: 'Admin'
-              };
-              return {
-                  ...o,
-                  logs: [...(o.logs || []), newLog] as any[]
-              };
-          }
-          return o;
-      }));
-  };
-
-  const createOrder = (customerData: any, cartItems: any[], totalAmount: number) => {
-    // 1. Find or Create Customer
-    let customer = customers.find(c => c.email === customerData.email);
-    let customerId = customer?.id;
-
-    if (!customer) {
-      customerId = `c${Date.now()}`;
-      customer = {
-        id: customerId,
-        firstName: customerData.firstName,
-        lastName: customerData.lastName,
-        email: customerData.email,
-        phone: customerData.phone,
-        createdAt: new Date().toISOString(),
-        address: customerData.address,
-        totalSpent: 0,
-        orderCount: 0
-      };
-      setCustomers(prev => [...prev, customer!]);
+  const createOrder = async (
+    customer: { firstName: string; lastName: string; email: string; phone?: string; address: any },
+    items: any[],
+    totalAmount: number
+  ) => {
+    const orderId = `ORD-${Date.now()}`;
+    
+    // Find or create customer
+    let existingCustomer = customers.find(c => c.email === customer.email);
+    let customerId: string;
+    
+    if (existingCustomer) {
+      customerId = existingCustomer.id;
+      // Update customer totals
+      await updateCustomer(customerId, {
+        totalSpent: Number(existingCustomer.totalSpent) + totalAmount,
+        orderCount: existingCustomer.orderCount + 1,
+      });
     } else {
-       // Update existing customer stats logic is handled below, but we might want to update address
-       setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, address: customerData.address } : c));
+      const newCustomer = await addCustomerMutation.mutateAsync({
+        ...customer,
+      });
+      customerId = newCustomer.id;
+      // Update customer totals after creation
+      await updateCustomer(customerId, {
+        totalSpent: totalAmount,
+        orderCount: 1,
+      });
     }
 
-    if (!customerId) return; // Should not happen
-
-    // 2. Create Order
-    const newOrder: Order = {
-      id: `ORD-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
-      customerId: customerId,
-      customerName: `${customerData.firstName} ${customerData.lastName}`,
-      customerEmail: customerData.email,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      totalAmount: totalAmount,
-      shippingAddress: customerData.address,
-      items: cartItems.map(item => ({
-        id: `item-${Math.random().toString(36).substr(2, 9)}`,
-        bookId: item.productId || item.config.theme || 'unknown', 
-        bookTitle: item.bookTitle,
-        quantity: item.quantity,
-        price: item.price,
-        configuration: item.config // Store full config including characters and childName
-      })),
+    const order = {
+      id: orderId,
+      customerId,
+      customerName: `${customer.firstName} ${customer.lastName}`,
+      customerEmail: customer.email,
+      status: 'pending' as OrderStatus,
+      items,
+      totalAmount: totalAmount.toString(),
+      shippingAddress: customer.address,
       logs: [
         {
-            id: `log-${Date.now()}`,
-            date: new Date().toISOString(),
-            type: 'system',
-            message: 'Commande créée',
-            author: 'Système'
-        }
-      ]
+          id: crypto.randomUUID(),
+          date: new Date().toISOString(),
+          type: 'system' as const,
+          message: 'Commande créée',
+          author: 'Système',
+        },
+      ],
     };
 
-    setOrders(prev => [newOrder, ...prev]);
-
-    // 3. Update Customer Stats
-    setCustomers(prev => prev.map(c => {
-      if (c.id === customerId) {
-        return {
-          ...c,
-          totalSpent: c.totalSpent + totalAmount,
-          orderCount: c.orderCount + 1
-        };
-      }
-      return c;
-    }));
+    await createOrderMutation.mutateAsync(order);
   };
 
-  const updateCustomer = (customerId: string, data: Partial<Customer>) => {
-    setCustomers(prev => prev.map(c => c.id === customerId ? { ...c, ...data } : c));
+  const updateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    const newLog = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      type: 'status_change' as const,
+      message: `Statut changé: ${status}`,
+      author: 'Admin',
+    };
+
+    await updateOrderMutation.mutateAsync({
+      id: orderId,
+      data: {
+        status,
+        logs: [...(order.logs || []), newLog],
+      },
+    });
   };
 
-  const addCustomer = (customer: Customer) => {
-    setCustomers(prev => [customer, ...prev]);
+  const updateOrderTracking = async (orderId: string, trackingNumber: string) => {
+    await updateOrderMutation.mutateAsync({
+      id: orderId,
+      data: { trackingNumber },
+    });
   };
 
-  const getCustomerById = (id: string) => customers.find(c => c.id === id);
-  
-  const getOrdersByCustomer = (customerId: string) => orders.filter(o => o.customerId === customerId);
-
-  const addShippingZone = (zone: ShippingZone) => {
-    setShippingZones(prev => [...prev, zone]);
+  const getOrdersByCustomer = (customerId: string) => {
+    return orders.filter(o => o.customerId === customerId);
   };
 
-  const updateShippingZone = (id: string, zone: Partial<ShippingZone>) => {
-    setShippingZones(prev => prev.map(z => z.id === id ? { ...z, ...zone } : z));
+  const addOrderLog = async (orderId: string, log: { type: 'status_change' | 'comment' | 'system'; message: string; author?: string }) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    const newLog = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      ...log,
+    };
+
+    await updateOrderMutation.mutateAsync({
+      id: orderId,
+      data: {
+        logs: [...(order.logs || []), newLog],
+      },
+    });
   };
 
-  const deleteShippingZone = (id: string) => {
-    setShippingZones(prev => prev.filter(z => z.id !== id));
+  const addShippingZone = async (zone: Omit<ShippingZone, 'id' | 'createdAt'>) => {
+    await addShippingZoneMutation.mutateAsync(zone);
   };
 
-  const updateDefaultShippingRate = (rate: number) => {
-    setDefaultShippingRate(rate);
+  const updateShippingZone = async (id: string, zone: Partial<ShippingZone>) => {
+    await updateShippingZoneMutation.mutateAsync({ id, data: zone });
+  };
+
+  const deleteShippingZone = async (id: string) => {
+    await deleteShippingZoneMutation.mutateAsync(id);
+  };
+
+  const updateDefaultShippingRate = async (rate: number) => {
+    await fetch('/api/settings/defaultShippingRate', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: rate }),
+    });
+    queryClient.invalidateQueries({ queryKey: ['settings', 'defaultShippingRate'] });
   };
 
   return (
-    <EcommerceContext.Provider value={{ 
-      customers, 
-      orders, 
-      shippingZones,
-      defaultShippingRate,
-      updateDefaultShippingRate,
-      updateOrderStatus, 
-      updateOrderTracking,
-      getCustomerById,
-      getOrdersByCustomer,
-      createOrder,
-      updateCustomer,
-      addCustomer,
-      addOrderLog,
-      addShippingZone,
-      updateShippingZone,
-      deleteShippingZone
-    }}>
+    <EcommerceContext.Provider
+      value={{
+        customers,
+        orders,
+        shippingZones,
+        defaultShippingRate,
+        isLoading,
+        addCustomer,
+        updateCustomer,
+        createOrder,
+        updateOrderStatus,
+        updateOrderTracking,
+        getOrdersByCustomer,
+        addOrderLog,
+        addShippingZone,
+        updateShippingZone,
+        deleteShippingZone,
+        updateDefaultShippingRate,
+      }}
+    >
       {children}
     </EcommerceContext.Provider>
   );
@@ -477,7 +359,7 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
 export const useEcommerce = () => {
   const context = useContext(EcommerceContext);
   if (context === undefined) {
-    throw new Error('useEcommerce must be used within a EcommerceProvider');
+    throw new Error('useEcommerce must be used within an EcommerceProvider');
   }
   return context;
 };

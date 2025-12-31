@@ -68,9 +68,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           </span>
         </div>
 
-        {/* Admin Shortcut - Hidden but accessible */}
-        <div className="hidden lg:block absolute left-4 top-20 opacity-0 hover:opacity-100 transition-opacity z-50">
-            <Link href="/admin" className="text-[10px] text-gray-300 hover:text-gray-500 uppercase tracking-widest font-bold bg-white/80 px-2 py-1 rounded border border-gray-100">
+        {/* Admin Shortcut - Visible */}
+        <div className="hidden lg:block absolute left-4 top-20 z-50">
+            <Link href="/admin" className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-widest font-bold bg-white/80 px-2 py-1 rounded border border-gray-200 shadow-sm transition-colors">
                 Admin
             </Link>
         </div>

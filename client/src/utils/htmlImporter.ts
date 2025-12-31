@@ -526,10 +526,6 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
                               rotation: 0
                           }
                      });
-                     
-                     // Mark as extracted so we can hide it in the preview (to avoid burning text into the background image)
-                     // We use opacity: 0 to keep the layout space but make it invisible
-                     el.setAttribute('data-replit-extracted', 'true');
                      markKeep(el);
                  }
              }
@@ -553,16 +549,6 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
           }
       }
   });
-
-  // Inject style to hide extracted text
-  const styleEl = doc.createElement('style');
-  styleEl.textContent = `
-    [data-replit-extracted="true"] { 
-        opacity: 0 !important; 
-        pointer-events: none !important;
-    }
-  `;
-  doc.head.appendChild(styleEl);
 
   return { texts, images, cleanedHtml: doc.documentElement.outerHTML };
 };

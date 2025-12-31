@@ -526,14 +526,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         });
     }
 
-    // Add standard/global variables if not already present
+    // Add standard/global variables ONLY if strictly necessary and standard for all books
+    // For now, we only include "dedication" which is a system-level variable not always in wizard
     const standardVars = [
-        { id: 'dedication', label: 'Dédicace' },
-        { id: 'childName', label: "Prénom de l'enfant" }, 
-        { id: 'heroName', label: "Nom du Héros" },
-        { id: 'age', label: "Age" },
-        { id: 'city', label: "Ville" },
-        { id: 'gender', label: "Genre" }
+        { id: 'dedication', label: 'Dédicace' }
     ];
 
     standardVars.forEach(stdVar => {

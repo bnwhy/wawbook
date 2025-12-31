@@ -307,19 +307,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       return {
         left: <div className="w-full h-full bg-transparent" />, // Empty space left of cover
         right: (
-          <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-l-8 border-gray-100 bg-white text-slate-900`}>
-             {/* Spine / Binding Effect */}
-             <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-200 to-white border-r border-black/5 z-30"></div>
-             <div className="absolute left-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
-
-             {/* Cover Thickness (Right Edge) */}
-             <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-black/20 to-transparent z-20 pointer-events-none"></div>
-
+          <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden bg-white text-slate-900`}>
              {generatedPages[0] ? (
                  <img 
                     src={generatedPages[0]} 
                     className="absolute inset-0 w-full h-full object-cover" 
-                    style={{ marginLeft: '12px', width: 'calc(100% - 12px)' }} 
                     alt="Cover" 
                  />
              ) : hasCustomCover ? (
@@ -327,22 +319,22 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 (<>
                     {/* Background */}
                     {coverBg ? (
-                         <img src={coverBg.imageUrl} className="absolute inset-0 w-full h-full object-cover" style={{ marginLeft: '12px', width: 'calc(100% - 12px)' }} alt="Cover Background" />
+                         <img src={coverBg.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Cover Background" />
                     ) : (
                          book?.coverImage && (
-                            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${book.coverImage})`, marginLeft: '12px', width: 'calc(100% - 12px)' }}></div>
+                            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${book.coverImage})` }}></div>
                          )
                     )}
                     {/* Loading overlay if generating */}
                     {isGenerating && (
-                        <div className="absolute inset-0 z-50 bg-white/50 flex items-center justify-center" style={{ marginLeft: '12px' }}>
+                        <div className="absolute inset-0 z-50 bg-white/50 flex items-center justify-center">
                             <Loader2 className="animate-spin text-cloud-blue" />
                         </div>
                     )}
                 </>)
              ) : (
                 /* EMPTY COVER IF NOT CONFIGURED */
-                (<div className="absolute inset-0 bg-white" style={{ marginLeft: '12px' }}></div>)
+                (<div className="absolute inset-0 bg-white"></div>)
              )}
           </div>
         )
@@ -372,19 +364,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
         return {
             left: (
-                <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-r-8 border-gray-100 ${showCustomBack || showCleanBack ? 'bg-white' : 'bg-cloud-blue text-white'}`}>
-                     {/* Spine / Binding Effect */}
-                     <div className="absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-gray-200 to-white border-l border-black/5 z-30"></div>
-                     <div className="absolute right-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
-        
-                     {/* Cover Thickness (Left Edge) */}
-                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-black/20 to-transparent z-20 pointer-events-none"></div>
-        
+                <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden bg-white`}>
                      {generatedPages[999] ? (
                         <img 
                             src={generatedPages[999]} 
                             className="absolute inset-0 w-full h-full object-cover" 
-                            style={{ marginRight: '12px', width: 'calc(100% - 12px)' }} 
                             alt="Back Cover" 
                          />
                      ) : showCustomBack ? (
@@ -392,9 +376,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         (<>
                             {/* Background */}
                             {backCoverBg ? (
-                               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${backCoverBg.imageUrl})`, marginRight: '12px' }}></div>
+                               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${backCoverBg.imageUrl})` }}></div>
                             ) : null}
-                            <div className="absolute inset-0 z-10" style={{ marginRight: '12px' }}>
+                            <div className="absolute inset-0 z-10">
                                {/* Stickers */}
                                {backCoverImages.map(el => {
                                    const imageUrl = resolveImageUrl(el);
@@ -437,23 +421,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                ))}
                             </div>
                         </>)
-                     ) : showCleanBack ? (
-                        /* Clean White Back (when front is custom but back is empty) */
-                         (null)
                      ) : (
-                        /* Default / Legacy Mode */
-                        (<>
-                            {book?.coverImage ? (
-                                <>
-                                    <div className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60" style={{ backgroundImage: `url(${book.coverImage})`, marginRight: '12px' }}></div>
-                                    <div className="absolute inset-0 bg-black/20" style={{ marginRight: '12px' }}></div>
-                                </>
-                            ) : (
-                                <div className="absolute inset-0 bg-cloud-blue" style={{ marginRight: '12px' }}>
-                                     <div className="absolute inset-0 bg-white/10 opacity-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4yIj48cGF0aCBkPSJNMCA0MEw0MCAwSDBMNDAgNDBWMHoiLz48L2c+PC9zdmc+')]"></div>
-                                </div>
-                            )}
-                        </>)
+                        /* Default / Legacy Mode - Now Just Empty White */
+                        (null)
                      )}
             
                      {/* Branding removed as per strict config requirement */}

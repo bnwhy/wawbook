@@ -5828,19 +5828,48 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         }
                                                     }
                                                 
+                                                    // Smart merge of texts: update existing ones by ID, append new ones
+                                                    const existingTexts = selectedBook.contentConfig.texts || [];
+                                                    const newTexts = [...existingTexts];
+                                                    
+                                                    importSessionTexts.forEach(importedText => {
+                                                        const existingIndex = newTexts.findIndex(t => t.id === importedText.id);
+                                                        if (existingIndex >= 0) {
+                                                            newTexts[existingIndex] = importedText;
+                                                        } else {
+                                                            newTexts.push(importedText);
+                                                        }
+                                                    });
+
+                                                    // Smart merge of images: update existing ones by ID, append new ones
+                                                    const existingImages = selectedBook.contentConfig.imageElements || [];
+                                                    const newImages = [...existingImages];
+
+                                                    importSessionImages.forEach(importedImage => {
+                                                        const existingIndex = newImages.findIndex(i => i.id === importedImage.id);
+                                                        if (existingIndex >= 0) {
+                                                            newImages[existingIndex] = importedImage;
+                                                        } else {
+                                                            newImages.push(importedImage);
+                                                        }
+                                                    });
+
                                                     handleSaveBook({
                                                         ...selectedBook,
                                                         contentConfig: {
                                                             ...selectedBook.contentConfig,
-                                                            texts: [...(selectedBook.contentConfig.texts || []), ...importSessionTexts],
-                                                            imageElements: [...(selectedBook.contentConfig.imageElements || []), ...importSessionImages]
+                                                            texts: newTexts,
+                                                            imageElements: newImages
                                                         }
                                                     });
-                                                    setPreviewHtml(null);
-                                                    setImportSessionTexts([]);
-                                                    setImportSessionImages([]);
-                                                    setImportSessionDimensions(null);
-                                                    toast.success(`${importSessionTexts.length} éléments importés et sauvegardés`);
+                                                    
+                                                    // DO NOT CLOSE THE SESSION AUTOMATICALLY
+                                                    // setPreviewHtml(null);
+                                                    // setImportSessionTexts([]);
+                                                    // setImportSessionImages([]);
+                                                    // setImportSessionDimensions(null);
+                                                    
+                                                    toast.success(`Configuration sauvegardée et mise à jour (${importSessionTexts.length} éléments en session)`);
                                                 } catch (e) {
                                                     toast.error("Erreur lors de la sauvegarde");
                                                 }
@@ -5848,7 +5877,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-sm transition-colors text-sm flex items-center gap-2"
                                         >
                                             <Save size={16} />
-                                            Confirmer l'Import
+                                            Enregistrer & Mettre à jour
                                         </button>
                                     )}
                                     <button
@@ -5942,6 +5971,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 VAR
                                                             </div>
                                                         )}
+                                                        <button
+                                                            onClick={() => {
+                                                                const newTexts = importSessionTexts.filter((_, i) => i !== idx);
+                                                                setImportSessionTexts(newTexts);
+                                                            }}
+                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                            title="Supprimer cet élément de l'import"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))

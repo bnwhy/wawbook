@@ -1,0 +1,70 @@
+# NuageBook - Personalized Children's Book Platform
+
+## Overview
+
+NuageBook is a French-language e-commerce platform for creating personalized children's books. Users can customize characters (appearance, names, traits), preview their book in real-time, and order physical printed copies. The platform features a full admin dashboard for managing products, orders, customers, shipping zones, and navigation menus.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18+ with TypeScript
+- **Routing**: Wouter (lightweight React router)
+- **State Management**: React Context API for global state (Books, Cart, Menu, Ecommerce)
+- **Data Fetching**: TanStack React Query for server state management
+- **UI Components**: shadcn/ui (Radix primitives + Tailwind CSS)
+- **Styling**: Tailwind CSS v4 with custom theme extending cloud/accent color palette
+- **Drag & Drop**: @dnd-kit for sortable admin interfaces
+- **Fonts**: Google Fonts (Quicksand, Nunito, Chewy, Patrick Hand)
+
+### Backend Architecture
+- **Runtime**: Node.js with Express
+- **Language**: TypeScript (ESM modules)
+- **API Pattern**: RESTful JSON API under `/api/*` routes
+- **Build Tool**: Vite for frontend, esbuild for server bundling
+
+### Data Storage
+- **Database**: PostgreSQL via Neon Serverless
+- **ORM**: Drizzle ORM with Zod schema validation
+- **Schema Location**: `shared/schema.ts` (shared between client/server)
+- **Entities**: Users, Books, Customers, Orders, ShippingZones, Printers, Menus, Settings
+
+### Key Design Patterns
+1. **Shared Types**: Schema definitions in `shared/` are used by both frontend and backend
+2. **Context Providers**: Wrap app with BooksProvider, MenuProvider, CartProvider, EcommerceProvider
+3. **Wizard Configuration**: Books contain JSON `wizardConfig` defining customization tabs, variants, and options
+4. **Content Configuration**: Books contain JSON `contentConfig` for page layouts, text elements, and image mappings
+
+### Application Flow
+1. User browses books on homepage or category pages
+2. User enters wizard to customize character appearance and details
+3. Real-time preview shows personalized book pages
+4. User adds to cart, proceeds through checkout
+5. Admin manages products, orders, and shipping via dashboard
+
+## External Dependencies
+
+### Database
+- **Neon Serverless PostgreSQL**: Cloud-hosted Postgres accessed via `@neondatabase/serverless`
+- **Connection**: `DATABASE_URL` environment variable required
+
+### Third-Party Libraries
+- **ag-psd**: PSD file parsing for importing design assets
+- **html2canvas**: Screenshot generation for book previews
+- **PDF Generation**: Custom utilities in `utils/pdfGenerator.ts`
+- **Google Fonts Complete**: Font metadata for admin font selection
+
+### AI/Generation Services
+- **Gemini API**: Optional story text generation via `services/geminiService.ts`
+- **Environment Variable**: `GEMINI_API_KEY` for AI features
+
+### Build & Development
+- **Vite Plugins**: React, Tailwind CSS, Replit-specific plugins (cartographer, dev-banner, error overlay)
+- **Custom Plugin**: `vite-plugin-meta-images.ts` for OpenGraph image handling
+
+### Shipping & Payments
+- Architecture prepared for Stripe integration (dependency listed)
+- Shipping zones configured per-country with multiple methods

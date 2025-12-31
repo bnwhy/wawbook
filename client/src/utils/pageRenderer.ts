@@ -135,6 +135,7 @@ export const renderHtmlPageToImage = async (
         });
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        console.log('[pageRenderer] Generated dataUrl length:', dataUrl?.length, 'starts with:', dataUrl?.substring(0, 50));
         document.body.removeChild(iframe);
         resolve(dataUrl);
       } catch (error) {

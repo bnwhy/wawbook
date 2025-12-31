@@ -5750,12 +5750,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
 
                     <div className="mt-4 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 mx-6 mb-6">
-                        <div className="flex flex-col gap-4 mb-4">
+                        <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                     <FileCode className="text-brand-coral" size={20} />
                                     Aperçu et Mapping des Variables
                                 </h3>
-                                <div className="flex gap-2 self-end">
+                                <div className="flex gap-2">
                                     {importSessionTexts.length > 0 && (
                                         <button
                                             type="button"
@@ -5815,9 +5815,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     />
                                 </div>
                                 <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50">
-                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex flex-col items-start gap-1">
+                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center">
                                         <span>TEXTES DÉTECTÉS ({importSessionTexts.length})</span>
-                                        <span className="text-[10px] text-gray-400 font-normal">Associez les textes aux variables</span>
+                                        <span className="text-[10px] text-gray-400">Associez les textes aux variables</span>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                                         {importSessionTexts.length === 0 ? (

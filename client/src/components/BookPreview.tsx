@@ -129,6 +129,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             (current, total) => console.log(`[BookPreview] Rendered page ${current}/${total}`)
                         );
                         console.log('[BookPreview] Rendered pages count:', Object.keys(pages).length);
+                        // Debug: log each page's dataUrl info
+                        Object.entries(pages).forEach(([idx, dataUrl]) => {
+                            console.log(`[BookPreview] Page ${idx} dataUrl length:`, dataUrl?.length, 'starts with:', dataUrl?.substring(0, 80));
+                        });
                         setGeneratedPages(pages);
                         setIsGenerating(false);
                         return;

@@ -470,7 +470,7 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
                  // But assuming Data URI or absolute URL for now.
                  // If it's a file path reference, we can't really read it unless it's a Data URI.
                  // We'll skip images that aren't data URIs or http links.
-                 if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('blob:')) {
+                 if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('blob:') || src.startsWith('/objects/')) {
                     images.push({
                         id: `img-html-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                         label: cleanLabel,

@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -434,6 +435,9 @@ export async function registerRoutes(
       res.status(500).json({ error: "Failed to set value" });
     }
   });
+
+  // Register object storage routes for file uploads
+  registerObjectStorageRoutes(app);
 
   return httpServer;
 }

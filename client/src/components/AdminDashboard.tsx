@@ -5733,29 +5733,33 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                     </div>
 
-                    
-                 </div>
-                 </div>
-              )}
-
-              {previewHtml && (
-                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-8 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
-                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                <FileCode className="text-brand-coral" size={20} />
-                                Aperçu du modèle importé
-                            </h3>
-                            <button 
-                                onClick={() => setPreviewHtml(null)}
-                                className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-500 hover:text-red-500"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-auto bg-gray-100 p-6 flex justify-center">
-                             <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200"> 
+                    {previewHtml && (
+                        <div className="mt-4 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    <FileCode className="text-brand-coral" size={20} />
+                                    Aperçu du modèle importé
+                                </h3>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleCapturePreview}
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-brand-coral hover:bg-brand-coral/90 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95"
+                                    >
+                                        <Camera size={16} />
+                                        <span>Générer JPEG</span>
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setPreviewHtml(null)}
+                                        className="px-3 py-1.5 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors text-sm"
+                                    >
+                                        Fermer
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex justify-center overflow-auto">
                                 <iframe 
                                     srcDoc={previewHtml}
                                     className="w-[800px] h-[600px] border-0 bg-white" 
@@ -5764,27 +5768,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 />
                             </div>
                         </div>
-
-                        <div className="p-4 border-t border-gray-100 bg-white flex justify-end gap-3">
-                             <button 
-                                type="button"
-                                onClick={() => setPreviewHtml(null)}
-                                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                Fermer
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleCapturePreview}
-                                className="flex items-center gap-2 px-4 py-2 bg-brand-coral hover:bg-brand-coral/90 text-white font-bold rounded-lg shadow-lg shadow-brand-coral/20 transition-all active:scale-95"
-                            >
-                                <Camera size={18} />
-                                <span>Générer JPEG et Ajouter au Livre</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                    )}
+                    
+                 </div>
+                 </div>
               )}
+
               {draftStatus && draftStatus !== (orders.find(o => o.id === selectedOrderId)?.status) && (
                  <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-4 z-50 animate-in fade-in slide-in-from-bottom-4 border border-slate-700/50 backdrop-blur-md bg-slate-900/90">
                     <div className="flex items-center gap-2">

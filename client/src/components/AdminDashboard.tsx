@@ -5730,7 +5730,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   className="hidden"
                               />
                           </div>
-                       
                     </div>
 
                     {/* Preview Container - MOVED INSIDE Content Tab */}
@@ -5796,7 +5795,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                         );
                     })()}
-
                  </div>
               )}
               {draftStatus && draftStatus !== (orders.find(o => o.id === selectedOrderId)?.status) && (

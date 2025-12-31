@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Loader2 } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { Story, BookConfig } from '../types';
+import { Story, BookConfig, Gender } from '../types';
 import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
@@ -46,7 +46,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         if (k === 'age') return config.age?.toString() || '';
         if (k === 'heroName') return config.childName || 'Héros';
         if (k === 'city') return config.city || '';
-        if (k === 'gender') return config.gender === 'girl' ? 'Fille' : 'Garçon';
+        if (k === 'gender') return config.gender === Gender.Girl ? 'Fille' : 'Garçon';
 
         return match;
     });

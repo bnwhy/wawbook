@@ -113,6 +113,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             
             const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
             
+            // Trigger Download
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `preview-capture-${Date.now()}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
             // Determine target page index
             let targetPageIndex = 1;
             if (pendingImportPageId && selectedBook) {
@@ -143,7 +151,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         imageElements: [...(selectedBook.contentConfig.imageElements || []), newImage]
                     }
                 });
-                toast.success("Capture ajoutée au livre !");
+                toast.success("Capture téléchargée et ajoutée au livre !");
             }
     
         } catch (e) {
@@ -5749,7 +5757,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         className="flex items-center gap-2 px-3 py-1.5 bg-brand-coral hover:bg-brand-coral/90 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95"
                                     >
                                         <Camera size={16} />
-                                        <span>Générer JPEG</span>
+                                        <span>Générer et Télécharger</span>
                                     </button>
                                     <button 
                                         type="button"

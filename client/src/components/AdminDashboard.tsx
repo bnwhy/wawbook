@@ -1307,7 +1307,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                      <button
                         onClick={() => {
-                           if (selectedBookId) {
+                           if (selectedBookId && selectedBook) {
                                window.open(`/?preview_book=${selectedBook.id}`, '_blank');
                            }
                         }}

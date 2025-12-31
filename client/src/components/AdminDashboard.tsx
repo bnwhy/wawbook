@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Theme } from '../types';
-import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType } from '../types/admin';
+import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType, RawHtmlPage } from '../types/admin';
 import { ShippingZone, ShippingMethod } from '../types/ecommerce';
 import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
@@ -81,6 +81,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [importSessionTexts, setImportSessionTexts] = useState<TextElement[]>([]);
   const [importSessionImages, setImportSessionImages] = useState<ImageElement[]>([]);
   const [importSessionDimensions, setImportSessionDimensions] = useState<{ width: number, height: number } | null>(null);
+  const [importSessionRawHtmlPages, setImportSessionRawHtmlPages] = useState<RawHtmlPage[]>([]);
+  const [importSessionCssContent, setImportSessionCssContent] = useState<string>('');
 
 
   // Shipping Zone State
@@ -5670,14 +5672,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          setPreviewHtml(htmlContent);
                                      }
                                      
-                                     // Store raw HTML pages and CSS for page rendering
+                                     // Store raw HTML pages and CSS in session state for later save
                                      if (rawHtmlPages && rawHtmlPages.length > 0) {
-                                         const updatedContentConfig = {
-                                             ...selectedBook.contentConfig,
-                                             rawHtmlPages,
-                                             cssContent: cssContentStr || ''
-                                         };
-                                         updateBook({ ...selectedBook, contentConfig: updatedContentConfig });
+                                         setImportSessionRawHtmlPages(rawHtmlPages);
+                                         setImportSessionCssContent(cssContentStr || '');
                                          toast.info(`${rawHtmlPages.length} page(s) HTML stockée(s) pour le rendu.`);
                                      }
                                      
@@ -5925,9 +5923,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 contentConfig: {
                                                                     ...selectedBook.contentConfig,
                                                                     texts: newTexts,
-                                                                    imageElements: newImages
+                                                                    imageElements: newImages,
+                                                                    rawHtmlPages: importSessionRawHtmlPages.length > 0 ? importSessionRawHtmlPages : selectedBook.contentConfig.rawHtmlPages,
+                                                                    cssContent: importSessionCssContent || selectedBook.contentConfig.cssContent
                                                                 }
                                                             });
+                                                            
+                                                            // Clear session states after successful save
+                                                            setImportSessionRawHtmlPages([]);
+                                                            setImportSessionCssContent('');
                                                             
                                                             toast.success(`Configuration sauvegardée et mise à jour (${importSessionTexts.length} éléments en session)`);
                                                         } catch (e) {

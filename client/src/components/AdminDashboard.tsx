@@ -5797,199 +5797,233 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                  </div>
 
-                    {previewHtml && (
-                        <div className="mt-4 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 mx-6 mb-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                    <FileCode className="text-brand-coral" size={20} />
-                                    Aperçu et Mapping des Variables
-                                </h3>
-                                <div className="flex gap-2">
-                                    {importSessionTexts.length > 0 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                try {
-                                                    // If we have dimensions, ask user if they want to update book dimensions
-                                                    if (importSessionDimensions) {
-                                                        const currentW = selectedBook.features?.dimensions?.width || 210;
-                                                        const currentH = selectedBook.features?.dimensions?.height || 210;
-                                                        // Simple heuristic: if diff > 10%
-                                                        if (Math.abs(currentW - importSessionDimensions.width) > 10 || Math.abs(currentH - importSessionDimensions.height) > 10) {
-                                                            if (confirm(`Les dimensions détectées (${importSessionDimensions.width}x${importSessionDimensions.height}) sont différentes de celles du livre (${currentW}x${currentH}). Voulez-vous mettre à jour les dimensions du livre ?`)) {
-                                                                handleSaveBook({
-                                                                    ...selectedBook,
-                                                                    features: {
-                                                                        ...selectedBook.features,
-                                                                        dimensions: importSessionDimensions
-                                                                    }
-                                                                });
-                                                            }
-                                                        }
-                                                    }
-                                                
-                                                    // Smart merge of texts: update existing ones by ID, append new ones
-                                                    const existingTexts = selectedBook.contentConfig.texts || [];
-                                                    const newTexts = [...existingTexts];
-                                                    
-                                                    importSessionTexts.forEach(importedText => {
-                                                        const existingIndex = newTexts.findIndex(t => t.id === importedText.id);
-                                                        if (existingIndex >= 0) {
-                                                            newTexts[existingIndex] = importedText;
-                                                        } else {
-                                                            newTexts.push(importedText);
-                                                        }
-                                                    });
-
-                                                    // Smart merge of images: update existing ones by ID, append new ones
-                                                    const existingImages = selectedBook.contentConfig.imageElements || [];
-                                                    const newImages = [...existingImages];
-
-                                                    importSessionImages.forEach(importedImage => {
-                                                        const existingIndex = newImages.findIndex(i => i.id === importedImage.id);
-                                                        if (existingIndex >= 0) {
-                                                            newImages[existingIndex] = importedImage;
-                                                        } else {
-                                                            newImages.push(importedImage);
-                                                        }
-                                                    });
-
-                                                    handleSaveBook({
-                                                        ...selectedBook,
-                                                        contentConfig: {
-                                                            ...selectedBook.contentConfig,
-                                                            texts: newTexts,
-                                                            imageElements: newImages
-                                                        }
-                                                    });
-                                                    
-                                                    // DO NOT CLOSE THE SESSION AUTOMATICALLY
-                                                    // setPreviewHtml(null);
-                                                    // setImportSessionTexts([]);
-                                                    // setImportSessionImages([]);
-                                                    // setImportSessionDimensions(null);
-                                                    
-                                                    toast.success(`Configuration sauvegardée et mise à jour (${importSessionTexts.length} éléments en session)`);
-                                                } catch (e) {
-                                                    toast.error("Erreur lors de la sauvegarde");
-                                                }
-                                            }}
-                                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-sm transition-colors text-sm flex items-center gap-2"
-                                        >
-                                            <Save size={16} />
-                                            Enregistrer & Mettre à jour
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={handleCapturePreview}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-brand-coral hover:bg-brand-coral/90 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95"
-                                    >
-                                        <Camera size={16} />
-                                        <span>Générer JPEG</span>
-                                    </button>
-                                    <button 
-                                        type="button"
-                                        onClick={() => {
-                                            setPreviewHtml(null);
-                                            setImportSessionTexts([]);
-                                            setImportSessionImages([]);
-                                        }}
-                                        className="px-3 py-1.5 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors text-sm"
-                                    >
-                                        Fermer
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4 h-[600px]">
-                                <div className="flex-1 border border-gray-200 rounded overflow-hidden bg-white relative">
-                                    <iframe 
-                                        srcDoc={previewHtml}
-                                        className="w-full h-full border-0 bg-white" 
-                                        title="HTML Preview"
-                                        sandbox="allow-same-origin" 
-                                    />
-                                    {importSessionDimensions && (
-                                        <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none font-mono">
-                                            DIMENSIONS: {Math.round(importSessionDimensions.width)} x {Math.round(importSessionDimensions.height)} px
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50">
-                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center">
-                                        <span>TEXTES DÉTECTÉS ({importSessionTexts.length})</span>
-                                        <span className="text-[10px] text-gray-400">Associez les textes aux variables</span>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                                        {importSessionTexts.length === 0 ? (
-                                            <div className="text-center text-gray-400 py-8 text-sm">
-                                                Aucun texte détecté dans ce fichier.
+                    <div className="flex-1 min-h-0 flex gap-6">
+                        {previewHtml ? (
+                            <>
+                                {/* HTML Preview Area (Import Mode) */}
+                                <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm relative flex flex-col">
+                                    <div className="flex-1 relative">
+                                        <iframe 
+                                            srcDoc={previewHtml}
+                                            className="w-full h-full border-0 bg-white" 
+                                            title="HTML Preview"
+                                            sandbox="allow-same-origin" 
+                                        />
+                                        {importSessionDimensions && (
+                                            <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none font-mono">
+                                                DIMENSIONS: {Math.round(importSessionDimensions.width)} x {Math.round(importSessionDimensions.height)} px
                                             </div>
-                                        ) : (
-                                            importSessionTexts.map((textItem, idx) => (
-                                                <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm text-sm hover:border-brand-coral/50 transition-colors">
-                                                    <div className="mb-2 font-mono text-xs text-gray-500 truncate" title={textItem.id}>
-                                                        ID: {textItem.id.split('-').pop()} | Page {textItem.position.pageIndex}
-                                                    </div>
-                                                    <div className="mb-3 p-2 bg-gray-50 rounded text-gray-800 text-sm border border-gray-100 italic">
-                                                        "{textItem.content.length > 50 ? textItem.content.substring(0, 50) + '...' : textItem.content}"
-                                                    </div>
-                                                    
-                                                    <div className="flex items-center gap-2">
-                                                        <select
-                                                            className="flex-1 text-xs border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-brand-coral focus:border-brand-coral outline-none"
-                                                            value={textItem.type === 'variable' ? textItem.content : ''}
-                                                            onChange={(e) => {
-                                                                const newVal = e.target.value;
-                                                                const newTexts = [...importSessionTexts];
-                                                                if (newVal) {
-                                                                    newTexts[idx] = { 
-                                                                        ...newTexts[idx], 
-                                                                        type: 'variable', 
-                                                                        content: newVal 
-                                                                    };
-                                                                } else {
-                                                                    // Revert to original content if possible, but we don't store original separately here.
-                                                                    // For now, switch to fixed but keep content (user can edit manually if we added that)
-                                                                     newTexts[idx] = { 
-                                                                        ...newTexts[idx], 
-                                                                        type: 'fixed'
-                                                                    };
-                                                                }
-                                                                setImportSessionTexts(newTexts);
-                                                            }}
-                                                        >
-                                                            {variableOptions.map(opt => (
-                                                                <option key={opt.value} value={opt.value}>
-                                                                    {opt.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        {textItem.type === 'variable' && (
-                                                            <div className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">
-                                                                VAR
-                                                            </div>
-                                                        )}
-                                                        <button
-                                                            onClick={() => {
-                                                                const newTexts = importSessionTexts.filter((_, i) => i !== idx);
-                                                                setImportSessionTexts(newTexts);
-                                                            }}
-                                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                                            title="Supprimer cet élément de l'import"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Variable Mapping Sidebar (Right) */}
+                                <div className="w-[450px] shrink-0 bg-white rounded-xl border border-gray-200 flex flex-col shadow-sm">
+                                    <div className="p-4 border-b border-gray-200 flex flex-col gap-4">
+                                        <div className="flex justify-between items-center">
+                                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                                <FileCode className="text-brand-coral" size={20} />
+                                                Aperçu et Mapping
+                                            </h3>
+                                            <button 
+                                                onClick={() => {
+                                                    setPreviewHtml(null);
+                                                    setImportSessionTexts([]);
+                                                    setImportSessionImages([]);
+                                                }}
+                                                className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-colors"
+                                                title="Fermer l'import"
+                                            >
+                                                <X size={20} />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex gap-2 flex-wrap">
+                                            {importSessionTexts.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        try {
+                                                            if (importSessionDimensions) {
+                                                                const currentW = selectedBook.features?.dimensions?.width || 210;
+                                                                const currentH = selectedBook.features?.dimensions?.height || 210;
+                                                                if (Math.abs(currentW - importSessionDimensions.width) > 10 || Math.abs(currentH - importSessionDimensions.height) > 10) {
+                                                                    if (confirm(`Les dimensions détectées (${importSessionDimensions.width}x${importSessionDimensions.height}) sont différentes de celles du livre (${currentW}x${currentH}). Voulez-vous mettre à jour les dimensions du livre ?`)) {
+                                                                        handleSaveBook({
+                                                                            ...selectedBook,
+                                                                            features: { ...selectedBook.features, dimensions: importSessionDimensions }
+                                                                        });
+                                                                    }
+                                                                }
+                                                            }
+                                                        
+                                                            const existingTexts = selectedBook.contentConfig.texts || [];
+                                                            const newTexts = [...existingTexts];
+                                                            
+                                                            importSessionTexts.forEach(importedText => {
+                                                                const existingIndex = newTexts.findIndex(t => t.id === importedText.id);
+                                                                if (existingIndex >= 0) {
+                                                                    newTexts[existingIndex] = importedText;
+                                                                } else {
+                                                                    newTexts.push(importedText);
+                                                                }
+                                                            });
+
+                                                            const existingImages = selectedBook.contentConfig.imageElements || [];
+                                                            const newImages = [...existingImages];
+
+                                                            importSessionImages.forEach(importedImage => {
+                                                                const existingIndex = newImages.findIndex(i => i.id === importedImage.id);
+                                                                if (existingIndex >= 0) {
+                                                                    newImages[existingIndex] = importedImage;
+                                                                } else {
+                                                                    newImages.push(importedImage);
+                                                                }
+                                                            });
+
+                                                            handleSaveBook({
+                                                                ...selectedBook,
+                                                                contentConfig: {
+                                                                    ...selectedBook.contentConfig,
+                                                                    texts: newTexts,
+                                                                    imageElements: newImages
+                                                                }
+                                                            });
+                                                            
+                                                            toast.success(`Configuration sauvegardée et mise à jour (${importSessionTexts.length} éléments en session)`);
+                                                        } catch (e) {
+                                                            toast.error("Erreur lors de la sauvegarde");
+                                                        }
+                                                    }}
+                                                    className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-sm transition-colors text-sm flex items-center justify-center gap-2"
+                                                >
+                                                    <Save size={16} />
+                                                    Enregistrer & Mettre à jour
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+                                        <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center shrink-0">
+                                            <span>TEXTES DÉTECTÉS ({importSessionTexts.length})</span>
+                                            <span className="text-[10px] text-gray-400">Associez les textes aux variables</span>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                                            {importSessionTexts.length === 0 ? (
+                                                <div className="text-center text-gray-400 py-8 text-sm">
+                                                    Aucun texte détecté dans ce fichier.
+                                                </div>
+                                            ) : (
+                                                importSessionTexts.map((textItem, idx) => (
+                                                    <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm text-sm hover:border-brand-coral/50 transition-colors">
+                                                        <div className="mb-2 font-mono text-xs text-gray-500 truncate" title={textItem.id}>
+                                                            ID: {textItem.id.split('-').pop()} | Page {textItem.position.pageIndex}
+                                                        </div>
+                                                        <div className="mb-3 p-2 bg-gray-50 rounded text-gray-800 text-sm border border-gray-100 italic">
+                                                            "{textItem.content.length > 50 ? textItem.content.substring(0, 50) + '...' : textItem.content}"
+                                                        </div>
+                                                        
+                                                        <div className="flex items-center gap-2">
+                                                            <select
+                                                                className="flex-1 text-xs border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-brand-coral focus:border-brand-coral outline-none"
+                                                                value={textItem.type === 'variable' ? textItem.content : ''}
+                                                                onChange={(e) => {
+                                                                    const newVal = e.target.value;
+                                                                    const newTexts = [...importSessionTexts];
+                                                                    if (newVal) {
+                                                                        newTexts[idx] = { 
+                                                                            ...newTexts[idx], 
+                                                                            type: 'variable', 
+                                                                            content: newVal 
+                                                                        };
+                                                                    } else {
+                                                                        // Revert to original content if possible
+                                                                         newTexts[idx] = { 
+                                                                            ...newTexts[idx], 
+                                                                            type: 'fixed'
+                                                                        };
+                                                                    }
+                                                                    setImportSessionTexts(newTexts);
+                                                                }}
+                                                            >
+                                                                {variableOptions.map(opt => (
+                                                                    <option key={opt.value} value={opt.value}>
+                                                                        {opt.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            {textItem.type === 'variable' && (
+                                                                <div className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">
+                                                                    VAR
+                                                                </div>
+                                                            )}
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newTexts = importSessionTexts.filter((_, i) => i !== idx);
+                                                                    setImportSessionTexts(newTexts);
+                                                                }}
+                                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                                                title="Supprimer cet élément"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            /* Storyboard Grid (Default Mode) */
+                            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 rounded-xl border border-slate-200/50">
+                                {(!selectedBook.contentConfig.pages || selectedBook.contentConfig.pages.length === 0) ? (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
+                                        <div className="p-4 bg-slate-100 rounded-full">
+                                            <Layout size={32} className="opacity-50" />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="font-medium text-slate-600">Aucune page configurée</p>
+                                            <p className="text-sm text-slate-400 mt-1">Utilisez le panneau d'import dans la barre d'outils pour commencer.</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {selectedBook.contentConfig.pages.sort((a: any, b: any) => a.pageNumber - b.pageNumber).map((page: any) => (
+                                            <div 
+                                                key={page.id}
+                                                className={`relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
+                                                    selectedPageId === page.id ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' : 'border-slate-100 hover:border-brand-coral/30'
+                                                }`}
+                                                onClick={() => setSelectedPageId(page.id)}
+                                            >
+                                                <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
+                                                    <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-mono">
+                                                            {page.pageNumber}
+                                                        </span>
+                                                        Page {page.pageNumber}
+                                                    </span>
+                                                </div>
+                                                <div className="aspect-[3/2] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
+                                                    <div className="text-center space-y-1">
+                                                        <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                            {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageNumber).length || 0} Textes
+                                                        </div>
+                                                        <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                            {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageNumber).length || 0} Images
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                  </div>
               )}

@@ -90,35 +90,32 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   const currentCombinationKey = getCombinationKey();
 
-  // --- GENERATE PAGES EFFECT ---
+  // --- LOAD PAGE IMAGES ---
   useEffect(() => {
     if (book) {
         setIsGenerating(true);
         const timer = setTimeout(async () => {
             try {
-                // Check if we have raw HTML pages (from EPUB import)
-                const rawPages = book.contentConfig?.rawHtmlPages;
-                const cssContent = book.contentConfig?.cssContent || '';
+                // Priority 1: Use pre-rendered page images from server (EPUB import)
+                const pageImages = book.contentConfig?.pageImages;
                 
-                if (rawPages && rawPages.length > 0) {
-                    console.log(`Rendering ${rawPages.length} HTML pages with html2canvas...`);
-                    const pages = await renderAllPages(
-                        rawPages,
-                        cssContent,
-                        config,
-                        config.characters,
-                        undefined,
-                        (current, total) => console.log(`Rendered page ${current}/${total}`)
-                    );
+                if (pageImages && pageImages.length > 0) {
+                    console.log(`Using ${pageImages.length} pre-rendered page images from server`);
+                    const pages: Record<number, string> = {};
+                    pageImages.forEach(pi => {
+                        pages[pi.pageIndex] = pi.imageUrl;
+                    });
                     setGeneratedPages(pages);
-                } else {
-                    // Fallback to canvas-based generation
-                    const pages = await generateBookPages(book, config, currentCombinationKey);
-                    setGeneratedPages(pages);
+                    setIsGenerating(false);
+                    return;
                 }
+                
+                // Priority 2: Fallback to canvas-based generation for non-EPUB books
+                const pages = await generateBookPages(book, config, currentCombinationKey);
+                setGeneratedPages(pages);
                 setIsGenerating(false);
             } catch (err) {
-                console.error("Failed to generate pages", err);
+                console.error("Failed to load pages", err);
                 setIsGenerating(false);
             }
         }, 100);

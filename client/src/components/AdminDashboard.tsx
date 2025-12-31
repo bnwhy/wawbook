@@ -5526,7 +5526,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
               {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
               {activeTab === 'content' && selectedBookId && selectedBook && (
-                 <div className="flex flex-col gap-6 h-[calc(100vh-180px)] relative">
+                 <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
                     
                     {/* Toolbar */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex justify-between items-center shrink-0">
@@ -5795,8 +5795,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                     </div>
 
+                    <div className="flex-1 min-h-0 flex gap-6">
                     {/* Storyboard Grid - Restored */}
-                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 rounded-xl border border-slate-200/50 mr-[620px]">
+                    <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 rounded-xl border border-slate-200/50">
                         {(!selectedBook.contentConfig.pages || selectedBook.contentConfig.pages.length === 0) ? (
                             <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
                                 <div className="p-4 bg-slate-100 rounded-full">
@@ -5841,7 +5842,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         )}
                     </div>
 
-                        <div className="absolute top-24 right-4 bottom-4 w-[600px] bg-white p-4 rounded-xl border border-gray-200 shadow-2xl animate-in slide-in-from-right-4 flex flex-col z-50">
+                        <div className="w-[450px] shrink-0 bg-white rounded-xl border border-gray-200 flex flex-col shadow-sm">
                             <div className="flex flex-col gap-4 mb-4 shrink-0">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                     <FileCode className="text-brand-coral" size={20} />
@@ -6042,6 +6043,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </div>
                     </div>
                 </div>
+            </div>
               )}
 
               {draftStatus && draftStatus !== (orders.find(o => o.id === selectedOrderId)?.status) && (

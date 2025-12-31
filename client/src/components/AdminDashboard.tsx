@@ -80,49 +80,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [importSessionImages, setImportSessionImages] = useState<ImageElement[]>([]);
   const [importSessionDimensions, setImportSessionDimensions] = useState<{ width: number, height: number } | null>(null);
 
-  // Compute available variable options based on selected book wizard config
-  const variableOptions = useMemo(() => {
-    const options: { value: string; label: string }[] = [
-        { value: '', label: '-- Texte Fixe --' }
-    ];
-
-    if (selectedBook?.wizardConfig?.tabs) {
-        selectedBook.wizardConfig.tabs.forEach(tab => {
-            if (tab.variants) {
-                tab.variants.forEach(variant => {
-                    if (variant.type === 'text') {
-                        options.push({
-                            value: `{{${variant.id}}}`,
-                            label: `${variant.title || variant.label} (${variant.id})`
-                        });
-                    }
-                });
-            }
-        });
-    }
-
-    // Add standard/global variables if not already present
-    const standardVars = [
-        { id: 'dedication', label: 'Dédicace' },
-        { id: 'childName', label: "Prénom de l'enfant" }, 
-        { id: 'heroName', label: "Nom du Héros" },
-        { id: 'age', label: "Age" },
-        { id: 'city', label: "Ville" },
-        { id: 'gender', label: "Genre" }
-    ];
-
-    standardVars.forEach(stdVar => {
-        const key = `{{${stdVar.id}}}`;
-        if (!options.some(o => o.value === key)) {
-             options.push({
-                value: key,
-                label: `${stdVar.label} (${stdVar.id})`
-            });
-        }
-    });
-
-    return options;
-  }, [selectedBook]);
 
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -547,6 +504,50 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const contextBook = books.find(b => b.id === selectedBookId);
   const [draftBook, setDraftBook] = useState<BookProduct | null>(null);
   const selectedBook = draftBook || contextBook;
+
+  // Compute available variable options based on selected book wizard config
+  const variableOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [
+        { value: '', label: '-- Texte Fixe --' }
+    ];
+
+    if (selectedBook?.wizardConfig?.tabs) {
+        selectedBook.wizardConfig.tabs.forEach(tab => {
+            if (tab.variants) {
+                tab.variants.forEach(variant => {
+                    if (variant.type === 'text') {
+                        options.push({
+                            value: `{{${variant.id}}}`,
+                            label: `${variant.title || variant.label} (${variant.id})`
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // Add standard/global variables if not already present
+    const standardVars = [
+        { id: 'dedication', label: 'Dédicace' },
+        { id: 'childName', label: "Prénom de l'enfant" }, 
+        { id: 'heroName', label: "Nom du Héros" },
+        { id: 'age', label: "Age" },
+        { id: 'city', label: "Ville" },
+        { id: 'gender', label: "Genre" }
+    ];
+
+    standardVars.forEach(stdVar => {
+        const key = `{{${stdVar.id}}}`;
+        if (!options.some(o => o.value === key)) {
+             options.push({
+                value: key,
+                label: `${stdVar.label} (${stdVar.id})`
+            });
+        }
+    });
+
+    return options;
+  }, [selectedBook]);
   
   // Effect to load all fonts used in the book
   React.useEffect(() => {

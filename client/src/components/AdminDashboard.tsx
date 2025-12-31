@@ -1326,16 +1326,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
                     
                     <button 
-                       onClick={() => {
-                          console.log("Save button clicked", { draftBook, selectedBook, selectedBookId });
+                       onClick={async () => {
                           const bookToSave = draftBook || selectedBook;
                           if (bookToSave) {
-                             console.log("Calling updateBook with:", bookToSave.id);
-                             updateBook(bookToSave);
-                             setDraftBook(JSON.parse(JSON.stringify(bookToSave)));
-                             toast.success("Modifications enregistrées");
-                          } else {
-                             console.log("No book to save - bookToSave is falsy");
+                             try {
+                                await updateBook(bookToSave);
+                                setDraftBook(JSON.parse(JSON.stringify(bookToSave)));
+                             } catch (error) {
+                                console.error("Error saving book:", error);
+                             }
                           }
                        }}
                        disabled={!selectedBook}

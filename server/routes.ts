@@ -53,10 +53,11 @@ export async function registerRoutes(
 
   app.patch("/api/books/:id", async (req, res) => {
     try {
+      const { createdAt, ...rest } = req.body;
       const body = {
-        ...req.body,
-        price: req.body.price !== undefined ? String(req.body.price) : undefined,
-        oldPrice: req.body.oldPrice !== undefined ? String(req.body.oldPrice) : undefined,
+        ...rest,
+        price: rest.price !== undefined ? String(rest.price) : undefined,
+        oldPrice: rest.oldPrice !== undefined ? String(rest.oldPrice) : undefined,
       };
       const book = await storage.updateBook(req.params.id, body);
       if (!book) {

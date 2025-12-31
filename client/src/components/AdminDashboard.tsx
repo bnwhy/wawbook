@@ -2548,9 +2548,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   <span className="font-bold">{Number(item.price).toFixed(2)} €</span>
                                                </div>
                                                <p className="text-sm text-slate-500 mb-1">Quantité: {item.quantity}</p>
-                                               <div className="text-xs text-slate-400 bg-slate-50 p-2 rounded inline-block">
-                                                  {JSON.stringify(item.configuration, null, 2)}
-                                               </div>
+                                               <pre className="text-xs text-slate-600 bg-slate-50 p-2 rounded max-w-md overflow-x-auto whitespace-pre-wrap">
+                                                  {JSON.stringify(item.config || item.configuration, null, 2)}
+                                               </pre>
                                             </div>
                                          </div>
                                       ))}

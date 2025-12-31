@@ -1307,7 +1307,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                      <button
                         onClick={() => {
-                           if (selectedBookId && selectedBook) {
+                           if (selectedBookId) {
                                window.open(`/?preview_book=${selectedBook.id}`, '_blank');
                            }
                         }}
@@ -5749,8 +5749,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                     </div>
 
-                    <div className="mt-4 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 mx-6 mb-6">
-                        <div className="flex justify-between items-center mb-4">
+                 </div>
+
+                    {previewHtml && (
+                        <div className="mt-4 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 mx-6 mb-6">
+                            <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                     <FileCode className="text-brand-coral" size={20} />
                                     Aperçu et Mapping des Variables
@@ -5879,7 +5882,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                  </div>
               )}

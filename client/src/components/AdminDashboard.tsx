@@ -5465,15 +5465,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
                     
                     {/* Toolbar */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex justify-between items-center shrink-0">
-                       <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2 text-slate-600 font-bold text-sm px-2">
-                             <Layout size={16} />
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex justify-between items-center shrink-0">
+                       <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 text-slate-600 font-bold">
+                             <Layout size={18} />
                              <span>Vue Storyboard</span>
                           </div>
 
                           {/* Variant Selector */}
-                          <div className="flex items-center gap-2 border-l border-gray-200 pl-3 ml-1">
+                          <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
                              <label className="text-[10px] font-bold text-gray-400 uppercase">Variante</label>
                              <select 
                                 value={selectedVariant}
@@ -5738,11 +5738,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  </div>
               )}
 
-              {(() => {
+              {previewHtml && (() => {
                   const dims = selectedBook?.features?.dimensions || { width: 210, height: 297 };
                   const ratio = dims.width / dims.height;
                   const maxW = 800;
                   const maxH = 600;
+                  const previewRatio = maxW / maxH;
                   
                   let w = maxW;
                   let h = maxW / ratio;
@@ -5753,7 +5754,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       w = h * ratio;
                   }
 
-                  // Always render the container, but show placeholder if no previewHtml
                   return (
                     <div className="w-full -mt-20 relative z-20">
                         <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -5762,39 +5762,42 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     <FileCode className="text-brand-coral" size={20} />
                                     Aperçu du modèle importé
                                 </h3>
-                                {/* Close button removed as requested to keep it always visible */}
+                                <button 
+                                    onClick={() => setPreviewHtml(null)}
+                                    className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-500 hover:text-red-500"
+                                >
+                                    <X size={20} />
+                                </button>
                             </div>
 
                             <div className="bg-gray-100 p-6 flex justify-center">
-                                <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200" style={{ width: `${w}px`, height: `${h}px` }}> 
-                                    {previewHtml ? (
-                                        <iframe 
-                                            srcDoc={previewHtml}
-                                            className="border-0 bg-white w-full h-full"
-                                            title="HTML Preview"
-                                            sandbox="allow-same-origin" 
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-2">
-                                            <FileCode size={48} className="opacity-20" />
-                                            <p className="text-sm font-medium">Aucun aperçu disponible</p>
-                                            <p className="text-xs">Importez un fichier HTML ou EPUB pour visualiser</p>
-                                        </div>
-                                    )}
+                                <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200"> 
+                                    <iframe 
+                                        srcDoc={previewHtml}
+                                        className="border-0 bg-white"
+                                        style={{ width: `${w}px`, height: `${h}px` }}
+                                        title="HTML Preview"
+                                        sandbox="allow-same-origin" 
+                                    />
                                 </div>
                             </div>
 
                             <div className="p-4 border-t border-gray-100 bg-white flex justify-end gap-3">
-                                {previewHtml && (
-                                    <button
-                                        type="button"
-                                        onClick={handleCapturePreview}
-                                        className="flex items-center gap-2 px-4 py-2 bg-brand-coral hover:bg-brand-coral/90 text-white font-bold rounded-lg shadow-lg shadow-brand-coral/20 transition-all active:scale-95"
-                                    >
-                                        <Camera size={18} />
-                                        <span>Générer JPEG et Ajouter au Livre</span>
-                                    </button>
-                                )}
+                                <button 
+                                    type="button"
+                                    onClick={() => setPreviewHtml(null)}
+                                    className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    Fermer
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCapturePreview}
+                                    className="flex items-center gap-2 px-4 py-2 bg-brand-coral hover:bg-brand-coral/90 text-white font-bold rounded-lg shadow-lg shadow-brand-coral/20 transition-all active:scale-95"
+                                >
+                                    <Camera size={18} />
+                                    <span>Générer JPEG et Ajouter au Livre</span>
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -5795,11 +5795,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                     </div>
 
-                 </div>
-
-                    {previewHtml && (
-                        <div className="mt-4 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 mx-6 mb-6">
-                            <div className="flex justify-between items-center mb-4">
+                        <div className="flex-1 min-h-0 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 flex flex-col">
+                            <div className="flex justify-between items-center mb-4 shrink-0">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                     <FileCode className="text-brand-coral" size={20} />
                                     Aperçu et Mapping des Variables
@@ -5902,22 +5899,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4 h-[600px]">
+                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
                                 <div className="flex-1 border border-gray-200 rounded overflow-hidden bg-white relative">
-                                    <iframe 
-                                        srcDoc={previewHtml}
-                                        className="w-full h-full border-0 bg-white" 
-                                        title="HTML Preview"
-                                        sandbox="allow-same-origin" 
-                                    />
+                                    {previewHtml ? (
+                                        <iframe 
+                                            srcDoc={previewHtml}
+                                            className="w-full h-full border-0 bg-white" 
+                                            title="HTML Preview"
+                                            sandbox="allow-same-origin" 
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
+                                            <FileCode size={48} className="mb-4 opacity-50" />
+                                            <p className="text-sm font-medium">Aucun fichier importé</p>
+                                            <p className="text-xs opacity-70 mt-1">Utilisez le bouton d'import dans la barre d'outils</p>
+                                        </div>
+                                    )}
                                     {importSessionDimensions && (
                                         <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none font-mono">
                                             DIMENSIONS: {Math.round(importSessionDimensions.width)} x {Math.round(importSessionDimensions.height)} px
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50">
-                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center">
+                                <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50 h-full">
+                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center shrink-0">
                                         <span>TEXTES DÉTECTÉS ({importSessionTexts.length})</span>
                                         <span className="text-[10px] text-gray-400">Associez les textes aux variables</span>
                                     </div>
@@ -5989,8 +5994,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
                         </div>
-                    )}
-
                  </div>
               )}
 

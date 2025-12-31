@@ -76,6 +76,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Import State
   const [pendingImportPageId, setPendingImportPageId] = useState<string | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [extractedText, setExtractedText] = useState<string>('');
 
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -5769,13 +5770,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex justify-center overflow-auto">
-                                <iframe 
-                                    srcDoc={previewHtml}
-                                    className="w-[800px] h-[600px] border-0 bg-white" 
-                                    title="HTML Preview"
-                                    sandbox="allow-same-origin" 
-                                />
+                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4 h-[600px]">
+                                <div className="flex-1 border border-gray-200 rounded overflow-hidden bg-white">
+                                    <iframe 
+                                        srcDoc={previewHtml}
+                                        className="w-full h-full border-0 bg-white" 
+                                        title="HTML Preview"
+                                        sandbox="allow-same-origin" 
+                                    />
+                                </div>
+                                <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50">
+                                    <div className="p-2 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100">
+                                        Texte extrait
+                                    </div>
+                                    <textarea
+                                        className="flex-1 p-4 w-full h-full resize-none focus:outline-none bg-white text-sm font-mono text-gray-700"
+                                        value={extractedText}
+                                        onChange={(e) => setExtractedText(e.target.value)}
+                                        placeholder="Le texte extrait apparaîtra ici..."
+                                    />
+                                </div>
                             </div>
                         </div>
                     )}

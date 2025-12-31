@@ -5749,8 +5749,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                     </div>
 
-                 </div>
-
                     <div className="mt-4 bg-gray-100 p-4 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 mx-6 mb-6">
                         <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">

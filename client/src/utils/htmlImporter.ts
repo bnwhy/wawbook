@@ -12,7 +12,7 @@ interface ParsedPage {
 // Map of filename -> Blob URL
 type ImageMap = Record<string, string>;
 
-export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string }> => {
+export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number }> => {
     const zip = new JSZip();
     const contents = await zip.loadAsync(file);
     
@@ -158,22 +158,26 @@ export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight
         console.warn("Failed to process preview HTML images", e);
     }
     
-    return { ...parsed, htmlContent: previewHtml };
+    return { ...parsed, htmlContent: previewHtml, width: parsed.width, height: parsed.height };
 };
 
-export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string }> => {
+export const parseHtmlFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number }> => {
   const text = await file.text();
   const parsed = parseHtmlContent(text, defaultWidth, defaultHeight, {}, file.name);
-  return { ...parsed, htmlContent: parsed.cleanedHtml };
+  return { ...parsed, htmlContent: parsed.cleanedHtml, width: parsed.width, height: parsed.height };
 };
 
-const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight: number, imageMap: ImageMap, sourceName: string, cssContent: string = ''): { texts: TextElement[], images: ImageElement[], cleanedHtml: string } => {
+const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight: number, imageMap: ImageMap, sourceName: string, cssContent: string = ''): { texts: TextElement[], images: ImageElement[], cleanedHtml: string, width: number, height: number } => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlText, 'text/html');
 
   const texts: TextElement[] = [];
   const images: ImageElement[] = [];
   const keepSet = new Set<Element>();
+
+  // Initialize dimensions with defaults
+  let finalWidth = defaultWidth;
+  let finalHeight = defaultHeight;
 
   const markKeep = (el: Element) => {
       let current: Element | null = el;
@@ -358,6 +362,10 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
              }
         }
     }
+    
+    // Update final dimensions (take the max found if multiple pages or just use the found page dims)
+    finalWidth = pageWidth;
+    finalHeight = pageHeight;
 
     // Now find all absolute elements inside this page
     const elements = Array.from(pageEl.querySelectorAll('*'));
@@ -550,5 +558,5 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
       }
   });
 
-  return { texts, images, cleanedHtml: doc.documentElement.outerHTML };
+  return { texts, images, cleanedHtml: doc.documentElement.outerHTML, width: finalWidth, height: finalHeight };
 };

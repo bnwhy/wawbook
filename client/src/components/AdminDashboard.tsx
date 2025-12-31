@@ -78,6 +78,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [importSessionTexts, setImportSessionTexts] = useState<TextElement[]>([]);
   const [importSessionImages, setImportSessionImages] = useState<ImageElement[]>([]);
+  const [importSessionDimensions, setImportSessionDimensions] = useState<{ width: number, height: number } | null>(null);
 
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -5616,10 +5617,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          result = await parseHtmlFile(file, defaultW, defaultH);
                                      }
                                      
-                                     const { texts: newTexts, images: newImages, htmlContent } = result;
+                                     const { texts: newTexts, images: newImages, htmlContent, width, height } = result;
 
                                      if (htmlContent) {
                                          setPreviewHtml(htmlContent);
+                                     }
+                                     
+                                     if (width && height) {
+                                         setImportSessionDimensions({ width, height });
                                      }
                                      
                                      if (newTexts.length === 0 && newImages.length === 0) {
@@ -5764,6 +5769,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="button"
                                             onClick={() => {
                                                 try {
+                                                    // If we have dimensions, ask user if they want to update book dimensions
+                                                    if (importSessionDimensions) {
+                                                        const currentW = selectedBook.features?.dimensions?.width || 210;
+                                                        const currentH = selectedBook.features?.dimensions?.height || 210;
+                                                        // Simple heuristic: if diff > 10%
+                                                        if (Math.abs(currentW - importSessionDimensions.width) > 10 || Math.abs(currentH - importSessionDimensions.height) > 10) {
+                                                            if (confirm(`Les dimensions détectées (${importSessionDimensions.width}x${importSessionDimensions.height}) sont différentes de celles du livre (${currentW}x${currentH}). Voulez-vous mettre à jour les dimensions du livre ?`)) {
+                                                                handleSaveBook({
+                                                                    ...selectedBook,
+                                                                    features: {
+                                                                        ...selectedBook.features,
+                                                                        dimensions: importSessionDimensions
+                                                                    }
+                                                                });
+                                                            }
+                                                        }
+                                                    }
+                                                
                                                     handleSaveBook({
                                                         ...selectedBook,
                                                         contentConfig: {
@@ -5775,6 +5798,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     setPreviewHtml(null);
                                                     setImportSessionTexts([]);
                                                     setImportSessionImages([]);
+                                                    setImportSessionDimensions(null);
                                                     toast.success(`${importSessionTexts.length} éléments importés et sauvegardés`);
                                                 } catch (e) {
                                                     toast.error("Erreur lors de la sauvegarde");
@@ -5809,13 +5833,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             </div>
                             
                             <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4 h-[600px]">
-                                <div className="flex-1 border border-gray-200 rounded overflow-hidden bg-white">
+                                <div className="flex-1 border border-gray-200 rounded overflow-hidden bg-white relative">
                                     <iframe 
                                         srcDoc={previewHtml}
                                         className="w-full h-full border-0 bg-white" 
                                         title="HTML Preview"
                                         sandbox="allow-same-origin" 
                                     />
+                                    {importSessionDimensions && (
+                                        <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm pointer-events-none font-mono">
+                                            DIMENSIONS: {Math.round(importSessionDimensions.width)} x {Math.round(importSessionDimensions.height)} px
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50">
                                     <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center">

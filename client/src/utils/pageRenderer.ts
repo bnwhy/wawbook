@@ -75,13 +75,24 @@ export const renderHtmlPageToImage = async (
   // Decode HTML entities first (server may encode < > as &lt; &gt;)
   let html = decodeHtmlEntities(rawPage.html);
   console.log('[pageRenderer] After decode (first 100 chars):', html?.substring(0, 100));
-  html = resolveVariables(html, config, characters);
+  
+  // Extract body content from EPUB HTML (it contains full HTML structure)
+  let bodyContent = html;
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if (bodyMatch) {
+    bodyContent = bodyMatch[1];
+    console.log('[pageRenderer] Extracted body content (first 200 chars):', bodyContent?.substring(0, 200));
+  } else {
+    console.log('[pageRenderer] No body tag found, using full HTML');
+  }
+  
+  bodyContent = resolveVariables(bodyContent, config, characters);
 
   if (imageMap) {
     for (const [key, url] of Object.entries(imageMap)) {
       const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      html = html.replace(new RegExp(`src=["']${escapedKey}["']`, 'g'), `src="${url}"`);
-      html = html.replace(new RegExp(`src=["'][^"']*/${escapedKey}["']`, 'g'), `src="${url}"`);
+      bodyContent = bodyContent.replace(new RegExp(`src=["']${escapedKey}["']`, 'g'), `src="${url}"`);
+      bodyContent = bodyContent.replace(new RegExp(`src=["'][^"']*/${escapedKey}["']`, 'g'), `src="${url}"`);
     }
   }
 
@@ -91,12 +102,12 @@ export const renderHtmlPageToImage = async (
       <head>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { width: ${rawPage.width}px; height: ${rawPage.height}px; overflow: hidden; background: white; }
+          body { width: ${rawPage.width}px; height: ${rawPage.height}px; overflow: hidden; background: white; position: relative; }
           ${cssContent || ''}
         </style>
       </head>
-      <body style="width:${rawPage.width}px;height:${rawPage.height}px;">
-        ${html}
+      <body style="width:${rawPage.width}px;height:${rawPage.height}px;position:relative;">
+        ${bodyContent}
       </body>
     </html>
   `;

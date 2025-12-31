@@ -54,8 +54,8 @@ export function registerObjectStorageRoutes(app: Express): void {
       // Generate unique filename
       const fileId = randomUUID();
       const ext = getExtensionFromContentType(contentType || 'image/png');
-      const finalFilename = filename || `image_${fileId}.${ext}`;
-      const objectName = `${basePath}/${finalFilename}`;
+      const finalFilename = filename ? `${filename}.${ext}` : `image_${fileId}.${ext}`;
+      const objectName = basePath ? `${basePath}/${finalFilename}` : finalFilename;
 
       // Decode base64 and upload
       const buffer = Buffer.from(data, 'base64');
@@ -69,8 +69,8 @@ export function registerObjectStorageRoutes(app: Express): void {
         },
       });
 
-      // Return the object path that can be served
-      const objectPath = `/objects/${objectName}`;
+      // Return the object path that can be served (includes bucket name)
+      const objectPath = `/objects/${bucketName}/${objectName}`;
 
       res.json({
         objectPath,

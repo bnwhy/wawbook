@@ -533,6 +533,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     return options;
   }, [selectedBook]);
+
+  // Compute available image variant options (variants with type 'options')
+  const imageVariantOptions = useMemo(() => {
+    const options: { value: string; label: string; variant?: any }[] = [
+        { value: '', label: '-- Image Statique --' }
+    ];
+
+    if (selectedBook?.wizardConfig?.tabs) {
+        selectedBook.wizardConfig.tabs.forEach(tab => {
+            if (tab.variants) {
+                tab.variants.forEach(variant => {
+                    if (variant.type === 'options' && variant.options && variant.options.length > 0) {
+                        options.push({
+                            value: variant.id,
+                            label: `${variant.title || variant.label} (${tab.label})`,
+                            variant: variant
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    return options;
+  }, [selectedBook]);
   
   // Effect to load all fonts used in the book
   React.useEffect(() => {
@@ -6158,19 +6183,100 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 {pageImages.length === 0 ? (
                                                                     <p className="text-xs text-slate-400 italic">Aucune image sur cette page</p>
                                                                 ) : (
-                                                                    <div className="space-y-2">
-                                                                        {pageImages.map((img: any, idx: number) => (
-                                                                            <div key={img.id || idx} className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                                                                <div className="flex items-center gap-2">
-                                                                                    <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
-                                                                                        {img.id || `img-${idx}`}
-                                                                                    </span>
-                                                                                    <span className="text-[10px] text-slate-400">
-                                                                                        {img.position?.width || '?'}x{img.position?.height || '?'}px
-                                                                                    </span>
+                                                                    <div className="space-y-3">
+                                                                        {pageImages.map((img: any, idx: number) => {
+                                                                            const selectedVariantOpt = imageVariantOptions.find(o => o.value === img.variableKey);
+                                                                            const variantOptions = selectedVariantOpt?.variant?.options || [];
+                                                                            
+                                                                            return (
+                                                                                <div key={img.id || idx} className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                                                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                                                                        <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
+                                                                                            {img.id || `img-${idx}`}
+                                                                                        </span>
+                                                                                        <span className="text-[10px] text-slate-400">
+                                                                                            {img.position?.width || '?'}x{img.position?.height || '?'}px
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    
+                                                                                    {/* Variant Selector */}
+                                                                                    <select
+                                                                                        value={img.variableKey || ''}
+                                                                                        onChange={(e) => {
+                                                                                            const newVariableKey = e.target.value || null;
+                                                                                            const updatedImages = selectedBook.contentConfig.imageElements!.map((i: any) =>
+                                                                                                i.id === img.id ? { ...i, variableKey: newVariableKey, variantImages: newVariableKey ? (i.variantImages || {}) : undefined } : i
+                                                                                            );
+                                                                                            const updatedBook = {
+                                                                                                ...selectedBook,
+                                                                                                contentConfig: {
+                                                                                                    ...selectedBook.contentConfig,
+                                                                                                    imageElements: updatedImages
+                                                                                                }
+                                                                                            };
+                                                                                            setDraftBook(updatedBook);
+                                                                                        }}
+                                                                                        className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral mb-2"
+                                                                                    >
+                                                                                        {imageVariantOptions.map(opt => (
+                                                                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                    
+                                                                                    {/* Variant Options - Image URLs */}
+                                                                                    {img.variableKey && variantOptions.length > 0 && (
+                                                                                        <div className="mt-2 space-y-2 border-t border-slate-200 pt-2">
+                                                                                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">Images par option:</p>
+                                                                                            {variantOptions.map((opt: any) => (
+                                                                                                <div key={opt.id} className="flex items-center gap-2">
+                                                                                                    <span className="text-[10px] text-slate-600 min-w-[60px] truncate" title={opt.label}>
+                                                                                                        {opt.label}
+                                                                                                    </span>
+                                                                                                    <input
+                                                                                                        type="text"
+                                                                                                        placeholder="URL de l'image..."
+                                                                                                        value={img.variantImages?.[opt.id] || ''}
+                                                                                                        onChange={(e) => {
+                                                                                                            const updatedImages = selectedBook.contentConfig.imageElements!.map((i: any) => {
+                                                                                                                if (i.id === img.id) {
+                                                                                                                    return {
+                                                                                                                        ...i,
+                                                                                                                        variantImages: {
+                                                                                                                            ...(i.variantImages || {}),
+                                                                                                                            [opt.id]: e.target.value
+                                                                                                                        }
+                                                                                                                    };
+                                                                                                                }
+                                                                                                                return i;
+                                                                                                            });
+                                                                                                            const updatedBook = {
+                                                                                                                ...selectedBook,
+                                                                                                                contentConfig: {
+                                                                                                                    ...selectedBook.contentConfig,
+                                                                                                                    imageElements: updatedImages
+                                                                                                                }
+                                                                                                            };
+                                                                                                            setDraftBook(updatedBook);
+                                                                                                        }}
+                                                                                                        className="flex-1 text-[10px] border border-slate-200 rounded px-2 py-1 bg-white focus:ring-1 focus:ring-brand-coral/20 focus:border-brand-coral"
+                                                                                                    />
+                                                                                                    {img.variantImages?.[opt.id] && (
+                                                                                                        <div className="w-6 h-6 rounded border border-slate-200 overflow-hidden bg-white">
+                                                                                                            <img 
+                                                                                                                src={img.variantImages[opt.id]} 
+                                                                                                                alt={opt.label}
+                                                                                                                className="w-full h-full object-cover"
+                                                                                                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                                                                            />
+                                                                                                        </div>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    )}
                                                                                 </div>
-                                                                            </div>
-                                                                        ))}
+                                                                            );
+                                                                        })}
                                                                     </div>
                                                                 )}
                                                             </div>

@@ -128,6 +128,7 @@ export interface ImageElement {
   type: 'static' | 'variable';
   url?: string;
   variableKey?: string;
+  variantImages?: Record<string, string>; // Maps option ID to image URL
   combinationKey?: string; // Optional: restrict to specific variant
   position: {
     pageIndex: number;

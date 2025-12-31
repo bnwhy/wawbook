@@ -36,8 +36,8 @@ export async function registerRoutes(
     try {
       const body = {
         ...req.body,
-        price: req.body.price !== undefined ? String(req.body.price) : undefined,
-        oldPrice: req.body.oldPrice !== undefined ? String(req.body.oldPrice) : undefined,
+        price: req.body.price != null ? String(req.body.price) : null,
+        oldPrice: req.body.oldPrice != null ? String(req.body.oldPrice) : null,
       };
       const validationResult = insertBookSchema.safeParse(body);
       if (!validationResult.success) {
@@ -56,8 +56,8 @@ export async function registerRoutes(
       const { createdAt, ...rest } = req.body;
       const body = {
         ...rest,
-        price: rest.price !== undefined ? String(rest.price) : undefined,
-        oldPrice: rest.oldPrice !== undefined ? String(rest.oldPrice) : undefined,
+        price: rest.price != null ? String(rest.price) : (rest.price === null ? null : undefined),
+        oldPrice: rest.oldPrice != null ? String(rest.oldPrice) : (rest.oldPrice === null ? null : undefined),
       };
       const book = await storage.updateBook(req.params.id, body);
       if (!book) {

@@ -76,7 +76,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Import State
   const [pendingImportPageId, setPendingImportPageId] = useState<string | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-  const [extractedText, setExtractedText] = useState<string>('');
+  const [importSessionTexts, setImportSessionTexts] = useState<TextElement[]>([]);
+  const [importSessionImages, setImportSessionImages] = useState<ImageElement[]>([]);
 
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -5668,17 +5669,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                            
                                      console.log('Final import payload:', { finalTexts, finalImages });
                                      
-                                     handleSaveBook({
-                                         ...selectedBook,
-                                         contentConfig: {
-                                             ...selectedBook.contentConfig,
-                                             texts: [...(selectedBook.contentConfig.texts || []), ...finalTexts],
-                                             imageElements: [...(selectedBook.contentConfig.imageElements || []), ...finalImages]
-                                         }
-                                     });
+                                     setImportSessionTexts(finalTexts);
+                                     setImportSessionImages(finalImages);
                                      
                                      const targetPageName = targetPageIndex !== -1 ? `Page ${targetPageIndex}` : "Auto-detect";
-                                     toast.success(`Importé sur ${targetPageName}: ${finalTexts.length} textes, ${finalImages.length} images`);
+                                     toast.success(`Import chargé : ${finalTexts.length} textes, ${finalImages.length} images. Veuillez vérifier et mapper les variables.`);
                                  } catch (err) {
                                      console.error(err);
                                      toast.error("Erreur lors de l'import HTML");
@@ -5749,20 +5744,51 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                                     <FileCode className="text-brand-coral" size={20} />
-                                    Aperçu du modèle importé
+                                    Aperçu et Mapping des Variables
                                 </h3>
                                 <div className="flex gap-2">
+                                    {importSessionTexts.length > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                try {
+                                                    handleSaveBook({
+                                                        ...selectedBook,
+                                                        contentConfig: {
+                                                            ...selectedBook.contentConfig,
+                                                            texts: [...(selectedBook.contentConfig.texts || []), ...importSessionTexts],
+                                                            imageElements: [...(selectedBook.contentConfig.imageElements || []), ...importSessionImages]
+                                                        }
+                                                    });
+                                                    setPreviewHtml(null);
+                                                    setImportSessionTexts([]);
+                                                    setImportSessionImages([]);
+                                                    toast.success(`${importSessionTexts.length} éléments importés et sauvegardés`);
+                                                } catch (e) {
+                                                    toast.error("Erreur lors de la sauvegarde");
+                                                }
+                                            }}
+                                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-sm transition-colors text-sm flex items-center gap-2"
+                                        >
+                                            <Save size={16} />
+                                            Confirmer l'Import
+                                        </button>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={handleCapturePreview}
                                         className="flex items-center gap-2 px-3 py-1.5 bg-brand-coral hover:bg-brand-coral/90 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95"
                                     >
                                         <Camera size={16} />
-                                        <span>Générer et Télécharger</span>
+                                        <span>Générer JPEG</span>
                                     </button>
                                     <button 
                                         type="button"
-                                        onClick={() => setPreviewHtml(null)}
+                                        onClick={() => {
+                                            setPreviewHtml(null);
+                                            setImportSessionTexts([]);
+                                            setImportSessionImages([]);
+                                        }}
                                         className="px-3 py-1.5 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors text-sm"
                                     >
                                         Fermer
@@ -5780,15 +5806,67 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     />
                                 </div>
                                 <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50">
-                                    <div className="p-2 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100">
-                                        Texte extrait
+                                    <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center">
+                                        <span>TEXTES DÉTECTÉS ({importSessionTexts.length})</span>
+                                        <span className="text-[10px] text-gray-400">Associez les textes aux variables</span>
                                     </div>
-                                    <textarea
-                                        className="flex-1 p-4 w-full h-full resize-none focus:outline-none bg-white text-sm font-mono text-gray-700"
-                                        value={extractedText}
-                                        onChange={(e) => setExtractedText(e.target.value)}
-                                        placeholder="Le texte extrait apparaîtra ici..."
-                                    />
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                                        {importSessionTexts.length === 0 ? (
+                                            <div className="text-center text-gray-400 py-8 text-sm">
+                                                Aucun texte détecté dans ce fichier.
+                                            </div>
+                                        ) : (
+                                            importSessionTexts.map((textItem, idx) => (
+                                                <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm text-sm hover:border-brand-coral/50 transition-colors">
+                                                    <div className="mb-2 font-mono text-xs text-gray-500 truncate" title={textItem.id}>
+                                                        ID: {textItem.id.split('-').pop()} | Page {textItem.position.pageIndex}
+                                                    </div>
+                                                    <div className="mb-3 p-2 bg-gray-50 rounded text-gray-800 text-sm border border-gray-100 italic">
+                                                        "{textItem.content.length > 50 ? textItem.content.substring(0, 50) + '...' : textItem.content}"
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-2">
+                                                        <select
+                                                            className="flex-1 text-xs border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-brand-coral focus:border-brand-coral outline-none"
+                                                            value={textItem.type === 'variable' ? textItem.content : ''}
+                                                            onChange={(e) => {
+                                                                const newVal = e.target.value;
+                                                                const newTexts = [...importSessionTexts];
+                                                                if (newVal) {
+                                                                    newTexts[idx] = { 
+                                                                        ...newTexts[idx], 
+                                                                        type: 'variable', 
+                                                                        content: newVal 
+                                                                    };
+                                                                } else {
+                                                                    // Revert to original content if possible, but we don't store original separately here.
+                                                                    // For now, switch to fixed but keep content (user can edit manually if we added that)
+                                                                     newTexts[idx] = { 
+                                                                        ...newTexts[idx], 
+                                                                        type: 'fixed'
+                                                                    };
+                                                                }
+                                                                setImportSessionTexts(newTexts);
+                                                            }}
+                                                        >
+                                                            <option value="">-- Texte Fixe --</option>
+                                                            <option value="{{childName}}">Prénom de l'enfant (childName)</option>
+                                                            <option value="{{heroName}}">Nom du Héros (heroName)</option>
+                                                            <option value="{{dedication}}">Dédicace (dedication)</option>
+                                                            <option value="{{age}}">Age (age)</option>
+                                                            <option value="{{city}}">Ville (city)</option>
+                                                            {/* Add common variables dynamically if needed */}
+                                                        </select>
+                                                        {textItem.type === 'variable' && (
+                                                            <div className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">
+                                                                VAR
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

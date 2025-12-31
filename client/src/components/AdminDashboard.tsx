@@ -5994,7 +5994,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
                         </div>
-                 </div>
               )}
 
               {draftStatus && draftStatus !== (orders.find(o => o.id === selectedOrderId)?.status) && (

@@ -218,12 +218,23 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const contentPages = getContentPages();
   let pageCount = contentPages.length;
 
-  if (book?.contentConfig?.pages?.length) {
+  // Check for rawHtmlPages first (EPUB import)
+  if (book?.contentConfig?.rawHtmlPages?.length) {
+      // Use rawHtmlPages count if available
+      const rawPages = book.contentConfig.rawHtmlPages;
+      const maxPageIndex = Math.max(...rawPages.map(p => p.pageIndex));
+      pageCount = Math.max(pageCount, maxPageIndex);
+  } else if (book?.contentConfig?.pages?.length) {
       // If using admin config, find the highest page number (excluding back cover 999)
       const validPages = book.contentConfig.pages.filter(p => p.pageNumber < 900);
       if (validPages.length > 0) {
           pageCount = Math.max(...validPages.map(p => p.pageNumber));
       }
+  }
+
+  // Ensure at least 1 page if we have any content
+  if (pageCount === 0 && (book?.contentConfig?.rawHtmlPages?.length || Object.keys(generatedPages).length > 0)) {
+      pageCount = Math.max(1, ...Object.keys(generatedPages).map(k => parseInt(k)).filter(n => n < 900));
   }
 
   const totalSpreads = Math.ceil(pageCount / 2); 

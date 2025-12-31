@@ -17,6 +17,7 @@ import { MenuProvider } from './context/MenuContext';
 import { CartProvider } from './context/CartContext';
 import { EcommerceProvider } from './context/EcommerceContext';
 import ScrollToTop from './components/ScrollToTop';
+import { Toaster } from 'sonner';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('HOME');
@@ -191,6 +192,7 @@ const App: React.FC = () => {
             </button>
         </div>
       )}
+      <Toaster position="bottom-right" richColors />
       </div>
           </EcommerceProvider>
         </CartProvider>

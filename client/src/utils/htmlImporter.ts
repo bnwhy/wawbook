@@ -564,6 +564,11 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
 import { RawHtmlPage } from '../types/admin';
 
 // Parse ZIP data that was extracted on the server (with permanent image URLs)
+export interface PageImage {
+  pageIndex: number;
+  imageUrl: string;
+}
+
 export const parseServerExtractedZip = async (
   serverData: { 
     images: Record<string, string>; 
@@ -571,11 +576,12 @@ export const parseServerExtractedZip = async (
     htmlContent: Record<string, string>; 
     cssContent: Record<string, string>;
     sessionId: string;
+    pageImages?: PageImage[];
   },
   defaultWidth = 800, 
   defaultHeight = 600,
   sourceName = 'server-extract'
-): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number, rawHtmlPages: RawHtmlPage[], cssContentStr: string, imageMap: Record<string, string> }> => {
+): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number, rawHtmlPages: RawHtmlPage[], cssContentStr: string, imageMap: Record<string, string>, pageImages: PageImage[] }> => {
     
     const { images: imageMap, htmlFiles, htmlContent, cssContent } = serverData;
     
@@ -702,6 +708,7 @@ export const parseServerExtractedZip = async (
         height: parsed.height,
         rawHtmlPages,
         cssContentStr: combinedCss,
-        imageMap
+        imageMap,
+        pageImages: serverData.pageImages || []
     };
 };

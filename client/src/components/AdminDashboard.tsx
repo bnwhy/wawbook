@@ -83,6 +83,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [importSessionDimensions, setImportSessionDimensions] = useState<{ width: number, height: number } | null>(null);
   const [importSessionRawHtmlPages, setImportSessionRawHtmlPages] = useState<RawHtmlPage[]>([]);
   const [importSessionCssContent, setImportSessionCssContent] = useState<string>('');
+  const [importSessionPageImages, setImportSessionPageImages] = useState<Array<{pageIndex: number; imageUrl: string}>>([]);
 
 
   // Shipping Zone State
@@ -5666,17 +5667,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          result = await parseHtmlFile(file, defaultW, defaultH);
                                      }
                                      
-                                     const { texts: newTexts, images: newImages, htmlContent, width, height, rawHtmlPages, cssContentStr } = result as any;
+                                     const { texts: newTexts, images: newImages, htmlContent, width, height, rawHtmlPages, cssContentStr, pageImages } = result as any;
 
                                      if (htmlContent) {
                                          setPreviewHtml(htmlContent);
                                      }
                                      
-                                     // Store raw HTML pages and CSS in session state for later save
+                                     // Store page images from server-side rendering (priority)
+                                     if (pageImages && pageImages.length > 0) {
+                                         setImportSessionPageImages(pageImages);
+                                         toast.success(`${pageImages.length} page(s) générée(s) en images sur le serveur.`);
+                                     }
+                                     
+                                     // Store raw HTML pages and CSS as fallback
                                      if (rawHtmlPages && rawHtmlPages.length > 0) {
                                          setImportSessionRawHtmlPages(rawHtmlPages);
                                          setImportSessionCssContent(cssContentStr || '');
-                                         toast.info(`${rawHtmlPages.length} page(s) HTML stockée(s) pour le rendu.`);
                                      }
                                      
                                      if (width && height) {
@@ -5925,13 +5931,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     texts: newTexts,
                                                                     imageElements: newImages,
                                                                     rawHtmlPages: importSessionRawHtmlPages.length > 0 ? importSessionRawHtmlPages : selectedBook.contentConfig.rawHtmlPages,
-                                                                    cssContent: importSessionCssContent || selectedBook.contentConfig.cssContent
+                                                                    cssContent: importSessionCssContent || selectedBook.contentConfig.cssContent,
+                                                                    pageImages: importSessionPageImages.length > 0 ? importSessionPageImages : selectedBook.contentConfig.pageImages
                                                                 }
                                                             });
                                                             
                                                             // Clear session states after successful save
                                                             setImportSessionRawHtmlPages([]);
                                                             setImportSessionCssContent('');
+                                                            setImportSessionPageImages([]);
                                                             
                                                             toast.success(`Configuration sauvegardée et mise à jour (${importSessionTexts.length} éléments en session)`);
                                                         } catch (e) {

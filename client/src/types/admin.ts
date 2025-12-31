@@ -74,6 +74,11 @@ export interface WizardTab {
   variants: WizardVariant[]; // e.g., [{id: 'v1', label: 'Garçon', options: [...]}, {id: 'v2', label: 'Fille', options: [...]}]
 }
 
+export interface PageImage {
+  pageIndex: number;
+  imageUrl: string;
+}
+
 export interface ContentConfiguration {
   pages: PageDefinition[];
   texts: TextElement[];
@@ -81,6 +86,7 @@ export interface ContentConfiguration {
   imageElements?: ImageElement[];
   rawHtmlPages?: RawHtmlPage[];
   cssContent?: string;
+  pageImages?: PageImage[];
 }
 
 export interface RawHtmlPage {

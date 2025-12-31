@@ -2,6 +2,7 @@ import type { Express, Request } from "express";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "./objectStorage";
 import { randomUUID } from "crypto";
 import JSZip from "jszip";
+import { renderHtmlToImage } from "../../services/pageRenderer";
 
 /**
  * Register object storage routes for file uploads.
@@ -171,12 +172,77 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
+      // Now render HTML pages to images using Puppeteer
+      const pageImages: Array<{ pageIndex: number; imageUrl: string }> = [];
+      
+      // Combine all CSS content
+      const allCss = Object.values(cssContent).join('\n');
+      
+      // Filter to only content pages (not TOC, etc.)
+      const contentHtmlFiles = htmlFiles.filter(f => 
+        !f.toLowerCase().includes('toc') && 
+        !f.toLowerCase().includes('nav') &&
+        !f.toLowerCase().includes('cover')
+      );
+      
+      // Process each HTML page
+      for (let i = 0; i < contentHtmlFiles.length; i++) {
+        const htmlFile = contentHtmlFiles[i];
+        let pageHtml = htmlContent[htmlFile] || '';
+        
+        // Parse viewport dimensions from the HTML
+        const viewportMatch = pageHtml.match(/width[=:](\d+).*?height[=:](\d+)/i);
+        const pageWidth = viewportMatch ? parseInt(viewportMatch[1]) : 595;
+        const pageHeight = viewportMatch ? parseInt(viewportMatch[2]) : 842;
+        
+        // Replace image paths with Object Storage URLs
+        for (const [originalPath, storagePath] of Object.entries(imageMap)) {
+          // Match various path patterns
+          const patterns = [
+            new RegExp(`src=["']([^"']*${originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})["']`, 'gi'),
+            new RegExp(`src=["']([^"']*${originalPath.split('/').pop()?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') || ''})["']`, 'gi'),
+          ];
+          
+          for (const pattern of patterns) {
+            pageHtml = pageHtml.replace(pattern, `src="${storagePath}"`);
+          }
+        }
+        
+        try {
+          // Render HTML to image
+          const imageBuffer = await renderHtmlToImage({
+            html: pageHtml,
+            css: allCss,
+            width: pageWidth,
+            height: pageHeight,
+          });
+          
+          // Upload the rendered image to Object Storage
+          const pageImageName = `${sessionId}_page_${i + 1}.png`;
+          const objectName = basePath ? `${basePath}/${pageImageName}` : pageImageName;
+          const file = bucket.file(objectName);
+          
+          await file.save(imageBuffer, {
+            contentType: 'image/png',
+            metadata: { cacheControl: 'public, max-age=31536000' },
+          });
+          
+          const imageUrl = `/objects/${bucketName}/${objectName}`;
+          pageImages.push({ pageIndex: i + 1, imageUrl });
+          
+          console.log(`Rendered page ${i + 1} to ${imageUrl}`);
+        } catch (renderError) {
+          console.error(`Failed to render page ${i + 1}:`, renderError);
+        }
+      }
+      
       res.json({
         images: imageMap,
         htmlFiles,
         htmlContent,
         cssContent,
         sessionId,
+        pageImages,
       });
     } catch (error) {
       console.error("Error extracting ZIP:", error);

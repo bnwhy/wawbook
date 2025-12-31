@@ -1,9 +1,15 @@
+export interface PageImage {
+  pageIndex: number;
+  imageUrl: string;
+}
+
 export interface ExtractZipResult {
   images: Record<string, string>;
   htmlFiles: string[];
   htmlContent: Record<string, string>;
   cssContent: Record<string, string>;
   sessionId: string;
+  pageImages: PageImage[];
 }
 
 export async function extractZipOnServer(file: File): Promise<ExtractZipResult> {

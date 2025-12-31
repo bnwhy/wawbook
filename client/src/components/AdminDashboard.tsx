@@ -5732,12 +5732,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                        
                     </div>
-
-                    
-                 </div>
                  </div>
               )}
 
+              {/* Preview Container - MOVED UP and gap adjusted */}
               {(() => {
                   const dims = selectedBook?.features?.dimensions || { width: 210, height: 297 };
                   const ratio = dims.width / dims.height;
@@ -5755,7 +5753,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                   // Always render the container, but show placeholder if no previewHtml
                   return (
-                    <div className="w-full -mt-20 relative z-20">
+                    <div className="w-full relative z-20 mt-0">
                         <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                             <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">

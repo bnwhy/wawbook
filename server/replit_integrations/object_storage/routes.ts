@@ -1,6 +1,7 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "./objectStorage";
 import { randomUUID } from "crypto";
+import JSZip from "jszip";
 
 /**
  * Register object storage routes for file uploads.
@@ -79,6 +80,98 @@ export function registerObjectStorageRoutes(app: Express): void {
     } catch (error) {
       console.error("Error uploading base64 image:", error);
       res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
+  /**
+   * Upload and extract a ZIP/EPUB file, storing all images in object storage.
+   * 
+   * Request body (JSON):
+   * {
+   *   "data": "base64_encoded_zip_file",
+   *   "filename": "book.epub"
+   * }
+   * 
+   * Response:
+   * {
+   *   "images": { "original/path.png": "/objects/bucket/public/uuid.png", ... },
+   *   "htmlFiles": ["content.xhtml", ...],
+   *   "htmlContent": { "content.xhtml": "<html>...</html>" }
+   * }
+   */
+  app.post("/api/uploads/extract-zip", async (req, res) => {
+    try {
+      const { data, filename } = req.body;
+
+      if (!data) {
+        return res.status(400).json({ error: "Missing required field: data" });
+      }
+
+      const publicPaths = objectStorageService.getPublicObjectSearchPaths();
+      if (!publicPaths.length) {
+        return res.status(500).json({ error: "No public object storage path configured" });
+      }
+
+      const publicPath = publicPaths[0];
+      const { bucketName, objectName: basePath } = parseObjectPathSimple(publicPath);
+      
+      const sessionId = randomUUID().substring(0, 8);
+      const buffer = Buffer.from(data, 'base64');
+      const zip = await JSZip.loadAsync(buffer);
+      
+      const imageMap: Record<string, string> = {};
+      const htmlFiles: string[] = [];
+      const htmlContent: Record<string, string> = {};
+      const cssContent: Record<string, string> = {};
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      
+      for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+        if (zipEntry.dir) continue;
+        
+        const lowerPath = relativePath.toLowerCase();
+        
+        if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
+          const imageBuffer = await zipEntry.async('nodebuffer');
+          const ext = relativePath.split('.').pop() || 'png';
+          const imageId = randomUUID().substring(0, 8);
+          const storageName = `${sessionId}_${imageId}.${ext}`;
+          const objectName = basePath ? `${basePath}/${storageName}` : storageName;
+          
+          const file = bucket.file(objectName);
+          const contentType = getContentTypeFromExt(ext);
+          
+          await file.save(imageBuffer, {
+            contentType,
+            metadata: { cacheControl: 'public, max-age=31536000' },
+          });
+          
+          const objectPath = `/objects/${bucketName}/${objectName}`;
+          imageMap[relativePath] = objectPath;
+          
+          const parts = relativePath.split('/');
+          const justFilename = parts[parts.length - 1];
+          imageMap[justFilename] = objectPath;
+        } else if (/\.(html?|xhtml)$/i.test(relativePath)) {
+          htmlFiles.push(relativePath);
+          const content = await zipEntry.async('string');
+          htmlContent[relativePath] = content;
+        } else if (/\.css$/i.test(relativePath)) {
+          const content = await zipEntry.async('string');
+          cssContent[relativePath] = content;
+        }
+      }
+      
+      res.json({
+        images: imageMap,
+        htmlFiles,
+        htmlContent,
+        cssContent,
+        sessionId,
+      });
+    } catch (error) {
+      console.error("Error extracting ZIP:", error);
+      res.status(500).json({ error: "Failed to extract ZIP file" });
     }
   });
 
@@ -206,5 +299,17 @@ function getExtensionFromContentType(contentType: string): string {
     'image/svg+xml': 'svg',
   };
   return map[contentType] || 'png';
+}
+
+function getContentTypeFromExt(ext: string): string {
+  const map: Record<string, string> = {
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+  };
+  return map[ext.toLowerCase()] || 'image/png';
 }
 

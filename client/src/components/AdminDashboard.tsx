@@ -5465,15 +5465,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
                     
                     {/* Toolbar */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex justify-between items-center shrink-0">
-                       <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2 text-slate-600 font-bold">
-                             <Layout size={18} />
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 flex justify-between items-center shrink-0">
+                       <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 text-slate-600 font-bold text-sm px-2">
+                             <Layout size={16} />
                              <span>Vue Storyboard</span>
                           </div>
 
                           {/* Variant Selector */}
-                          <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
+                          <div className="flex items-center gap-2 border-l border-gray-200 pl-3 ml-1">
                              <label className="text-[10px] font-bold text-gray-400 uppercase">Variante</label>
                              <select 
                                 value={selectedVariant}

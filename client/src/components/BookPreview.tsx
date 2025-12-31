@@ -151,8 +151,24 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   }, [book, config, currentCombinationKey]);
 
   // --- DIMENSIONS & SCALE ---
-  // Default to Square 210x210 if not specified
-  const dims = book?.features?.dimensions || { width: 210, height: 210 };
+  // Use EPUB dimensions if available, otherwise fall back to features or default
+  const getBookDimensions = () => {
+    // Priority 1: Use rawHtmlPages dimensions (EPUB import)
+    if (book?.contentConfig?.rawHtmlPages?.length) {
+      const firstPage = book.contentConfig.rawHtmlPages[0];
+      if (firstPage.width && firstPage.height) {
+        return { width: firstPage.width, height: firstPage.height };
+      }
+    }
+    // Priority 2: Use configured features dimensions
+    if (book?.features?.dimensions) {
+      return book.features.dimensions;
+    }
+    // Default to Square 210x210
+    return { width: 210, height: 210 };
+  };
+  const dims = getBookDimensions();
+  console.log('[BookPreview] Using dimensions:', dims);
   
   // Spread aspect ratio = (Single Page Width * 2) / Page Height
   const spreadAspectRatio = (dims.width * 2) / dims.height;
@@ -325,6 +341,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   const renderPageContent = (pageIndex: number, isLeft: boolean) => {
+      console.log('[BookPreview] renderPageContent called for page:', pageIndex, 'hasGeneratedPage:', !!generatedPages[pageIndex], 'availablePages:', Object.keys(generatedPages));
       // 1. Check if we have generated image
       if (generatedPages[pageIndex]) {
           return (

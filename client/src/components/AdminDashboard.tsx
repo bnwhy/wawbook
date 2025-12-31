@@ -635,61 +635,52 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [activeLayerId, selectedBook]);
 
 
-  // SETTINGS STATE
-  const [settings, setSettings] = useState(() => {
-    try {
-        const saved = localStorage.getItem('admin_settings');
-        return saved ? JSON.parse(saved) : {
-            general: {
-                storeName: 'NuageBook',
-                supportEmail: 'contact@nuagebook.com',
-                currency: 'EUR',
-                language: 'fr'
-            },
-            payment: {
-                stripeEnabled: true,
-                stripeKey: 'pk_test_sample_key_12345',
-                paypalEnabled: false
-            },
-            shipping: {
-                freeShippingThreshold: 50,
-                standardRate: 4.90,
-                expressRate: 9.90
-            },
-            notifications: {
-                orderConfirmation: true,
-                shippingUpdate: true
-            }
-        };
-    } catch (e) {
-        return {
-            general: {
-                storeName: 'NuageBook',
-                supportEmail: 'contact@nuagebook.com',
-                currency: 'EUR',
-                language: 'fr'
-            },
-            payment: {
-                stripeEnabled: true,
-                stripeKey: 'pk_test_sample_key_12345',
-                paypalEnabled: false
-            },
-            shipping: {
-                freeShippingThreshold: 50,
-                standardRate: 4.90,
-                expressRate: 9.90
-            },
-            notifications: {
-                orderConfirmation: true,
-                shippingUpdate: true
-            }
-        };
-    }
+  // SETTINGS STATE - loaded from API
+  const [settings, setSettings] = useState({
+    general: { storeName: '', supportEmail: '', currency: 'EUR', language: 'fr' },
+    payment: { stripeEnabled: false, stripeKey: '', paypalEnabled: false },
+    shipping: { freeShippingThreshold: 50, standardRate: 4.90, expressRate: 9.90 },
+    notifications: { orderConfirmation: true, shippingUpdate: true }
   });
 
-  const handleSaveSettings = (section: string) => {
-      localStorage.setItem('admin_settings', JSON.stringify(settings));
+  // Load settings from API
+  React.useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const [general, payment, shipping, notifications] = await Promise.all([
+          fetch('/api/settings/general').then(r => r.ok ? r.json() : null),
+          fetch('/api/settings/payment').then(r => r.ok ? r.json() : null),
+          fetch('/api/settings/shipping').then(r => r.ok ? r.json() : null),
+          fetch('/api/settings/notifications').then(r => r.ok ? r.json() : null)
+        ]);
+        setSettings({
+          general: general?.value || settings.general,
+          payment: payment?.value || settings.payment,
+          shipping: shipping?.value || settings.shipping,
+          notifications: notifications?.value || settings.notifications
+        });
+      } catch (err) {
+        console.error('Error loading settings:', err);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const handleSaveSettings = async (section: string) => {
+    try {
+      const sectionKey = section === 'Général' ? 'general' : 
+                         section === 'Paiement' ? 'payment' :
+                         section === 'Expédition' ? 'shipping' : 'notifications';
+      const value = settings[sectionKey as keyof typeof settings];
+      await fetch(`/api/settings/${sectionKey}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value })
+      });
       toast.success(`Réglages "${section}" sauvegardés avec succès`);
+    } catch (err) {
+      toast.error('Erreur lors de la sauvegarde');
+    }
   };
 
   // Sync draft when switching books or initially loading

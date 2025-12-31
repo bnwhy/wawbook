@@ -1,3 +1,30 @@
+export interface ExtractZipResult {
+  images: Record<string, string>;
+  htmlFiles: string[];
+  htmlContent: Record<string, string>;
+  cssContent: Record<string, string>;
+  sessionId: string;
+}
+
+export async function extractZipOnServer(file: File): Promise<ExtractZipResult> {
+  const arrayBuffer = await file.arrayBuffer();
+  const base64 = btoa(
+    new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+  );
+  
+  const response = await fetch('/api/uploads/extract-zip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: base64, filename: file.name }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to extract ZIP on server');
+  }
+  
+  return response.json();
+}
+
 export async function uploadBlobToStorage(blobUrl: string, filename?: string): Promise<string> {
   try {
     const response = await fetch(blobUrl);

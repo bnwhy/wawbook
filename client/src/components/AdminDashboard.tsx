@@ -37,7 +37,8 @@ const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or
 import googleFonts from 'google-fonts-complete';
 
 import { readPsd } from 'ag-psd';
-import { parseHtmlFile, parseZipFile } from '../utils/htmlImporter';
+import { parseHtmlFile, parseZipFile, parseServerExtractedZip } from '../utils/htmlImporter';
+import { extractZipOnServer } from '../utils/imageUploader';
 import { uploadMultipleBlobs, replaceBlobUrls } from '../utils/imageUploader';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -5649,13 +5650,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                  if (!file || !selectedBook) return;
                                  
                                  try {
-                                     toast.info(file.name.endsWith('.zip') || file.name.endsWith('.epub') ? "Lecture de l'archive en cours..." : "Lecture du fichier HTML en cours...");
+                                     const isZipOrEpub = file.name.toLowerCase().endsWith('.zip') || file.name.toLowerCase().endsWith('.epub');
+                                     toast.info(isZipOrEpub ? "Envoi et extraction de l'archive sur le serveur..." : "Lecture du fichier HTML en cours...");
                                      const defaultW = selectedBook.features?.dimensions?.width || 800;
                                      const defaultH = selectedBook.features?.dimensions?.height || 600;
                                      
                                      let result;
-                                     if (file.name.toLowerCase().endsWith('.zip') || file.name.toLowerCase().endsWith('.epub')) {
-                                         result = await parseZipFile(file, defaultW, defaultH);
+                                     if (isZipOrEpub) {
+                                         // Server-side extraction stores images permanently immediately
+                                         const serverData = await extractZipOnServer(file);
+                                         result = await parseServerExtractedZip(serverData, defaultW, defaultH, file.name);
                                      } else {
                                          result = await parseHtmlFile(file, defaultW, defaultH);
                                      }

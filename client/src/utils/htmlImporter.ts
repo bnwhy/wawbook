@@ -560,3 +560,111 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
 
   return { texts, images, cleanedHtml: doc.documentElement.outerHTML, width: finalWidth, height: finalHeight };
 };
+
+// Parse ZIP data that was extracted on the server (with permanent image URLs)
+export const parseServerExtractedZip = async (
+  serverData: { 
+    images: Record<string, string>; 
+    htmlFiles: string[]; 
+    htmlContent: Record<string, string>; 
+    cssContent: Record<string, string>;
+    sessionId: string;
+  },
+  defaultWidth = 800, 
+  defaultHeight = 600,
+  sourceName = 'server-extract'
+): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number }> => {
+    
+    const { images: imageMap, htmlFiles, htmlContent, cssContent } = serverData;
+    
+    // Find the first HTML file to parse
+    if (!htmlFiles.length) {
+        throw new Error("No HTML/XHTML file found in server extraction");
+    }
+    
+    // Sort and get first HTML file
+    const sortedHtmlFiles = [...htmlFiles].sort();
+    const mainHtmlFile = sortedHtmlFiles[0];
+    const rawHtmlContent = htmlContent[mainHtmlFile];
+    
+    // Combine all CSS
+    let combinedCss = '';
+    for (const cssFile of Object.keys(cssContent)) {
+        combinedCss += cssContent[cssFile] + '\n';
+    }
+    
+    // Parse HTML content with server-provided image URLs (already permanent)
+    const parsed = parseHtmlContent(rawHtmlContent, defaultWidth, defaultHeight, imageMap, sourceName, combinedCss);
+    
+    // Build preview HTML
+    let previewHtml = parsed.cleanedHtml;
+    
+    // Inject CSS
+    if (combinedCss) {
+        if (previewHtml.includes('</head>')) {
+            previewHtml = previewHtml.replace('</head>', `<style>\n${combinedCss}\n</style></head>`);
+        } else {
+            previewHtml = `<style>\n${combinedCss}\n</style>` + previewHtml;
+        }
+    }
+    
+    // Replace image sources with permanent URLs from server
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(previewHtml, 'text/html');
+        
+        const findImage = (src: string): string | null => {
+            if (!src) return null;
+            if (imageMap[src]) return imageMap[src];
+            try {
+                const decoded = decodeURIComponent(src);
+                if (imageMap[decoded]) return imageMap[decoded];
+            } catch (e) {}
+            const cleanSrc = src.replace(/^\.\//, '');
+            if (imageMap[cleanSrc]) return imageMap[cleanSrc];
+            const parts = src.split('/');
+            const filename = parts[parts.length - 1];
+            if (imageMap[filename]) return imageMap[filename];
+            try {
+                const decodedFilename = decodeURIComponent(filename);
+                if (imageMap[decodedFilename]) return imageMap[decodedFilename];
+            } catch (e) {}
+            return null;
+        };
+        
+        // Replace img src
+        doc.querySelectorAll('img').forEach(img => {
+            const src = img.getAttribute('src');
+            if (src) {
+                const replacement = findImage(src);
+                if (replacement) {
+                    img.setAttribute('src', replacement);
+                }
+            }
+        });
+        
+        // Replace CSS background-image
+        doc.querySelectorAll('[style*="background"]').forEach(el => {
+            const style = el.getAttribute('style');
+            if (style) {
+                const newStyle = style.replace(/url\(['"]?([^'")\s]+)['"]?\)/gi, (match, url) => {
+                    const replacement = findImage(url);
+                    return replacement ? `url('${replacement}')` : match;
+                });
+                el.setAttribute('style', newStyle);
+            }
+        });
+        
+        previewHtml = doc.documentElement.outerHTML;
+    } catch (e) {
+        console.error('Error replacing images in preview HTML:', e);
+    }
+    
+    return {
+        texts: parsed.texts,
+        images: parsed.images,
+        htmlContent: previewHtml,
+        width: parsed.width,
+        height: parsed.height
+    };
+};

@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas';
-import { RawHtmlPage } from '../types/admin';
+import { RawHtmlPage, ImageElement, ImageCondition } from '../types/admin';
 import { BookConfig, Gender } from '../types';
 
 export interface RenderedPage {
@@ -11,6 +11,32 @@ const decodeHtmlEntities = (html: string): string => {
   const textarea = document.createElement('textarea');
   textarea.innerHTML = html;
   return textarea.value;
+};
+
+// Check if an image's conditions match the user's selections
+const checkImageConditions = (
+  conditions: ImageCondition[] | undefined,
+  characters: Record<string, Record<string, string>> | undefined
+): boolean => {
+  // No conditions means always show
+  if (!conditions || conditions.length === 0) return true;
+  
+  // All conditions must match
+  return conditions.every(cond => {
+    if (!characters) return false;
+    
+    // Search in all tabs for the variant
+    for (const tabId of Object.keys(characters)) {
+      const tabSelections = characters[tabId];
+      if (tabSelections[cond.variantId] !== undefined) {
+        // For checkbox variants, the value is stored as string "true" or "false"
+        const selectedValue = tabSelections[cond.variantId];
+        return selectedValue === cond.optionId;
+      }
+    }
+    
+    return false; // Condition not found in selections
+  });
 };
 
 const resolveVariables = (html: string, config: BookConfig, characters?: Record<string, Record<string, string>>): string => {
@@ -86,7 +112,8 @@ export const renderHtmlPageToImage = async (
   cssContent: string,
   config: BookConfig,
   characters?: Record<string, Record<string, string>>,
-  imageMap?: Record<string, string>
+  imageMap?: Record<string, string>,
+  imageElements?: ImageElement[]
 ): Promise<string> => {
   console.log('[pageRenderer] Starting render for page', rawPage.pageIndex);
   console.log('[pageRenderer] Raw HTML (first 100 chars):', rawPage.html?.substring(0, 100));
@@ -122,6 +149,30 @@ export const renderHtmlPageToImage = async (
       bodyContent = bodyContent.replace(new RegExp(`src=["']${escapedKey}["']`, 'g'), `src="${url}"`);
       bodyContent = bodyContent.replace(new RegExp(`src=["'][^"']*/${escapedKey}["']`, 'g'), `src="${url}"`);
     }
+  }
+
+  // Filter images based on conditions
+  if (imageElements && imageElements.length > 0) {
+    // Get images for this page that have conditions
+    const pageImageElements = imageElements.filter(
+      img => img.position.pageIndex === rawPage.pageIndex && img.conditions && img.conditions.length > 0
+    );
+    
+    // For each image with conditions, check if it should be visible
+    pageImageElements.forEach(imgEl => {
+      const shouldShow = checkImageConditions(imgEl.conditions, characters);
+      console.log(`[pageRenderer] Image ${imgEl.id} conditions:`, imgEl.conditions, 'shouldShow:', shouldShow);
+      
+      if (!shouldShow && imgEl.url) {
+        // Hide images that don't match conditions by replacing with transparent placeholder
+        const escapedUrl = imgEl.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Replace img src with a 1px transparent gif
+        bodyContent = bodyContent.replace(
+          new RegExp(`src=["']${escapedUrl}["']`, 'g'),
+          'src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="opacity:0;visibility:hidden;"'
+        );
+      }
+    });
   }
 
   const fullHtml = `
@@ -198,7 +249,8 @@ export const renderAllPages = async (
   config: BookConfig,
   characters?: Record<string, Record<string, string>>,
   imageMap?: Record<string, string>,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  imageElements?: ImageElement[]
 ): Promise<Record<number, string>> => {
   const result: Record<number, string> = {};
 
@@ -207,7 +259,7 @@ export const renderAllPages = async (
   for (let i = 0; i < sortedPages.length; i++) {
     const page = sortedPages[i];
     try {
-      const dataUrl = await renderHtmlPageToImage(page, cssContent, config, characters, imageMap);
+      const dataUrl = await renderHtmlPageToImage(page, cssContent, config, characters, imageMap, imageElements);
       result[page.pageIndex] = dataUrl;
       onProgress?.(i + 1, sortedPages.length);
     } catch (error) {

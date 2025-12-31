@@ -126,7 +126,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             config,
                             config.characters,
                             undefined,
-                            (current, total) => console.log(`[BookPreview] Rendered page ${current}/${total}`)
+                            (current, total) => console.log(`[BookPreview] Rendered page ${current}/${total}`),
+                            book.contentConfig?.imageElements
                         );
                         console.log('[BookPreview] Rendered pages count:', Object.keys(pages).length);
                         // Debug: log each page's dataUrl info

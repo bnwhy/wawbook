@@ -5759,20 +5759,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     Aperçu et Mapping des Variables
                                 </h3>
                                 <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (selectedBookId && selectedBook) {
-                                                window.open(`/?preview_book=${selectedBook.id}`, '_blank');
-                                            }
-                                        }}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg shadow-sm transition-all active:scale-95"
-                                        title="Voir le site actuel (Configuration sauvegardée)"
-                                    >
-                                        <Eye size={16} />
-                                        <span>Voir le site</span>
-                                    </button>
-                                    {(importSessionTexts.length > 0 || importSessionImages.length > 0) && (
+                                    {importSessionTexts.length > 0 && (
                                         <button
                                             type="button"
                                             onClick={() => {

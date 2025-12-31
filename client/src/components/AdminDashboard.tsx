@@ -38,6 +38,7 @@ import googleFonts from 'google-fonts-complete';
 
 import { readPsd } from 'ag-psd';
 import { parseHtmlFile, parseZipFile } from '../utils/htmlImporter';
+import { uploadMultipleBlobs, replaceBlobUrls } from '../utils/imageUploader';
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const importInputRef = React.useRef<HTMLInputElement>(null);
@@ -5728,8 +5729,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                            
                                      console.log('Final import payload:', { finalTexts, finalImages });
                                      
+                                     const blobImages = finalImages.filter(img => img.url && img.url.startsWith('blob:'));
+                                     if (blobImages.length > 0) {
+                                         toast.info(`Upload de ${blobImages.length} image(s) vers le stockage permanent...`);
+                                         try {
+                                             const urlMap = await uploadMultipleBlobs(
+                                                 blobImages.map(img => ({ url: img.url, id: img.id })),
+                                                 (current, total) => {
+                                                     console.log(`Uploading image ${current}/${total}`);
+                                                 }
+                                             );
+                                             
+                                             const updatedImages = replaceBlobUrls(finalImages, urlMap) as typeof finalImages;
+                                             setImportSessionImages(updatedImages);
+                                             toast.success(`${urlMap.size} image(s) uploadée(s) avec succès.`);
+                                         } catch (uploadErr) {
+                                             console.error('Failed to upload some images:', uploadErr);
+                                             toast.warning("Certaines images n'ont pas pu être uploadées. Elles resteront temporaires.");
+                                             setImportSessionImages(finalImages);
+                                         }
+                                     } else {
+                                         setImportSessionImages(finalImages);
+                                     }
+                                     
                                      setImportSessionTexts(finalTexts);
-                                     setImportSessionImages(finalImages);
                                      
                                      const targetPageName = targetPageIndex !== -1 ? `Page ${targetPageIndex}` : "Auto-detect";
                                      toast.success(`Import chargé : ${finalTexts.length} textes, ${finalImages.length} images. Veuillez vérifier et mapper les variables.`);

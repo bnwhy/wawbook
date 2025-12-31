@@ -5946,8 +5946,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
                             
-                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col md:flex-row gap-4 flex-1 min-h-0 overflow-hidden">
-                                <div className="flex-1 border border-gray-200 rounded overflow-hidden bg-white relative">
+                            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
+                                <div className="h-48 border border-gray-200 rounded overflow-hidden bg-white relative shrink-0">
                                     {previewHtml ? (
                                         <iframe 
                                             srcDoc={previewHtml}
@@ -5968,7 +5968,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50 h-full">
+                                <div className="flex-1 flex flex-col border border-gray-200 rounded bg-gray-50 overflow-hidden">
                                     <div className="p-3 border-b border-gray-200 font-bold text-xs text-gray-500 bg-gray-100 flex justify-between items-center shrink-0">
                                         <span>TEXTES DÉTECTÉS ({importSessionTexts.length})</span>
                                         <span className="text-[10px] text-gray-400">Associez les textes aux variables</span>

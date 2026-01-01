@@ -80,6 +80,9 @@ export const orders = pgTable("orders", {
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
   status: text("status").notNull(), // 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  paymentStatus: text("payment_status").default("pending").notNull(), // 'pending' | 'paid' | 'failed' | 'refunded'
+  stripeSessionId: text("stripe_session_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
   items: jsonb("items").notNull().$type<Array<{
     id: string;
     bookId: string;

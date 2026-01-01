@@ -229,7 +229,7 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                     onClick={() => setLocation('/checkout')}
                     className="w-full bg-cloud-deep text-white font-bold text-lg py-3 px-4 rounded-lg shadow-md hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
                 >
-                    <Lock size={18} /> Paiement
+                    <Lock size={18} /> Passer la commande
                 </button>
                 
                 <div className="mt-4">

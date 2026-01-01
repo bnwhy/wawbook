@@ -74,14 +74,21 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
   };
 
   return (
-    <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+    <div className={`rounded-lg p-3 border ${conditions.length > 0 ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-100'}`}>
       <div className="flex items-start justify-between gap-2 mb-2">
         <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
           {img.id || 'img'}
         </span>
-        <span className="text-[10px] text-slate-400">
-          {img.position?.width || '?'}x{img.position?.height || '?'}px
-        </span>
+        <div className="flex gap-1">
+          {conditions.length > 0 && (
+            <span className="text-[10px] font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded">
+              {conditions.length} condition{conditions.length > 1 ? 's' : ''}
+            </span>
+          )}
+          <span className="text-[10px] text-slate-400">
+            {img.position?.width || '?'}x{img.position?.height || '?'}px
+          </span>
+        </div>
       </div>
 
       {/* Conditions List */}
@@ -6344,30 +6351,39 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             </div>
                                                         </div>
                                                         
-                                                        {/* Save Button */}
-                                                        {draftBook && (
-                                                            <div className="p-4 border-t border-slate-100 bg-slate-50">
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        try {
-                                                                            console.log('[AdminDashboard] Save button clicked');
-                                                                            console.log('[AdminDashboard] draftBook imageElements:', JSON.stringify(draftBook.contentConfig.imageElements));
-                                                                            await updateBook(draftBook);
-                                                                            console.log('[AdminDashboard] updateBook completed');
-                                                                            setDraftBook(null);
-                                                                            toast.success('Modifications sauvegardées');
-                                                                        } catch (err) {
-                                                                            console.error('[AdminDashboard] Save error:', err);
-                                                                            toast.error('Erreur lors de la sauvegarde');
-                                                                        }
-                                                                    }}
-                                                                    className="w-full bg-brand-coral hover:bg-red-500 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
-                                                                >
-                                                                    <Save size={14} />
-                                                                    Sauvegarder
-                                                                </button>
-                                                            </div>
-                                                        )}
+                                                        {/* Save Button - Always visible with status */}
+                                                        <div className="p-4 border-t border-slate-100 bg-slate-50">
+                                                            {draftBook ? (
+                                                                <>
+                                                                    <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                                                                        Modifications non sauvegardées
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                console.log('[AdminDashboard] Save button clicked');
+                                                                                console.log('[AdminDashboard] draftBook imageElements:', JSON.stringify(draftBook.contentConfig.imageElements));
+                                                                                await updateBook(draftBook);
+                                                                                console.log('[AdminDashboard] updateBook completed');
+                                                                                setDraftBook(null);
+                                                                                toast.success('Modifications sauvegardées');
+                                                                            } catch (err) {
+                                                                                console.error('[AdminDashboard] Save error:', err);
+                                                                                toast.error('Erreur lors de la sauvegarde');
+                                                                            }
+                                                                        }}
+                                                                        className="w-full bg-brand-coral hover:bg-red-500 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                                                                    >
+                                                                        <Save size={14} />
+                                                                        Sauvegarder
+                                                                    </button>
+                                                                </>
+                                                            ) : (
+                                                                <div className="p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700 text-center">
+                                                                    Aucune modification en attente
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>

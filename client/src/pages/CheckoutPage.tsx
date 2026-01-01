@@ -200,31 +200,6 @@ const CheckoutPage = () => {
             <div className="lg:col-span-2">
                 {step === 'details' ? (
                    <>
-                        {/* --- EXPRESS CHECKOUT --- */}
-                        <div className="mb-8">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="h-px bg-stone-200 flex-1"></div>
-                                <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Paiement Express</span>
-                                <div className="h-px bg-stone-200 flex-1"></div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-3">
-                                <button type="button" className="bg-[#5A31F4] hover:bg-[#4c29d3] text-white py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors">
-                                    <span className="italic font-black">Shop</span> Pay
-                                </button>
-                                <button type="button" className="bg-[#FFC439] hover:bg-[#f4bb34] text-black py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors">
-                                    PayPal
-                                </button>
-                                <button type="button" className="bg-black hover:bg-stone-800 text-white py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors">
-                                    GPay
-                                </button>
-                            </div>
-                            <div className="flex items-center gap-4 mt-6">
-                                <div className="h-px bg-stone-200 flex-1"></div>
-                                <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">OU</span>
-                                <div className="h-px bg-stone-200 flex-1"></div>
-                            </div>
-                        </div>
-
                         <form onSubmit={handleDetailsSubmit} className="space-y-8">
                             {/* Contact Section */}
                             <div className="space-y-4">
@@ -367,13 +342,6 @@ const CheckoutPage = () => {
                         <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3 text-sm text-blue-800">
                             <Lock size={16} className="mt-0.5 flex-shrink-0" />
                             <p>Vous allez être redirigé vers la page de paiement sécurisée Stripe. Toutes les transactions sont cryptées.</p>
-                        </div>
-
-                        <div className="flex items-center justify-center gap-4 py-4">
-                            <img src="https://cdn.jsdelivr.net/gh/nickvdyck/simple-icons@master/icons/visa.svg" alt="Visa" className="h-8 opacity-60" />
-                            <img src="https://cdn.jsdelivr.net/gh/nickvdyck/simple-icons@master/icons/mastercard.svg" alt="Mastercard" className="h-8 opacity-60" />
-                            <img src="https://cdn.jsdelivr.net/gh/nickvdyck/simple-icons@master/icons/applepay.svg" alt="Apple Pay" className="h-8 opacity-60" />
-                            <img src="https://cdn.jsdelivr.net/gh/nickvdyck/simple-icons@master/icons/googlepay.svg" alt="Google Pay" className="h-8 opacity-60" />
                         </div>
 
                         <div className="pt-4">

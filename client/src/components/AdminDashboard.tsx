@@ -6358,39 +6358,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             </div>
                                                         </div>
                                                         
-                                                        {/* Save Button - Always visible with status */}
-                                                        <div className="p-4 border-t border-slate-100 bg-slate-50">
-                                                            {draftBook ? (
-                                                                <>
-                                                                    <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
-                                                                        Modifications non sauvegardées
-                                                                    </div>
-                                                                    <button
-                                                                        onClick={async () => {
-                                                                            try {
-                                                                                console.log('[AdminDashboard] Save button clicked');
-                                                                                console.log('[AdminDashboard] draftBook imageElements:', JSON.stringify(draftBook.contentConfig.imageElements));
-                                                                                await updateBook(draftBook);
-                                                                                console.log('[AdminDashboard] updateBook completed');
-                                                                                setDraftBook(null);
-                                                                                toast.success('Modifications sauvegardées');
-                                                                            } catch (err) {
-                                                                                console.error('[AdminDashboard] Save error:', err);
-                                                                                toast.error('Erreur lors de la sauvegarde');
-                                                                            }
-                                                                        }}
-                                                                        className="w-full bg-brand-coral hover:bg-red-500 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2"
-                                                                    >
-                                                                        <Save size={14} />
-                                                                        Sauvegarder
-                                                                    </button>
-                                                                </>
-                                                            ) : (
-                                                                <div className="p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700 text-center">
-                                                                    Aucune modification en attente
-                                                                </div>
-                                                            )}
-                                                        </div>
                                                     </div>
                                                 )}
                                             </div>

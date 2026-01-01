@@ -53,12 +53,15 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
   const [selectedVariant, setSelectedVariant] = useState<string>('');
   const [selectedOption, setSelectedOption] = useState<string>('');
 
+  console.log('[ImageConditionEditor] Render for img:', img.id, 'available variants:', imageVariantOptions.length, 'current conditions:', conditions.length);
+
   const currentVariantOptions = useMemo(() => {
     const variant = imageVariantOptions.find(v => v.value === selectedVariant);
     return variant?.variantOptions || [];
   }, [selectedVariant, imageVariantOptions]);
 
   const addCondition = () => {
+    console.log('[ImageConditionEditor] + button clicked, selectedVariant:', selectedVariant, 'selectedOption:', selectedOption);
     if (selectedVariant && selectedOption) {
       const newConditions = [...conditions, { variantId: selectedVariant, optionId: selectedOption }];
       console.log('[ImageConditionEditor] Adding condition:', { variantId: selectedVariant, optionId: selectedOption });
@@ -66,6 +69,8 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
       onConditionsChange(newConditions);
       setSelectedVariant('');
       setSelectedOption('');
+    } else {
+      console.log('[ImageConditionEditor] Cannot add - missing variant or option');
     }
   };
 

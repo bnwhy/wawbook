@@ -468,7 +468,7 @@ export async function registerRoutes(
 
   app.post("/api/checkout/create-session", async (req, res) => {
     try {
-      const { items, customerEmail, customerName, shippingAddress, orderId } = req.body;
+      const { items, shippingOption, customerEmail, customerName, shippingAddress, orderId } = req.body;
 
       if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ error: "Items are required" });
@@ -490,6 +490,11 @@ export async function registerRoutes(
       const session = await stripeService.createCheckoutSession({
         customerEmail,
         lineItems,
+        shippingOption: shippingOption ? {
+          name: shippingOption.name,
+          description: shippingOption.description,
+          amount: parseFloat(shippingOption.price) || 0,
+        } : undefined,
         successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${baseUrl}/checkout/cancel`,
         metadata: {

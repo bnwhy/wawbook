@@ -102,20 +102,18 @@ const CheckoutPage = () => {
         quantity: item.quantity,
       }));
       
-      if (shippingCost > 0 && selectedMethod) {
-        lineItems.push({
-          name: 'Livraison',
-          description: `${selectedMethod.name}${selectedMethod.estimatedDelay ? ` (${selectedMethod.estimatedDelay})` : ''}`,
-          price: shippingCost,
-          quantity: 1,
-        });
-      }
+      const shippingOption = selectedMethod ? {
+        name: selectedMethod.name,
+        description: selectedMethod.estimatedDelay || undefined,
+        price: shippingCost,
+      } : undefined;
       
       const response = await fetch('/api/checkout/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: lineItems,
+          shippingOption,
           customerEmail: formData.email,
           customerName: `${formData.firstName} ${formData.lastName}`,
           shippingAddress: {

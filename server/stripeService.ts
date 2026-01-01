@@ -17,13 +17,14 @@ export class StripeService {
   async createCheckoutSession(params: {
     customerEmail: string;
     lineItems: Array<{ name: string; description?: string; amount: number; quantity: number }>;
+    shippingOption?: { name: string; description?: string; amount: number };
     successUrl: string;
     cancelUrl: string;
     metadata?: Record<string, string>;
   }) {
     const stripe = await getUncachableStripeClient();
     
-    return await stripe.checkout.sessions.create({
+    const sessionConfig: any = {
       payment_method_types: ['card'],
       customer_email: params.customerEmail,
       line_items: params.lineItems.map(item => ({
@@ -41,7 +42,28 @@ export class StripeService {
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
       metadata: params.metadata,
-    });
+    };
+
+    if (params.shippingOption) {
+      sessionConfig.shipping_options = [{
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: {
+            amount: Math.round(params.shippingOption.amount * 100),
+            currency: 'eur',
+          },
+          display_name: params.shippingOption.name,
+          ...(params.shippingOption.description && { 
+            delivery_estimate: {
+              minimum: { unit: 'business_day', value: 2 },
+              maximum: { unit: 'business_day', value: 5 },
+            }
+          }),
+        },
+      }];
+    }
+
+    return await stripe.checkout.sessions.create(sessionConfig);
   }
 
   async getProduct(productId: string) {

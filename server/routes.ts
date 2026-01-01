@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { stripeService } from "./stripeService";
+import { getStripePublishableKey } from "./stripeClient";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -443,6 +445,56 @@ export async function registerRoutes(
 
   // Register object storage routes for file uploads
   registerObjectStorageRoutes(app);
+
+  // ===== STRIPE CHECKOUT =====
+  app.get("/api/stripe/config", async (req, res) => {
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error) {
+      console.error("Error getting Stripe config:", error);
+      res.status(500).json({ error: "Failed to get Stripe config" });
+    }
+  });
+
+  app.post("/api/checkout/create-session", async (req, res) => {
+    try {
+      const { items, customerEmail, customerName, shippingAddress, orderId } = req.body;
+
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "Items are required" });
+      }
+
+      if (!customerEmail) {
+        return res.status(400).json({ error: "Customer email is required" });
+      }
+
+      const lineItems = items.map((item: any) => ({
+        name: item.name || item.title || 'Livre personnalisé',
+        amount: parseFloat(item.price) || 29.90,
+        quantity: item.quantity || 1,
+      }));
+
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      
+      const session = await stripeService.createCheckoutSession({
+        customerEmail,
+        lineItems,
+        successUrl: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${baseUrl}/checkout/cancel`,
+        metadata: {
+          orderId: orderId || '',
+          customerName: customerName || '',
+          shippingAddress: JSON.stringify(shippingAddress || {}),
+        },
+      });
+
+      res.json({ url: session.url, sessionId: session.id });
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
 
   return httpServer;
 }

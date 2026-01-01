@@ -195,15 +195,17 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
-                  <div className="aspect-square relative overflow-hidden bg-gray-50">
-                      {/* Book spine effect on left */}
-                      <div className="absolute left-0 top-0 bottom-0 w-3 z-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent"></div>
-                      <div className="absolute left-0 top-0 bottom-0 w-[6px] z-10 bg-gradient-to-r from-stone-400/60 to-stone-300/30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"></div>
-                      <img 
-                        src={card.coverImage} 
-                        alt={card.name}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
+                  <div className="aspect-square relative overflow-hidden bg-stone-100 flex items-center justify-center p-4">
+                      {/* Book wrapper with spine effect */}
+                      <div className="relative h-full w-auto max-w-full flex shadow-[4px_4px_12px_rgba(0,0,0,0.15),-1px_0_0_#a8a29e] rounded-r-sm overflow-hidden">
+                        {/* Book spine on left */}
+                        <div className="absolute left-0 top-0 bottom-0 w-2 z-10 bg-gradient-to-r from-stone-400 via-stone-300 to-stone-200 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.15)]"></div>
+                        <img 
+                          src={card.coverImage} 
+                          alt={card.name}
+                          className="h-full w-auto object-contain transition-transform duration-700 group-hover:scale-105 rounded-r-sm"
+                        />
+                      </div>
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                           <Heart size={12} className="text-accent-melon fill-current" />
                           Nouveau
@@ -249,15 +251,17 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
-                  <div className="aspect-square relative overflow-hidden bg-gray-50">
-                      {/* Book spine effect on left */}
-                      <div className="absolute left-0 top-0 bottom-0 w-3 z-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent"></div>
-                      <div className="absolute left-0 top-0 bottom-0 w-[6px] z-10 bg-gradient-to-r from-stone-400/60 to-stone-300/30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"></div>
-                      <img 
-                        src={card.coverImage} 
-                        alt={card.name}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
+                  <div className="aspect-square relative overflow-hidden bg-stone-100 flex items-center justify-center p-4">
+                      {/* Book wrapper with spine effect */}
+                      <div className="relative h-full w-auto max-w-full flex shadow-[4px_4px_12px_rgba(0,0,0,0.15),-1px_0_0_#a8a29e] rounded-r-sm overflow-hidden">
+                        {/* Book spine on left */}
+                        <div className="absolute left-0 top-0 bottom-0 w-2 z-10 bg-gradient-to-r from-stone-400 via-stone-300 to-stone-200 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.15)]"></div>
+                        <img 
+                          src={card.coverImage} 
+                          alt={card.name}
+                          className="h-full w-auto object-contain transition-transform duration-700 group-hover:scale-105 rounded-r-sm"
+                        />
+                      </div>
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                           <Star size={12} className="text-accent-sun fill-current" />
                           Best-seller
@@ -303,15 +307,17 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                   >
                     {/* Image Container */}
-                    <div className="aspect-square relative overflow-hidden bg-gray-50">
-                        {/* Book spine effect on left */}
-                        <div className="absolute left-0 top-0 bottom-0 w-3 z-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent"></div>
-                        <div className="absolute left-0 top-0 bottom-0 w-[6px] z-10 bg-gradient-to-r from-stone-400/60 to-stone-300/30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"></div>
-                        <img 
-                          src={activity.coverImage} 
-                          alt={activity.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
+                    <div className="aspect-square relative overflow-hidden bg-stone-100 flex items-center justify-center p-4">
+                        {/* Book wrapper with spine effect */}
+                        <div className="relative h-full w-auto max-w-full flex shadow-[4px_4px_12px_rgba(0,0,0,0.15),-1px_0_0_#a8a29e] rounded-r-sm overflow-hidden">
+                          {/* Book spine on left */}
+                          <div className="absolute left-0 top-0 bottom-0 w-2 z-10 bg-gradient-to-r from-stone-400 via-stone-300 to-stone-200 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.15)]"></div>
+                          <img 
+                            src={activity.coverImage} 
+                            alt={activity.name}
+                            className="h-full w-auto object-contain transition-transform duration-700 group-hover:scale-105 rounded-r-sm"
+                          />
+                        </div>
                     </div>
 
                     {/* Content */}
@@ -353,15 +359,17 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                   >
                     {/* Image Container */}
-                    <div className="aspect-square relative overflow-hidden bg-gray-50">
-                        {/* Book spine effect on left */}
-                        <div className="absolute left-0 top-0 bottom-0 w-3 z-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent"></div>
-                        <div className="absolute left-0 top-0 bottom-0 w-[6px] z-10 bg-gradient-to-r from-stone-400/60 to-stone-300/30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"></div>
-                        <img 
-                          src={occasion.coverImage} 
-                          alt={occasion.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
+                    <div className="aspect-square relative overflow-hidden bg-stone-100 flex items-center justify-center p-4">
+                        {/* Book wrapper with spine effect */}
+                        <div className="relative h-full w-auto max-w-full flex shadow-[4px_4px_12px_rgba(0,0,0,0.15),-1px_0_0_#a8a29e] rounded-r-sm overflow-hidden">
+                          {/* Book spine on left */}
+                          <div className="absolute left-0 top-0 bottom-0 w-2 z-10 bg-gradient-to-r from-stone-400 via-stone-300 to-stone-200 shadow-[inset_-2px_0_4px_rgba(0,0,0,0.15)]"></div>
+                          <img 
+                            src={occasion.coverImage} 
+                            alt={occasion.name}
+                            className="h-full w-auto object-contain transition-transform duration-700 group-hover:scale-105 rounded-r-sm"
+                          />
+                        </div>
                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                             <Gift size={12} className="text-accent-melon fill-current" />
                             Célébration

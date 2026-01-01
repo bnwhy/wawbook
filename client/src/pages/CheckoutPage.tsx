@@ -95,15 +95,25 @@ const CheckoutPage = () => {
     setIsLoading(true);
     
     try {
+      const lineItems = items.map(item => ({
+        name: item.bookTitle || 'Livre personnalisé',
+        price: item.price,
+        quantity: item.quantity,
+      }));
+      
+      if (shippingCost > 0) {
+        lineItems.push({
+          name: `Livraison${selectedMethod ? ` - ${selectedMethod.name}` : ''}`,
+          price: shippingCost,
+          quantity: 1,
+        });
+      }
+      
       const response = await fetch('/api/checkout/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: items.map(item => ({
-            name: item.bookTitle || 'Livre personnalisé',
-            price: item.price + (shippingCost / items.length),
-            quantity: item.quantity,
-          })),
+          items: lineItems,
           customerEmail: formData.email,
           customerName: `${formData.firstName} ${formData.lastName}`,
           shippingAddress: {

@@ -122,41 +122,43 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
         })}
 
         {/* Add Condition */}
-        <div className="flex gap-1">
-          <select
-            value={selectedVariant}
-            onChange={(e) => {
-              setSelectedVariant(e.target.value);
-              setSelectedOption('');
-            }}
-            className="flex-1 text-[10px] border border-slate-200 rounded px-1 py-1 bg-white"
-          >
-            <option value="">Variante...</option>
-            {imageVariantOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label} ({opt.tabLabel})
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedOption}
-            onChange={(e) => setSelectedOption(e.target.value)}
-            className="flex-1 text-[10px] border border-slate-200 rounded px-1 py-1 bg-white"
-            disabled={!selectedVariant}
-          >
-            <option value="">Option...</option>
-            {currentVariantOptions.map(opt => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col gap-1">
+          <div className="flex gap-1">
+            <select
+              value={selectedVariant}
+              onChange={(e) => {
+                setSelectedVariant(e.target.value);
+                setSelectedOption('');
+              }}
+              className="flex-1 text-[10px] border border-slate-200 rounded px-1 py-1 bg-white"
+            >
+              <option value="">Variante...</option>
+              {imageVariantOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label} ({opt.tabLabel})
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedOption}
+              onChange={(e) => setSelectedOption(e.target.value)}
+              className="flex-1 text-[10px] border border-slate-200 rounded px-1 py-1 bg-white"
+              disabled={!selectedVariant}
+            >
+              <option value="">Option...</option>
+              {currentVariantOptions.map(opt => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             onClick={addCondition}
             disabled={!selectedVariant || !selectedOption}
-            className="px-2 py-1 bg-brand-coral text-white text-[10px] rounded hover:bg-red-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-1.5 bg-green-500 text-white text-[11px] rounded hover:bg-green-600 font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1"
           >
-            +
+            <span className="text-lg leading-none">+</span> Ajouter cette condition
           </button>
         </div>
       </div>

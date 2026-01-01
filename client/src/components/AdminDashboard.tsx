@@ -2209,10 +2209,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         return 0;
                                      })
                                      .map(order => {
-                                     // Mock statuses for the view
-                                     const isPaid = order.status !== 'pending' && order.status !== 'cancelled';
-                                     const paymentStatus = isPaid ? 'Payé' : 'En attente';
-                                     const paymentColor = isPaid ? 'bg-slate-100 text-slate-700' : 'bg-orange-100 text-orange-800';
+                                     // Real payment status from Stripe
+                                     const paymentStatusValue = (order as any).paymentStatus || 'pending';
+                                     const paymentStatusLabels: Record<string, string> = {
+                                        'paid': 'Payé',
+                                        'pending': 'En attente',
+                                        'failed': 'Échoué',
+                                        'refunded': 'Remboursé'
+                                     };
+                                     const paymentStatusColors: Record<string, string> = {
+                                        'paid': 'bg-green-100 text-green-700',
+                                        'pending': 'bg-orange-100 text-orange-800',
+                                        'failed': 'bg-red-100 text-red-700',
+                                        'refunded': 'bg-purple-100 text-purple-700'
+                                     };
+                                     const paymentStatus = paymentStatusLabels[paymentStatusValue] || 'En attente';
+                                     const paymentColor = paymentStatusColors[paymentStatusValue] || 'bg-orange-100 text-orange-800';
+                                     const isPaid = paymentStatusValue === 'paid';
                                      
                                      const fulfillmentStatus = 
                                         order.status === 'delivered' ? 'Livré' :

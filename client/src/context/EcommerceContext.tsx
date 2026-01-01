@@ -214,12 +214,10 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     stripeSessionId?: string
   ): Promise<string> => {
     const generateOrderId = () => {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      let result = '';
-      for (let i = 0; i < 9; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return result;
+      const year = new Date().getFullYear().toString().slice(-2);
+      const existingOrdersThisYear = orders.filter(o => o.id.includes(`ORD-${year}-`)).length;
+      const nextNumber = (existingOrdersThisYear + 1).toString().padStart(7, '0');
+      return `ORD-${year}-${nextNumber}`;
     };
     const orderId = generateOrderId();
     

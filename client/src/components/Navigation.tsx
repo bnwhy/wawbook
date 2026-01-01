@@ -55,7 +55,8 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
 
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-2' : 'bg-transparent py-4'}`}>
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+      {/* Desktop Navigation */}
+      <div className="hidden lg:flex max-w-7xl mx-auto px-6 justify-between items-center">
         
         {/* Logo */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => {
@@ -69,7 +70,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden lg:flex items-center gap-1">
+        <div className="flex items-center gap-1">
           {mainMenu.map((menu, idx) => (
             <div 
               key={idx}
@@ -135,42 +136,52 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           ))}
         </div>
 
-          {/* CTA Button & Mobile Toggle */}
-        <div className="flex items-center gap-2 md:gap-4">
-          
-          {/* Desktop Cart Button */}
-          <Link href="/cart" className="hidden md:flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
-               <ShoppingCart size={20} />
-               <span>Panier</span>
-               {itemCount > 0 && (
-                <span className="w-5 h-5 bg-white text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
-                  {itemCount}
-                </span>
-               )}
-          </Link>
-          
-          {/* Mobile Cart Icon */}
-          <Link href="/cart" className="md:hidden relative p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors">
-               <ShoppingCart size={24} />
-               {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-sun text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
-                  {itemCount}
-                </span>
-               )}
-          </Link>
+        {/* Desktop Cart Button */}
+        <Link href="/cart" className="flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
+             <ShoppingCart size={20} />
+             <span>Panier</span>
+             {itemCount > 0 && (
+              <span className="w-5 h-5 bg-white text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+                {itemCount}
+              </span>
+             )}
+        </Link>
+      </div>
 
-          {/* Mobile Menu Button */}
-          <button 
-            className="lg:hidden p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors"
-            onClick={() => setMobileMenuOpen(true)}
-          >
-            <Menu size={28} />
-          </button>
+      {/* Mobile Navigation - Menu left, Logo center, Cart right */}
+      <div className="lg:hidden flex items-center justify-between px-4">
+        {/* Left: Menu Button */}
+        <button 
+          className="p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors"
+          onClick={() => setMobileMenuOpen(true)}
+        >
+          <Menu size={28} />
+        </button>
+
+        {/* Center: Logo */}
+        <div className="flex items-center gap-2 cursor-pointer group absolute left-1/2 -translate-x-1/2" onClick={() => {
+          setLocation('/');
+          window.location.reload(); 
+        }}>
+          <CloudLogo />
+          <span className="text-2xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
+            nuagebook
+          </span>
         </div>
+
+        {/* Right: Cart Icon */}
+        <Link href="/cart" className="relative p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors">
+             <ShoppingCart size={24} />
+             {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-sun text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+                {itemCount}
+              </span>
+             )}
+        </Link>
       </div>
       {/* --- MOBILE MENU OVERLAY --- */}
       <div className={`fixed inset-0 bg-cloud-dark/20 backdrop-blur-sm z-[60] transition-opacity duration-300 lg:hidden ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`} onClick={() => setMobileMenuOpen(false)} />
-      <div className={`fixed top-0 right-0 w-[300px] h-full bg-white shadow-2xl z-[70] transform transition-transform duration-300 lg:hidden flex flex-col overflow-y-auto ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed top-0 left-0 w-[300px] h-full bg-white shadow-2xl z-[70] transform transition-transform duration-300 lg:hidden flex flex-col overflow-y-auto ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 flex justify-between items-center border-b border-cloud-light">
           <span className="font-display font-black text-2xl text-cloud-blue">Menu</span>
           <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-red-50 text-cloud-dark/50 hover:text-red-400 rounded-full transition-colors">

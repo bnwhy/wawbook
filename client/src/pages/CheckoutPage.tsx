@@ -189,9 +189,7 @@ const CheckoutPage = () => {
             <div className="flex items-center gap-2 mb-8 text-sm font-bold text-stone-400">
                 <span className={step === 'details' ? 'text-cloud-blue' : 'text-green-600'}>1. Information</span>
                 <span className="text-stone-300">/</span>
-                <span className={step === 'payment' ? 'text-cloud-blue' : ''}>2. Livraison</span>
-                <span className="text-stone-300">/</span>
-                <span>3. Paiement</span>
+                <span className={step === 'payment' ? 'text-cloud-blue' : ''}>2. Paiement</span>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8">

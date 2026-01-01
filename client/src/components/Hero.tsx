@@ -195,7 +195,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
-                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                  <div className="aspect-square relative overflow-hidden bg-gray-50">
                       {/* Book spine effect on left */}
                       <div className="absolute left-0 top-0 bottom-0 w-3 z-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent"></div>
                       <div className="absolute left-0 top-0 bottom-0 w-[6px] z-10 bg-gradient-to-r from-stone-400/60 to-stone-300/30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"></div>
@@ -249,7 +249,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
-                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                  <div className="aspect-square relative overflow-hidden bg-gray-50">
                       {/* Book spine effect on left */}
                       <div className="absolute left-0 top-0 bottom-0 w-3 z-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent"></div>
                       <div className="absolute left-0 top-0 bottom-0 w-[6px] z-10 bg-gradient-to-r from-stone-400/60 to-stone-300/30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"></div>
@@ -303,7 +303,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                   >
                     {/* Image Container */}
-                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                    <div className="aspect-square relative overflow-hidden bg-gray-50">
                         {/* Book spine effect on left */}
                         <div className="absolute left-0 top-0 bottom-0 w-3 z-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent"></div>
                         <div className="absolute left-0 top-0 bottom-0 w-[6px] z-10 bg-gradient-to-r from-stone-400/60 to-stone-300/30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"></div>
@@ -353,7 +353,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                   >
                     {/* Image Container */}
-                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                    <div className="aspect-square relative overflow-hidden bg-gray-50">
                         {/* Book spine effect on left */}
                         <div className="absolute left-0 top-0 bottom-0 w-3 z-10 bg-gradient-to-r from-black/25 via-black/10 to-transparent"></div>
                         <div className="absolute left-0 top-0 bottom-0 w-[6px] z-10 bg-gradient-to-r from-stone-400/60 to-stone-300/30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"></div>

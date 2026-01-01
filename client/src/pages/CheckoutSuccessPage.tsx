@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 
@@ -12,31 +12,67 @@ const CheckoutSuccessPage = () => {
   const { createOrder } = useEcommerce();
   const [orderData, setOrderData] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    const pendingOrder = localStorage.getItem('pendingOrder');
-    if (pendingOrder) {
-      const data = JSON.parse(pendingOrder);
-      setOrderData(data);
-      
-      createOrder({
-        firstName: data.formData.firstName,
-        lastName: data.formData.lastName,
-        email: data.formData.email,
-        phone: data.formData.phone,
-        address: {
-          street: data.formData.address,
-          city: data.formData.city,
-          zipCode: data.formData.zip,
-          country: data.formData.country
-        }
-      }, data.items, data.grandTotal);
+    const processOrder = async () => {
+      const pendingOrder = localStorage.getItem('pendingOrder');
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
 
-      setOrderNumber(Math.random().toString(36).substr(2, 9).toUpperCase());
-      clearCart();
-      localStorage.removeItem('pendingOrder');
-    }
+      if (pendingOrder) {
+        const data = JSON.parse(pendingOrder);
+        setOrderData(data);
+        
+        try {
+          const orderId = await createOrder({
+            firstName: data.formData.firstName,
+            lastName: data.formData.lastName,
+            email: data.formData.email,
+            phone: data.formData.phone,
+            address: {
+              street: data.formData.address,
+              city: data.formData.city,
+              zipCode: data.formData.zip,
+              country: data.formData.country
+            }
+          }, data.items, data.grandTotal, sessionId || undefined);
+
+          setOrderNumber(orderId);
+
+          if (sessionId) {
+            await fetch('/api/checkout/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sessionId, orderId }),
+            });
+          }
+
+          clearCart();
+          localStorage.removeItem('pendingOrder');
+        } catch (error) {
+          console.error('Error processing order:', error);
+        }
+      }
+      setIsProcessing(false);
+    };
+
+    processOrder();
   }, []);
+
+  if (isProcessing) {
+    return (
+      <div className="min-h-screen flex flex-col bg-stone-50">
+        <Navigation onStart={() => setLocation('/')} />
+        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-20">
+          <Loader2 className="w-16 h-16 text-cloud-blue animate-spin mb-6" />
+          <h1 className="font-display font-black text-2xl text-stone-900 mb-4">Confirmation en cours...</h1>
+          <p className="text-stone-600">Veuillez patienter pendant que nous finalisons votre commande.</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!orderData) {
     return (

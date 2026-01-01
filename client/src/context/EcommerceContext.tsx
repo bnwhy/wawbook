@@ -18,8 +18,9 @@ interface EcommerceContextType {
   createOrder: (
     customer: { firstName: string; lastName: string; email: string; phone?: string; address: any },
     items: any[],
-    totalAmount: number
-  ) => Promise<void>;
+    totalAmount: number,
+    stripeSessionId?: string
+  ) => Promise<string>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => Promise<void>;
   updateOrderTracking: (orderId: string, trackingNumber: string) => Promise<void>;
   getOrdersByCustomer: (customerId: string) => Order[];
@@ -209,8 +210,9 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
   const createOrder = async (
     customer: { firstName: string; lastName: string; email: string; phone?: string; address: any },
     items: any[],
-    totalAmount: number
-  ) => {
+    totalAmount: number,
+    stripeSessionId?: string
+  ): Promise<string> => {
     const orderId = `ORD-${Date.now()}`;
     
     // Find or create customer
@@ -236,12 +238,13 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       });
     }
 
-    const order = {
+    const order: any = {
       id: orderId,
       customerId,
       customerName: `${customer.firstName} ${customer.lastName}`,
       customerEmail: customer.email,
       status: 'pending' as OrderStatus,
+      paymentStatus: 'pending',
       items,
       totalAmount: totalAmount.toString(),
       shippingAddress: customer.address,
@@ -256,7 +259,12 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       ],
     };
 
+    if (stripeSessionId) {
+      order.stripeSessionId = stripeSessionId;
+    }
+
     await createOrderMutation.mutateAsync(order);
+    return orderId;
   };
 
   const updateOrderStatus = async (orderId: string, status: OrderStatus) => {

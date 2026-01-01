@@ -123,13 +123,11 @@ export async function registerRoutes(
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
       
-      // Check if customer already exists with this email
+      // Check if customer already exists with this email - just return it
       if (validationResult.data.email) {
         const existingCustomer = await storage.getCustomerByEmail(validationResult.data.email);
         if (existingCustomer) {
-          // Update existing customer with new data and return
-          const updated = await storage.updateCustomer(existingCustomer.id, validationResult.data);
-          return res.status(200).json(updated || existingCustomer);
+          return res.status(200).json(existingCustomer);
         }
       }
       

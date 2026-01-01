@@ -60,7 +60,10 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
 
   const addCondition = () => {
     if (selectedVariant && selectedOption) {
-      onConditionsChange([...conditions, { variantId: selectedVariant, optionId: selectedOption }]);
+      const newConditions = [...conditions, { variantId: selectedVariant, optionId: selectedOption }];
+      console.log('[ImageConditionEditor] Adding condition:', { variantId: selectedVariant, optionId: selectedOption });
+      console.log('[ImageConditionEditor] New conditions array:', newConditions);
+      onConditionsChange(newConditions);
       setSelectedVariant('');
       setSelectedOption('');
     }
@@ -6314,11 +6317,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                     conditions={conditions}
                                                                                     imageVariantOptions={imageVariantOptions}
                                                                                     onConditionsChange={(newConditions) => {
+                                                                                        console.log('[AdminDashboard] onConditionsChange called for image:', img.id);
+                                                                                        console.log('[AdminDashboard] newConditions:', JSON.stringify(newConditions));
                                                                                         const currentBook = draftBook || selectedBook;
+                                                                                        console.log('[AdminDashboard] currentBook source:', draftBook ? 'draftBook' : 'selectedBook');
                                                                                         const currentImages = currentBook.contentConfig.imageElements || [];
                                                                                         const updatedImages = currentImages.map((i: any) =>
                                                                                             i.id === img.id ? { ...i, conditions: newConditions } : i
                                                                                         );
+                                                                                        console.log('[AdminDashboard] Updated image:', updatedImages.find((i: any) => i.id === img.id));
                                                                                         const updatedBook = {
                                                                                             ...currentBook,
                                                                                             contentConfig: {
@@ -6326,6 +6333,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                                 imageElements: updatedImages
                                                                                             }
                                                                                         };
+                                                                                        console.log('[AdminDashboard] Setting draftBook with updated imageElements');
                                                                                         setDraftBook(updatedBook);
                                                                                     }}
                                                                                 />
@@ -6342,10 +6350,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 <button
                                                                     onClick={async () => {
                                                                         try {
+                                                                            console.log('[AdminDashboard] Save button clicked');
+                                                                            console.log('[AdminDashboard] draftBook imageElements:', JSON.stringify(draftBook.contentConfig.imageElements));
                                                                             await updateBook(draftBook);
+                                                                            console.log('[AdminDashboard] updateBook completed');
                                                                             setDraftBook(null);
                                                                             toast.success('Modifications sauvegardées');
                                                                         } catch (err) {
+                                                                            console.error('[AdminDashboard] Save error:', err);
                                                                             toast.error('Erreur lors de la sauvegarde');
                                                                         }
                                                                     }}

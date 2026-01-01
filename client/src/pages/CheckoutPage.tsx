@@ -197,18 +197,18 @@ const CheckoutPage = () => {
           <Navigation onStart={() => setLocation('/')} />
           <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
             {/* Checkout Wizard Stepper */}
-            <div className="mb-16">
-              <div className="flex items-center justify-center">
-                <div className="flex items-center w-full max-w-md">
+            <div className="mb-10 md:mb-16">
+              <div className="flex items-center justify-center px-2">
+                <div className="flex items-center w-full max-w-sm md:max-w-md">
                   {/* Step 1: Panier - Completed */}
                   <div 
                     className="flex flex-col items-center cursor-pointer group z-10"
                     onClick={() => setLocation('/cart')}
                   >
-                    <div className="w-12 h-12 bg-accent-sun rounded-full flex items-center justify-center shadow-md transform group-hover:scale-110 transition-transform">
-                      <ShoppingCart size={20} className="text-white" />
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-accent-sun rounded-full flex items-center justify-center shadow-md transform group-hover:scale-110 transition-transform">
+                      <ShoppingCart className="text-white w-4 h-4 md:w-5 md:h-5" />
                     </div>
-                    <span className="text-xs font-bold text-cloud-dark mt-2">Panier</span>
+                    <span className="text-[10px] md:text-xs font-bold text-cloud-dark mt-1 md:mt-2">Panier</span>
                   </div>
 
                   {/* Line 1: Panier → Adresse (always colored) */}
@@ -219,14 +219,14 @@ const CheckoutPage = () => {
                     className={`flex flex-col items-center z-10 ${step === 'payment' ? 'cursor-pointer group' : ''}`}
                     onClick={() => step === 'payment' && setStep('details')}
                   >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md transform transition-transform ${
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-md transform transition-transform ${
                       step === 'details' 
                         ? 'bg-accent-melon ring-2 ring-accent-melon/40' 
                         : 'bg-accent-melon group-hover:scale-110'
                     }`}>
-                      <Truck size={20} className="text-white" />
+                      <Truck className="text-white w-4 h-4 md:w-5 md:h-5" />
                     </div>
-                    <span className={`text-xs font-bold mt-2 ${step === 'details' ? 'text-accent-melon' : 'text-cloud-dark'}`}>Livraison</span>
+                    <span className={`text-[10px] md:text-xs font-bold mt-1 md:mt-2 ${step === 'details' ? 'text-accent-melon' : 'text-cloud-dark'}`}>Livraison</span>
                   </div>
 
                   {/* Line 2: Adresse → Paiement (colored if on payment step) */}
@@ -234,14 +234,14 @@ const CheckoutPage = () => {
 
                   {/* Step 3: Paiement */}
                   <div className="flex flex-col items-center z-10">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md transform transition-transform ${
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-md transform transition-transform ${
                       step === 'payment' 
                         ? 'bg-cloud-deep ring-2 ring-cloud-deep/40' 
                         : 'bg-stone-200'
                     }`}>
-                      <CreditCard size={20} className={step === 'payment' ? 'text-white' : 'text-stone-400'} />
+                      <CreditCard className={`w-4 h-4 md:w-5 md:h-5 ${step === 'payment' ? 'text-white' : 'text-stone-400'}`} />
                     </div>
-                    <span className={`text-xs font-bold mt-2 ${step === 'payment' ? 'text-cloud-deep' : 'text-stone-400'}`}>Paiement</span>
+                    <span className={`text-[10px] md:text-xs font-bold mt-1 md:mt-2 ${step === 'payment' ? 'text-cloud-deep' : 'text-stone-400'}`}>Paiement</span>
                   </div>
                 </div>
               </div>
@@ -252,7 +252,7 @@ const CheckoutPage = () => {
                 <div className="lg:col-span-2 flex justify-center">
                     {step === 'details' ? (
                        <>
-                            <form id="details-form" onSubmit={handleDetailsSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-8 max-w-lg w-full">
+                            <form id="details-form" onSubmit={handleDetailsSubmit} className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-stone-100 space-y-6 md:space-y-8 w-full max-w-lg md:max-w-xl">
                                 {/* Contact Section */}
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
@@ -360,7 +360,7 @@ const CheckoutPage = () => {
                             </form>
                        </>
                     ) : (
-                        <form id="payment-form" onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6 max-w-lg w-full">
+                        <form id="payment-form" onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-stone-100 space-y-6 w-full max-w-lg md:max-w-xl">
                              <div className="flex items-center gap-2 mb-6 cursor-pointer text-stone-500 hover:text-stone-800 transition-colors" onClick={() => setStep('details')}>
                                 <ArrowLeft size={16} /> Retour aux détails
                             </div>

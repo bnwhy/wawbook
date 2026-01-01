@@ -136,13 +136,24 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
         </div>
 
           {/* CTA Button & Mobile Toggle */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           
+          {/* Desktop Cart Button */}
           <Link href="/cart" className="hidden md:flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
                <ShoppingCart size={20} />
                <span>Panier</span>
                {itemCount > 0 && (
                 <span className="w-5 h-5 bg-white text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+                  {itemCount}
+                </span>
+               )}
+          </Link>
+          
+          {/* Mobile Cart Icon */}
+          <Link href="/cart" className="md:hidden relative p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors">
+               <ShoppingCart size={24} />
+               {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-sun text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
                   {itemCount}
                 </span>
                )}

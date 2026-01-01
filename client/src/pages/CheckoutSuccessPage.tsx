@@ -103,43 +103,43 @@ const CheckoutSuccessPage = () => {
     <div className="min-h-screen flex flex-col bg-stone-50">
       <Navigation onStart={() => setLocation('/')} />
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
-        {/* Checkout Wizard Stepper - All Completed */}
-        <div className="mb-12">
+        {/* Checkout Wizard Stepper - All Completed - Style "C'est facile comme tout" */}
+        <div className="mb-16">
           <div className="flex items-center justify-center relative">
             {/* Connecting Line */}
-            <div className="hidden md:block absolute top-6 left-[15%] right-[15%] h-0.5 border-b-2 border-dashed border-green-400 z-0"></div>
+            <div className="hidden md:block absolute top-10 left-[12%] right-[12%] h-1 bg-white border-b-2 border-dashed border-green-400 z-0"></div>
             
-            <div className="flex items-center justify-between w-full max-w-2xl relative z-10">
+            <div className="flex items-center justify-between w-full max-w-3xl relative z-10">
               {/* Step 1: Panier - Completed */}
               <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
-                  <Check size={20} className="text-white" />
+                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-cloud mb-4">
+                  <Check size={32} className="text-white" />
                 </div>
-                <span className="text-xs font-bold text-green-600 uppercase tracking-wide">Panier</span>
+                <h3 className="text-sm font-display font-black text-green-600">Panier</h3>
               </div>
 
               {/* Step 2: Adresse - Completed */}
               <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
-                  <Check size={20} className="text-white" />
+                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-cloud mb-4">
+                  <Check size={32} className="text-white" />
                 </div>
-                <span className="text-xs font-bold text-green-600 uppercase tracking-wide">Adresse</span>
+                <h3 className="text-sm font-display font-black text-green-600">Adresse</h3>
               </div>
 
               {/* Step 3: Expédition - Completed */}
               <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
-                  <Check size={20} className="text-white" />
+                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-cloud mb-4">
+                  <Check size={32} className="text-white" />
                 </div>
-                <span className="text-xs font-bold text-green-600 uppercase tracking-wide">Expédition</span>
+                <h3 className="text-sm font-display font-black text-green-600">Expédition</h3>
               </div>
 
               {/* Step 4: Paiement - Completed */}
               <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2 ring-4 ring-green-200">
-                  <Check size={20} className="text-white" />
+                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-cloud mb-4 ring-4 ring-green-200">
+                  <Check size={32} className="text-white" />
                 </div>
-                <span className="text-xs font-bold text-green-600 uppercase tracking-wide">Paiement</span>
+                <h3 className="text-sm font-display font-black text-green-600">Paiement</h3>
               </div>
             </div>
           </div>

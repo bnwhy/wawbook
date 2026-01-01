@@ -643,10 +643,66 @@ const Wizard: React.FC<WizardProps> = (props) => {
                 </div>
              </div>
 
-             {/* Book Cover Simulation */}
-             <div className="relative w-[60%] aspect-[3/4] shadow-2xl rounded-r-xl overflow-hidden transform rotate-1 bg-white group">
-                {/* Background Image */}
-                <img src={book.coverImage} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+             {/* Book Cover Simulation - 3D Effect */}
+             <div className="relative w-[55%] aspect-[3/4] transform rotate-2 group" style={{ perspective: '1000px' }}>
+                {/* Book container with 3D transform */}
+                <div 
+                  className="relative w-full h-full transition-transform duration-500 group-hover:rotate-y-[-5deg]"
+                  style={{ transformStyle: 'preserve-3d', transform: 'rotateY(-8deg)' }}
+                >
+                  {/* Spine (left edge) */}
+                  <div 
+                    className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-stone-700 via-stone-600 to-stone-500 rounded-l-sm"
+                    style={{ 
+                      transform: 'translateX(-100%) rotateY(90deg)',
+                      transformOrigin: 'right center',
+                      boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.3)'
+                    }}
+                  />
+                  
+                  {/* Page edges (right side) */}
+                  <div 
+                    className="absolute right-0 top-1 bottom-1 w-2"
+                    style={{ transform: 'translateX(2px)' }}
+                  >
+                    {[...Array(8)].map((_, i) => (
+                      <div 
+                        key={i}
+                        className="absolute top-0 bottom-0 bg-gray-100 border-r border-gray-200"
+                        style={{ 
+                          right: `${i * 1}px`,
+                          width: '1px',
+                          opacity: 1 - (i * 0.1)
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Page edges (bottom) */}
+                  <div 
+                    className="absolute left-1 right-1 bottom-0 h-1.5 bg-gradient-to-b from-gray-50 to-gray-200 rounded-b-sm"
+                    style={{ transform: 'translateY(2px)' }}
+                  />
+                  
+                  {/* Main cover */}
+                  <div className="absolute inset-0 rounded-r-lg overflow-hidden shadow-2xl bg-white">
+                    <img src={book.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                    
+                    {/* Cover shine effect */}
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none"
+                    />
+                    
+                    {/* Edge highlight */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-black/20 to-transparent" />
+                  </div>
+                  
+                  {/* Drop shadow */}
+                  <div 
+                    className="absolute -bottom-4 left-4 right-0 h-8 bg-black/20 blur-xl rounded-full"
+                    style={{ transform: 'scaleY(0.3)' }}
+                  />
+                </div>
              </div>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Loader2 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Story, BookConfig } from '../types';
@@ -36,6 +36,21 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
   const [generatedPages, setGeneratedPages] = useState<Record<number, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Mobile single-page mode
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobilePageIndex, setMobilePageIndex] = useState(0); // 0 = cover, 1-N = pages, N+1 = back cover
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const bookContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // --- HELPER: Resolve Variables ---
   const resolveTextVariable = (text: string) => {
@@ -313,6 +328,99 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     }
   };
 
+  // --- MOBILE NAVIGATION ---
+  // Total mobile pages: cover (0) + content pages (1 to pageCount) + back cover (pageCount + 1)
+  const totalMobilePages = pageCount + 2; // cover + pages + back cover
+  
+  const handleMobileNext = () => {
+    if (mobilePageIndex < totalMobilePages - 1) {
+      setMobilePageIndex(p => p + 1);
+    }
+  };
+  
+  const handleMobilePrev = () => {
+    if (mobilePageIndex > 0) {
+      setMobilePageIndex(p => p - 1);
+    }
+  };
+  
+  // Touch handlers for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = null;
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+  
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    
+    const diff = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+    
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0) {
+        // Swipe left -> next page
+        handleMobileNext();
+      } else {
+        // Swipe right -> previous page
+        handleMobilePrev();
+      }
+    }
+    
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+  
+  // Get mobile page content
+  const getMobilePageContent = (index: number) => {
+    // index 0 = cover
+    if (index === 0) {
+      if (generatedPages[0]) {
+        return (
+          <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
+            <img src={generatedPages[0]} className="w-full h-full object-contain" alt="Cover" />
+          </div>
+        );
+      }
+      return (
+        <div className="w-full h-full bg-white rounded-lg shadow-xl flex items-center justify-center">
+          {isGenerating ? <Loader2 className="animate-spin text-cloud-blue" size={32} /> : <BookOpen size={40} className="text-gray-200" />}
+        </div>
+      );
+    }
+    
+    // index = totalMobilePages - 1 = back cover
+    if (index === totalMobilePages - 1) {
+      if (generatedPages[999]) {
+        return (
+          <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
+            <img src={generatedPages[999]} className="w-full h-full object-contain" alt="Back Cover" />
+          </div>
+        );
+      }
+      return <div className="w-full h-full bg-white rounded-lg shadow-xl" />;
+    }
+    
+    // Content pages: index 1 corresponds to page 1, etc.
+    const pageNum = index;
+    if (generatedPages[pageNum]) {
+      return (
+        <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
+          <img src={generatedPages[pageNum]} className="w-full h-full object-contain" alt={`Page ${pageNum}`} />
+        </div>
+      );
+    }
+    
+    return (
+      <div className="w-full h-full bg-white rounded-lg shadow-xl flex items-center justify-center">
+        {isGenerating ? <Loader2 className="animate-spin text-cloud-blue" size={32} /> : <BookOpen size={40} className="text-gray-200" />}
+      </div>
+    );
+  };
+
   // --- CONTENT GENERATORS ---
 
   const resolveImageUrl = (el: ImageElement) => {
@@ -563,8 +671,69 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           {/* NAVBAR */}
           {!isModal && <Navigation onStart={onStart} />}
           {/* BOOK PREVIEW AREA */}
-          <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : 'py-2 mt-2 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
+          <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : isMobile ? 'py-6 mt-16' : 'py-2 mt-2 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
               
+              {/* MOBILE SINGLE PAGE VIEW */}
+              {isMobile ? (
+                <div className="w-full flex flex-col items-center">
+                  {/* Mobile Book Container with swipe */}
+                  <div 
+                    ref={bookContainerRef}
+                    className="relative w-full max-w-sm mx-auto"
+                    style={{ aspectRatio: `${dims.width} / ${dims.height}` }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {/* Page content */}
+                    <div className="w-full h-full">
+                      {getMobilePageContent(mobilePageIndex)}
+                    </div>
+                    
+                    {/* Navigation arrows (smaller on mobile) */}
+                    <button 
+                      onClick={handleMobilePrev} 
+                      disabled={mobilePageIndex === 0}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg disabled:opacity-0 transition-opacity z-20"
+                    >
+                      <ChevronLeft size={24} strokeWidth={2.5} />
+                    </button>
+                    <button 
+                      onClick={handleMobileNext} 
+                      disabled={mobilePageIndex === totalMobilePages - 1}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg disabled:opacity-0 transition-opacity z-20"
+                    >
+                      <ChevronRight size={24} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                  
+                  {/* Page indicator */}
+                  <div className="mt-4 flex items-center justify-center gap-2">
+                    <span className="text-sm font-medium text-stone-600">
+                      {mobilePageIndex === 0 ? 'Couverture' : mobilePageIndex === totalMobilePages - 1 ? 'Dos' : `Page ${mobilePageIndex}`}
+                    </span>
+                    <span className="text-xs text-stone-400">
+                      ({mobilePageIndex + 1} / {totalMobilePages})
+                    </span>
+                  </div>
+                  
+                  {/* Swipe hint */}
+                  <p className="mt-2 text-xs text-stone-400 text-center">
+                    Glissez pour tourner les pages
+                  </p>
+                  
+                  {/* Modify Link */}
+                  {!isModal && (
+                    <div className="mt-4 flex justify-center">
+                      <button onClick={onStart} className="text-cloud-blue font-bold text-sm hover:underline flex items-center gap-1 transition-colors hover:text-cloud-deep">
+                        <ChevronLeft size={16} strokeWidth={3} /> Retour à la personnalisation
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* DESKTOP DOUBLE-PAGE SPREAD VIEW */
+                <>
               {/* Stage */}
               <div className={`relative z-10 flex items-center justify-center w-full max-w-7xl perspective-[2500px] animate-drop-in ${isModal ? 'h-[600px] scale-[0.85]' : 'h-[850px]'}`}>
                 
@@ -683,6 +852,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     <ChevronLeft size={16} strokeWidth={3} /> Retour à la personnalisation
                  </button>
               </div>
+              )}
+                </>
               )}
 
           </div>

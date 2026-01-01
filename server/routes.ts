@@ -60,6 +60,11 @@ export async function registerRoutes(
         price: rest.price != null ? String(rest.price) : (rest.price === null ? null : undefined),
         oldPrice: rest.oldPrice != null ? String(rest.oldPrice) : (rest.oldPrice === null ? null : undefined),
       };
+      console.log('[PATCH /api/books/:id] Received imageElements count:', body.contentConfig?.imageElements?.length);
+      if (body.contentConfig?.imageElements?.length > 0) {
+        const firstWithConditions = body.contentConfig.imageElements.find((img: any) => img.conditions?.length > 0);
+        console.log('[PATCH /api/books/:id] First image with conditions:', JSON.stringify(firstWithConditions));
+      }
       const book = await storage.updateBook(req.params.id, body);
       if (!book) {
         return res.status(404).json({ error: "Book not found" });

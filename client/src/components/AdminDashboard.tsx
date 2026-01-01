@@ -2258,7 +2258,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                  }}
                                               />
                                            </td>
-                                           <td className="px-4 py-3 font-bold text-slate-900 group-hover:underline">#{order.id.slice(0,8)}</td>
+                                           <td className="px-4 py-3 font-bold text-slate-900 group-hover:underline">#{order.id}</td>
                                            <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                                               {new Date(order.createdAt).toLocaleDateString()}
                                               <span className="text-slate-400 ml-1 text-[10px]">{new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>

@@ -152,25 +152,34 @@ export const renderHtmlPageToImage = async (
   }
 
   // Filter images based on conditions
+  console.log('[pageRenderer] imageElements passed:', imageElements?.length, 'for page:', rawPage.pageIndex);
+  console.log('[pageRenderer] characters:', JSON.stringify(characters));
+  
   if (imageElements && imageElements.length > 0) {
     // Get images for this page that have conditions
     const pageImageElements = imageElements.filter(
       img => img.position.pageIndex === rawPage.pageIndex && img.conditions && img.conditions.length > 0
     );
     
+    console.log('[pageRenderer] Page images with conditions:', pageImageElements.length);
+    
     // For each image with conditions, check if it should be visible
     pageImageElements.forEach(imgEl => {
       const shouldShow = checkImageConditions(imgEl.conditions, characters);
-      console.log(`[pageRenderer] Image ${imgEl.id} conditions:`, imgEl.conditions, 'shouldShow:', shouldShow);
+      console.log(`[pageRenderer] Image ${imgEl.id} url:`, imgEl.url?.substring(0, 50));
+      console.log(`[pageRenderer] Image ${imgEl.id} conditions:`, JSON.stringify(imgEl.conditions), 'shouldShow:', shouldShow);
       
       if (!shouldShow && imgEl.url) {
         // Hide images that don't match conditions by replacing with transparent placeholder
         const escapedUrl = imgEl.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        console.log('[pageRenderer] Hiding image, searching for URL:', imgEl.url);
         // Replace img src with a 1px transparent gif
+        const beforeReplace = bodyContent;
         bodyContent = bodyContent.replace(
           new RegExp(`src=["']${escapedUrl}["']`, 'g'),
           'src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="opacity:0;visibility:hidden;"'
         );
+        console.log('[pageRenderer] Replaced:', beforeReplace !== bodyContent);
       }
     });
   }

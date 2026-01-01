@@ -511,5 +511,79 @@ export async function registerRoutes(
     }
   });
 
+  // Verify payment status and update order
+  app.post("/api/checkout/verify-payment", async (req, res) => {
+    try {
+      const { sessionId, orderId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID is required" });
+      }
+
+      const paymentResult = await stripeService.getPaymentStatus(sessionId);
+      
+      // Update order with payment status if orderId is provided
+      if (orderId) {
+        await storage.updateOrder(orderId, {
+          paymentStatus: paymentResult.status,
+          stripeSessionId: sessionId,
+          stripePaymentIntentId: paymentResult.paymentIntentId,
+        });
+      }
+
+      res.json({
+        paymentStatus: paymentResult.status,
+        paymentIntentId: paymentResult.paymentIntentId,
+      });
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      res.status(500).json({ error: "Failed to verify payment" });
+    }
+  });
+
+  // Get payment status for an order
+  app.get("/api/orders/:id/payment-status", async (req, res) => {
+    try {
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // If we have a Stripe session ID, get fresh status from Stripe
+      if (order.stripeSessionId) {
+        try {
+          const paymentResult = await stripeService.getPaymentStatus(order.stripeSessionId);
+          
+          // Update if status changed
+          if (paymentResult.status !== order.paymentStatus) {
+            await storage.updateOrder(order.id, {
+              paymentStatus: paymentResult.status,
+              stripePaymentIntentId: paymentResult.paymentIntentId,
+            });
+          }
+          
+          res.json({
+            paymentStatus: paymentResult.status,
+            stripeSessionId: order.stripeSessionId,
+            stripePaymentIntentId: paymentResult.paymentIntentId,
+          });
+        } catch (stripeError) {
+          // If Stripe fails, return stored status
+          res.json({
+            paymentStatus: order.paymentStatus || 'pending',
+            stripeSessionId: order.stripeSessionId,
+          });
+        }
+      } else {
+        res.json({
+          paymentStatus: order.paymentStatus || 'pending',
+        });
+      }
+    } catch (error) {
+      console.error("Error getting payment status:", error);
+      res.status(500).json({ error: "Failed to get payment status" });
+    }
+  });
+
   return httpServer;
 }

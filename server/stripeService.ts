@@ -93,6 +93,31 @@ export class StripeService {
     );
     return result.rows;
   }
+
+  async getCheckoutSession(sessionId: string) {
+    const stripe = await getUncachableStripeClient();
+    return await stripe.checkout.sessions.retrieve(sessionId);
+  }
+
+  async getPaymentStatus(sessionId: string): Promise<{
+    status: 'pending' | 'paid' | 'failed' | 'refunded';
+    paymentIntentId?: string;
+  }> {
+    const session = await this.getCheckoutSession(sessionId);
+    
+    if (session.payment_status === 'paid') {
+      return {
+        status: 'paid',
+        paymentIntentId: typeof session.payment_intent === 'string' 
+          ? session.payment_intent 
+          : session.payment_intent?.id,
+      };
+    } else if (session.payment_status === 'unpaid') {
+      return { status: 'pending' };
+    } else {
+      return { status: 'failed' };
+    }
+  }
 }
 
 export const stripeService = new StripeService();

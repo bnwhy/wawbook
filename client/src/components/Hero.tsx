@@ -194,25 +194,14 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   onClick={() => onStart(undefined, undefined, card.name)}
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                 >
-                  {/* Image Container - 3D Book Effect */}
-                  <div className="aspect-[3/4] relative overflow-visible bg-transparent flex items-center justify-center p-6">
-                      {/* Book with 3D effect */}
-                      <div className="relative w-[85%] h-[90%] group-hover:-translate-y-1 transition-transform duration-300">
-                        {/* Page edges (right side) */}
-                        <div className="absolute top-[2px] -right-[6px] w-[6px] h-[calc(100%-4px)] bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-r-sm" style={{ boxShadow: '1px 0 2px rgba(0,0,0,0.1)' }}></div>
-                        {/* Page edges (bottom) */}
-                        <div className="absolute -bottom-[4px] left-[2px] w-[calc(100%-4px)] h-[4px] bg-gradient-to-b from-gray-200 to-gray-300 rounded-b-sm"></div>
-                        {/* Main cover */}
-                        <div className="relative w-full h-full rounded-sm overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.25),_0_2px_4px_rgba(0,0,0,0.1)]">
-                          <img 
-                            src={card.coverImage} 
-                            alt={card.name}
-                            className="w-full h-full object-contain bg-white"
-                          />
-                        </div>
-                      </div>
-                      {/* Badge */}
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1 z-10">
+                  {/* Image Container */}
+                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                      <img 
+                        src={card.coverImage} 
+                        alt={card.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                           <Heart size={12} className="text-accent-melon fill-current" />
                           Nouveau
                       </div>
@@ -256,25 +245,14 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   onClick={() => onStart(card.theme, undefined, card.name)}
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                 >
-                  {/* Image Container - 3D Book Effect */}
-                  <div className="aspect-[3/4] relative overflow-visible bg-transparent flex items-center justify-center p-6">
-                      {/* Book with 3D effect */}
-                      <div className="relative w-[85%] h-[90%] group-hover:-translate-y-1 transition-transform duration-300">
-                        {/* Page edges (right side) */}
-                        <div className="absolute top-[2px] -right-[6px] w-[6px] h-[calc(100%-4px)] bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-r-sm" style={{ boxShadow: '1px 0 2px rgba(0,0,0,0.1)' }}></div>
-                        {/* Page edges (bottom) */}
-                        <div className="absolute -bottom-[4px] left-[2px] w-[calc(100%-4px)] h-[4px] bg-gradient-to-b from-gray-200 to-gray-300 rounded-b-sm"></div>
-                        {/* Main cover */}
-                        <div className="relative w-full h-full rounded-sm overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.25),_0_2px_4px_rgba(0,0,0,0.1)]">
-                          <img 
-                            src={card.coverImage} 
-                            alt={card.name}
-                            className="w-full h-full object-contain bg-white"
-                          />
-                        </div>
-                      </div>
-                      {/* Badge */}
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1 z-10">
+                  {/* Image Container */}
+                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                      <img 
+                        src={card.coverImage} 
+                        alt={card.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                           <Star size={12} className="text-accent-sun fill-current" />
                           Best-seller
                       </div>
@@ -318,23 +296,13 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     onClick={() => onStart(undefined, activity.id as any, activity.name)}
                     className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                   >
-                    {/* Image Container - 3D Book Effect */}
-                    <div className="aspect-[3/4] relative overflow-visible bg-transparent flex items-center justify-center p-6">
-                        {/* Book with 3D effect */}
-                        <div className="relative w-[85%] h-[90%] group-hover:-translate-y-1 transition-transform duration-300">
-                          {/* Page edges (right side) */}
-                          <div className="absolute top-[2px] -right-[6px] w-[6px] h-[calc(100%-4px)] bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-r-sm" style={{ boxShadow: '1px 0 2px rgba(0,0,0,0.1)' }}></div>
-                          {/* Page edges (bottom) */}
-                          <div className="absolute -bottom-[4px] left-[2px] w-[calc(100%-4px)] h-[4px] bg-gradient-to-b from-gray-200 to-gray-300 rounded-b-sm"></div>
-                          {/* Main cover */}
-                          <div className="relative w-full h-full rounded-sm overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.25),_0_2px_4px_rgba(0,0,0,0.1)]">
-                            <img 
-                              src={activity.coverImage} 
-                              alt={activity.name}
-                              className="w-full h-full object-contain bg-white"
-                            />
-                          </div>
-                        </div>
+                    {/* Image Container */}
+                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                        <img 
+                          src={activity.coverImage} 
+                          alt={activity.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
                     </div>
 
                     {/* Content */}
@@ -375,25 +343,14 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                     onClick={() => onStart(undefined, undefined, occasion.name)}
                     className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
                   >
-                    {/* Image Container - 3D Book Effect */}
-                    <div className="aspect-[3/4] relative overflow-visible bg-transparent flex items-center justify-center p-6">
-                        {/* Book with 3D effect */}
-                        <div className="relative w-[85%] h-[90%] group-hover:-translate-y-1 transition-transform duration-300">
-                          {/* Page edges (right side) */}
-                          <div className="absolute top-[2px] -right-[6px] w-[6px] h-[calc(100%-4px)] bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-r-sm" style={{ boxShadow: '1px 0 2px rgba(0,0,0,0.1)' }}></div>
-                          {/* Page edges (bottom) */}
-                          <div className="absolute -bottom-[4px] left-[2px] w-[calc(100%-4px)] h-[4px] bg-gradient-to-b from-gray-200 to-gray-300 rounded-b-sm"></div>
-                          {/* Main cover */}
-                          <div className="relative w-full h-full rounded-sm overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.25),_0_2px_4px_rgba(0,0,0,0.1)]">
-                            <img 
-                              src={occasion.coverImage} 
-                              alt={occasion.name}
-                              className="w-full h-full object-contain bg-white"
-                            />
-                          </div>
-                        </div>
-                        {/* Badge */}
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1 z-10">
+                    {/* Image Container */}
+                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                        <img 
+                          src={occasion.coverImage} 
+                          alt={occasion.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                             <Gift size={12} className="text-accent-melon fill-current" />
                             Célébration
                         </div>

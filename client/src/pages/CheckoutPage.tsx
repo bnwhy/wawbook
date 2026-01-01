@@ -29,17 +29,6 @@ const CheckoutPage = () => {
     zip: '',
     country: 'France',
     phone: '',
-    cardNumber: '',
-    expiry: '',
-    cvc: '',
-    // Billing Address Fields
-    billingFirstName: '',
-    billingLastName: '',
-    billingAddress: '',
-    billingApartment: '',
-    billingCity: '',
-    billingZip: '',
-    billingCountry: 'France',
   });
 
   // Shipping State
@@ -101,32 +90,51 @@ const CheckoutPage = () => {
     window.scrollTo(0, 0);
   };
 
-  const handlePaymentSubmit = (e: React.FormEvent) => {
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
-      // Create Order in Ecommerce Backend
-      createOrder({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        address: {
+    try {
+      const response = await fetch('/api/checkout/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map(item => ({
+            name: item.bookTitle || 'Livre personnalisé',
+            price: item.price + (shippingCost / items.length),
+            quantity: item.quantity,
+          })),
+          customerEmail: formData.email,
+          customerName: `${formData.firstName} ${formData.lastName}`,
+          shippingAddress: {
             street: formData.address,
+            apartment: formData.apartment,
             city: formData.city,
             zipCode: formData.zip,
-            country: formData.country
-        }
-      }, items, grandTotal);
+            country: formData.country,
+            phone: formData.phone,
+          },
+        }),
+      });
 
+      const data = await response.json();
+      
+      if (data.url) {
+        localStorage.setItem('pendingOrder', JSON.stringify({
+          formData,
+          items,
+          grandTotal,
+          shippingMethod: selectedMethod,
+        }));
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Une erreur est survenue. Veuillez réessayer.');
       setIsLoading(false);
-      setStep('confirmation');
-      setOrderNumber(Math.random().toString(36).substr(2, 9).toUpperCase());
-      clearCart();
-      window.scrollTo(0, 0);
-    }, 2000);
+    }
   };
 
   if (items.length === 0 && step !== 'confirmation') {
@@ -336,100 +344,42 @@ const CheckoutPage = () => {
                         <h2 className="font-display font-black text-2xl text-stone-800 flex items-center gap-3">
                             <CreditCard className="text-cloud-blue" /> Paiement sécurisé
                         </h2>
-                        
-                        {/* Billing Address Toggle */}
-                        <div className="space-y-4">
-                             <h3 className="font-bold text-lg text-stone-800">Adresse de facturation</h3>
-                             <div className="border border-stone-300 rounded-lg overflow-hidden">
-                                <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-200">
-                                    <div className="flex items-center gap-3">
-                                        <input 
-                                            type="radio" 
-                                            name="billing" 
-                                            checked={billingMode === 'same'}
-                                            onChange={() => setBillingMode('same')}
-                                            className="text-cloud-blue focus:ring-cloud-blue" 
-                                        />
-                                        <span className="text-sm font-medium text-stone-800">Identique à l'adresse de livraison</span>
-                                    </div>
-                                </label>
-                                <label className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <input 
-                                            type="radio" 
-                                            name="billing" 
-                                            checked={billingMode === 'different'}
-                                            onChange={() => setBillingMode('different')}
-                                            className="text-cloud-blue focus:ring-cloud-blue" 
-                                        />
-                                        <span className="text-sm font-medium text-stone-800">Utiliser une autre adresse de facturation</span>
-                                    </div>
-                                </label>
+
+                        <div className="bg-stone-50 rounded-xl p-4 space-y-3">
+                            <h3 className="font-bold text-stone-700">Récapitulatif de livraison</h3>
+                            <div className="text-sm text-stone-600 space-y-1">
+                                <p><span className="font-medium">{formData.firstName} {formData.lastName}</span></p>
+                                <p>{formData.address}{formData.apartment ? `, ${formData.apartment}` : ''}</p>
+                                <p>{formData.zip} {formData.city}, {formData.country}</p>
+                                <p>{formData.email}</p>
+                                {formData.phone && <p>{formData.phone}</p>}
                             </div>
-
-                            {/* Billing Address Form */}
-                            {billingMode === 'different' && (
-                                <div className="p-4 bg-stone-50 rounded-lg space-y-4 border border-stone-200 animate-in slide-in-from-top-2">
-                                    <div className="relative">
-                                        <select 
-                                            name="billingCountry"
-                                            value={formData.billingCountry}
-                                            onChange={handleInputChange}
-                                            className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer"
-                                        >
-                                            {ALL_COUNTRIES.map(country => (
-                                                <option key={country} value={country}>{country}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <input required name="billingFirstName" value={formData.billingFirstName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Prénom" />
-                                        <input required name="billingLastName" value={formData.billingLastName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Nom" />
-                                    </div>
-
-                                    <input required name="billingAddress" value={formData.billingAddress} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Adresse" />
-                                    <input name="billingApartment" value={formData.billingApartment} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Appartement, suite, etc. (facultatif)" />
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <input required name="billingZip" value={formData.billingZip} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Code postal" />
-                                        <input required name="billingCity" value={formData.billingCity} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Ville" />
-                                    </div>
+                            {selectedMethod && (
+                                <div className="pt-2 border-t border-stone-200 mt-2">
+                                    <p className="text-sm text-stone-600">
+                                        <span className="font-medium">Livraison :</span> {selectedMethod.name}
+                                        {selectedMethod.estimatedDelay && ` (${selectedMethod.estimatedDelay})`}
+                                    </p>
                                 </div>
                             )}
                         </div>
 
-                        <div className="border-t border-stone-100 my-6"></div>
-
                         <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3 text-sm text-blue-800">
                             <Lock size={16} className="mt-0.5 flex-shrink-0" />
-                            <p>Toutes les transactions sont sécurisées et cryptées. Nous ne stockons pas vos informations bancaires.</p>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-stone-600">Numéro de carte</label>
-                            <div className="relative">
-                                <input required name="cardNumber" value={formData.cardNumber} onChange={handleInputChange} type="text" className="w-full p-3 pl-12 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none font-mono" placeholder="0000 0000 0000 0000" />
-                                <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
-                            </div>
+                            <p>Vous allez être redirigé vers la page de paiement sécurisée Stripe. Toutes les transactions sont cryptées.</p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-stone-600">Expiration</label>
-                                <input required name="expiry" value={formData.expiry} onChange={handleInputChange} type="text" className="w-full p-3 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none font-mono" placeholder="MM/YY" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-stone-600">CVC</label>
-                                <input required name="cvc" value={formData.cvc} onChange={handleInputChange} type="text" className="w-full p-3 border-2 border-stone-200 rounded-xl focus:border-cloud-blue focus:ring-0 outline-none font-mono" placeholder="123" />
-                            </div>
+                        <div className="flex items-center justify-center gap-4 py-4">
+                            <img src="https://cdn.jsdelivr.net/gh/nickvdyck/simple-icons@master/icons/visa.svg" alt="Visa" className="h-8 opacity-60" />
+                            <img src="https://cdn.jsdelivr.net/gh/nickvdyck/simple-icons@master/icons/mastercard.svg" alt="Mastercard" className="h-8 opacity-60" />
+                            <img src="https://cdn.jsdelivr.net/gh/nickvdyck/simple-icons@master/icons/applepay.svg" alt="Apple Pay" className="h-8 opacity-60" />
+                            <img src="https://cdn.jsdelivr.net/gh/nickvdyck/simple-icons@master/icons/googlepay.svg" alt="Google Pay" className="h-8 opacity-60" />
                         </div>
 
                         <div className="pt-4">
                             <button type="submit" disabled={isLoading || !selectedMethod} className="w-full bg-cloud-deep text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
                                 {isLoading ? (
-                                    <>Traitement en cours...</>
+                                    <>Redirection vers Stripe...</>
                                 ) : (
                                     <>Payer {grandTotal.toFixed(2)}€</>
                                 )}

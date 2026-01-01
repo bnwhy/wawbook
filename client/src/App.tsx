@@ -6,6 +6,8 @@ import LoadingScreen from './components/LoadingScreen';
 import AdminDashboard from './components/AdminDashboard';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
+import CheckoutCancelPage from './pages/CheckoutCancelPage';
 import { AppState, BookConfig, Story, Theme, Activity } from './types';
 import { generateStoryText } from './services/geminiService';
 import { Switch, Route, useLocation } from 'wouter';
@@ -144,6 +146,8 @@ const App: React.FC = () => {
             }} />
           </Route>
           <Route path="/checkout" component={CheckoutPage} />
+          <Route path="/checkout/success" component={CheckoutSuccessPage} />
+          <Route path="/checkout/cancel" component={CheckoutCancelPage} />
 
           {/* Content Pages */}
         <Route path="/products/:category">

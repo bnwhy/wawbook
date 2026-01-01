@@ -40,6 +40,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   // Mobile single-page mode
   const [isMobile, setIsMobile] = useState(false);
   const [mobilePageIndex, setMobilePageIndex] = useState(0); // 0 = cover, 1-N = pages, N+1 = back cover
+  const [mobileFlipDirection, setMobileFlipDirection] = useState<'next' | 'prev' | null>(null);
+  const [isMobileFlipping, setIsMobileFlipping] = useState(false);
+  const [isPageTouched, setIsPageTouched] = useState(false);
+  const [touchOffset, setTouchOffset] = useState(0); // For drag preview
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
   const bookContainerRef = useRef<HTMLDivElement>(null);
@@ -333,28 +337,49 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const totalMobilePages = pageCount + 2; // cover + pages + back cover
   
   const handleMobileNext = () => {
-    if (mobilePageIndex < totalMobilePages - 1) {
-      setMobilePageIndex(p => p + 1);
+    if (mobilePageIndex < totalMobilePages - 1 && !isMobileFlipping) {
+      setIsMobileFlipping(true);
+      setMobileFlipDirection('next');
+      setTimeout(() => {
+        setMobilePageIndex(p => p + 1);
+        setIsMobileFlipping(false);
+        setMobileFlipDirection(null);
+      }, 400);
     }
   };
   
   const handleMobilePrev = () => {
-    if (mobilePageIndex > 0) {
-      setMobilePageIndex(p => p - 1);
+    if (mobilePageIndex > 0 && !isMobileFlipping) {
+      setIsMobileFlipping(true);
+      setMobileFlipDirection('prev');
+      setTimeout(() => {
+        setMobilePageIndex(p => p - 1);
+        setIsMobileFlipping(false);
+        setMobileFlipDirection(null);
+      }, 400);
     }
   };
   
-  // Touch handlers for swipe
+  // Touch handlers for swipe with corner lift effect
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchEndX.current = null;
+    setIsPageTouched(true);
+    setTouchOffset(0);
   };
   
   const handleTouchMove = (e: React.TouchEvent) => {
     touchEndX.current = e.touches[0].clientX;
+    if (touchStartX.current !== null) {
+      const diff = touchStartX.current - e.touches[0].clientX;
+      setTouchOffset(Math.max(-100, Math.min(100, diff)));
+    }
   };
   
   const handleTouchEnd = () => {
+    setIsPageTouched(false);
+    setTouchOffset(0);
+    
     if (touchStartX.current === null || touchEndX.current === null) return;
     
     const diff = touchStartX.current - touchEndX.current;
@@ -675,33 +700,88 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
               
               {/* MOBILE SINGLE PAGE VIEW */}
               {isMobile ? (
-                <div className="w-full flex flex-col items-center">
+                <div className="w-full flex flex-col items-center animate-mobile-book-open" style={{ perspective: '1200px' }}>
                   {/* Mobile Book Container with swipe */}
                   <div 
                     ref={bookContainerRef}
-                    className="relative w-full max-w-sm mx-auto"
-                    style={{ aspectRatio: `${dims.width} / ${dims.height}` }}
+                    className="relative w-full max-w-[85vw] mx-auto"
+                    style={{ 
+                      aspectRatio: `${dims.width} / ${dims.height}`,
+                      transformStyle: 'preserve-3d',
+                      transform: isPageTouched 
+                        ? `rotateY(${touchOffset * -0.05}deg) scale(0.98)` 
+                        : 'rotateY(0deg) scale(1)',
+                      transition: isPageTouched ? 'none' : 'transform 0.3s ease-out'
+                    }}
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                   >
-                    {/* Page content */}
-                    <div className="w-full h-full">
+                    {/* Book spine effect (right side) */}
+                    <div className="absolute right-0 top-0 bottom-0 w-2 bg-gradient-to-l from-gray-400 via-gray-300 to-gray-200 rounded-r-sm z-30 shadow-inner" />
+                    <div className="absolute right-2 top-0 bottom-0 w-[3px] bg-gradient-to-l from-black/10 to-transparent z-20" />
+                    
+                    {/* Book thickness effect (bottom) */}
+                    <div className="absolute bottom-0 left-2 right-2 h-2 bg-gradient-to-t from-gray-300 to-gray-100 rounded-b-sm z-10 shadow-sm" 
+                         style={{ transform: 'translateY(4px) rotateX(-60deg)', transformOrigin: 'top' }} />
+                    
+                    {/* Page content with flip animation */}
+                    <div 
+                      className={`w-full h-full relative overflow-hidden rounded-lg shadow-2xl ${
+                        isMobileFlipping 
+                          ? mobileFlipDirection === 'next' 
+                            ? 'animate-mobile-flip-next' 
+                            : 'animate-mobile-flip-prev'
+                          : ''
+                      }`}
+                      style={{ 
+                        transformStyle: 'preserve-3d',
+                        backfaceVisibility: 'hidden'
+                      }}
+                    >
                       {getMobilePageContent(mobilePageIndex)}
+                      
+                      {/* Corner curl effect (bottom-right) when touched */}
+                      {isPageTouched && touchOffset > 20 && mobilePageIndex < totalMobilePages - 1 && (
+                        <div 
+                          className="absolute bottom-0 right-0 w-16 h-16 pointer-events-none z-40"
+                          style={{
+                            background: 'linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.9) 50%)',
+                            boxShadow: '-2px -2px 5px rgba(0,0,0,0.1)',
+                            transform: `rotate(${Math.min(touchOffset * 0.3, 30)}deg)`,
+                            transformOrigin: 'bottom right',
+                            borderRadius: '0 0 8px 0'
+                          }}
+                        />
+                      )}
+                      
+                      {/* Corner curl effect (bottom-left) when swiping right */}
+                      {isPageTouched && touchOffset < -20 && mobilePageIndex > 0 && (
+                        <div 
+                          className="absolute bottom-0 left-0 w-16 h-16 pointer-events-none z-40"
+                          style={{
+                            background: 'linear-gradient(-135deg, transparent 50%, rgba(255,255,255,0.9) 50%)',
+                            boxShadow: '2px -2px 5px rgba(0,0,0,0.1)',
+                            transform: `rotate(${Math.max(touchOffset * 0.3, -30)}deg)`,
+                            transformOrigin: 'bottom left',
+                            borderRadius: '0 0 0 8px'
+                          }}
+                        />
+                      )}
                     </div>
                     
                     {/* Navigation arrows (smaller on mobile) */}
                     <button 
                       onClick={handleMobilePrev} 
-                      disabled={mobilePageIndex === 0}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg disabled:opacity-0 transition-opacity z-20"
+                      disabled={mobilePageIndex === 0 || isMobileFlipping}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg disabled:opacity-0 transition-opacity z-40"
                     >
                       <ChevronLeft size={24} strokeWidth={2.5} />
                     </button>
                     <button 
                       onClick={handleMobileNext} 
-                      disabled={mobilePageIndex === totalMobilePages - 1}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg disabled:opacity-0 transition-opacity z-20"
+                      disabled={mobilePageIndex === totalMobilePages - 1 || isMobileFlipping}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg disabled:opacity-0 transition-opacity z-40"
                     >
                       <ChevronRight size={24} strokeWidth={2.5} />
                     </button>
@@ -718,8 +798,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   </div>
                   
                   {/* Swipe hint */}
-                  <p className="mt-2 text-xs text-stone-400 text-center">
+                  <p className="mt-2 text-xs text-stone-400 text-center flex items-center gap-1">
+                    <ChevronLeft size={14} className="animate-pulse" />
                     Glissez pour tourner les pages
+                    <ChevronRight size={14} className="animate-pulse" />
                   </p>
                   
                   {/* Modify Link */}
@@ -988,6 +1070,61 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 100% { transform: translateY(0) scale(1); opacity: 1; }
             }
             .animate-drop-in { animation: drop-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+            
+            /* Mobile book animations */
+            @keyframes mobile-book-open {
+                0% { 
+                    transform: perspective(1200px) rotateY(-30deg) scale(0.8); 
+                    opacity: 0;
+                }
+                50% { 
+                    transform: perspective(1200px) rotateY(5deg) scale(1.02); 
+                    opacity: 1;
+                }
+                100% { 
+                    transform: perspective(1200px) rotateY(0deg) scale(1); 
+                    opacity: 1;
+                }
+            }
+            .animate-mobile-book-open { 
+                animation: mobile-book-open 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+            }
+            
+            @keyframes mobile-flip-next {
+                0% { 
+                    transform: perspective(800px) rotateY(0deg); 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                }
+                50% { 
+                    transform: perspective(800px) rotateY(-15deg) translateX(-10px); 
+                    box-shadow: 10px 10px 40px rgba(0,0,0,0.3);
+                }
+                100% { 
+                    transform: perspective(800px) rotateY(0deg); 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                }
+            }
+            .animate-mobile-flip-next { 
+                animation: mobile-flip-next 0.4s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; 
+            }
+            
+            @keyframes mobile-flip-prev {
+                0% { 
+                    transform: perspective(800px) rotateY(0deg); 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                }
+                50% { 
+                    transform: perspective(800px) rotateY(15deg) translateX(10px); 
+                    box-shadow: -10px 10px 40px rgba(0,0,0,0.3);
+                }
+                100% { 
+                    transform: perspective(800px) rotateY(0deg); 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                }
+            }
+            .animate-mobile-flip-prev { 
+                animation: mobile-flip-prev 0.4s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; 
+            }
           `}</style>
       </div>
   );

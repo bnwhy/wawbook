@@ -197,7 +197,7 @@ const CheckoutPage = () => {
           <Navigation onStart={() => setLocation('/')} />
           <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
             {/* Checkout Wizard Stepper */}
-            <div className="mb-10">
+            <div className="mb-16">
               <div className="flex items-center justify-center">
                 <div className="flex items-center w-full max-w-md">
                   {/* Step 1: Panier - Completed */}
@@ -249,10 +249,10 @@ const CheckoutPage = () => {
 
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Main Form Area */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 flex justify-center">
                     {step === 'details' ? (
                        <>
-                            <form id="details-form" onSubmit={handleDetailsSubmit} className="space-y-8 max-w-lg">
+                            <form id="details-form" onSubmit={handleDetailsSubmit} className="space-y-8 max-w-lg w-full">
                                 {/* Contact Section */}
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
@@ -360,7 +360,7 @@ const CheckoutPage = () => {
                             </form>
                        </>
                     ) : (
-                        <form id="payment-form" onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6 max-w-lg">
+                        <form id="payment-form" onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6 max-w-lg w-full">
                              <div className="flex items-center gap-2 mb-6 cursor-pointer text-stone-500 hover:text-stone-800 transition-colors" onClick={() => setStep('details')}>
                                 <ArrowLeft size={16} /> Retour aux détails
                             </div>

@@ -252,7 +252,7 @@ const CheckoutPage = () => {
                 <div className="lg:col-span-2 flex justify-center">
                     {step === 'details' ? (
                        <>
-                            <form id="details-form" onSubmit={handleDetailsSubmit} className="space-y-8 max-w-lg w-full">
+                            <form id="details-form" onSubmit={handleDetailsSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-8 max-w-lg w-full">
                                 {/* Contact Section */}
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">

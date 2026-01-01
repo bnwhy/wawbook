@@ -1637,7 +1637,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                   {orders.slice(0, 5).map(order => (
+                                   {[...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5).map(order => (
                                       <tr key={order.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => { setActiveTab('orders'); setSelectedOrderId(order.id); }}>
                                          <td className="px-6 py-4 font-bold text-slate-900">{order.id}</td>
                                          <td className="px-6 py-4">{order.customerName}</td>
@@ -2192,7 +2192,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   {orders
                                      .filter(order => !orderFilter || order.status === orderFilter)
                                      .sort((a, b) => {
-                                        if (!sortConfig) return 0;
+                                        if (!sortConfig) {
+                                           // Default: sort by date descending (newest first)
+                                           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                                        }
                                         const { key, direction } = sortConfig;
                                         
                                         // Handle specific fields

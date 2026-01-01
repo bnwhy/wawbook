@@ -199,7 +199,7 @@ const CheckoutPage = () => {
                 <div className="lg:col-span-2">
                     {step === 'details' ? (
                        <>
-                            <form onSubmit={handleDetailsSubmit} className="space-y-8">
+                            <form id="details-form" onSubmit={handleDetailsSubmit} className="space-y-8">
                                 {/* Contact Section */}
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
@@ -299,18 +299,15 @@ const CheckoutPage = () => {
                                     )}
                                 </div>
 
-                                <div className="pt-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+                                <div className="pt-6">
                                     <a href="/cart" className="flex items-center gap-2 text-cloud-blue hover:text-cloud-deep text-sm font-medium transition-colors">
                                         <ArrowLeft size={16} /> Retour au panier
                                     </a>
-                                    <button type="submit" className="w-full sm:w-auto bg-cloud-blue text-white font-bold text-lg py-4 px-8 rounded-xl shadow-lg hover:bg-cloud-deep hover:scale-[1.01] active:scale-[0.99] transition-all">
-                                        Continuer vers le paiement
-                                    </button>
                                 </div>
                             </form>
                        </>
                     ) : (
-                        <form onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6">
+                        <form id="payment-form" onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6">
                              <div className="flex items-center gap-2 mb-6 cursor-pointer text-stone-500 hover:text-stone-800 transition-colors" onClick={() => setStep('details')}>
                                 <ArrowLeft size={16} /> Retour aux détails
                             </div>
@@ -341,16 +338,6 @@ const CheckoutPage = () => {
                             <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3 text-sm text-blue-800">
                                 <Lock size={16} className="mt-0.5 flex-shrink-0" />
                                 <p>Vous allez être redirigé vers la page de paiement sécurisée Stripe. Toutes les transactions sont cryptées.</p>
-                            </div>
-
-                            <div className="pt-4">
-                                <button type="submit" disabled={isLoading || !selectedMethod} className="w-full bg-cloud-deep text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-                                    {isLoading ? (
-                                        <>Redirection vers Stripe...</>
-                                    ) : (
-                                        <>Payer {grandTotal.toFixed(2)}€</>
-                                    )}
-                                </button>
                             </div>
                         </form>
                     )}
@@ -394,7 +381,21 @@ const CheckoutPage = () => {
                             </div>
                         </div>
                         
-                        <div className="mt-6 flex items-center gap-2 text-xs text-stone-500 justify-center">
+                        {step === 'details' ? (
+                            <button type="submit" form="details-form" className="mt-6 w-full bg-cloud-deep text-white font-bold text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all">
+                                Continuer vers le paiement
+                            </button>
+                        ) : (
+                            <button type="submit" form="payment-form" disabled={isLoading || !selectedMethod} className="mt-6 w-full bg-cloud-deep text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                                {isLoading ? (
+                                    <>Redirection vers Stripe...</>
+                                ) : (
+                                    <>Payer {grandTotal.toFixed(2)}€</>
+                                )}
+                            </button>
+                        )}
+                        
+                        <div className="mt-4 flex items-center gap-2 text-xs text-stone-500 justify-center">
                             <ShieldCheck size={14} /> Paiement 100% sécurisé
                         </div>
                     </div>

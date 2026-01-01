@@ -40,8 +40,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   // Mobile single-page mode
   const [isMobile, setIsMobile] = useState(false);
   const [mobilePageIndex, setMobilePageIndex] = useState(0); // 0 = cover, 1-N = pages, N+1 = back cover
+  const [mobileSlideDirection, setMobileSlideDirection] = useState<'left' | 'right' | null>(null);
+  const [isSliding, setIsSliding] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
   const bookContainerRef = useRef<HTMLDivElement>(null);
   
   // Detect mobile screen
@@ -333,43 +336,67 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const totalMobilePages = pageCount + 2; // cover + pages + back cover
   
   const handleMobileNext = () => {
-    if (mobilePageIndex < totalMobilePages - 1) {
-      setMobilePageIndex(p => p + 1);
+    if (mobilePageIndex < totalMobilePages - 1 && !isSliding) {
+      setIsSliding(true);
+      setMobileSlideDirection('left');
+      setTimeout(() => {
+        setMobilePageIndex(p => p + 1);
+        setMobileSlideDirection(null);
+        setIsSliding(false);
+      }, 350);
     }
   };
   
   const handleMobilePrev = () => {
-    if (mobilePageIndex > 0) {
-      setMobilePageIndex(p => p - 1);
+    if (mobilePageIndex > 0 && !isSliding) {
+      setIsSliding(true);
+      setMobileSlideDirection('right');
+      setTimeout(() => {
+        setMobilePageIndex(p => p - 1);
+        setMobileSlideDirection(null);
+        setIsSliding(false);
+      }, 350);
     }
   };
   
-  // Touch handlers for swipe
+  // Touch handlers for swipe with live offset tracking
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (isSliding) return;
     touchStartX.current = e.touches[0].clientX;
     touchEndX.current = null;
+    setSwipeOffset(0);
   };
   
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (isSliding || touchStartX.current === null) return;
     touchEndX.current = e.touches[0].clientX;
+    const diff = touchStartX.current - touchEndX.current;
+    // Limit swipe offset for visual feedback
+    const maxOffset = 120;
+    const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, diff));
+    setSwipeOffset(clampedOffset);
   };
   
   const handleTouchEnd = () => {
-    if (touchStartX.current === null || touchEndX.current === null) return;
+    if (touchStartX.current === null || touchEndX.current === null) {
+      setSwipeOffset(0);
+      return;
+    }
     
     const diff = touchStartX.current - touchEndX.current;
     const minSwipeDistance = 50;
     
     if (Math.abs(diff) > minSwipeDistance) {
-      if (diff > 0) {
+      if (diff > 0 && mobilePageIndex < totalMobilePages - 1) {
         // Swipe left -> next page
         handleMobileNext();
-      } else {
+      } else if (diff < 0 && mobilePageIndex > 0) {
         // Swipe right -> previous page
         handleMobilePrev();
       }
     }
     
+    setSwipeOffset(0);
     touchStartX.current = null;
     touchEndX.current = null;
   };
@@ -675,32 +702,58 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
               
               {/* MOBILE SINGLE PAGE VIEW */}
               {isMobile ? (
-                <div className="w-full flex flex-col items-center">
+                <div className="w-full flex flex-col items-center overflow-hidden">
                   {/* Mobile Book Container with swipe */}
                   <div 
                     ref={bookContainerRef}
-                    className="relative w-full max-w-sm mx-auto"
+                    className="relative w-full max-w-sm mx-auto overflow-hidden"
                     style={{ aspectRatio: `${dims.width} / ${dims.height}` }}
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                   >
-                    {/* Page content */}
-                    <div className="w-full h-full">
-                      {getMobilePageContent(mobilePageIndex)}
+                    {/* Pages carousel container */}
+                    <div className="relative w-full h-full">
+                      {/* Current page */}
+                      <div 
+                        className={`absolute inset-0 w-full h-full transition-transform duration-350 ease-out ${
+                          mobileSlideDirection === 'left' ? 'animate-slide-out-left' : 
+                          mobileSlideDirection === 'right' ? 'animate-slide-out-right' : ''
+                        }`}
+                        style={{ 
+                          transform: !isSliding && swipeOffset !== 0 ? `translateX(${-swipeOffset}px)` : undefined,
+                          transition: swipeOffset !== 0 ? 'none' : undefined
+                        }}
+                      >
+                        {getMobilePageContent(mobilePageIndex)}
+                      </div>
+                      
+                      {/* Next page (preview when sliding left) */}
+                      {mobileSlideDirection === 'left' && mobilePageIndex < totalMobilePages - 1 && (
+                        <div className="absolute inset-0 w-full h-full animate-slide-in-left">
+                          {getMobilePageContent(mobilePageIndex + 1)}
+                        </div>
+                      )}
+                      
+                      {/* Previous page (preview when sliding right) */}
+                      {mobileSlideDirection === 'right' && mobilePageIndex > 0 && (
+                        <div className="absolute inset-0 w-full h-full animate-slide-in-right">
+                          {getMobilePageContent(mobilePageIndex - 1)}
+                        </div>
+                      )}
                     </div>
                     
                     {/* Navigation arrows (smaller on mobile) */}
                     <button 
                       onClick={handleMobilePrev} 
-                      disabled={mobilePageIndex === 0}
+                      disabled={mobilePageIndex === 0 || isSliding}
                       className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg disabled:opacity-0 transition-opacity z-20"
                     >
                       <ChevronLeft size={24} strokeWidth={2.5} />
                     </button>
                     <button 
                       onClick={handleMobileNext} 
-                      disabled={mobilePageIndex === totalMobilePages - 1}
+                      disabled={mobilePageIndex === totalMobilePages - 1 || isSliding}
                       className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg disabled:opacity-0 transition-opacity z-20"
                     >
                       <ChevronRight size={24} strokeWidth={2.5} />
@@ -988,6 +1041,28 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 100% { transform: translateY(0) scale(1); opacity: 1; }
             }
             .animate-drop-in { animation: drop-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+            
+            /* Mobile slide animations */
+            @keyframes slide-out-left {
+                0% { transform: translateX(0); opacity: 1; }
+                100% { transform: translateX(-100%); opacity: 0; }
+            }
+            @keyframes slide-out-right {
+                0% { transform: translateX(0); opacity: 1; }
+                100% { transform: translateX(100%); opacity: 0; }
+            }
+            @keyframes slide-in-left {
+                0% { transform: translateX(100%); opacity: 0; }
+                100% { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slide-in-right {
+                0% { transform: translateX(-100%); opacity: 0; }
+                100% { transform: translateX(0); opacity: 1; }
+            }
+            .animate-slide-out-left { animation: slide-out-left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+            .animate-slide-out-right { animation: slide-out-right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+            .animate-slide-in-left { animation: slide-in-left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+            .animate-slide-in-right { animation: slide-in-right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
           `}</style>
       </div>
   );

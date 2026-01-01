@@ -95,15 +95,17 @@ const CheckoutPage = () => {
     setIsLoading(true);
     
     try {
-      const lineItems = items.map(item => ({
+      const lineItems: Array<{ name: string; description?: string; price: number; quantity: number }> = items.map(item => ({
         name: item.bookTitle || 'Livre personnalisé',
+        description: item.format === 'hardcover' ? 'Couverture rigide' : 'Couverture souple',
         price: item.price,
         quantity: item.quantity,
       }));
       
-      if (shippingCost > 0) {
+      if (shippingCost > 0 && selectedMethod) {
         lineItems.push({
-          name: `Livraison${selectedMethod ? ` - ${selectedMethod.name}` : ''}`,
+          name: 'Livraison',
+          description: `${selectedMethod.name}${selectedMethod.estimatedDelay ? ` (${selectedMethod.estimatedDelay})` : ''}`,
           price: shippingCost,
           quantity: 1,
         });

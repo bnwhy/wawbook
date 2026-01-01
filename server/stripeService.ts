@@ -16,7 +16,7 @@ export class StripeService {
 
   async createCheckoutSession(params: {
     customerEmail: string;
-    lineItems: Array<{ name: string; amount: number; quantity: number }>;
+    lineItems: Array<{ name: string; description?: string; amount: number; quantity: number }>;
     successUrl: string;
     cancelUrl: string;
     metadata?: Record<string, string>;
@@ -31,6 +31,7 @@ export class StripeService {
           currency: 'eur',
           product_data: {
             name: item.name,
+            ...(item.description && { description: item.description }),
           },
           unit_amount: Math.round(item.amount * 100),
         },

@@ -480,6 +480,7 @@ export async function registerRoutes(
 
       const lineItems = items.map((item: any) => ({
         name: item.name || item.title || 'Livre personnalisé',
+        description: item.description,
         amount: parseFloat(item.price) || 29.90,
         quantity: item.quantity || 1,
       }));

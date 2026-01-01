@@ -61,7 +61,7 @@ const CloudLogo = () => (
 
 interface BookCardInfoProps {
   features?: {
-    languages?: { code: string; label: string }[] | string[];
+    languages?: string[];
     customization?: string[];
     pages?: number;
     formats?: string[];
@@ -82,7 +82,7 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
          {features.languages && features.languages.length > 0 && (
            <div>
              <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>
-             {features.languages.map((lang) => typeof lang === 'string' ? lang : lang.label).join(', ')}
+             {features.languages.join(', ')}
            </div>
          )}
          {features.customization && features.customization.length > 0 && (
@@ -110,139 +110,6 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
   );
 };
 
-interface Book3DCardProps {
-  card: {
-    name: string;
-    coverImage?: string;
-    badgeText?: string;
-    description?: string;
-    features?: {
-      languages?: { code: string; label: string }[] | string[];
-      customization?: string[];
-      pages?: number;
-      formats?: string[];
-    };
-    price?: number | string;
-    oldPrice?: number | string;
-    theme?: string;
-  };
-  badgeIcon?: React.ReactNode;
-  badgeLabel?: string;
-  onStart: () => void;
-}
-
-const Book3DCard: React.FC<Book3DCardProps> = ({ card, badgeIcon, badgeLabel, onStart }) => {
-  return (
-    <div 
-      onClick={onStart}
-      className="group flex flex-col cursor-pointer"
-    >
-      {/* 3D Book Container */}
-      <div className="relative mb-4 perspective-[1000px]">
-        <div 
-          className="relative transition-transform duration-500 ease-out group-hover:rotate-y-[-8deg] group-hover:translate-x-2"
-          style={{ transformStyle: 'preserve-3d' }}
-        >
-          {/* Book Cover (Front) */}
-          <div 
-            className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.3)] group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)] transition-shadow duration-500"
-            style={{ 
-              transform: 'rotateY(-5deg)',
-              transformOrigin: 'left center'
-            }}
-          >
-            <img 
-              src={card.coverImage} 
-              alt={card.name}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            {/* Shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent pointer-events-none" />
-            
-            {/* Badge */}
-            {badgeIcon && badgeLabel && (
-              <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold text-cloud-dark shadow-md flex items-center gap-1.5">
-                {badgeIcon}
-                {badgeLabel}
-              </div>
-            )}
-          </div>
-          
-          {/* Book Spine (Side) */}
-          <div 
-            className="absolute top-0 left-0 h-full w-4 bg-gradient-to-r from-stone-400 via-stone-300 to-stone-200 rounded-l-sm"
-            style={{ 
-              transform: 'rotateY(90deg) translateZ(-8px) translateX(-8px)',
-              transformOrigin: 'left center',
-              boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.2)'
-            }}
-          >
-            {/* Spine texture lines */}
-            <div className="absolute inset-x-0 top-[10%] h-px bg-stone-400/50" />
-            <div className="absolute inset-x-0 top-[15%] h-px bg-stone-400/30" />
-            <div className="absolute inset-x-0 bottom-[10%] h-px bg-stone-400/50" />
-            <div className="absolute inset-x-0 bottom-[15%] h-px bg-stone-400/30" />
-          </div>
-          
-          {/* Pages (visible from side) */}
-          <div 
-            className="absolute top-[2px] right-0 h-[calc(100%-4px)] w-3 bg-gradient-to-r from-stone-100 to-white rounded-r-[2px]"
-            style={{ 
-              transform: 'translateX(2px)',
-              boxShadow: 'inset 1px 0 2px rgba(0,0,0,0.05), 2px 0 4px rgba(0,0,0,0.1)'
-            }}
-          >
-            {/* Page lines */}
-            {[...Array(8)].map((_, i) => (
-              <div 
-                key={i} 
-                className="absolute inset-x-0 bg-stone-200/60 h-px"
-                style={{ top: `${12 + i * 10}%` }}
-              />
-            ))}
-          </div>
-          
-          {/* Bottom shadow/depth */}
-          <div 
-            className="absolute -bottom-2 left-2 right-2 h-3 bg-gradient-to-t from-black/20 to-transparent blur-sm rounded-full"
-            style={{ transform: 'rotateX(90deg)' }}
-          />
-        </div>
-      </div>
-
-      {/* Content Card */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 group-hover:shadow-md group-hover:border-gray-200 transition-all duration-300">
-        <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
-        <h3 className="text-xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
-        <p className="text-cloud-dark/60 text-sm font-medium mb-3 leading-relaxed line-clamp-2">
-          {card.description}
-        </p>
-        
-        <BookCardInfo features={card.features} />
-        
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <div className="flex flex-col">
-            {card.oldPrice && (
-              <span className="text-xs text-gray-400 font-bold line-through">{Number(card.oldPrice).toFixed(2)} €</span>
-            )}
-            <span className="text-xl font-black text-accent-melon">{Number(card.price).toFixed(2)} €</span>
-          </div>
-          <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
-            <PenTool size={14} />
-            Créer
-          </button>
-        </div>
-      </div>
-      
-      {/* CSS for 3D effects */}
-      <style>{`
-        .perspective-\\[1000px\\] { perspective: 1000px; }
-        .group:hover .group-hover\\:rotate-y-\\[-8deg\\] { transform: rotateY(-8deg) translateX(8px); }
-      `}</style>
-    </div>
-  );
-};
-
 const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   const { books } = useBooks(); // Use the context to get the books
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -264,7 +131,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   return (
      <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
         {/* --- NAVBAR --- */}
-        <Navigation onStart={() => onStart()} />
+        <Navigation onStart={() => onStart()} onAdminClick={onAdminClick} />
         {/* --- HERO SECTION --- */}
         <header className="pt-40 pb-32 px-6 max-w-7xl mx-auto w-full relative">
           {/* Floating Clouds Decoration */}
@@ -322,13 +189,46 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-7xl mx-auto justify-center">
               {familyCards.map((card, idx) => (
-                <Book3DCard
+                <div 
                   key={idx}
-                  card={card}
-                  badgeIcon={<Heart size={12} className="text-accent-melon fill-current" />}
-                  badgeLabel="Nouveau"
-                  onStart={() => onStart(undefined, undefined, card.name)}
-                />
+                  onClick={() => onStart(undefined, undefined, card.name)}
+                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                >
+                  {/* Image Container */}
+                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                      <img 
+                        src={card.coverImage} 
+                        alt={card.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
+                          <Heart size={12} className="text-accent-melon fill-current" />
+                          Nouveau
+                      </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5 flex flex-col flex-grow">
+                     <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
+                     <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
+                     <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
+                        {card.description}
+                     </p>
+                     
+                     <BookCardInfo features={card.features} />
+                     
+                     <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && `${Number(card.oldPrice).toFixed(2)} €`}</span>
+                            <span className="text-xl font-black text-accent-melon">{Number(card.price).toFixed(2)} €</span>
+                        </div>
+                        <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
+                            <PenTool size={14} />
+                            Créer
+                        </button>
+                     </div>
+                  </div>
+                </div>
               ))}
             </div>
 
@@ -340,13 +240,46 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-7xl mx-auto">
               {themeCards.map((card, idx) => (
-                <Book3DCard
+                <div 
                   key={idx}
-                  card={card}
-                  badgeIcon={<Star size={12} className="text-accent-sun fill-current" />}
-                  badgeLabel="Best-seller"
-                  onStart={() => onStart(card.theme as Theme, undefined, card.name)}
-                />
+                  onClick={() => onStart(card.theme, undefined, card.name)}
+                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                >
+                  {/* Image Container */}
+                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                      <img 
+                        src={card.coverImage} 
+                        alt={card.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
+                          <Star size={12} className="text-accent-sun fill-current" />
+                          Best-seller
+                      </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5 flex flex-col flex-grow">
+                     <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
+                     <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
+                     <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
+                        {card.description}
+                     </p>
+                     
+                     <BookCardInfo features={card.features} />
+                     
+                     <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && `${Number(card.oldPrice).toFixed(2)} €`}</span>
+                            <span className="text-xl font-black text-accent-melon">{Number(card.price).toFixed(2)} €</span>
+                        </div>
+                        <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
+                            <PenTool size={14} />
+                            Créer
+                        </button>
+                     </div>
+                  </div>
+                </div>
               ))}
             </div>
 
@@ -358,11 +291,42 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
                {activityCards.map((activity, idx) => (
-                  <Book3DCard
-                    key={idx}
-                    card={activity}
-                    onStart={() => onStart(undefined, activity.id as Activity, activity.name)}
-                  />
+                  <div 
+                    key={idx} 
+                    onClick={() => onStart(undefined, activity.id as any, activity.name)}
+                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                  >
+                    {/* Image Container */}
+                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                        <img 
+                          src={activity.coverImage} 
+                          alt={activity.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5 flex flex-col flex-grow">
+                       <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{activity.badgeText}</div>
+                       <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{activity.name}</h3>
+                       <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
+                          {activity.description}
+                       </p>
+                       
+                       <BookCardInfo features={activity.features} />
+                       
+                       <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                          <div className="flex flex-col">
+                              <span className="text-xs text-gray-400 font-bold line-through">{activity.oldPrice && `${Number(activity.oldPrice).toFixed(2)} €`}</span>
+                              <span className="text-xl font-black text-accent-melon">{Number(activity.price).toFixed(2)} €</span>
+                          </div>
+                          <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
+                              <PenTool size={14} />
+                              Créer
+                          </button>
+                       </div>
+                    </div>
+                  </div>
                ))}
             </div>
 
@@ -374,13 +338,46 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
                {occasionCards.map((occasion, idx) => (
-                  <Book3DCard
-                    key={idx}
-                    card={occasion}
-                    badgeIcon={<Gift size={12} className="text-accent-melon fill-current" />}
-                    badgeLabel="Célébration"
-                    onStart={() => onStart(undefined, undefined, occasion.name)}
-                  />
+                  <div 
+                    key={idx} 
+                    onClick={() => onStart(undefined, undefined, occasion.name)}
+                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                  >
+                    {/* Image Container */}
+                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                        <img 
+                          src={occasion.coverImage} 
+                          alt={occasion.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
+                            <Gift size={12} className="text-accent-melon fill-current" />
+                            Célébration
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5 flex flex-col flex-grow">
+                       <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{occasion.badgeText}</div>
+                       <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{occasion.name}</h3>
+                       <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
+                          {occasion.description}
+                       </p>
+                       
+                       <BookCardInfo features={occasion.features} />
+                       
+                       <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
+                          <div className="flex flex-col">
+                              <span className="text-xs text-gray-400 font-bold line-through">{occasion.oldPrice && `${Number(occasion.oldPrice).toFixed(2)} €`}</span>
+                              <span className="text-xl font-black text-accent-melon">{Number(occasion.price).toFixed(2)} €</span>
+                          </div>
+                          <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
+                              <PenTool size={14} />
+                              Créer
+                          </button>
+                       </div>
+                    </div>
+                  </div>
                ))}
             </div>
 

@@ -2957,6 +2957,53 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    </button>
                                 </div>
 
+                                {/* Payment Info from Stripe */}
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                   <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                      <CreditCard size={18} className="text-indigo-600" />
+                                      Paiement
+                                   </h3>
+                                   <div className="space-y-3">
+                                      <div>
+                                         <div className="text-xs text-slate-500 uppercase font-bold mb-1">Statut</div>
+                                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
+                                            (order as any).paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
+                                            (order as any).paymentStatus === 'failed' ? 'bg-red-100 text-red-700' :
+                                            (order as any).paymentStatus === 'refunded' ? 'bg-purple-100 text-purple-700' :
+                                            'bg-orange-100 text-orange-800'
+                                         }`}>
+                                            {(order as any).paymentStatus === 'paid' ? 'Payé' :
+                                             (order as any).paymentStatus === 'failed' ? 'Échoué' :
+                                             (order as any).paymentStatus === 'refunded' ? 'Remboursé' : 'En attente'}
+                                         </span>
+                                      </div>
+                                      {(order as any).stripeSessionId && (
+                                         <div>
+                                            <div className="text-xs text-slate-500 uppercase font-bold mb-1">Session Stripe</div>
+                                            <div className="text-xs text-slate-600 font-mono bg-slate-50 p-2 rounded break-all">
+                                               {(order as any).stripeSessionId}
+                                            </div>
+                                         </div>
+                                      )}
+                                      {(order as any).stripePaymentIntentId && (
+                                         <div>
+                                            <div className="text-xs text-slate-500 uppercase font-bold mb-1">Payment Intent</div>
+                                            <div className="text-xs text-slate-600 font-mono bg-slate-50 p-2 rounded break-all">
+                                               {(order as any).stripePaymentIntentId}
+                                            </div>
+                                            <a 
+                                               href={`https://dashboard.stripe.com/payments/${(order as any).stripePaymentIntentId}`}
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               className="text-xs text-indigo-600 font-bold hover:underline mt-1 inline-block"
+                                            >
+                                               Voir sur Stripe →
+                                            </a>
+                                         </div>
+                                      )}
+                                   </div>
+                                </div>
+
                                 {/* Logs & Commentaires (Moved to Sidebar) */}
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">

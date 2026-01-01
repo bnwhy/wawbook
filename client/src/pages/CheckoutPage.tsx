@@ -191,7 +191,7 @@ const CheckoutPage = () => {
                 <span className="text-stone-300">/</span>
                 <span className={step === 'payment' ? 'text-cloud-blue' : ''}>2. Livraison</span>
                 <span className="text-stone-300">/</span>
-                <span>3. Confirmation</span>
+                <span>3. Paiement</span>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8">

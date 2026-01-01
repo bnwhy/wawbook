@@ -213,13 +213,9 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     totalAmount: number,
     stripeSessionId?: string
   ): Promise<string> => {
-    const generateOrderId = () => {
-      const year = new Date().getFullYear().toString().slice(-2);
-      const existingOrdersThisYear = orders.filter(o => o.id.includes(`ORD-${year}-`)).length;
-      const nextNumber = (existingOrdersThisYear + 1).toString().padStart(7, '0');
-      return `ORD-${year}-${nextNumber}`;
-    };
-    const orderId = generateOrderId();
+    const response = await fetch('/api/orders/next-id');
+    if (!response.ok) throw new Error('Failed to generate order ID');
+    const { orderId } = await response.json();
     
     // Find or create customer
     let existingCustomer = customers.find(c => c.email === customer.email);

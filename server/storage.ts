@@ -30,7 +30,7 @@ import {
   settings,
 } from "@shared/schema";
 
-const pool = new pg.Pool({
+export const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
 });
 const db = drizzle(pool);

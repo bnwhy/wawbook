@@ -167,6 +167,20 @@ export async function registerRoutes(
   });
 
   // ===== ORDERS =====
+  app.get("/api/orders/next-id", async (req, res) => {
+    try {
+      const { pool } = await import("./storage");
+      const result = await pool.query("SELECT nextval('order_number_seq') as seq");
+      const seq = result.rows[0].seq;
+      const year = new Date().getFullYear().toString().slice(-2);
+      const orderId = `ORD-${year}-${String(seq).padStart(7, '0')}`;
+      res.json({ orderId });
+    } catch (error) {
+      console.error("Error generating order ID:", error);
+      res.status(500).json({ error: "Failed to generate order ID" });
+    }
+  });
+
   app.get("/api/orders", async (req, res) => {
     try {
       const orders = await storage.getAllOrders();

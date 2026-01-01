@@ -252,7 +252,7 @@ const CheckoutPage = () => {
                 <div className="lg:col-span-2">
                     {step === 'details' ? (
                        <>
-                            <form id="details-form" onSubmit={handleDetailsSubmit} className="space-y-8">
+                            <form id="details-form" onSubmit={handleDetailsSubmit} className="space-y-8 max-w-lg">
                                 {/* Contact Section */}
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
@@ -360,7 +360,7 @@ const CheckoutPage = () => {
                             </form>
                        </>
                     ) : (
-                        <form id="payment-form" onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6">
+                        <form id="payment-form" onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-8 shadow-sm border border-stone-100 space-y-6 max-w-lg">
                              <div className="flex items-center gap-2 mb-6 cursor-pointer text-stone-500 hover:text-stone-800 transition-colors" onClick={() => setStep('details')}>
                                 <ArrowLeft size={16} /> Retour aux détails
                             </div>

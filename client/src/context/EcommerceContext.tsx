@@ -213,7 +213,15 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     totalAmount: number,
     stripeSessionId?: string
   ): Promise<string> => {
-    const orderId = `ORD-${Date.now()}`;
+    const generateOrderId = () => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let result = '';
+      for (let i = 0; i < 9; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+    const orderId = generateOrderId();
     
     // Find or create customer
     let existingCustomer = customers.find(c => c.email === customer.email);

@@ -122,6 +122,17 @@ export async function registerRoutes(
       if (!validationResult.success) {
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
+      
+      // Check if customer already exists with this email
+      if (validationResult.data.email) {
+        const existingCustomer = await storage.getCustomerByEmail(validationResult.data.email);
+        if (existingCustomer) {
+          // Update existing customer with new data and return
+          const updated = await storage.updateCustomer(existingCustomer.id, validationResult.data);
+          return res.status(200).json(updated || existingCustomer);
+        }
+      }
+      
       const customer = await storage.createCustomer(validationResult.data);
       res.status(201).json(customer);
     } catch (error) {

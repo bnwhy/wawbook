@@ -6168,11 +6168,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     }
                                     
                                     if (hasRawHtmlPages) {
+                                        const currentBookForPage = draftBook || selectedBook;
                                         const pageTexts = selectedEpubPageIndex !== null 
-                                            ? selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === selectedEpubPageIndex) || []
+                                            ? currentBookForPage.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === selectedEpubPageIndex) || []
                                             : [];
                                         const pageImages = selectedEpubPageIndex !== null
-                                            ? selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === selectedEpubPageIndex) || []
+                                            ? currentBookForPage.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === selectedEpubPageIndex) || []
                                             : [];
                                         
                                         return (
@@ -6313,13 +6314,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                     conditions={conditions}
                                                                                     imageVariantOptions={imageVariantOptions}
                                                                                     onConditionsChange={(newConditions) => {
-                                                                                        const updatedImages = selectedBook.contentConfig.imageElements!.map((i: any) =>
+                                                                                        const currentBook = draftBook || selectedBook;
+                                                                                        const currentImages = currentBook.contentConfig.imageElements || [];
+                                                                                        const updatedImages = currentImages.map((i: any) =>
                                                                                             i.id === img.id ? { ...i, conditions: newConditions } : i
                                                                                         );
                                                                                         const updatedBook = {
-                                                                                            ...selectedBook,
+                                                                                            ...currentBook,
                                                                                             contentConfig: {
-                                                                                                ...selectedBook.contentConfig,
+                                                                                                ...currentBook.contentConfig,
                                                                                                 imageElements: updatedImages
                                                                                             }
                                                                                         };

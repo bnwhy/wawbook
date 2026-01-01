@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
-import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle, ShoppingCart, User, Check } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -196,10 +196,77 @@ const CheckoutPage = () => {
       <div className="min-h-screen flex flex-col bg-stone-50">
           <Navigation onStart={() => setLocation('/')} />
           <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
-            <div className="flex items-center gap-2 mb-8 text-sm font-bold text-stone-400">
-                <span className={step === 'details' ? 'text-cloud-blue' : 'text-green-600'}>1. Information</span>
-                <span className="text-stone-300">/</span>
-                <span className={step === 'payment' ? 'text-cloud-blue' : ''}>2. Paiement</span>
+            {/* Checkout Wizard Stepper */}
+            <div className="mb-12">
+              <div className="flex items-center justify-center relative">
+                {/* Connecting Line */}
+                <div className="hidden md:block absolute top-6 left-[15%] right-[15%] h-0.5 border-b-2 border-dashed border-cloud-sky z-0"></div>
+                
+                <div className="flex items-center justify-between w-full max-w-2xl relative z-10">
+                  {/* Step 1: Panier */}
+                  <div 
+                    className="flex flex-col items-center cursor-pointer group"
+                    onClick={() => setLocation('/cart')}
+                  >
+                    <div className="w-12 h-12 bg-accent-sun rounded-full flex items-center justify-center shadow-lg mb-2 transform group-hover:scale-110 transition-transform">
+                      <Check size={20} className="text-white" />
+                    </div>
+                    <span className="text-xs font-bold text-cloud-dark uppercase tracking-wide">Panier</span>
+                  </div>
+
+                  {/* Step 2: Adresse */}
+                  <div 
+                    className={`flex flex-col items-center ${step === 'payment' ? 'cursor-pointer group' : ''}`}
+                    onClick={() => step === 'payment' && setStep('details')}
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg mb-2 transform transition-transform ${
+                      step === 'details' 
+                        ? 'bg-accent-melon ring-4 ring-accent-melon/30' 
+                        : 'bg-accent-melon group-hover:scale-110'
+                    }`}>
+                      {step === 'details' ? (
+                        <User size={20} className="text-white" />
+                      ) : (
+                        <Check size={20} className="text-white" />
+                      )}
+                    </div>
+                    <span className={`text-xs font-bold uppercase tracking-wide ${step === 'details' ? 'text-accent-melon' : 'text-cloud-dark'}`}>Adresse</span>
+                  </div>
+
+                  {/* Step 3: Expédition */}
+                  <div 
+                    className={`flex flex-col items-center ${step === 'payment' ? 'cursor-pointer group' : ''}`}
+                    onClick={() => step === 'payment' && setStep('details')}
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg mb-2 transform transition-transform ${
+                      step === 'details' 
+                        ? 'bg-cloud-sky ring-4 ring-cloud-sky/30' 
+                        : step === 'payment' 
+                          ? 'bg-cloud-sky group-hover:scale-110' 
+                          : 'bg-stone-200'
+                    }`}>
+                      {step === 'payment' ? (
+                        <Check size={20} className="text-white" />
+                      ) : (
+                        <Truck size={20} className={step === 'details' ? 'text-white' : 'text-stone-400'} />
+                      )}
+                    </div>
+                    <span className={`text-xs font-bold uppercase tracking-wide ${step === 'details' ? 'text-cloud-sky' : step === 'payment' ? 'text-cloud-dark' : 'text-stone-400'}`}>Expédition</span>
+                  </div>
+
+                  {/* Step 4: Paiement */}
+                  <div className="flex flex-col items-center">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg mb-2 transform transition-transform ${
+                      step === 'payment' 
+                        ? 'bg-cloud-deep ring-4 ring-cloud-deep/30' 
+                        : 'bg-stone-200'
+                    }`}>
+                      <CreditCard size={20} className={step === 'payment' ? 'text-white' : 'text-stone-400'} />
+                    </div>
+                    <span className={`text-xs font-bold uppercase tracking-wide ${step === 'payment' ? 'text-cloud-deep' : 'text-stone-400'}`}>Paiement</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8">

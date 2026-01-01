@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2, ShoppingCart, User, Truck, CreditCard, Check } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 
@@ -102,11 +102,54 @@ const CheckoutSuccessPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-stone-50">
       <Navigation onStart={() => setLocation('/')} />
-      <main className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-20">
-        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-bounce">
-          <CheckCircle size={48} />
+      <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
+        {/* Checkout Wizard Stepper - All Completed */}
+        <div className="mb-12">
+          <div className="flex items-center justify-center relative">
+            {/* Connecting Line */}
+            <div className="hidden md:block absolute top-6 left-[15%] right-[15%] h-0.5 border-b-2 border-dashed border-green-400 z-0"></div>
+            
+            <div className="flex items-center justify-between w-full max-w-2xl relative z-10">
+              {/* Step 1: Panier - Completed */}
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
+                  <Check size={20} className="text-white" />
+                </div>
+                <span className="text-xs font-bold text-green-600 uppercase tracking-wide">Panier</span>
+              </div>
+
+              {/* Step 2: Adresse - Completed */}
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
+                  <Check size={20} className="text-white" />
+                </div>
+                <span className="text-xs font-bold text-green-600 uppercase tracking-wide">Adresse</span>
+              </div>
+
+              {/* Step 3: Expédition - Completed */}
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2">
+                  <Check size={20} className="text-white" />
+                </div>
+                <span className="text-xs font-bold text-green-600 uppercase tracking-wide">Expédition</span>
+              </div>
+
+              {/* Step 4: Paiement - Completed */}
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-2 ring-4 ring-green-200">
+                  <Check size={20} className="text-white" />
+                </div>
+                <span className="text-xs font-bold text-green-600 uppercase tracking-wide">Paiement</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <h1 className="font-display font-black text-4xl text-stone-900 mb-4">Commande Confirmée !</h1>
+
+        <div className="flex flex-col items-center text-center">
+          <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-bounce">
+            <CheckCircle size={48} />
+          </div>
+          <h1 className="font-display font-black text-4xl text-stone-900 mb-4">Commande Confirmée !</h1>
         <p className="text-stone-600 text-lg max-w-lg mb-8">
           Merci {orderData.formData.firstName} ! Votre livre est en route vers l'imprimerie. 
           Un email de confirmation a été envoyé à <span className="font-bold">{orderData.formData.email}</span>.
@@ -133,6 +176,7 @@ const CheckoutSuccessPage = () => {
         >
           Retour à l'accueil
         </button>
+        </div>
       </main>
       <Footer />
     </div>

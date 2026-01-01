@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCart, CartItem } from '../context/CartContext';
 import { useBooks } from '../context/BooksContext';
-import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, X } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, X, ShoppingCart, User, Truck, CreditCard } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -81,6 +81,48 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
       <Navigation onStart={() => setLocation('/')} />
       
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
+        {/* Checkout Wizard Stepper */}
+        <div className="mb-12">
+          <div className="flex items-center justify-center relative">
+            {/* Connecting Line */}
+            <div className="hidden md:block absolute top-6 left-[15%] right-[15%] h-0.5 border-b-2 border-dashed border-cloud-sky z-0"></div>
+            
+            <div className="flex items-center justify-between w-full max-w-2xl relative z-10">
+              {/* Step 1: Panier - Active */}
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-accent-sun rounded-full flex items-center justify-center shadow-lg mb-2 ring-4 ring-accent-sun/30">
+                  <ShoppingCart size={20} className="text-white" />
+                </div>
+                <span className="text-xs font-bold text-accent-sun uppercase tracking-wide">Panier</span>
+              </div>
+
+              {/* Step 2: Adresse - Pending */}
+              <div className="flex flex-col items-center opacity-60">
+                <div className="w-12 h-12 bg-stone-200 rounded-full flex items-center justify-center shadow-lg mb-2">
+                  <User size={20} className="text-stone-400" />
+                </div>
+                <span className="text-xs font-bold text-stone-400 uppercase tracking-wide">Adresse</span>
+              </div>
+
+              {/* Step 3: Expédition - Pending */}
+              <div className="flex flex-col items-center opacity-60">
+                <div className="w-12 h-12 bg-stone-200 rounded-full flex items-center justify-center shadow-lg mb-2">
+                  <Truck size={20} className="text-stone-400" />
+                </div>
+                <span className="text-xs font-bold text-stone-400 uppercase tracking-wide">Expédition</span>
+              </div>
+
+              {/* Step 4: Paiement - Pending */}
+              <div className="flex flex-col items-center opacity-60">
+                <div className="w-12 h-12 bg-stone-200 rounded-full flex items-center justify-center shadow-lg mb-2">
+                  <CreditCard size={20} className="text-stone-400" />
+                </div>
+                <span className="text-xs font-bold text-stone-400 uppercase tracking-wide">Paiement</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <h1 className="font-display font-black text-4xl text-cloud-dark mb-8">Votre panier</h1>
         
         <div className="grid lg:grid-cols-3 gap-8">

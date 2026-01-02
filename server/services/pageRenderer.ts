@@ -3,7 +3,22 @@ import puppeteer, { Browser } from 'puppeteer';
 let browserInstance: Browser | null = null;
 
 async function getBrowser(): Promise<Browser> {
+  // Check if existing browser is still connected
+  if (browserInstance) {
+    try {
+      // Test if browser is still alive
+      if (!browserInstance.connected) {
+        console.log('[pageRenderer] Browser disconnected, recreating...');
+        browserInstance = null;
+      }
+    } catch (e) {
+      console.log('[pageRenderer] Browser check failed, recreating...');
+      browserInstance = null;
+    }
+  }
+  
   if (!browserInstance) {
+    console.log('[pageRenderer] Launching new browser instance...');
     browserInstance = await puppeteer.launch({
       headless: true,
       executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -12,7 +27,14 @@ async function getBrowser(): Promise<Browser> {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
+        '--single-process',
       ],
+    });
+    
+    // Handle browser disconnection
+    browserInstance.on('disconnected', () => {
+      console.log('[pageRenderer] Browser disconnected event');
+      browserInstance = null;
     });
   }
   return browserInstance;

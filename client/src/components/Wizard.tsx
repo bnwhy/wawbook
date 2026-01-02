@@ -680,18 +680,18 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     
                     {/* Hardcover binding crease/groove - the characteristic indent of hardcover books */}
                     <div 
-                      className="absolute left-[6%] top-0 bottom-0 w-[3px] pointer-events-none"
+                      className="absolute left-[5%] top-0 bottom-0 w-[8px] pointer-events-none"
                       style={{
-                        background: 'linear-gradient(to right, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.15) 30%, rgba(255,255,255,0.2) 50%, rgba(0,0,0,0.1) 70%, transparent 100%)',
-                        boxShadow: '-1px 0 2px rgba(0,0,0,0.1), 1px 0 1px rgba(255,255,255,0.15)'
+                        background: 'linear-gradient(to right, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.25) 25%, rgba(0,0,0,0.15) 45%, rgba(255,255,255,0.15) 55%, rgba(0,0,0,0.08) 75%, transparent 100%)',
+                        boxShadow: '-2px 0 4px rgba(0,0,0,0.2), 2px 0 3px rgba(0,0,0,0.1), inset 0 0 2px rgba(0,0,0,0.15)'
                       }}
                     />
                     
-                    {/* Second crease line for depth */}
+                    {/* Outer shadow line for more depth */}
                     <div 
-                      className="absolute left-[5.5%] top-0 bottom-0 w-[1px] pointer-events-none opacity-40"
+                      className="absolute left-[4%] top-0 bottom-0 w-[2px] pointer-events-none"
                       style={{
-                        background: 'linear-gradient(to bottom, transparent 2%, rgba(0,0,0,0.3) 10%, rgba(0,0,0,0.3) 90%, transparent 98%)'
+                        background: 'linear-gradient(to bottom, transparent 1%, rgba(0,0,0,0.2) 8%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.2) 92%, transparent 99%)'
                       }}
                     />
                     

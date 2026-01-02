@@ -3,9 +3,26 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
-import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
+import { renderHtmlToImage } from "./services/pageRenderer";
+import { objectStorageClient } from "./replit_integrations/object_storage/objectStorage";
+
+// Helper to parse object storage path
+function parseObjectPath(path: string): { bucketName: string; objectName: string } {
+  if (!path.startsWith("/")) {
+    path = `/${path}`;
+  }
+  const pathParts = path.split("/");
+  if (pathParts.length < 3) {
+    throw new Error("Invalid path: must contain at least a bucket name");
+  }
+  return {
+    bucketName: pathParts[1],
+    objectName: pathParts.slice(2).join("/"),
+  };
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -85,6 +102,112 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting book:", error);
       res.status(500).json({ error: "Failed to delete book" });
+    }
+  });
+
+  // ===== RENDER BOOK PAGES (SERVER-SIDE) =====
+  app.post("/api/books/:id/render-pages", async (req, res) => {
+    try {
+      const bookId = req.params.id;
+      const { config, characters } = req.body;
+      
+      console.log(`[render-pages] Starting server-side render for book: ${bookId}`);
+      
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      const rawPages = book.contentConfig?.rawHtmlPages;
+      const cssContent = book.contentConfig?.cssContent || '';
+      
+      if (!rawPages || rawPages.length === 0) {
+        return res.status(400).json({ error: "No raw HTML pages to render" });
+      }
+      
+      console.log(`[render-pages] Rendering ${rawPages.length} pages with Puppeteer...`);
+      
+      const objectStorageService = new ObjectStorageService();
+      const bucketName = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] || 'default-bucket';
+      const sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+      
+      const renderedPages: Array<{ pageIndex: number; imageUrl: string }> = [];
+      
+      // Build variables from config and characters
+      const variables: Record<string, string> = {};
+      if (config?.childName) variables['childName'] = config.childName;
+      if (config?.childName) variables['nom_enfant'] = config.childName;
+      if (config?.age) variables['age'] = String(config.age);
+      if (config?.dedication) variables['dedication'] = config.dedication;
+      
+      // Add character selections as variables
+      if (characters) {
+        for (const [tabId, selections] of Object.entries(characters as Record<string, Record<string, string>>)) {
+          for (const [variantId, value] of Object.entries(selections)) {
+            variables[variantId] = value;
+            variables[`${tabId}.${variantId}`] = value;
+          }
+        }
+      }
+      
+      // Build image map from book's image elements
+      const imageMap: Record<string, string> = {};
+      const imageElements = book.contentConfig?.imageElements || [];
+      for (const img of imageElements) {
+        if (img.url) {
+          imageMap[img.url] = img.url;
+        }
+      }
+      
+      // Render each page with Puppeteer
+      for (const page of rawPages) {
+        try {
+          const imageBuffer = await renderHtmlToImage({
+            html: page.html,
+            css: cssContent,
+            width: page.width || 595,
+            height: page.height || 842,
+            imageMap,
+            variables,
+          });
+          
+          // Upload to Object Storage
+          const objectPath = `${process.env.PRIVATE_OBJECT_DIR}/rendered/${sessionId}/page_${page.pageIndex}.jpg`;
+          const { bucketName: bucket, objectName } = parseObjectPath(objectPath);
+          const bucketRef = objectStorageClient.bucket(bucket);
+          const file = bucketRef.file(objectName);
+          
+          await file.save(imageBuffer, {
+            contentType: 'image/jpeg',
+            metadata: {
+              cacheControl: 'public, max-age=3600',
+            },
+          });
+          
+          // Get public URL
+          const publicUrl = `/objects/rendered/${sessionId}/page_${page.pageIndex}.jpg`;
+          
+          renderedPages.push({
+            pageIndex: page.pageIndex,
+            imageUrl: publicUrl,
+          });
+          
+          console.log(`[render-pages] Rendered page ${page.pageIndex}`);
+        } catch (pageError) {
+          console.error(`[render-pages] Failed to render page ${page.pageIndex}:`, pageError);
+        }
+      }
+      
+      console.log(`[render-pages] Completed. Rendered ${renderedPages.length}/${rawPages.length} pages`);
+      
+      res.json({
+        success: true,
+        sessionId,
+        pages: renderedPages,
+      });
+    } catch (error) {
+      console.error("[render-pages] Error:", error);
+      res.status(500).json({ error: "Failed to render pages" });
     }
   });
 

@@ -1468,6 +1468,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     
                     <button 
                        onClick={async () => {
+                          const hasChanges = hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook));
+                          if (!hasChanges) return;
                           const bookToSave = draftBook || selectedBook;
                           if (bookToSave) {
                              try {
@@ -1478,11 +1480,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              }
                           }
                        }}
-                       disabled={!selectedBook}
+                       disabled={!selectedBook || !(hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook)))}
                        className={`w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm ${
                           hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook))
                              ? 'bg-brand-coral hover:bg-red-500 text-white cursor-pointer' 
-                             : 'bg-slate-800 text-slate-500 hover:bg-slate-700 cursor-pointer'
+                             : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
                        }`}
                     >
                        <Save size={14} />
@@ -3721,7 +3723,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               basePath: '/',
                               items: []
                           })}
-                          className="bg-brand-coral text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-red-500 transition-colors"
+                          className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-md"
                       >
                           <Plus size={18} /> Ajouter un élément
                       </button>

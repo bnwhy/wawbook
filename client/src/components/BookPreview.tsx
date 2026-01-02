@@ -47,16 +47,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [swipeOffset, setSwipeOffset] = useState(0);
   const bookContainerRef = useRef<HTMLDivElement>(null);
   
-  // Flipbook-js features (exact copy)
-  const [isCalling, setIsCalling] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [activeSpread, setActiveSpread] = useState(0); // Which spread is active (0 = cover, 1 = pages 1-2, etc.)
-  const [wasActiveSpread, setWasActiveSpread] = useState<number | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const callingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const canClose = true; // Allow closing the book (show front/back covers)
-  const initialCall = true; // Animation on load that repeats
-  
   // Detect mobile screen
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -64,38 +54,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  // Initial call animation (flipbook-js exact: 500ms delay, then repeats every 3s)
-  useEffect(() => {
-    if (!isMobile && initialCall) {
-      const readyTimer = setTimeout(() => setIsReady(true), 100);
-      
-      const setupCalls = () => {
-        setIsCalling(true);
-        setTimeout(() => setIsCalling(false), 900);
-      };
-      
-      const callTimer = setTimeout(setupCalls, 500);
-      callingIntervalRef.current = setInterval(setupCalls, 3000);
-      
-      return () => {
-        clearTimeout(readyTimer);
-        clearTimeout(callTimer);
-        if (callingIntervalRef.current) clearInterval(callingIntervalRef.current);
-      };
-    } else {
-      setIsReady(true);
-    }
-  }, [isMobile]);
-  
-  // Stop calling animation after first page turn
-  const stopCalling = () => {
-    if (callingIntervalRef.current) {
-      clearInterval(callingIntervalRef.current);
-      callingIntervalRef.current = null;
-    }
-    setIsCalling(false);
-  };
 
   // --- HELPER: Resolve Variables ---
   const resolveTextVariable = (text: string) => {
@@ -827,241 +785,117 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   )}
                 </div>
               ) : (
-                /* DESKTOP FLIPBOOK - EXACT FLIPBOOK-JS with canClose=true and initialCall=true */
+                /* DESKTOP DOUBLE-PAGE SPREAD VIEW */
                 <>
               {/* Stage */}
-              <div className={`relative z-10 flex items-center justify-center w-full animate-drop-in ${isModal ? 'h-[550px] scale-[0.85]' : 'h-[700px]'}`}>
+              <div className={`relative z-10 flex items-center justify-center w-full max-w-7xl perspective-[2500px] animate-drop-in ${isModal ? 'h-[600px] scale-[0.85]' : 'h-[850px]'}`}>
                 
                 {/* Arrows */}
-                <button 
-                  onClick={() => { handlePrev(); }} 
-                  disabled={currentView === 0 || isFlipping} 
-                  className="absolute left-4 lg:left-12 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer"
-                >
-                  <ChevronLeft size={32} strokeWidth={2.5} />
+                <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
+                    <ChevronLeft size={32} strokeWidth={2.5} />
                 </button>
-                <button 
-                  onClick={() => { stopCalling(); handleNext(); }} 
-                  disabled={currentView === totalViews - 1 || isFlipping} 
-                  className="absolute right-4 lg:right-12 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer"
-                >
-                  <ChevronRight size={32} strokeWidth={2.5} />
+                <button onClick={handleNext} disabled={currentView === totalViews - 1 || isFlipping} className="absolute right-4 lg:right-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
+                    <ChevronRight size={32} strokeWidth={2.5} />
                 </button>
 
-                {/* FLIPBOOK-JS EXACT IMPLEMENTATION */}
-                {(() => {
-                  // Double-page book dimensions (each page is half width)
-                  const pageWidth = Math.round(computedW * 0.28);
-                  const bookHeight = Math.round(computedH * 0.85);
-                  const bookWidth = pageWidth * 2; // Full open book = 2 pages
-                  
-                  // Build page list: With canClose=true, we show pages as pairs
-                  // Page 0 = front cover (right page only when closed)
-                  // Pages 1,2 = first spread, 3,4 = second spread, etc.
-                  // Last page = back cover (left page only when at end)
-                  
-                  // Generate all pages from spreads
-                  const allPages: { content: React.ReactNode; side: 'left' | 'right'; spreadIdx: number }[] = [];
-                  
-                  // Page 0: Front cover (appears as right page when book is closed)
-                  const coverSpread = getSpreadContent(0);
-                  allPages.push({ content: coverSpread.right, side: 'right', spreadIdx: 0 });
-                  
-                  // Middle pages: alternate left/right from each spread
-                  for (let i = 1; i < totalViews; i++) {
-                    const spread = getSpreadContent(i);
-                    allPages.push({ content: spread.left, side: 'left', spreadIdx: i });
-                    allPages.push({ content: spread.right, side: 'right', spreadIdx: i });
-                  }
-                  
-                  // Position: at-front-cover = left -25%, at-rear-cover = left +25%
-                  const isAtFrontCover = currentView === 0;
-                  const isAtRearCover = currentView === totalViews - 1;
-                  let bookLeft = '0%';
-                  if (isAtFrontCover) bookLeft = '-25%';
-                  else if (isAtRearCover) bookLeft = '25%';
-                  
-                  // Determine which page indices are active
-                  // With canClose: view 0 = page 0 only, view 1 = pages 1+2, view 2 = pages 3+4...
-                  const getActivePageIndices = (view: number): number[] => {
-                    if (view === 0) return [0]; // Front cover only
-                    // For other views: leftPage = (view-1)*2 + 1, rightPage = leftPage + 1
-                    const leftIdx = (view - 1) * 2 + 1;
-                    const rightIdx = leftIdx + 1;
-                    if (rightIdx < allPages.length) return [leftIdx, rightIdx];
-                    return [leftIdx]; // Last page only
-                  };
-                  
-                  const activeIndices = getActivePageIndices(currentView);
-                  
-                  return (
-                    <div 
-                      className={`c-flipbook relative block overflow-visible ${isReady ? 'is-ready' : ''} ${isAtFrontCover ? 'at-front-cover' : ''} ${isAtRearCover ? 'at-rear-cover' : ''}`}
-                      style={{ 
-                        perspective: '2200px',
-                        transformStyle: 'preserve-3d',
-                        width: `${bookWidth}px`,
-                        height: `${bookHeight}px`,
-                        left: bookLeft,
-                        transition: isReady ? 'left 0.7s' : 'none'
-                      }}
-                    >
-                      {allPages.map((page, pageIndex) => {
-                        const isEven = pageIndex % 2 === 0; // Even = left pages (index 0,2,4...)
-                        const isOdd = !isEven; // Odd = right pages (index 1,3,5...)
-                        
-                        const isActive = activeIndices.includes(pageIndex);
-                        const isFirstPage = pageIndex === 0;
-                        const isLastPage = pageIndex === allPages.length - 1;
-                        
-                        // flipbook-js: odd pages are right side, even are left side
-                        // With canClose=true: odd = right, even = left
-                        // Right pages (odd): transform-origin: 0 (left edge), right: 0
-                        // Left pages (even): transform-origin: 100% (right edge), left: 0
-                        
-                        // Determine if this page should be flipped based on active spread
-                        // For odd pages (right): flipped if their spread is before current view
-                        // For even pages (left): flipped if their spread is at or after current view? 
-                        // Actually flipbook-js uses sibling selectors: .is-active ~ .page flips following pages
-                        
-                        // Simplified logic for our case:
-                        // Right pages (odd index): appear on right, flip to left when turning forward
-                        // Left pages (even index except 0): appear on left when their spread is active
-                        
-                        let transform = 'rotateY(0deg)';
-                        let zIndex = 0;
-                        
-                        if (isOdd) {
-                          // Right page logic
-                          const spreadForThisPage = Math.floor((pageIndex - 1) / 2) + 1;
-                          const isBeforeCurrentView = spreadForThisPage < currentView;
-                          const isCurrentSpread = spreadForThisPage === currentView || (currentView === 0 && pageIndex === 0);
-                          
-                          if (pageIndex === 0) {
-                            // Front cover special case
-                            if (currentView === 0) {
-                              // Active front cover
-                              if (isCalling) {
-                                transform = 'rotateY(-20deg)';
-                              } else {
-                                transform = 'rotateY(-10deg)';
-                              }
-                              zIndex = 2;
-                            } else {
-                              // Flipped
-                              transform = 'rotateY(-180deg)';
-                              zIndex = 0;
-                            }
-                          } else if (isBeforeCurrentView) {
-                            transform = 'rotateY(-180deg)';
-                            zIndex = 0;
-                          } else if (isActive) {
-                            if (isCalling && isFirstPage) {
-                              transform = 'rotateY(-20deg)';
-                            } else {
-                              transform = 'rotateY(-10deg)';
-                            }
-                            zIndex = 2;
-                          } else {
-                            transform = 'rotateY(0deg)';
-                            zIndex = 0;
-                          }
-                        } else {
-                          // Left page (even index, but skip 0 which is handled as right/cover)
-                          // Left pages: transform-origin: 100%, they start flipped and unflip when active
-                          const spreadForThisPage = Math.floor((pageIndex) / 2);
-                          const isAfterCurrentView = spreadForThisPage > currentView;
-                          
-                          if (isActive) {
-                            transform = 'rotateY(10deg)';
-                            zIndex = 2;
-                          } else if (isAfterCurrentView) {
-                            transform = 'rotateY(180deg)';
-                            zIndex = 0;
-                          } else {
-                            transform = 'rotateY(0deg)';
-                            zIndex = 1;
-                          }
-                        }
-                        
-                        // Page class names
-                        let pageClasses = 'c-flipbook__page';
-                        if (isActive) pageClasses += ' is-active';
-                        if (isFirstPage) pageClasses += ' first-page';
-                        if (isLastPage) pageClasses += ' last-page';
-                        if (isCalling && isActive && isOdd) pageClasses += ' is-calling';
-                        
-                        // Page styles based on odd/even (right/left)
-                        const isRightPage = isOdd || pageIndex === 0;
-                        
-                        return (
-                          <div
-                            key={pageIndex}
-                            className={pageClasses}
-                            data-page={pageIndex}
-                            style={{
-                              position: 'absolute',
-                              width: '50%',
-                              height: '100%',
-                              ...(isRightPage ? { right: 0 } : { left: 0 }),
-                              transformStyle: 'preserve-3d',
-                              transformOrigin: isRightPage ? '0' : '100%',
-                              transform,
-                              transition: isReady ? 'transform 0.9s ease' : 'none',
-                              zIndex,
-                              cursor: 'pointer',
-                              backfaceVisibility: 'hidden',
-                              WebkitBackfaceVisibility: 'hidden',
-                              userSelect: 'none',
-                              overflow: 'hidden',
-                              background: '#efeef4',
-                              borderRadius: isRightPage ? '0 6px 6px 0' : '6px 0 0 6px'
-                            }}
-                            onClick={() => {
-                              if (isRightPage && isActive && !isFlipping && currentView < totalViews - 1) {
-                                stopCalling();
-                                handleNext();
-                              } else if (!isRightPage && isActive && canClose && !isFlipping && currentView > 0) {
-                                handlePrev();
-                              }
-                            }}
-                          >
-                            {/* Page content */}
-                            <div className="w-full h-full relative">
-                              {page.content}
-                              {/* Spine shadow */}
-                              {isRightPage ? (
-                                <div 
-                                  className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none"
-                                  style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.04) 40%, transparent 100%)' }}
-                                />
-                              ) : (
-                                <div 
-                                  className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none"
-                                  style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.04) 40%, transparent 100%)' }}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-                
-                {/* Book shadow */}
+                {/* BOOK OBJECT */}
                 <div 
-                  className="absolute pointer-events-none"
-                  style={{
-                    bottom: isModal ? '40px' : '80px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: `${Math.round(computedW * 0.7)}px`,
-                    height: '20px',
-                    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, transparent 70%)',
-                    borderRadius: '50%'
+                  className={`relative flex shadow-[0_30px_60px_rgba(0,0,0,0.4)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev') || (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
+                  style={{ 
+                    width: `${computedW}px`,
+                    height: `${computedH}px`,
+                    transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev')
+                      ? 'translateX(-25%)'
+                      : (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')
+                        ? 'translateX(25%)'
+                        : 'translateX(0%)'
                   }}
-                />
+                >
+                    {/* 3D Page Thickness Effect (Visible when book is open) */}
+                    {currentView > 0 && currentView < totalViews - 1 && !((currentView === 1 && direction === 'prev')) && !((currentView === totalViews - 2 && direction === 'next')) && (
+                       <>
+                          {/* Left Page Stack - More layers for rigid effect */}
+                          <div className="absolute top-1 bottom-1 left-1 w-1 bg-gray-200 rounded-l-sm border-l border-gray-300" style={{ transform: 'translateX(-2px) translateZ(-1px)' }}></div>
+                          <div className="absolute top-1.5 bottom-1.5 left-1 w-1 bg-white rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-4px) translateZ(-2px)' }}></div>
+                          <div className="absolute top-2 bottom-2 left-1 w-1 bg-gray-100 rounded-l-sm border-l border-gray-300" style={{ transform: 'translateX(-6px) translateZ(-3px)' }}></div>
+                          <div className="absolute top-2.5 bottom-2.5 left-1 w-1 bg-white rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-8px) translateZ(-4px)' }}></div>
+                          <div className="absolute top-3 bottom-3 left-1 w-1 bg-gray-50 rounded-l-sm border-l border-gray-100" style={{ transform: 'translateX(-10px) translateZ(-5px)' }}></div>
+                          
+                          {/* Right Page Stack - More layers for rigid effect */}
+                          <div className="absolute top-1 bottom-1 right-1 w-1 bg-gray-200 rounded-r-sm border-r border-gray-300" style={{ transform: 'translateX(2px) translateZ(-1px)' }}></div>
+                          <div className="absolute top-1.5 bottom-1.5 right-1 w-1 bg-white rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(4px) translateZ(-2px)' }}></div>
+                          <div className="absolute top-2 bottom-2 right-1 w-1 bg-gray-100 rounded-r-sm border-r border-gray-300" style={{ transform: 'translateX(6px) translateZ(-3px)' }}></div>
+                          <div className="absolute top-2.5 bottom-2.5 right-1 w-1 bg-white rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(8px) translateZ(-4px)' }}></div>
+                          <div className="absolute top-3 bottom-3 right-1 w-1 bg-gray-50 rounded-r-sm border-r border-gray-100" style={{ transform: 'translateX(10px) translateZ(-5px)' }}></div>
+                       </>
+                    )}
+                    
+                    {/* 1. STATIC LAYER (Bottom) */}
+                    <div className="absolute inset-0 flex w-full h-full z-0 perspective-[2500px]">
+                        {/* LEFT SIDE */}
+                        <div 
+                            onClick={() => { if (currentView > 0) handlePrev(); }}
+                            className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md origin-right transition-transform duration-500 ease-out hover:[transform:rotateY(5deg)] ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : (currentView === totalViews - 1 ? 'bg-white cursor-pointer hover:bg-gray-50/10 shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white cursor-pointer hover:bg-gray-50/10')}`}
+                        >
+                            {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
+                        </div>
+                        {/* RIGHT SIDE */}
+                        <div 
+                            onClick={() => { if (currentView < totalViews - 1) handleNext(); }}
+                            className={`w-1/2 h-full overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/10 transition-transform duration-500 ease-out origin-left hover:[transform:rotateY(-5deg)] ${(currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next') ? 'bg-transparent shadow-none pointer-events-none' : (currentView === 0 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white shadow-sm')}`}
+                        >
+                            {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
+                        </div>
+                    </div>
+
+                    {/* 2. FLIPPING LAYER (Top) */}
+                    {isFlipping && (
+                        <div className="absolute inset-0 z-20 pointer-events-none perspective-[2500px]">
+                            {direction === 'next' && (
+                                <div className="absolute right-0 w-1/2 h-full transform-style-3d origin-left animate-flip-next shadow-2xl">
+                                    {/* Front (Visible at start) */}
+                                    <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100">
+                                        <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5 z-20"></div>
+                                        {currentSpread.right}
+                                    </div>
+                                    {/* Back (Visible at end) */}
+                                    <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100" style={{ transform: 'rotateY(180deg)' }}>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
+                                        {nextSpread?.left}
+                                    </div>
+                                </div>
+                            )}
+
+                            {direction === 'prev' && (
+                                <div className="absolute left-0 w-1/2 h-full transform-style-3d origin-right animate-flip-prev shadow-2xl">
+                                    {/* Front (Visible at start) */}
+                                    <div className={`absolute inset-0 backface-hidden rounded-l-md overflow-hidden border-r border-gray-100 ${currentView === 1 ? 'bg-transparent border-none' : 'bg-white'}`}>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
+                                        {currentSpread.left}
+                                    </div>
+                                    {/* Back (Visible at end) */}
+                                    <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100" style={{ transform: 'rotateY(-180deg)' }}>
+                                        <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5 z-20"></div>
+                                        {prevSpread?.right}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* 3. STATIC IDLE LAYER (Only when not flipping to prevent flicker) */}
+                    {!isFlipping && (
+                        <div className="absolute inset-0 flex w-full h-full z-10 pointer-events-none">
+                            <div className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${currentView === 0 ? 'bg-transparent border-none' : (currentView === totalViews - 1 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white')}`}>
+                                {currentSpread.left}
+                            </div>
+                            <div className={`w-1/2 h-full overflow-hidden rounded-r-md ${currentView === totalViews - 1 ? 'bg-transparent' : (currentView === 0 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white')}`}>
+                                {currentSpread.right}
+                            </div>
+                        </div>
+                    )}
+
+                </div>
               </div>
 
               {/* Modify Link */}

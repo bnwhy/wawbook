@@ -6,6 +6,7 @@ import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
 import { generateBookPages } from '../utils/imageGenerator';
+import { renderAllPages } from '../utils/pageRenderer';
 import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
 import hardcoverIcon from '@assets/generated_images/hardcover_teal_book_isometric.png';
@@ -64,7 +65,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         if (k === 'dedication') return config.dedication || '';
         if (k === 'age') return config.age?.toString() || '';
         if (k === 'heroName') return config.childName || 'Héros';
-        if (k === 'gender') return config.gender || 'Garçon';
+        if (k === 'city') return config.city || '';
+        if (k === 'gender') return config.gender === 'girl' ? 'Fille' : 'Garçon';
 
         return match;
     });
@@ -127,65 +129,35 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     return;
                 }
                 
-                // Priority 2: Render raw HTML pages with SERVER-SIDE Puppeteer
+                // Priority 2: Render raw HTML pages with html2canvas (EPUB fixed layout)
                 const rawPages = book.contentConfig?.rawHtmlPages;
                 const cssContent = book.contentConfig?.cssContent || '';
                 
                 console.log('[BookPreview] rawPages:', rawPages?.length, 'cssContent length:', cssContent?.length);
                 
                 if (rawPages && rawPages.length > 0) {
-                    console.log(`[BookPreview] Rendering ${rawPages.length} pages via server API...`);
+                    console.log(`[BookPreview] Rendering ${rawPages.length} EPUB fixed layout pages with html2canvas...`);
+                    console.log('[BookPreview] First page HTML preview:', rawPages[0].html?.substring(0, 200));
                     try {
-                        // Build variables for server-side substitution
-                        const variables: Record<string, string> = {
-                            childName: config.childName || "l'enfant",
-                            dedication: config.dedication || '',
-                            age: config.age?.toString() || '',
-                            heroName: config.childName || 'Héros',
-                            gender: config.gender || 'Garçon',
-                        };
-                        
-                        // Add character variant variables
-                        if (config.characters) {
-                            for (const [tabId, variants] of Object.entries(config.characters)) {
-                                for (const [variantId, value] of Object.entries(variants as Record<string, string>)) {
-                                    variables[`${tabId}.${variantId}`] = value;
-                                }
-                            }
-                        }
-                        
-                        // Call server API to render pages
-                        const response = await fetch('/api/render-pages', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                pages: rawPages.map(p => ({
-                                    html: p.html,
-                                    width: p.width || 400,
-                                    height: p.height || 293,
-                                    pageIndex: p.pageIndex,
-                                })),
-                                css: cssContent,
-                                variables,
-                            }),
+                        const pages = await renderAllPages(
+                            rawPages,
+                            cssContent,
+                            config,
+                            config.characters,
+                            undefined,
+                            (current, total) => console.log(`[BookPreview] Rendered page ${current}/${total}`),
+                            book.contentConfig?.imageElements
+                        );
+                        console.log('[BookPreview] Rendered pages count:', Object.keys(pages).length);
+                        // Debug: log each page's dataUrl info
+                        Object.entries(pages).forEach(([idx, dataUrl]) => {
+                            console.log(`[BookPreview] Page ${idx} dataUrl length:`, dataUrl?.length, 'starts with:', dataUrl?.substring(0, 80));
                         });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log('[BookPreview] Server rendered pages:', Object.keys(data.pages).length);
-                            // Convert string keys to number keys
-                            const pages: Record<number, string> = {};
-                            for (const [key, value] of Object.entries(data.pages)) {
-                                pages[parseInt(key)] = value as string;
-                            }
-                            setGeneratedPages(pages);
-                            setIsGenerating(false);
-                            return;
-                        } else {
-                            console.error('[BookPreview] Server render failed:', await response.text());
-                        }
+                        setGeneratedPages(pages);
+                        setIsGenerating(false);
+                        return;
                     } catch (renderErr) {
-                        console.error('[BookPreview] Server render failed:', renderErr);
+                        console.error('[BookPreview] html2canvas render failed:', renderErr);
                     }
                 }
                 
@@ -361,21 +333,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   // --- MOBILE NAVIGATION ---
-  // Build list of actual mobile pages that exist in generatedPages
-  const mobilePagesList = useMemo(() => {
-    const pages: number[] = [];
-    // Check for cover (index 0)
-    if (generatedPages[0]) pages.push(0);
-    // Content pages (1 to pageCount)
-    for (let i = 1; i <= pageCount; i++) {
-      if (generatedPages[i]) pages.push(i);
-    }
-    // Check for back cover (index 999)
-    if (generatedPages[999]) pages.push(999);
-    return pages;
-  }, [generatedPages, pageCount]);
-  
-  const totalMobilePages = mobilePagesList.length;
+  // Total mobile pages: cover (0) + content pages (1 to pageCount) + back cover (pageCount + 1)
+  const totalMobilePages = pageCount + 2; // cover + pages + back cover
   
   const handleMobileNext = () => {
     if (mobilePageIndex < totalMobilePages - 1 && !isSliding) {
@@ -443,12 +402,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     touchEndX.current = null;
   };
   
-  // Get mobile page content - uses mobilePagesList for actual page numbers
+  // Get mobile page content
   const getMobilePageContent = (index: number) => {
-    const actualPageNum = mobilePagesList[index];
-    
-    // If we don't have this page, show placeholder
-    if (actualPageNum === undefined || !generatedPages[actualPageNum]) {
+    // index 0 = cover
+    if (index === 0) {
+      if (generatedPages[0]) {
+        return (
+          <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
+            <img src={generatedPages[0]} className="w-full h-full object-contain" alt="Cover" />
+          </div>
+        );
+      }
       return (
         <div className="w-full h-full bg-white rounded-lg shadow-xl flex items-center justify-center">
           {isGenerating ? <Loader2 className="animate-spin text-cloud-blue" size={32} /> : <BookOpen size={40} className="text-gray-200" />}
@@ -456,22 +420,33 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       );
     }
     
-    // Determine label based on page number
-    const altText = actualPageNum === 0 ? 'Cover' : actualPageNum === 999 ? 'Back Cover' : `Page ${actualPageNum}`;
+    // index = totalMobilePages - 1 = back cover
+    if (index === totalMobilePages - 1) {
+      if (generatedPages[999]) {
+        return (
+          <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
+            <img src={generatedPages[999]} className="w-full h-full object-contain" alt="Back Cover" />
+          </div>
+        );
+      }
+      return <div className="w-full h-full bg-white rounded-lg shadow-xl" />;
+    }
+    
+    // Content pages: index 1 corresponds to page 1, etc.
+    const pageNum = index;
+    if (generatedPages[pageNum]) {
+      return (
+        <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
+          <img src={generatedPages[pageNum]} className="w-full h-full object-contain" alt={`Page ${pageNum}`} />
+        </div>
+      );
+    }
     
     return (
-      <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
-        <img src={generatedPages[actualPageNum]} className="w-full h-full object-contain" alt={altText} />
+      <div className="w-full h-full bg-white rounded-lg shadow-xl flex items-center justify-center">
+        {isGenerating ? <Loader2 className="animate-spin text-cloud-blue" size={32} /> : <BookOpen size={40} className="text-gray-200" />}
       </div>
     );
-  };
-  
-  // Get mobile page label for indicator
-  const getMobilePageLabel = (index: number) => {
-    const actualPageNum = mobilePagesList[index];
-    if (actualPageNum === 0) return 'Couverture';
-    if (actualPageNum === 999) return 'Dos';
-    return `Page ${actualPageNum}`;
   };
 
   // --- CONTENT GENERATORS ---
@@ -803,10 +778,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   {/* Page indicator */}
                   <div className="mt-4 flex items-center justify-center gap-2">
                     <span className="text-sm font-medium text-stone-600">
-                      {getMobilePageLabel(mobilePageIndex)}
+                      {mobilePageIndex === 0 ? 'Couverture' : mobilePageIndex === totalMobilePages - 1 ? 'Dos' : `Page ${mobilePageIndex}`}
                     </span>
                     <span className="text-xs text-stone-400">
-                      ({mobilePageIndex + 1} / {totalMobilePages || 1})
+                      ({mobilePageIndex + 1} / {totalMobilePages})
                     </span>
                   </div>
                   

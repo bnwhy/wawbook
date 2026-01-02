@@ -808,31 +808,38 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     transition: 'transform 0.5s ease-in-out',
                     width: `${Math.round(computedW * 0.42)}px`,
                     height: `${Math.round(computedH * 0.85)}px`,
-                    transform: `translateX(${Math.round(computedW * 0.21)}px)`
+                    transform: `translateX(${currentView > 0 ? Math.round(computedW * 0.21) : 0}px)`
                   }}
                 >
                   {/* Pages - Each page has front and rear face */}
                   {Array.from({ length: totalViews }).map((_, pageIndex) => {
                     const isActive = pageIndex === currentView;
                     const isNextShown = pageIndex === currentView + 1;
+                    const isLastShown = pageIndex === currentView - 1;
                     const isPastPage = pageIndex < currentView;
                     const isFlippingPage = isFlipping && (
                       (direction === 'next' && pageIndex === currentView) ||
                       (direction === 'prev' && pageIndex === currentView - 1)
                     );
                     
-                    // Calculate rotation - Librio style
-                    let rotation = isPastPage ? -180 : (isActive ? -1 : 0);
+                    // Calculate rotation - EXACT Librio values
+                    // active: rotateY(1deg), flipped: rotateY(-178deg), others: none
+                    let rotation = 0;
+                    if (isActive) {
+                      rotation = 1; // Librio: matrix3d(0.999848...) ≈ rotateY(1deg)
+                    } else if (isPastPage) {
+                      rotation = -178; // Librio: matrix3d(-0.999391...) ≈ rotateY(-178deg)
+                    }
                     if (isFlippingPage) {
-                      rotation = direction === 'next' ? -180 : -1;
+                      rotation = direction === 'next' ? -178 : 1;
                     }
                     
-                    // Z-index like Librio: active=5, next=1, others=0
+                    // Z-index EXACT Librio: active=5, last-shown flipped=5, next-shown=1, others=0
                     let zIndex = 0;
                     if (isFlippingPage) zIndex = 10;
                     else if (isActive) zIndex = 5;
+                    else if (isLastShown) zIndex = 5; // last-shown flipped (currentView - 1 is always < currentView)
                     else if (isNextShown) zIndex = 1;
-                    else if (isPastPage) zIndex = pageIndex;
                     
                     // Get page content - front shows right side, rear shows left side of next
                     const spread = getSpreadContent(pageIndex);

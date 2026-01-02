@@ -6128,7 +6128,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         </div>
 
                                         <div className="flex gap-2 flex-wrap">
-                                            {importSessionTexts.length > 0 && (
+                                            {(importSessionTexts.length > 0 || importSessionImages.length > 0 || importSessionRawHtmlPages.length > 0) && (
                                                 <button
                                                     type="button"
                                                     onClick={() => {
@@ -6187,7 +6187,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             setImportSessionCssContent('');
                                                             setImportSessionPageImages([]);
                                                             
-                                                            toast.success(`Configuration sauvegardée et mise à jour (${importSessionTexts.length} éléments en session)`);
+                                                            const totalElements = importSessionTexts.length + importSessionImages.length;
+                                                            toast.success(`Configuration sauvegardée (${totalElements} éléments, ${importSessionRawHtmlPages.length} pages)`);
                                                         } catch (e) {
                                                             toast.error("Erreur lors de la sauvegarde");
                                                         }

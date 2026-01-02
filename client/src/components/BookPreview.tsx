@@ -47,11 +47,15 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [swipeOffset, setSwipeOffset] = useState(0);
   const bookContainerRef = useRef<HTMLDivElement>(null);
   
-  // Flipbook-js inspired features
+  // Flipbook-js features (exact copy)
   const [isCalling, setIsCalling] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const canClose = true; // Allow closing the book (go back to page 0)
-  const initialCall = true; // Animation on load
+  const [activeSpread, setActiveSpread] = useState(0); // Which spread is active (0 = cover, 1 = pages 1-2, etc.)
+  const [wasActiveSpread, setWasActiveSpread] = useState<number | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const callingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const canClose = true; // Allow closing the book (show front/back covers)
+  const initialCall = true; // Animation on load that repeats
   
   // Detect mobile screen
   useEffect(() => {
@@ -61,22 +65,37 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Initial call animation (flipbook-js style)
+  // Initial call animation (flipbook-js exact: 500ms delay, then repeats every 3s)
   useEffect(() => {
     if (!isMobile && initialCall) {
       const readyTimer = setTimeout(() => setIsReady(true), 100);
-      const callTimer = setTimeout(() => {
+      
+      const setupCalls = () => {
         setIsCalling(true);
-        setTimeout(() => setIsCalling(false), 800);
-      }, 500);
+        setTimeout(() => setIsCalling(false), 900);
+      };
+      
+      const callTimer = setTimeout(setupCalls, 500);
+      callingIntervalRef.current = setInterval(setupCalls, 3000);
+      
       return () => {
         clearTimeout(readyTimer);
         clearTimeout(callTimer);
+        if (callingIntervalRef.current) clearInterval(callingIntervalRef.current);
       };
     } else {
       setIsReady(true);
     }
   }, [isMobile]);
+  
+  // Stop calling animation after first page turn
+  const stopCalling = () => {
+    if (callingIntervalRef.current) {
+      clearInterval(callingIntervalRef.current);
+      callingIntervalRef.current = null;
+    }
+    setIsCalling(false);
+  };
 
   // --- HELPER: Resolve Variables ---
   const resolveTextVariable = (text: string) => {
@@ -808,31 +827,72 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   )}
                 </div>
               ) : (
-                /* DESKTOP FLIPBOOK - FLIPBOOK-JS INSPIRED with initialCall & canClose */
+                /* DESKTOP FLIPBOOK - EXACT FLIPBOOK-JS with canClose=true and initialCall=true */
                 <>
               {/* Stage */}
               <div className={`relative z-10 flex items-center justify-center w-full animate-drop-in ${isModal ? 'h-[550px] scale-[0.85]' : 'h-[700px]'}`}>
                 
                 {/* Arrows */}
-                <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-12 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
-                    <ChevronLeft size={32} strokeWidth={2.5} />
+                <button 
+                  onClick={() => { handlePrev(); }} 
+                  disabled={currentView === 0 || isFlipping} 
+                  className="absolute left-4 lg:left-12 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer"
+                >
+                  <ChevronLeft size={32} strokeWidth={2.5} />
                 </button>
-                <button onClick={handleNext} disabled={currentView === totalViews - 1 || isFlipping} className="absolute right-4 lg:right-12 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
-                    <ChevronRight size={32} strokeWidth={2.5} />
+                <button 
+                  onClick={() => { stopCalling(); handleNext(); }} 
+                  disabled={currentView === totalViews - 1 || isFlipping} 
+                  className="absolute right-4 lg:right-12 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer"
+                >
+                  <ChevronRight size={32} strokeWidth={2.5} />
                 </button>
 
-                {/* FLIPBOOK-JS INSPIRED BOOK */}
+                {/* FLIPBOOK-JS EXACT IMPLEMENTATION */}
                 {(() => {
-                  const bookWidth = Math.round(computedW * 0.42);
+                  // Double-page book dimensions (each page is half width)
+                  const pageWidth = Math.round(computedW * 0.28);
                   const bookHeight = Math.round(computedH * 0.85);
-                  const halfWidth = Math.round(bookWidth / 2);
+                  const bookWidth = pageWidth * 2; // Full open book = 2 pages
+                  
+                  // Build page list: With canClose=true, we show pages as pairs
+                  // Page 0 = front cover (right page only when closed)
+                  // Pages 1,2 = first spread, 3,4 = second spread, etc.
+                  // Last page = back cover (left page only when at end)
+                  
+                  // Generate all pages from spreads
+                  const allPages: { content: React.ReactNode; side: 'left' | 'right'; spreadIdx: number }[] = [];
+                  
+                  // Page 0: Front cover (appears as right page when book is closed)
+                  const coverSpread = getSpreadContent(0);
+                  allPages.push({ content: coverSpread.right, side: 'right', spreadIdx: 0 });
+                  
+                  // Middle pages: alternate left/right from each spread
+                  for (let i = 1; i < totalViews; i++) {
+                    const spread = getSpreadContent(i);
+                    allPages.push({ content: spread.left, side: 'left', spreadIdx: i });
+                    allPages.push({ content: spread.right, side: 'right', spreadIdx: i });
+                  }
                   
                   // Position: at-front-cover = left -25%, at-rear-cover = left +25%
                   const isAtFrontCover = currentView === 0;
                   const isAtRearCover = currentView === totalViews - 1;
-                  let bookLeft = 0;
-                  if (isAtFrontCover) bookLeft = -halfWidth / 2;
-                  else if (isAtRearCover) bookLeft = halfWidth / 2;
+                  let bookLeft = '0%';
+                  if (isAtFrontCover) bookLeft = '-25%';
+                  else if (isAtRearCover) bookLeft = '25%';
+                  
+                  // Determine which page indices are active
+                  // With canClose: view 0 = page 0 only, view 1 = pages 1+2, view 2 = pages 3+4...
+                  const getActivePageIndices = (view: number): number[] => {
+                    if (view === 0) return [0]; // Front cover only
+                    // For other views: leftPage = (view-1)*2 + 1, rightPage = leftPage + 1
+                    const leftIdx = (view - 1) * 2 + 1;
+                    const rightIdx = leftIdx + 1;
+                    if (rightIdx < allPages.length) return [leftIdx, rightIdx];
+                    return [leftIdx]; // Last page only
+                  };
+                  
+                  const activeIndices = getActivePageIndices(currentView);
                   
                   return (
                     <div 
@@ -842,47 +902,97 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         transformStyle: 'preserve-3d',
                         width: `${bookWidth}px`,
                         height: `${bookHeight}px`,
-                        left: `${bookLeft}px`,
-                        transition: isReady ? 'left 0.7s ease' : 'none'
+                        left: bookLeft,
+                        transition: isReady ? 'left 0.7s' : 'none'
                       }}
                     >
-                      {Array.from({ length: totalViews }).map((_, pageIndex) => {
-                        const isFlipped = pageIndex < currentView;
-                        const isActive = pageIndex === currentView;
-                        const isNextPage = pageIndex === currentView + 1;
-                        const wasActive = pageIndex === currentView - 1;
+                      {allPages.map((page, pageIndex) => {
+                        const isEven = pageIndex % 2 === 0; // Even = left pages (index 0,2,4...)
+                        const isOdd = !isEven; // Odd = right pages (index 1,3,5...)
+                        
+                        const isActive = activeIndices.includes(pageIndex);
                         const isFirstPage = pageIndex === 0;
-                        const isLastPage = pageIndex === totalViews - 1;
+                        const isLastPage = pageIndex === allPages.length - 1;
                         
-                        // Page class names (flipbook-js style)
-                        let pageClasses = 'c-flipbook__page';
-                        if (isActive) pageClasses += ' is-active';
-                        if (wasActive) pageClasses += ' was-active';
-                        if (isFirstPage) pageClasses += ' first-page';
-                        if (isLastPage) pageClasses += ' last-page';
-                        if (isCalling && isActive) pageClasses += ' is-calling';
+                        // flipbook-js: odd pages are right side, even are left side
+                        // With canClose=true: odd = right, even = left
+                        // Right pages (odd): transform-origin: 0 (left edge), right: 0
+                        // Left pages (even): transform-origin: 100% (right edge), left: 0
                         
-                        // Transform calculation (flipbook-js style)
-                        // Pages flip from right edge (transform-origin: 0 = left edge for right pages)
+                        // Determine if this page should be flipped based on active spread
+                        // For odd pages (right): flipped if their spread is before current view
+                        // For even pages (left): flipped if their spread is at or after current view? 
+                        // Actually flipbook-js uses sibling selectors: .is-active ~ .page flips following pages
+                        
+                        // Simplified logic for our case:
+                        // Right pages (odd index): appear on right, flip to left when turning forward
+                        // Left pages (even index except 0): appear on left when their spread is active
+                        
                         let transform = 'rotateY(0deg)';
-                        if (isFlipped) {
-                          transform = 'rotateY(-180deg)';
-                        } else if (isActive) {
-                          // Active page tilts slightly
-                          if (isCalling) {
-                            transform = 'rotateY(-20deg)'; // Calling animation
+                        let zIndex = 0;
+                        
+                        if (isOdd) {
+                          // Right page logic
+                          const spreadForThisPage = Math.floor((pageIndex - 1) / 2) + 1;
+                          const isBeforeCurrentView = spreadForThisPage < currentView;
+                          const isCurrentSpread = spreadForThisPage === currentView || (currentView === 0 && pageIndex === 0);
+                          
+                          if (pageIndex === 0) {
+                            // Front cover special case
+                            if (currentView === 0) {
+                              // Active front cover
+                              if (isCalling) {
+                                transform = 'rotateY(-20deg)';
+                              } else {
+                                transform = 'rotateY(-10deg)';
+                              }
+                              zIndex = 2;
+                            } else {
+                              // Flipped
+                              transform = 'rotateY(-180deg)';
+                              zIndex = 0;
+                            }
+                          } else if (isBeforeCurrentView) {
+                            transform = 'rotateY(-180deg)';
+                            zIndex = 0;
+                          } else if (isActive) {
+                            if (isCalling && isFirstPage) {
+                              transform = 'rotateY(-20deg)';
+                            } else {
+                              transform = 'rotateY(-10deg)';
+                            }
+                            zIndex = 2;
                           } else {
-                            transform = 'rotateY(-10deg)';
+                            transform = 'rotateY(0deg)';
+                            zIndex = 0;
+                          }
+                        } else {
+                          // Left page (even index, but skip 0 which is handled as right/cover)
+                          // Left pages: transform-origin: 100%, they start flipped and unflip when active
+                          const spreadForThisPage = Math.floor((pageIndex) / 2);
+                          const isAfterCurrentView = spreadForThisPage > currentView;
+                          
+                          if (isActive) {
+                            transform = 'rotateY(10deg)';
+                            zIndex = 2;
+                          } else if (isAfterCurrentView) {
+                            transform = 'rotateY(180deg)';
+                            zIndex = 0;
+                          } else {
+                            transform = 'rotateY(0deg)';
+                            zIndex = 1;
                           }
                         }
                         
-                        // Z-index (flipbook-js style)
-                        let zIndex = 0;
-                        if (isActive) zIndex = 2;
-                        else if (wasActive) zIndex = 1;
+                        // Page class names
+                        let pageClasses = 'c-flipbook__page';
+                        if (isActive) pageClasses += ' is-active';
+                        if (isFirstPage) pageClasses += ' first-page';
+                        if (isLastPage) pageClasses += ' last-page';
+                        if (isCalling && isActive && isOdd) pageClasses += ' is-calling';
                         
-                        const spread = getSpreadContent(pageIndex);
-                        const nextSpread = pageIndex + 1 < totalViews ? getSpreadContent(pageIndex + 1) : null;
+                        // Page styles based on odd/even (right/left)
+                        const isRightPage = isOdd || pageIndex === 0;
                         
                         return (
                           <div
@@ -891,11 +1001,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             data-page={pageIndex}
                             style={{
                               position: 'absolute',
-                              width: '100%',
+                              width: '50%',
                               height: '100%',
-                              right: 0,
+                              ...(isRightPage ? { right: 0 } : { left: 0 }),
                               transformStyle: 'preserve-3d',
-                              transformOrigin: '0',
+                              transformOrigin: isRightPage ? '0' : '100%',
                               transform,
                               transition: isReady ? 'transform 0.9s ease' : 'none',
                               zIndex,
@@ -904,60 +1014,33 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                               WebkitBackfaceVisibility: 'hidden',
                               userSelect: 'none',
                               overflow: 'hidden',
-                              backgroundColor: '#fff',
-                              borderRadius: '0 6px 6px 0'
+                              background: '#efeef4',
+                              borderRadius: isRightPage ? '0 6px 6px 0' : '6px 0 0 6px'
                             }}
                             onClick={() => {
-                              if (isActive && !isFlipping && currentView < totalViews - 1) {
+                              if (isRightPage && isActive && !isFlipping && currentView < totalViews - 1) {
+                                stopCalling();
                                 handleNext();
-                              } else if (wasActive && canClose && !isFlipping) {
+                              } else if (!isRightPage && isActive && canClose && !isFlipping && currentView > 0) {
                                 handlePrev();
                               }
                             }}
                           >
-                            {/* FRONT FACE - Shows right side of spread */}
-                            <div 
-                              className="front-face"
-                              style={{
-                                position: 'absolute',
-                                width: '100%',
-                                height: '100%',
-                                backfaceVisibility: 'hidden',
-                                WebkitBackfaceVisibility: 'hidden',
-                                overflow: 'hidden',
-                                backgroundColor: 'white',
-                                borderRadius: '0 6px 6px 0',
-                                boxShadow: isActive ? '4px 0 20px rgba(0,0,0,0.2)' : '2px 0 10px rgba(0,0,0,0.1)'
-                              }}
-                            >
-                              <div className="w-full h-full">{spread.right}</div>
-                              <div 
-                                className="absolute left-0 top-0 bottom-0 w-10 pointer-events-none"
-                                style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.06) 40%, transparent 100%)' }}
-                              />
-                            </div>
-                            
-                            {/* REAR FACE - Shows left side of next spread (visible when flipped) */}
-                            <div 
-                              className="rear-face"
-                              style={{
-                                position: 'absolute',
-                                width: '100%',
-                                height: '100%',
-                                backfaceVisibility: 'hidden',
-                                WebkitBackfaceVisibility: 'hidden',
-                                transform: 'rotateY(180deg)',
-                                overflow: 'hidden',
-                                backgroundColor: 'white',
-                                borderRadius: '6px 0 0 6px',
-                                boxShadow: '-4px 0 20px rgba(0,0,0,0.2)'
-                              }}
-                            >
-                              <div className="w-full h-full">{nextSpread?.left || <div className="w-full h-full bg-stone-50" />}</div>
-                              <div 
-                                className="absolute right-0 top-0 bottom-0 w-10 pointer-events-none"
-                                style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.06) 40%, transparent 100%)' }}
-                              />
+                            {/* Page content */}
+                            <div className="w-full h-full relative">
+                              {page.content}
+                              {/* Spine shadow */}
+                              {isRightPage ? (
+                                <div 
+                                  className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none"
+                                  style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.04) 40%, transparent 100%)' }}
+                                />
+                              ) : (
+                                <div 
+                                  className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none"
+                                  style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.04) 40%, transparent 100%)' }}
+                                />
+                              )}
                             </div>
                           </div>
                         );

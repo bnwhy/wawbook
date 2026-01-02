@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
+import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState, useMemo } from 'react';
 // @ts-ignore
 import FlipBook from 'flipbook-js';
 import 'flipbook-js/style.css';
@@ -25,7 +25,11 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     const prevButtonRef = useRef<HTMLButtonElement>(null);
     const nextButtonRef = useRef<HTMLButtonElement>(null);
     const [isInitialized, setIsInitialized] = useState(false);
-    const initAttemptedRef = useRef(false);
+    
+    const pagesKey = useMemo(() => {
+      if (pages.length === 0) return '';
+      return pages.map(p => p.substring(0, 50)).join('|');
+    }, [pages]);
 
     useImperativeHandle(ref, () => ({
       turnPage: (direction) => flipbookRef.current?.turnPage(direction),
@@ -35,40 +39,47 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }));
 
     useEffect(() => {
-      if (!containerRef.current || pages.length === 0 || initAttemptedRef.current) return;
+      if (!containerRef.current || pages.length === 0) return;
       
-      initAttemptedRef.current = true;
-
       const flipbookEl = containerRef.current.querySelector('.c-flipbook') as HTMLElement;
       if (!flipbookEl) return;
 
+      if (flipbookRef.current) {
+        flipbookRef.current = null;
+        setIsInitialized(false);
+      }
+
       const timer = setTimeout(() => {
-        flipbookRef.current = new FlipBook(flipbookEl, {
-          canClose: true,
-          initialCall: true,
-          arrowKeys: true,
-          nextButton: nextButtonRef.current,
-          previousButton: prevButtonRef.current,
-          width,
-          height,
-          onPageTurn: (el: HTMLElement, context: { pagesActive: NodeListOf<HTMLElement>; children: NodeListOf<HTMLElement> }) => {
-            if (onPageTurn) {
-              const activePages = context.pagesActive;
-              if (activePages.length > 0) {
-                const pageIndex = Array.from(context.children).indexOf(activePages[0]);
-                onPageTurn(pageIndex);
+        try {
+          flipbookRef.current = new FlipBook(flipbookEl, {
+            canClose: true,
+            initialCall: true,
+            arrowKeys: true,
+            nextButton: nextButtonRef.current,
+            previousButton: prevButtonRef.current,
+            width,
+            height,
+            onPageTurn: (el: HTMLElement, context: { pagesActive: NodeListOf<HTMLElement>; children: NodeListOf<HTMLElement> }) => {
+              if (onPageTurn) {
+                const activePages = context.pagesActive;
+                if (activePages.length > 0) {
+                  const pageIndex = Array.from(context.children).indexOf(activePages[0]);
+                  onPageTurn(pageIndex);
+                }
               }
-            }
-          },
-        });
-        setIsInitialized(true);
-      }, 100);
+            },
+          });
+          setIsInitialized(true);
+        } catch (error) {
+          console.error('[FlipbookViewer] Error initializing flipbook:', error);
+        }
+      }, 150);
 
       return () => {
         clearTimeout(timer);
         flipbookRef.current = null;
       };
-    }, [pages.length, width, height]);
+    }, [pagesKey, width, height]);
 
     if (pages.length === 0) {
       return (
@@ -79,10 +90,10 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }
 
     return (
-      <div ref={containerRef} className={`flex flex-col items-center z-50 ${className}`}>
+      <div ref={containerRef} className={`flex flex-col items-center z-50 ${className}`} key={pagesKey}>
         <div className="c-flipbook" style={{ width, height, position: 'relative', zIndex: 50 }}>
           {pages.map((pageUrl, index) => (
-            <div key={index} className="c-flipbook__page">
+            <div key={`page-${index}-${pageUrl.substring(0, 30)}`} className="c-flipbook__page">
               <img
                 src={pageUrl}
                 alt={`Page ${index + 1}`}

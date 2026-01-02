@@ -803,12 +803,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   className="librio-book relative block mx-auto overflow-visible p-0"
                   style={{ 
                     perspective: '4000px',
-                    perspectiveOrigin: '0',
+                    perspectiveOrigin: '0px 50%',
                     transformStyle: 'preserve-3d',
                     transition: 'transform 0.5s ease-in-out',
                     width: `${Math.round(computedW * 0.42)}px`,
                     height: `${Math.round(computedH * 0.85)}px`,
-                    transform: `translateX(${Math.round(computedW * 0.21)}px)`
+                    transform: `translateX(${Math.round(computedW * 0.42)}px)`
                   }}
                 >
                   {/* Pages - Each page has front and rear face */}
@@ -844,7 +844,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         className="page absolute w-full h-full"
                         style={{
                           transformStyle: 'preserve-3d',
-                          transformOrigin: 'left center',
+                          transformOrigin: '0px 50%',
                           transform: `rotateY(${rotation}deg)`,
                           transition: 'transform 1s',
                           zIndex,

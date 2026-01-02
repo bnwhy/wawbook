@@ -668,13 +668,18 @@ export const parseServerExtractedZip = async (
         console.error('Error replacing images in preview HTML:', e);
     }
     
-    // Build rawHtmlPages for all HTML files
+    // Build rawHtmlPages for all HTML files and extract images from each page
     const rawHtmlPages: RawHtmlPage[] = [];
     const sortedFiles = [...htmlFiles].filter(f => !f.toLowerCase().includes('toc')).sort();
+    
+    // Collect all images from all pages
+    const allImages: ImageElement[] = [];
+    const allTexts: TextElement[] = [];
     
     for (let i = 0; i < sortedFiles.length; i++) {
         const filePath = sortedFiles[i];
         let fileHtml = htmlContent[filePath];
+        const pageIndex = i + 1;
         
         // Replace image paths with permanent URLs
         for (const [key, url] of Object.entries(imageMap)) {
@@ -693,16 +698,43 @@ export const parseServerExtractedZip = async (
         if (heightMatch) pageHeight = parseInt(heightMatch[1]);
         
         rawHtmlPages.push({
-            pageIndex: i + 1,
+            pageIndex,
             html: fileHtml,
             width: pageWidth,
             height: pageHeight
         });
+        
+        // Parse this page to extract images with correct pageIndex
+        const pageParsed = parseHtmlContent(htmlContent[filePath], defaultWidth, defaultHeight, imageMap, `page-${pageIndex}`, combinedCss);
+        
+        // Add images with correct pageIndex
+        pageParsed.images.forEach(img => {
+            allImages.push({
+                ...img,
+                id: `img-html-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                position: {
+                    ...img.position,
+                    pageIndex
+                }
+            });
+        });
+        
+        // Add texts with correct pageIndex
+        pageParsed.texts.forEach(txt => {
+            allTexts.push({
+                ...txt,
+                id: `text-html-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                position: {
+                    ...txt.position,
+                    pageIndex
+                }
+            });
+        });
     }
     
     return {
-        texts: parsed.texts,
-        images: parsed.images,
+        texts: allTexts,
+        images: allImages,
         htmlContent: previewHtml,
         width: parsed.width,
         height: parsed.height,

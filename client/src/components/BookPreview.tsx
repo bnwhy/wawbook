@@ -65,8 +65,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         if (k === 'dedication') return config.dedication || '';
         if (k === 'age') return config.age?.toString() || '';
         if (k === 'heroName') return config.childName || 'Héros';
-        if (k === 'city') return config.city || '';
-        if (k === 'gender') return config.gender === 'girl' ? 'Fille' : 'Garçon';
+        if (k === 'gender') return config.gender || 'Garçon';
 
         return match;
     });

@@ -71,6 +71,9 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
 <html>
 <head>
   <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Nunito:wght@400;500;600;700&family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { 
@@ -92,6 +95,14 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
       timeout: 30000 
     });
     
+    // Wait for fonts to load
+    await page.waitForFunction(() => {
+      return (document as any).fonts.ready.then(() => true);
+    }, { timeout: 10000 }).catch(() => {
+      console.log('[pageRenderer] Font loading timeout, continuing...');
+    });
+    
+    // Wait for images to load
     await page.waitForFunction(() => {
       const images = document.querySelectorAll('img');
       return Array.from(images).every(img => img.complete);

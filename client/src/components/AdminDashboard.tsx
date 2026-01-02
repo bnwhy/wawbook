@@ -6270,10 +6270,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     </div>
                                                     <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                                                         {sortedPages.map((page: any) => {
-                                                            const thumbnailUrl = (pageImages.find((pi: any) => pi.pageIndex === page.pageIndex) as any)?.url;
+                                                            const pageImagesFromElements = selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex) || [];
+                                                            const thumbnailUrl = (pageImages.find((pi: any) => pi.pageIndex === page.pageIndex) as any)?.url 
+                                                                || (pageImagesFromElements.length > 0 ? pageImagesFromElements[0].url : null);
                                                             const isSelected = effectiveSelectedPage === page.pageIndex;
                                                             const textsCount = selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0;
-                                                            const imagesCount = selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex).length || 0;
+                                                            const imagesCount = pageImagesFromElements.length;
                                                             
                                                             return (
                                                                 <div 

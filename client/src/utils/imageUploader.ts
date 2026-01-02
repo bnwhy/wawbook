@@ -101,3 +101,36 @@ export function replaceBlobUrls<T extends { url?: string }>(
     return item;
   });
 }
+
+export async function uploadFileToStorage(file: File, prefix?: string): Promise<string> {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(
+      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+    
+    const filename = prefix ? `${prefix}_${file.name}` : file.name;
+    
+    const uploadResponse = await fetch('/api/uploads/base64', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        data: base64,
+        contentType: file.type || 'image/png',
+        filename: filename,
+      }),
+    });
+    
+    if (!uploadResponse.ok) {
+      throw new Error('Upload failed');
+    }
+    
+    const result = await uploadResponse.json();
+    return result.objectPath;
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw error;
+  }
+}

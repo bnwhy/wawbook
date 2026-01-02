@@ -39,7 +39,7 @@ import googleFonts from 'google-fonts-complete';
 import { readPsd } from 'ag-psd';
 import { parseHtmlFile, parseZipFile, parseServerExtractedZip } from '../utils/htmlImporter';
 import { extractZipOnServer } from '../utils/imageUploader';
-import { uploadMultipleBlobs, replaceBlobUrls } from '../utils/imageUploader';
+import { uploadMultipleBlobs, replaceBlobUrls, uploadFileToStorage } from '../utils/imageUploader';
 
 // Image Condition Editor Component
 interface ImageConditionEditorProps {
@@ -4565,12 +4565,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 )}
                                 <input 
                                    type="file" 
+                                   accept="image/*"
                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                   onChange={(e) => {
+                                   onChange={async (e) => {
                                       const file = e.target.files?.[0];
                                       if (file) {
-                                         const url = URL.createObjectURL(file);
-                                         handleSaveBook({...selectedBook, coverImage: url});
+                                         try {
+                                            toast.loading('Upload de la couverture...', { id: 'cover-upload' });
+                                            const objectPath = await uploadFileToStorage(file, `cover_${selectedBook.id}`);
+                                            handleSaveBook({...selectedBook, coverImage: objectPath});
+                                            toast.success('Couverture uploadée!', { id: 'cover-upload' });
+                                         } catch (error) {
+                                            console.error('Cover upload error:', error);
+                                            toast.error('Erreur lors de l\'upload', { id: 'cover-upload' });
+                                         }
                                       }
                                    }}
                                 />

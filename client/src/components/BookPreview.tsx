@@ -47,6 +47,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [swipeOffset, setSwipeOffset] = useState(0);
   const bookContainerRef = useRef<HTMLDivElement>(null);
   
+  // Flipbook-js inspired features
+  const [isCalling, setIsCalling] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const canClose = true; // Allow closing the book (go back to page 0)
+  const initialCall = true; // Animation on load
+  
   // Detect mobile screen
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -54,6 +60,23 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Initial call animation (flipbook-js style)
+  useEffect(() => {
+    if (!isMobile && initialCall) {
+      const readyTimer = setTimeout(() => setIsReady(true), 100);
+      const callTimer = setTimeout(() => {
+        setIsCalling(true);
+        setTimeout(() => setIsCalling(false), 800);
+      }, 500);
+      return () => {
+        clearTimeout(readyTimer);
+        clearTimeout(callTimer);
+      };
+    } else {
+      setIsReady(true);
+    }
+  }, [isMobile]);
 
   // --- HELPER: Resolve Variables ---
   const resolveTextVariable = (text: string) => {
@@ -785,7 +808,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   )}
                 </div>
               ) : (
-                /* DESKTOP FLIPBOOK - LIBRIO EXACT 100% */
+                /* DESKTOP FLIPBOOK - FLIPBOOK-JS INSPIRED with initialCall & canClose */
                 <>
               {/* Stage */}
               <div className={`relative z-10 flex items-center justify-center w-full animate-drop-in ${isModal ? 'h-[550px] scale-[0.85]' : 'h-[700px]'}`}>
@@ -798,49 +821,65 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     <ChevronRight size={32} strokeWidth={2.5} />
                 </button>
 
-                {/* LIBRIO BOOK - 100% EXACT CSS */}
+                {/* FLIPBOOK-JS INSPIRED BOOK */}
                 {(() => {
                   const bookWidth = Math.round(computedW * 0.42);
                   const bookHeight = Math.round(computedH * 0.85);
-                  const halfHeight = Math.round(bookHeight / 2);
                   const halfWidth = Math.round(bookWidth / 2);
+                  
+                  // Position: at-front-cover = left -25%, at-rear-cover = left +25%
+                  const isAtFrontCover = currentView === 0;
+                  const isAtRearCover = currentView === totalViews - 1;
+                  let bookLeft = 0;
+                  if (isAtFrontCover) bookLeft = -halfWidth / 2;
+                  else if (isAtRearCover) bookLeft = halfWidth / 2;
                   
                   return (
                     <div 
-                      className="librio-book librio-book-loaded relative block overflow-visible"
+                      className={`c-flipbook relative block overflow-visible ${isReady ? 'is-ready' : ''} ${isAtFrontCover ? 'at-front-cover' : ''} ${isAtRearCover ? 'at-rear-cover' : ''}`}
                       style={{ 
-                        perspective: '4000px',
-                        perspectiveOrigin: `0px ${halfHeight}px`,
+                        perspective: '2200px',
                         transformStyle: 'preserve-3d',
-                        transition: 'transform 0.5s ease-in-out',
                         width: `${bookWidth}px`,
                         height: `${bookHeight}px`,
-                        transform: `translateX(${currentView > 0 ? halfWidth : 0}px)`
+                        left: `${bookLeft}px`,
+                        transition: isReady ? 'left 0.7s ease' : 'none'
                       }}
                     >
                       {Array.from({ length: totalViews }).map((_, pageIndex) => {
                         const isFlipped = pageIndex < currentView;
                         const isActive = pageIndex === currentView;
-                        const isNextShown = pageIndex === currentView + 1;
-                        const isLastShownFlipped = pageIndex === currentView - 1;
+                        const isNextPage = pageIndex === currentView + 1;
+                        const wasActive = pageIndex === currentView - 1;
+                        const isFirstPage = pageIndex === 0;
+                        const isLastPage = pageIndex === totalViews - 1;
                         
-                        let pageClass = 'page';
-                        if (isLastShownFlipped) pageClass += ' last-shown flipped';
-                        else if (isFlipped) pageClass += ' flipped';
-                        else if (isActive) pageClass += ' active';
-                        else if (isNextShown) pageClass += ' next-shown';
+                        // Page class names (flipbook-js style)
+                        let pageClasses = 'c-flipbook__page';
+                        if (isActive) pageClasses += ' is-active';
+                        if (wasActive) pageClasses += ' was-active';
+                        if (isFirstPage) pageClasses += ' first-page';
+                        if (isLastPage) pageClasses += ' last-page';
+                        if (isCalling && isActive) pageClasses += ' is-calling';
                         
-                        let transform = 'none';
-                        if (isActive) {
-                          transform = `rotateY(1deg)`;
-                        } else if (isFlipped) {
-                          transform = `rotateY(-178deg)`;
+                        // Transform calculation (flipbook-js style)
+                        // Pages flip from right edge (transform-origin: 0 = left edge for right pages)
+                        let transform = 'rotateY(0deg)';
+                        if (isFlipped) {
+                          transform = 'rotateY(-180deg)';
+                        } else if (isActive) {
+                          // Active page tilts slightly
+                          if (isCalling) {
+                            transform = 'rotateY(-20deg)'; // Calling animation
+                          } else {
+                            transform = 'rotateY(-10deg)';
+                          }
                         }
                         
+                        // Z-index (flipbook-js style)
                         let zIndex = 0;
-                        if (isActive) zIndex = 5;
-                        else if (isLastShownFlipped) zIndex = 5;
-                        else if (isNextShown) zIndex = 1;
+                        if (isActive) zIndex = 2;
+                        else if (wasActive) zIndex = 1;
                         
                         const spread = getSpreadContent(pageIndex);
                         const nextSpread = pageIndex + 1 < totalViews ? getSpreadContent(pageIndex + 1) : null;
@@ -848,53 +887,59 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         return (
                           <div
                             key={pageIndex}
-                            className={pageClass}
+                            className={pageClasses}
                             data-page={pageIndex}
                             style={{
                               position: 'absolute',
                               width: '100%',
                               height: '100%',
+                              right: 0,
                               transformStyle: 'preserve-3d',
-                              transformOrigin: `0px ${halfHeight}px`,
+                              transformOrigin: '0',
                               transform,
-                              transition: 'transform 1s',
+                              transition: isReady ? 'transform 0.9s ease' : 'none',
                               zIndex,
-                              cursor: isActive ? 'pointer' : 'default'
+                              cursor: 'pointer',
+                              backfaceVisibility: 'hidden',
+                              WebkitBackfaceVisibility: 'hidden',
+                              userSelect: 'none',
+                              overflow: 'hidden',
+                              backgroundColor: '#fff',
+                              borderRadius: '0 6px 6px 0'
                             }}
                             onClick={() => {
                               if (isActive && !isFlipping && currentView < totalViews - 1) {
                                 handleNext();
-                              } else if (isLastShownFlipped && !isFlipping) {
+                              } else if (wasActive && canClose && !isFlipping) {
                                 handlePrev();
                               }
                             }}
                           >
-                            {/* FRONT FACE */}
+                            {/* FRONT FACE - Shows right side of spread */}
                             <div 
-                              className="front face"
+                              className="front-face"
                               style={{
                                 position: 'absolute',
                                 width: '100%',
                                 height: '100%',
                                 backfaceVisibility: 'hidden',
                                 WebkitBackfaceVisibility: 'hidden',
-                                transform: 'none',
                                 overflow: 'hidden',
                                 backgroundColor: 'white',
-                                borderRadius: '0 4px 4px 0',
-                                boxShadow: '2px 0 15px rgba(0,0,0,0.15)'
+                                borderRadius: '0 6px 6px 0',
+                                boxShadow: isActive ? '4px 0 20px rgba(0,0,0,0.2)' : '2px 0 10px rgba(0,0,0,0.1)'
                               }}
                             >
                               <div className="w-full h-full">{spread.right}</div>
                               <div 
-                                className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none"
-                                style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 30%, transparent 100%)' }}
+                                className="absolute left-0 top-0 bottom-0 w-10 pointer-events-none"
+                                style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.06) 40%, transparent 100%)' }}
                               />
                             </div>
                             
-                            {/* REAR FACE - Librio: rotateY(180deg) */}
+                            {/* REAR FACE - Shows left side of next spread (visible when flipped) */}
                             <div 
-                              className="rear face"
+                              className="rear-face"
                               style={{
                                 position: 'absolute',
                                 width: '100%',
@@ -904,14 +949,14 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                 transform: 'rotateY(180deg)',
                                 overflow: 'hidden',
                                 backgroundColor: 'white',
-                                borderRadius: '4px 0 0 4px',
-                                boxShadow: '-2px 0 15px rgba(0,0,0,0.15)'
+                                borderRadius: '6px 0 0 6px',
+                                boxShadow: '-4px 0 20px rgba(0,0,0,0.2)'
                               }}
                             >
-                              <div className="w-full h-full">{nextSpread?.left || <div className="w-full h-full bg-stone-100" />}</div>
+                              <div className="w-full h-full">{nextSpread?.left || <div className="w-full h-full bg-stone-50" />}</div>
                               <div 
-                                className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none"
-                                style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 30%, transparent 100%)' }}
+                                className="absolute right-0 top-0 bottom-0 w-10 pointer-events-none"
+                                style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.06) 40%, transparent 100%)' }}
                               />
                             </div>
                           </div>
@@ -930,7 +975,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     transform: 'translateX(-50%)',
                     width: `${Math.round(computedW * 0.7)}px`,
                     height: '20px',
-                    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.25) 0%, transparent 70%)',
+                    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, transparent 70%)',
                     borderRadius: '50%'
                   }}
                 />

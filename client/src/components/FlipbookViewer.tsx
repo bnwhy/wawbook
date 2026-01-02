@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+// @ts-ignore
 import FlipBook from 'flipbook-js';
 import 'flipbook-js/dist/flipbook.min.css';
 
@@ -45,7 +46,7 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
         previousButton: prevButtonRef.current,
         width,
         height,
-        onPageTurn: (el, context) => {
+        onPageTurn: (el: HTMLElement, context: { pagesActive: NodeListOf<HTMLElement>; children: NodeListOf<HTMLElement> }) => {
           if (onPageTurn) {
             const activePages = context.pagesActive;
             if (activePages.length > 0) {

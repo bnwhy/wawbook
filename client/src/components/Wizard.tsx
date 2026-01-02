@@ -675,12 +675,12 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   />
                   
                   {/* Main cover with hardcover crease */}
-                  <div className="absolute inset-0 rounded-lg overflow-hidden shadow-2xl bg-white">
+                  <div className="absolute inset-0 rounded-sm overflow-hidden shadow-2xl bg-white">
                     <img src={book.coverImage} alt="Cover" className="w-full h-full object-cover" />
                     
                     {/* Hardcover binding crease/groove - the characteristic indent of hardcover books */}
                     <div 
-                      className="absolute left-[4%] top-0 bottom-0 w-[14px] pointer-events-none"
+                      className="absolute left-[2%] top-0 bottom-0 w-[14px] pointer-events-none"
                       style={{
                         background: 'linear-gradient(to right, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.08) 30%, rgba(255,255,255,0.1) 50%, rgba(0,0,0,0.05) 70%, transparent 100%)',
                         boxShadow: '-1px 0 2px rgba(0,0,0,0.08), 1px 0 2px rgba(0,0,0,0.05)'

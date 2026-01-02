@@ -118,8 +118,15 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Book not found" });
       }
       
-      const rawPages = book.contentConfig?.rawHtmlPages;
-      const cssContent = book.contentConfig?.cssContent || '';
+      // Cast contentConfig to expected structure
+      const contentConfig = book.contentConfig as {
+        rawHtmlPages?: Array<{ html: string; width: number; height: number; pageIndex: number }>;
+        cssContent?: string;
+        imageElements?: Array<{ url?: string }>;
+      };
+      
+      const rawPages = contentConfig?.rawHtmlPages;
+      const cssContent = contentConfig?.cssContent || '';
       
       if (!rawPages || rawPages.length === 0) {
         return res.status(400).json({ error: "No raw HTML pages to render" });
@@ -152,7 +159,7 @@ export async function registerRoutes(
       
       // Build image map from book's image elements
       const imageMap: Record<string, string> = {};
-      const imageElements = book.contentConfig?.imageElements || [];
+      const imageElements = contentConfig?.imageElements || [];
       for (const img of imageElements) {
         if (img.url) {
           imageMap[img.url] = img.url;

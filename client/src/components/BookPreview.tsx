@@ -6,7 +6,6 @@ import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
 import { generateBookPages } from '../utils/imageGenerator';
-import { renderAllPages } from '../utils/pageRenderer';
 import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
 import hardcoverIcon from '@assets/generated_images/hardcover_teal_book_isometric.png';
@@ -109,7 +108,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   const currentCombinationKey = getCombinationKey();
 
-  // --- LOAD PAGE IMAGES ---
+  // --- LOAD PAGE IMAGES (SERVER-SIDE RENDERING) ---
   useEffect(() => {
     if (book) {
         setIsGenerating(true);
@@ -129,35 +128,44 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     return;
                 }
                 
-                // Priority 2: Render raw HTML pages with html2canvas (EPUB fixed layout)
+                // Priority 2: Request server-side rendering with Puppeteer
                 const rawPages = book.contentConfig?.rawHtmlPages;
-                const cssContent = book.contentConfig?.cssContent || '';
-                
-                console.log('[BookPreview] rawPages:', rawPages?.length, 'cssContent length:', cssContent?.length);
                 
                 if (rawPages && rawPages.length > 0) {
-                    console.log(`[BookPreview] Rendering ${rawPages.length} EPUB fixed layout pages with html2canvas...`);
-                    console.log('[BookPreview] First page HTML preview:', rawPages[0].html?.substring(0, 200));
+                    console.log(`[BookPreview] Requesting server-side render for ${rawPages.length} pages...`);
                     try {
-                        const pages = await renderAllPages(
-                            rawPages,
-                            cssContent,
-                            config,
-                            config.characters,
-                            undefined,
-                            (current, total) => console.log(`[BookPreview] Rendered page ${current}/${total}`),
-                            book.contentConfig?.imageElements
-                        );
-                        console.log('[BookPreview] Rendered pages count:', Object.keys(pages).length);
-                        // Debug: log each page's dataUrl info
-                        Object.entries(pages).forEach(([idx, dataUrl]) => {
-                            console.log(`[BookPreview] Page ${idx} dataUrl length:`, dataUrl?.length, 'starts with:', dataUrl?.substring(0, 80));
+                        const response = await fetch(`/api/books/${book.id}/render-pages`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                config: {
+                                    childName: config.childName,
+                                    age: config.age,
+                                    dedication: config.dedication,
+                                    gender: config.gender,
+                                },
+                                characters: config.characters,
+                            }),
                         });
-                        setGeneratedPages(pages);
-                        setIsGenerating(false);
-                        return;
+                        
+                        if (response.ok) {
+                            const result = await response.json();
+                            console.log(`[BookPreview] Server rendered ${result.pages?.length} pages`);
+                            
+                            if (result.pages && result.pages.length > 0) {
+                                const pages: Record<number, string> = {};
+                                result.pages.forEach((p: { pageIndex: number; imageUrl: string }) => {
+                                    pages[p.pageIndex] = p.imageUrl;
+                                });
+                                setGeneratedPages(pages);
+                                setIsGenerating(false);
+                                return;
+                            }
+                        } else {
+                            console.error('[BookPreview] Server render failed:', await response.text());
+                        }
                     } catch (renderErr) {
-                        console.error('[BookPreview] html2canvas render failed:', renderErr);
+                        console.error('[BookPreview] Server render request failed:', renderErr);
                     }
                 }
                 

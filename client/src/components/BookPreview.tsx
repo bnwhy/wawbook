@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Loader2 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Story, BookConfig } from '../types';
@@ -8,6 +8,7 @@ import { useCart } from '../context/CartContext';
 import { generateBookPages } from '../utils/imageGenerator';
 import { renderAllPages } from '../utils/pageRenderer';
 import Navigation from './Navigation';
+import FlipbookViewer from './FlipbookViewer';
 import hardcoverIcon from '@assets/generated_images/hardcover_teal_book_isometric.png';
 import softcoverIcon from '@assets/generated_images/softcover_teal_book_isometric.png';
 
@@ -693,6 +694,20 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const nextSpread = direction === 'next' ? getSpreadContent(currentView + 1) : null;
   const prevSpread = direction === 'prev' ? getSpreadContent(currentView - 1) : null;
 
+  // Convert generatedPages to array for FlipbookViewer
+  const flipbookPages = useMemo(() => {
+    const pages: string[] = [];
+    // Cover (index 0)
+    if (generatedPages[0]) pages.push(generatedPages[0]);
+    // Content pages (1 to pageCount)
+    for (let i = 1; i <= pageCount; i++) {
+      if (generatedPages[i]) pages.push(generatedPages[i]);
+    }
+    // Back cover (index 999)
+    if (generatedPages[999]) pages.push(generatedPages[999]);
+    return pages;
+  }, [generatedPages, pageCount]);
+
   return (
       <div className={`flex flex-col font-sans bg-stone-100 ${isModal ? 'h-full' : 'min-h-screen'}`}>
           {/* NAVBAR */}
@@ -785,117 +800,26 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   )}
                 </div>
               ) : (
-                /* DESKTOP DOUBLE-PAGE SPREAD VIEW */
+                /* DESKTOP FLIPBOOK VIEW */
                 <>
               {/* Stage */}
-              <div className={`relative z-10 flex items-center justify-center w-full max-w-7xl perspective-[2500px] animate-drop-in ${isModal ? 'h-[600px] scale-[0.85]' : 'h-[850px]'}`}>
-                
-                {/* Arrows */}
-                <button onClick={handlePrev} disabled={currentView === 0 || isFlipping} className="absolute left-4 lg:left-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
-                    <ChevronLeft size={32} strokeWidth={2.5} />
-                </button>
-                <button onClick={handleNext} disabled={currentView === totalViews - 1 || isFlipping} className="absolute right-4 lg:right-0 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-xl hover:scale-110 transition-all z-50 hover:bg-stone-50 disabled:opacity-0 cursor-pointer">
-                    <ChevronRight size={32} strokeWidth={2.5} />
-                </button>
-
-                {/* BOOK OBJECT */}
-                <div 
-                  className={`relative flex shadow-[0_30px_60px_rgba(0,0,0,0.4)] rounded-md preserve-3d transition-transform duration-[1500ms] ease-in-out ${(currentView === 0 || (currentView === 1 && direction === 'prev') || (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')) ? 'bg-transparent shadow-none' : 'bg-white'}`}
-                  style={{ 
-                    width: `${computedW}px`,
-                    height: `${computedH}px`,
-                    transform: (currentView === 0 && (!isFlipping || direction !== 'next')) || (currentView === 1 && isFlipping && direction === 'prev')
-                      ? 'translateX(-25%)'
-                      : (currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next')
-                        ? 'translateX(25%)'
-                        : 'translateX(0%)'
-                  }}
-                >
-                    {/* 3D Page Thickness Effect (Visible when book is open) */}
-                    {currentView > 0 && currentView < totalViews - 1 && !((currentView === 1 && direction === 'prev')) && !((currentView === totalViews - 2 && direction === 'next')) && (
-                       <>
-                          {/* Left Page Stack - More layers for rigid effect */}
-                          <div className="absolute top-1 bottom-1 left-1 w-1 bg-gray-200 rounded-l-sm border-l border-gray-300" style={{ transform: 'translateX(-2px) translateZ(-1px)' }}></div>
-                          <div className="absolute top-1.5 bottom-1.5 left-1 w-1 bg-white rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-4px) translateZ(-2px)' }}></div>
-                          <div className="absolute top-2 bottom-2 left-1 w-1 bg-gray-100 rounded-l-sm border-l border-gray-300" style={{ transform: 'translateX(-6px) translateZ(-3px)' }}></div>
-                          <div className="absolute top-2.5 bottom-2.5 left-1 w-1 bg-white rounded-l-sm border-l border-gray-200" style={{ transform: 'translateX(-8px) translateZ(-4px)' }}></div>
-                          <div className="absolute top-3 bottom-3 left-1 w-1 bg-gray-50 rounded-l-sm border-l border-gray-100" style={{ transform: 'translateX(-10px) translateZ(-5px)' }}></div>
-                          
-                          {/* Right Page Stack - More layers for rigid effect */}
-                          <div className="absolute top-1 bottom-1 right-1 w-1 bg-gray-200 rounded-r-sm border-r border-gray-300" style={{ transform: 'translateX(2px) translateZ(-1px)' }}></div>
-                          <div className="absolute top-1.5 bottom-1.5 right-1 w-1 bg-white rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(4px) translateZ(-2px)' }}></div>
-                          <div className="absolute top-2 bottom-2 right-1 w-1 bg-gray-100 rounded-r-sm border-r border-gray-300" style={{ transform: 'translateX(6px) translateZ(-3px)' }}></div>
-                          <div className="absolute top-2.5 bottom-2.5 right-1 w-1 bg-white rounded-r-sm border-r border-gray-200" style={{ transform: 'translateX(8px) translateZ(-4px)' }}></div>
-                          <div className="absolute top-3 bottom-3 right-1 w-1 bg-gray-50 rounded-r-sm border-r border-gray-100" style={{ transform: 'translateX(10px) translateZ(-5px)' }}></div>
-                       </>
-                    )}
-                    
-                    {/* 1. STATIC LAYER (Bottom) */}
-                    <div className="absolute inset-0 flex w-full h-full z-0 perspective-[2500px]">
-                        {/* LEFT SIDE */}
-                        <div 
-                            onClick={() => { if (currentView > 0) handlePrev(); }}
-                            className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md origin-right transition-transform duration-500 ease-out hover:[transform:rotateY(5deg)] ${(currentView === 0 || (currentView === 1 && direction === 'prev')) ? 'bg-transparent border-none pointer-events-none' : (currentView === totalViews - 1 ? 'bg-white cursor-pointer hover:bg-gray-50/10 shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white cursor-pointer hover:bg-gray-50/10')}`}
-                        >
-                            {direction === 'next' ? currentSpread.left : (prevSpread ? prevSpread.left : currentSpread.left)}
-                        </div>
-                        {/* RIGHT SIDE */}
-                        <div 
-                            onClick={() => { if (currentView < totalViews - 1) handleNext(); }}
-                            className={`w-1/2 h-full overflow-hidden rounded-r-md cursor-pointer hover:bg-gray-50/10 transition-transform duration-500 ease-out origin-left hover:[transform:rotateY(-5deg)] ${(currentView === totalViews - 1 && (!isFlipping || direction !== 'prev')) || (currentView === totalViews - 2 && isFlipping && direction === 'next') ? 'bg-transparent shadow-none pointer-events-none' : (currentView === 0 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white shadow-sm')}`}
-                        >
-                            {direction === 'prev' ? currentSpread.right : (nextSpread ? nextSpread.right : currentSpread.right)}
-                        </div>
+              <div className={`relative z-10 flex items-center justify-center w-full max-w-5xl animate-drop-in ${isModal ? 'h-[600px]' : 'h-[750px]'}`}>
+                {flipbookPages.length > 0 ? (
+                  <FlipbookViewer
+                    pages={flipbookPages}
+                    width="100%"
+                    height="100%"
+                    className="w-full h-full"
+                    onPageTurn={(pageIndex) => setCurrentView(Math.floor(pageIndex / 2))}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="animate-spin text-cloud-blue" size={48} />
+                      <p className="text-stone-500 font-medium">Génération des pages...</p>
                     </div>
-
-                    {/* 2. FLIPPING LAYER (Top) */}
-                    {isFlipping && (
-                        <div className="absolute inset-0 z-20 pointer-events-none perspective-[2500px]">
-                            {direction === 'next' && (
-                                <div className="absolute right-0 w-1/2 h-full transform-style-3d origin-left animate-flip-next shadow-2xl">
-                                    {/* Front (Visible at start) */}
-                                    <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100">
-                                        <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5 z-20"></div>
-                                        {currentSpread.right}
-                                    </div>
-                                    {/* Back (Visible at end) */}
-                                    <div className="absolute inset-0 backface-hidden bg-white rounded-l-md overflow-hidden border-r border-gray-100" style={{ transform: 'rotateY(180deg)' }}>
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
-                                        {nextSpread?.left}
-                                    </div>
-                                </div>
-                            )}
-
-                            {direction === 'prev' && (
-                                <div className="absolute left-0 w-1/2 h-full transform-style-3d origin-right animate-flip-prev shadow-2xl">
-                                    {/* Front (Visible at start) */}
-                                    <div className={`absolute inset-0 backface-hidden rounded-l-md overflow-hidden border-r border-gray-100 ${currentView === 1 ? 'bg-transparent border-none' : 'bg-white'}`}>
-                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 z-20"></div>
-                                        {currentSpread.left}
-                                    </div>
-                                    {/* Back (Visible at end) */}
-                                    <div className="absolute inset-0 backface-hidden bg-white rounded-r-md overflow-hidden border-l border-gray-100" style={{ transform: 'rotateY(-180deg)' }}>
-                                        <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/5 z-20"></div>
-                                        {prevSpread?.right}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* 3. STATIC IDLE LAYER (Only when not flipping to prevent flicker) */}
-                    {!isFlipping && (
-                        <div className="absolute inset-0 flex w-full h-full z-10 pointer-events-none">
-                            <div className={`w-1/2 h-full border-r border-gray-200 overflow-hidden rounded-l-md ${currentView === 0 ? 'bg-transparent border-none' : (currentView === totalViews - 1 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white')}`}>
-                                {currentSpread.left}
-                            </div>
-                            <div className={`w-1/2 h-full overflow-hidden rounded-r-md ${currentView === totalViews - 1 ? 'bg-transparent' : (currentView === 0 ? 'bg-white shadow-[0_30px_60px_rgba(0,0,0,0.4)]' : 'bg-white')}`}>
-                                {currentSpread.right}
-                            </div>
-                        </div>
-                    )}
-
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Modify Link */}

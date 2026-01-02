@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 // @ts-ignore
 import FlipBook from 'flipbook-js';
-import 'flipbook-js/dist/flipbook.min.css';
+import 'flipbook-js/style.css';
 
 interface FlipbookViewerProps {
   pages: string[];

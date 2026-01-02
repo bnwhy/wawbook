@@ -61,21 +61,15 @@ const CloudLogo = () => (
 
 interface BookCardInfoProps {
   features?: {
-    languages?: (string | { code: string; label: string })[];
+    languages?: string[];
     customization?: string[];
     pages?: number;
     formats?: string[];
-    dimensions?: { width: number; height: number };
-    printConfig?: any;
   };
 }
 
 const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
   if (!features) return null;
-
-  const getLanguageLabels = (languages: (string | { code: string; label: string })[]) => {
-    return languages.map(lang => typeof lang === 'string' ? lang : lang.label).join(', ');
-  };
 
   return (
   <div className="mb-4" onClick={(e) => e.stopPropagation()}>
@@ -88,7 +82,7 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
          {features.languages && features.languages.length > 0 && (
            <div>
              <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>
-             {getLanguageLabels(features.languages)}
+             {features.languages.join(', ')}
            </div>
          )}
          {features.customization && features.customization.length > 0 && (
@@ -137,7 +131,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   return (
      <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
         {/* --- NAVBAR --- */}
-        <Navigation onStart={() => onStart()} />
+        <Navigation onStart={() => onStart()} onAdminClick={onAdminClick} />
         {/* --- HERO SECTION --- */}
         <header className="pt-40 pb-32 px-6 max-w-7xl mx-auto w-full relative">
           {/* Floating Clouds Decoration */}
@@ -202,17 +196,11 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                 >
                   {/* Image Container */}
                   <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
-                      {card.coverImage ? (
-                        <img 
-                          src={card.coverImage} 
-                          alt={card.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300">
-                          <BookOpen size={48} />
-                        </div>
-                      )}
+                      <img 
+                        src={card.coverImage} 
+                        alt={card.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                           <Heart size={12} className="text-accent-melon fill-current" />
                           Nouveau
@@ -259,17 +247,11 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                 >
                   {/* Image Container */}
                   <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
-                      {card.coverImage ? (
-                        <img 
-                          src={card.coverImage} 
-                          alt={card.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300">
-                          <BookOpen size={48} />
-                        </div>
-                      )}
+                      <img 
+                        src={card.coverImage} 
+                        alt={card.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                           <Star size={12} className="text-accent-sun fill-current" />
                           Best-seller
@@ -316,17 +298,11 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   >
                     {/* Image Container */}
                     <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
-                        {activity.coverImage ? (
-                          <img 
-                            src={activity.coverImage} 
-                            alt={activity.name}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300">
-                            <BookOpen size={48} />
-                          </div>
-                        )}
+                        <img 
+                          src={activity.coverImage} 
+                          alt={activity.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
                     </div>
 
                     {/* Content */}
@@ -369,17 +345,11 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   >
                     {/* Image Container */}
                     <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
-                        {occasion.coverImage ? (
-                          <img 
-                            src={occasion.coverImage} 
-                            alt={occasion.name}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300">
-                            <BookOpen size={48} />
-                          </div>
-                        )}
+                        <img 
+                          src={occasion.coverImage} 
+                          alt={occasion.name}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
                             <Gift size={12} className="text-accent-melon fill-current" />
                             Célébration

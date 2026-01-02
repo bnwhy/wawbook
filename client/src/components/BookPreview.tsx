@@ -806,6 +806,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
               <div className={`relative z-10 flex items-center justify-center w-full max-w-5xl animate-drop-in ${isModal ? 'h-[600px]' : 'h-[750px]'}`}>
                 {flipbookPages.length > 0 ? (
                   <FlipbookViewer
+                    key={`flipbook-${flipbookPages.length}-${book?.id || 'default'}`}
                     pages={flipbookPages}
                     width={`${computedW}px`}
                     height={`${computedH}px`}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState } from 'react';
 // @ts-ignore
 import FlipBook from 'flipbook-js';
 import 'flipbook-js/style.css';
@@ -24,6 +24,8 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     const flipbookRef = useRef<FlipBook | null>(null);
     const prevButtonRef = useRef<HTMLButtonElement>(null);
     const nextButtonRef = useRef<HTMLButtonElement>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const initAttemptedRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       turnPage: (direction) => flipbookRef.current?.turnPage(direction),
@@ -33,34 +35,40 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }));
 
     useEffect(() => {
-      if (!containerRef.current || pages.length === 0) return;
+      if (!containerRef.current || pages.length === 0 || initAttemptedRef.current) return;
+      
+      initAttemptedRef.current = true;
 
       const flipbookEl = containerRef.current.querySelector('.c-flipbook') as HTMLElement;
       if (!flipbookEl) return;
 
-      flipbookRef.current = new FlipBook(flipbookEl, {
-        canClose: true,
-        initialCall: true,
-        arrowKeys: true,
-        nextButton: nextButtonRef.current,
-        previousButton: prevButtonRef.current,
-        width,
-        height,
-        onPageTurn: (el: HTMLElement, context: { pagesActive: NodeListOf<HTMLElement>; children: NodeListOf<HTMLElement> }) => {
-          if (onPageTurn) {
-            const activePages = context.pagesActive;
-            if (activePages.length > 0) {
-              const pageIndex = Array.from(context.children).indexOf(activePages[0]);
-              onPageTurn(pageIndex);
+      const timer = setTimeout(() => {
+        flipbookRef.current = new FlipBook(flipbookEl, {
+          canClose: true,
+          initialCall: true,
+          arrowKeys: true,
+          nextButton: nextButtonRef.current,
+          previousButton: prevButtonRef.current,
+          width,
+          height,
+          onPageTurn: (el: HTMLElement, context: { pagesActive: NodeListOf<HTMLElement>; children: NodeListOf<HTMLElement> }) => {
+            if (onPageTurn) {
+              const activePages = context.pagesActive;
+              if (activePages.length > 0) {
+                const pageIndex = Array.from(context.children).indexOf(activePages[0]);
+                onPageTurn(pageIndex);
+              }
             }
-          }
-        },
-      });
+          },
+        });
+        setIsInitialized(true);
+      }, 100);
 
       return () => {
+        clearTimeout(timer);
         flipbookRef.current = null;
       };
-    }, [pages, width, height, onPageTurn]);
+    }, [pages.length, width, height]);
 
     if (pages.length === 0) {
       return (

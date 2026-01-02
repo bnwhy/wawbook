@@ -71,8 +71,8 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }
 
     return (
-      <div ref={containerRef} className={`relative z-50 ${className}`} style={{ width, height }}>
-        <div className="c-flipbook" style={{ width: '100%', height: '100%', position: 'relative', zIndex: 50 }}>
+      <div ref={containerRef} className={`flex flex-col items-center z-50 ${className}`}>
+        <div className="c-flipbook" style={{ width, height, position: 'relative', zIndex: 50 }}>
           {pages.map((pageUrl, index) => (
             <div key={index} className="c-flipbook__page">
               <img
@@ -85,25 +85,27 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
           ))}
         </div>
 
-        <button
-          ref={prevButtonRef}
-          className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-110 transition-all z-20"
-          aria-label="Page précédente"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
+        <div className="flex items-center justify-center gap-8 mt-6">
+          <button
+            ref={prevButtonRef}
+            className="w-12 h-12 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-50 hover:scale-110 transition-all z-20 border border-gray-200"
+            aria-label="Page précédente"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
 
-        <button
-          ref={nextButtonRef}
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 text-stone-700 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-110 transition-all z-20"
-          aria-label="Page suivante"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </button>
+          <button
+            ref={nextButtonRef}
+            className="w-12 h-12 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-50 hover:scale-110 transition-all z-20 border border-gray-200"
+            aria-label="Page suivante"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
     );
   }

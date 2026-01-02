@@ -6,7 +6,6 @@ import { fromZodError } from "zod-validation-error";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
-import { renderHtmlToImage } from "./services/pageRenderer";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -597,70 +596,6 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error getting payment status:", error);
       res.status(500).json({ error: "Failed to get payment status" });
-    }
-  });
-
-  // ===== PAGE RENDERING API =====
-  // Render a single page to JPEG on the server
-  app.post("/api/render-page", async (req, res) => {
-    try {
-      const { html, css, width, height, variables } = req.body;
-      
-      if (!html) {
-        return res.status(400).json({ error: "HTML content is required" });
-      }
-      
-      const imageBuffer = await renderHtmlToImage({
-        html,
-        css: css || '',
-        width: width || 400,
-        height: height || 293,
-        variables: variables || {},
-      });
-      
-      // Return as base64 data URL
-      const base64 = imageBuffer.toString('base64');
-      const dataUrl = `data:image/jpeg;base64,${base64}`;
-      
-      res.json({ dataUrl });
-    } catch (error) {
-      console.error("Error rendering page:", error);
-      res.status(500).json({ error: "Failed to render page" });
-    }
-  });
-
-  // Render multiple pages to JPEG on the server
-  app.post("/api/render-pages", async (req, res) => {
-    try {
-      const { pages, css, variables } = req.body;
-      
-      if (!pages || !Array.isArray(pages) || pages.length === 0) {
-        return res.status(400).json({ error: "Pages array is required" });
-      }
-      
-      const results: Record<number, string> = {};
-      
-      for (const page of pages) {
-        try {
-          const imageBuffer = await renderHtmlToImage({
-            html: page.html,
-            css: css || '',
-            width: page.width || 400,
-            height: page.height || 293,
-            variables: variables || {},
-          });
-          
-          const base64 = imageBuffer.toString('base64');
-          results[page.pageIndex] = `data:image/jpeg;base64,${base64}`;
-        } catch (pageError) {
-          console.error(`Failed to render page ${page.pageIndex}:`, pageError);
-        }
-      }
-      
-      res.json({ pages: results });
-    } catch (error) {
-      console.error("Error rendering pages:", error);
-      res.status(500).json({ error: "Failed to render pages" });
     }
   });
 

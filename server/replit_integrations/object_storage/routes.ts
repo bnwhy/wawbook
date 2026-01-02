@@ -218,12 +218,12 @@ export function registerObjectStorageRoutes(app: Express): void {
           });
           
           // Upload the rendered image to Object Storage
-          const pageImageName = `${sessionId}_page_${i + 1}.jpg`;
+          const pageImageName = `${sessionId}_page_${i + 1}.png`;
           const objectName = basePath ? `${basePath}/${pageImageName}` : pageImageName;
           const file = bucket.file(objectName);
           
           await file.save(imageBuffer, {
-            contentType: 'image/jpeg',
+            contentType: 'image/png',
             metadata: { cacheControl: 'public, max-age=31536000' },
           });
           

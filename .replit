@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["unzip", "chromium"]
+packages = ["unzip"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -51,6 +51,3 @@ waitForPort = 5000
 [agent]
 mockupState = "FULLSTACK"
 integrations = ["javascript_object_storage:2.0.0", "stripe:2.0.0"]
-
-[objectStorage]
-defaultBucketID = "replit-objstore-90dfe834-8458-4073-876b-8e57fcd8249d"

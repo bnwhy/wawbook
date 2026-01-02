@@ -3,38 +3,15 @@ import puppeteer, { Browser } from 'puppeteer';
 let browserInstance: Browser | null = null;
 
 async function getBrowser(): Promise<Browser> {
-  // Check if existing browser is still connected
-  if (browserInstance) {
-    try {
-      // Test if browser is still alive
-      if (!browserInstance.connected) {
-        console.log('[pageRenderer] Browser disconnected, recreating...');
-        browserInstance = null;
-      }
-    } catch (e) {
-      console.log('[pageRenderer] Browser check failed, recreating...');
-      browserInstance = null;
-    }
-  }
-  
   if (!browserInstance) {
-    console.log('[pageRenderer] Launching new browser instance...');
     browserInstance = await puppeteer.launch({
       headless: true,
-      executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--single-process',
       ],
-    });
-    
-    // Handle browser disconnection
-    browserInstance.on('disconnected', () => {
-      console.log('[pageRenderer] Browser disconnected event');
-      browserInstance = null;
     });
   }
   return browserInstance;
@@ -94,11 +71,7 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
 <html>
 <head>
   <meta charset="utf-8">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&family=Patrick+Hand&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { 
       width: ${width}px; 
@@ -125,8 +98,7 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     }, { timeout: 10000 }).catch(() => {});
     
     const screenshot = await page.screenshot({
-      type: 'jpeg',
-      quality: 90,
+      type: 'png',
       clip: { x: 0, y: 0, width, height },
     });
     
@@ -169,7 +141,7 @@ export async function renderPagesToImages(
         variables,
       });
       
-      const filename = `page_${page.pageIndex}.jpg`;
+      const filename = `page_${page.pageIndex}.png`;
       const imageUrl = await uploadImage(imageBuffer, filename);
       
       results.push({

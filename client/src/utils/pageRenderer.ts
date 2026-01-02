@@ -188,9 +188,13 @@ export const renderHtmlPageToImage = async (
     <!DOCTYPE html>
     <html>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
         <style>
+          @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&family=Patrick+Hand&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { width: ${rawPage.width}px; height: ${rawPage.height}px; overflow: hidden; background: white; position: relative; }
+          body { width: ${rawPage.width}px; height: ${rawPage.height}px; overflow: hidden; background: white; position: relative; font-family: 'Quicksand', 'Nunito', sans-serif; }
           ${cssContent || ''}
         </style>
       </head>
@@ -221,7 +225,20 @@ export const renderHtmlPageToImage = async (
         iframeDoc.write(fullHtml);
         iframeDoc.close();
 
-        await new Promise(r => setTimeout(r, 100));
+        // Wait for fonts to load - fonts need more time than 100ms
+        await new Promise(r => setTimeout(r, 500));
+        
+        // Try to wait for fonts API if available
+        if (iframeDoc.fonts && iframeDoc.fonts.ready) {
+          try {
+            await Promise.race([
+              iframeDoc.fonts.ready,
+              new Promise(r => setTimeout(r, 2000)) // Timeout after 2s
+            ]);
+          } catch (e) {
+            console.log('[pageRenderer] Font loading check failed, continuing anyway');
+          }
+        }
 
         const canvas = await html2canvas(iframeDoc.body, {
           width: rawPage.width,

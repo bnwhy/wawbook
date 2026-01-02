@@ -808,7 +808,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     transition: 'transform 0.5s ease-in-out',
                     width: `${Math.round(computedW * 0.42)}px`,
                     height: `${Math.round(computedH * 0.85)}px`,
-                    transform: `translateX(${Math.round(computedW * 0.42)}px)`
+                    transform: `translateX(${Math.round(computedW * 0.21)}px)`
                   }}
                 >
                   {/* Pages - Each page has front and rear face */}

@@ -71,8 +71,8 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }
 
     return (
-      <div ref={containerRef} className={`relative z-50 ${className}`}>
-        <div className="c-flipbook" style={{ width, height, position: 'relative', zIndex: 50 }}>
+      <div ref={containerRef} className={`relative z-50 ${className}`} style={{ width, height }}>
+        <div className="c-flipbook" style={{ width: '100%', height: '100%', position: 'relative', zIndex: 50 }}>
           {pages.map((pageUrl, index) => (
             <div key={index} className="c-flipbook__page">
               <img

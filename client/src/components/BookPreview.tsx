@@ -807,9 +807,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 {flipbookPages.length > 0 ? (
                   <FlipbookViewer
                     pages={flipbookPages}
-                    width="100%"
-                    height="100%"
-                    className="w-full h-full"
+                    width={`${computedW}px`}
+                    height={`${computedH}px`}
+                    className="mx-auto"
                     onPageTurn={(pageIndex) => setCurrentView(Math.floor(pageIndex / 2))}
                   />
                 ) : (

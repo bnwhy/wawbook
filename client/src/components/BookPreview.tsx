@@ -198,8 +198,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const spreadAspectRatio = (dims.width * 2) / dims.height;
   
   // Max dimensions for the book preview container
-  const MAX_W = 1080;
-  const MAX_H = 720;
+  const MAX_W = 800;
+  const MAX_H = 550;
 
   let computedW = MAX_H * spreadAspectRatio;
   let computedH = MAX_H;

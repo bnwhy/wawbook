@@ -6042,6 +6042,53 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     <div className="flex-1 min-h-0 flex gap-6">
                         {previewHtml ? (
                             <>
+                                {/* Left Sidebar - Page Thumbnails (Import Mode) */}
+                                {importSessionRawHtmlPages.length > 0 && (
+                                    <div className="w-40 shrink-0 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                        <div className="p-3 border-b border-slate-100 bg-slate-50">
+                                            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide">Pages ({importSessionRawHtmlPages.length})</h4>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                                            {importSessionRawHtmlPages.sort((a, b) => a.pageIndex - b.pageIndex).map((page) => {
+                                                const pageImagesFromSession = importSessionImages.filter((i: any) => i.position?.pageIndex === page.pageIndex) || [];
+                                                const thumbnailUrl = pageImagesFromSession.length > 0 ? pageImagesFromSession[0].url : null;
+                                                const textsCount = importSessionTexts.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0;
+                                                const imagesCount = pageImagesFromSession.length;
+                                                
+                                                return (
+                                                    <div 
+                                                        key={`import-thumb-${page.pageIndex}`}
+                                                        className="relative rounded-lg border-2 border-slate-100 hover:border-brand-coral/30 transition-all hover:shadow-md"
+                                                    >
+                                                        <div className="aspect-[3/4] bg-slate-50 relative overflow-hidden rounded-t-md">
+                                                            {thumbnailUrl ? (
+                                                                <img 
+                                                                    src={thumbnailUrl} 
+                                                                    alt={`Page ${page.pageIndex}`}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
+                                                                    <FileCode size={20} className="text-slate-300" />
+                                                                </div>
+                                                            )}
+                                                            <div className="absolute top-1 left-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold bg-brand-coral text-white">
+                                                                {page.pageIndex}
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-1.5 bg-white rounded-b-md">
+                                                            <div className="flex justify-between items-center text-[9px] text-slate-500">
+                                                                <span>{textsCount}T</span>
+                                                                <span>{imagesCount}I</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* HTML Preview Area (Import Mode) */}
                                 <div className="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm relative flex flex-col">
                                     <div className="flex-1 relative">

@@ -6249,180 +6249,186 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     
                                     if (hasRawHtmlPages) {
                                         const currentBookForPage = draftBook || selectedBook;
-                                        const pageTexts = selectedEpubPageIndex !== null 
-                                            ? currentBookForPage.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === selectedEpubPageIndex) || []
+                                        const sortedPages = selectedBook.contentConfig.rawHtmlPages!.sort((a: any, b: any) => a.pageIndex - b.pageIndex);
+                                        const pageImages = selectedBook.contentConfig.pageImages || [];
+                                        
+                                        const effectiveSelectedPage = selectedEpubPageIndex ?? (sortedPages.length > 0 ? sortedPages[0].pageIndex : null);
+                                        
+                                        const pageTexts = effectiveSelectedPage !== null 
+                                            ? currentBookForPage.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === effectiveSelectedPage) || []
                                             : [];
-                                        const pageImages = selectedEpubPageIndex !== null
-                                            ? currentBookForPage.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === selectedEpubPageIndex) || []
+                                        const pageImagesForSelected = effectiveSelectedPage !== null
+                                            ? currentBookForPage.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === effectiveSelectedPage) || []
                                             : [];
                                         
                                         return (
-                                            <div className="flex gap-6 h-full">
-                                                {/* Pages Grid */}
-                                                <div className={`grid grid-cols-1 md:grid-cols-2 ${selectedEpubPageIndex !== null ? 'lg:grid-cols-2' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-4 ${selectedEpubPageIndex !== null ? 'flex-1' : 'w-full'}`}>
-                                                    {selectedBook.contentConfig.rawHtmlPages!.sort((a: any, b: any) => a.pageIndex - b.pageIndex).map((page: any) => (
-                                                        <div 
-                                                            key={`raw-${page.pageIndex}`}
-                                                            className={`relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
-                                                                selectedEpubPageIndex === page.pageIndex 
-                                                                    ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' 
-                                                                    : 'border-slate-100 hover:border-brand-coral/30'
-                                                            }`}
-                                                            onClick={() => setSelectedEpubPageIndex(
-                                                                selectedEpubPageIndex === page.pageIndex ? null : page.pageIndex
-                                                            )}
-                                                        >
-                                                            <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
-                                                                <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
-                                                                    <span className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-mono ${
-                                                                        selectedEpubPageIndex === page.pageIndex 
-                                                                            ? 'bg-brand-coral text-white' 
-                                                                            : 'bg-emerald-100 text-emerald-600'
-                                                                    }`}>
-                                                                        {page.pageIndex}
-                                                                    </span>
-                                                                    Page {page.pageIndex}
-                                                                </span>
-                                                                <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded font-medium">EPUB</span>
-                                                            </div>
-                                                            <div className="aspect-[3/4] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
-                                                                <div className="text-center space-y-1 p-2">
-                                                                    <div className="text-xs text-slate-500">
-                                                                        {page.width}x{page.height}px
+                                            <div className="flex gap-4 h-full">
+                                                {/* Left Sidebar - Page Thumbnails */}
+                                                <div className="w-48 shrink-0 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                                    <div className="p-3 border-b border-slate-100 bg-slate-50">
+                                                        <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide">Pages ({sortedPages.length})</h4>
+                                                    </div>
+                                                    <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+                                                        {sortedPages.map((page: any) => {
+                                                            const thumbnailUrl = pageImages.find((pi: any) => pi.pageIndex === page.pageIndex)?.url;
+                                                            const isSelected = effectiveSelectedPage === page.pageIndex;
+                                                            const textsCount = selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0;
+                                                            const imagesCount = selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex).length || 0;
+                                                            
+                                                            return (
+                                                                <div 
+                                                                    key={`thumb-${page.pageIndex}`}
+                                                                    className={`relative cursor-pointer rounded-lg border-2 transition-all hover:shadow-md ${
+                                                                        isSelected 
+                                                                            ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' 
+                                                                            : 'border-slate-100 hover:border-brand-coral/30'
+                                                                    }`}
+                                                                    onClick={() => setSelectedEpubPageIndex(page.pageIndex)}
+                                                                >
+                                                                    <div className="aspect-[3/4] bg-slate-50 relative overflow-hidden rounded-t-md">
+                                                                        {thumbnailUrl ? (
+                                                                            <img 
+                                                                                src={thumbnailUrl} 
+                                                                                alt={`Page ${page.pageIndex}`}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
+                                                                                <FileCode size={24} className="text-slate-300" />
+                                                                            </div>
+                                                                        )}
+                                                                        <div className={`absolute top-1 left-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${
+                                                                            isSelected ? 'bg-brand-coral text-white' : 'bg-white/90 text-slate-600 shadow-sm'
+                                                                        }`}>
+                                                                            {page.pageIndex}
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                                        {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0} Textes
-                                                                    </div>
-                                                                    <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                                        {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex).length || 0} Images
+                                                                    <div className="p-1.5 bg-white rounded-b-md">
+                                                                        <div className="flex justify-between items-center text-[9px] text-slate-500">
+                                                                            <span>{textsCount}T</span>
+                                                                            <span>{imagesCount}I</span>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
                                                 
-                                                {/* Edit Panel */}
-                                                {selectedEpubPageIndex !== null && (
-                                                    <div className="w-96 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                                                        <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-brand-coral/5 to-transparent">
-                                                            <div className="flex items-center justify-between">
-                                                                <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                                                    <Edit3 size={16} className="text-brand-coral" />
-                                                                    Page {selectedEpubPageIndex}
-                                                                </h3>
-                                                                <button 
-                                                                    onClick={() => setSelectedEpubPageIndex(null)}
-                                                                    className="p-1 hover:bg-slate-100 rounded transition-colors"
-                                                                >
-                                                                    <X size={16} className="text-slate-400" />
-                                                                </button>
+                                                {/* Right Content Panel - Texts & Images for Selected Page */}
+                                                <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                                    <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-brand-coral/5 to-transparent">
+                                                        <div className="flex items-center justify-between">
+                                                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                                                <Edit3 size={16} className="text-brand-coral" />
+                                                                Page {effectiveSelectedPage}
+                                                            </h3>
+                                                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                                <span className="px-2 py-1 bg-slate-100 rounded">{pageTexts.length} Textes</span>
+                                                                <span className="px-2 py-1 bg-slate-100 rounded">{pageImagesForSelected.length} Images</span>
                                                             </div>
                                                         </div>
-                                                        
-                                                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                                            {/* Texts Section */}
-                                                            <div>
-                                                                <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                                                                    <Type size={14} />
-                                                                    Textes ({pageTexts.length})
-                                                                </h4>
-                                                                {pageTexts.length === 0 ? (
-                                                                    <p className="text-xs text-slate-400 italic">Aucun texte sur cette page</p>
-                                                                ) : (
-                                                                    <div className="space-y-2">
-                                                                        {pageTexts.map((text: any, idx: number) => (
-                                                                            <div key={text.id || idx} className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                                                                <div className="flex items-start justify-between gap-2 mb-2">
-                                                                                    <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
-                                                                                        {text.id || `text-${idx}`}
-                                                                                    </span>
-                                                                                    {text.variableId && (
-                                                                                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
-                                                                                            {text.variableId}
-                                                                                        </span>
-                                                                                    )}
-                                                                                </div>
-                                                                                <div className="text-xs text-slate-600 line-clamp-2 mb-2">
-                                                                                    {text.content || text.text || '(vide)'}
-                                                                                </div>
-                                                                                <select
-                                                                                    value={text.variableId || ''}
-                                                                                    onChange={(e) => {
-                                                                                        const newVariableId = e.target.value || null;
-                                                                                        const updatedTexts = selectedBook.contentConfig.texts.map((t: any) =>
-                                                                                            t.id === text.id ? { ...t, variableId: newVariableId } : t
-                                                                                        );
-                                                                                        const updatedBook = {
-                                                                                            ...selectedBook,
-                                                                                            contentConfig: {
-                                                                                                ...selectedBook.contentConfig,
-                                                                                                texts: updatedTexts
-                                                                                            }
-                                                                                        };
-                                                                                        setDraftBook(updatedBook);
-                                                                                    }}
-                                                                                    className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral"
-                                                                                >
-                                                                                    {variableOptions.map(opt => (
-                                                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                                                    ))}
-                                                                                </select>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            
-                                                            {/* Images Section */}
-                                                            <div>
-                                                                <h4 className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                                                                    <ImageIcon size={14} />
-                                                                    Images ({pageImages.length})
-                                                                </h4>
-                                                                {pageImages.length === 0 ? (
-                                                                    <p className="text-xs text-slate-400 italic">Aucune image sur cette page</p>
-                                                                ) : (
-                                                                    <div className="space-y-3">
-                                                                        {pageImages.map((img: any, idx: number) => {
-                                                                            const conditions = img.conditions || [];
-                                                                            
-                                                                            return (
-                                                                                <ImageConditionEditor
-                                                                                    key={img.id || idx}
-                                                                                    img={img}
-                                                                                    conditions={conditions}
-                                                                                    imageVariantOptions={imageVariantOptions}
-                                                                                    onConditionsChange={(newConditions) => {
-                                                                                        console.log('[AdminDashboard] onConditionsChange called for image:', img.id);
-                                                                                        console.log('[AdminDashboard] newConditions:', JSON.stringify(newConditions));
-                                                                                        const currentBook = draftBook || selectedBook;
-                                                                                        console.log('[AdminDashboard] currentBook source:', draftBook ? 'draftBook' : 'selectedBook');
-                                                                                        const currentImages = currentBook.contentConfig.imageElements || [];
-                                                                                        const updatedImages = currentImages.map((i: any) =>
-                                                                                            i.id === img.id ? { ...i, conditions: newConditions } : i
-                                                                                        );
-                                                                                        console.log('[AdminDashboard] Updated image:', updatedImages.find((i: any) => i.id === img.id));
-                                                                                        const updatedBook = {
-                                                                                            ...currentBook,
-                                                                                            contentConfig: {
-                                                                                                ...currentBook.contentConfig,
-                                                                                                imageElements: updatedImages
-                                                                                            }
-                                                                                        };
-                                                                                        console.log('[AdminDashboard] Setting draftBook with updated imageElements');
-                                                                                        setDraftBook(updatedBook);
-                                                                                    }}
-                                                                                />
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        
                                                     </div>
-                                                )}
+                                                    
+                                                    <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+                                                        {/* Texts Section */}
+                                                        <div>
+                                                            <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2 sticky top-0 bg-white py-1">
+                                                                <Type size={14} className="text-blue-500" />
+                                                                Textes ({pageTexts.length})
+                                                            </h4>
+                                                            {pageTexts.length === 0 ? (
+                                                                <p className="text-xs text-slate-400 italic py-4 text-center bg-slate-50 rounded-lg">Aucun texte sur cette page</p>
+                                                            ) : (
+                                                                <div className="space-y-3">
+                                                                    {pageTexts.map((text: any, idx: number) => (
+                                                                        <div key={text.id || idx} className="bg-slate-50 rounded-lg p-3 border border-slate-100 hover:border-slate-200 transition-colors">
+                                                                            <div className="flex items-start justify-between gap-2 mb-2">
+                                                                                <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded truncate max-w-[150px]" title={text.id}>
+                                                                                    {text.label || text.id?.split('-').pop() || `text-${idx}`}
+                                                                                </span>
+                                                                                {text.type === 'variable' && (
+                                                                                    <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium shrink-0">
+                                                                                        VAR
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="text-sm text-slate-700 mb-3 p-2 bg-white rounded border border-slate-100 italic">
+                                                                                "{text.content?.length > 80 ? text.content.substring(0, 80) + '...' : text.content || '(vide)'}"
+                                                                            </div>
+                                                                            <select
+                                                                                value={text.type === 'variable' ? text.content : ''}
+                                                                                onChange={(e) => {
+                                                                                    const newVal = e.target.value;
+                                                                                    const currentBook = draftBook || selectedBook;
+                                                                                    const updatedTexts = currentBook.contentConfig.texts.map((t: any) =>
+                                                                                        t.id === text.id 
+                                                                                            ? { ...t, type: newVal ? 'variable' : 'fixed', content: newVal || text.content }
+                                                                                            : t
+                                                                                    );
+                                                                                    const updatedBook = {
+                                                                                        ...currentBook,
+                                                                                        contentConfig: {
+                                                                                            ...currentBook.contentConfig,
+                                                                                            texts: updatedTexts
+                                                                                        }
+                                                                                    };
+                                                                                    setDraftBook(updatedBook);
+                                                                                }}
+                                                                                className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral"
+                                                                            >
+                                                                                {variableOptions.map(opt => (
+                                                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Images Section */}
+                                                        <div>
+                                                            <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2 sticky top-0 bg-white py-1">
+                                                                <ImageIcon size={14} className="text-emerald-500" />
+                                                                Images ({pageImagesForSelected.length})
+                                                            </h4>
+                                                            {pageImagesForSelected.length === 0 ? (
+                                                                <p className="text-xs text-slate-400 italic py-4 text-center bg-slate-50 rounded-lg">Aucune image sur cette page</p>
+                                                            ) : (
+                                                                <div className="space-y-3">
+                                                                    {pageImagesForSelected.map((img: any, idx: number) => {
+                                                                        const conditions = img.conditions || [];
+                                                                        
+                                                                        return (
+                                                                            <ImageConditionEditor
+                                                                                key={img.id || idx}
+                                                                                img={img}
+                                                                                conditions={conditions}
+                                                                                imageVariantOptions={imageVariantOptions}
+                                                                                onConditionsChange={(newConditions) => {
+                                                                                    const currentBook = draftBook || selectedBook;
+                                                                                    const currentImages = currentBook.contentConfig.imageElements || [];
+                                                                                    const updatedImages = currentImages.map((i: any) =>
+                                                                                        i.id === img.id ? { ...i, conditions: newConditions } : i
+                                                                                    );
+                                                                                    const updatedBook = {
+                                                                                        ...currentBook,
+                                                                                        contentConfig: {
+                                                                                            ...currentBook.contentConfig,
+                                                                                            imageElements: updatedImages
+                                                                                        }
+                                                                                    };
+                                                                                    setDraftBook(updatedBook);
+                                                                                }}
+                                                                            />
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         );
                                     }

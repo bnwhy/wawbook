@@ -1,0 +1,56 @@
+2fd51909be8a57c666720ec05f5cc4ba:1  The resource https://librio.com/build/shop/fonts/GothamRounded-Book.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2fd51909be8a57c666720ec05f5cc4ba:1  The resource https://librio.com/build/shop/fonts/icons.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2fd51909be8a57c666720ec05f5cc4ba:1  The resource https://librio.com/build/shop/fonts/brand-icons.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+2fd51909be8a57c666720ec05f5cc4ba:1  The resource https://librio.com/build/shop/fonts/GothamRounded-Medium.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+Warning: Don’t paste code into the DevTools Console that you don’t understand or haven’t reviewed yourself. This could allow attackers to steal your identity or take control of your computer. Please type ‘allow pasting’ below and press Enter to allow pasting.
+allow pasting
+const styles = {
+  book: getComputedStyle(document.querySelector(".librio-book")),
+  page: getComputedStyle(document.querySelector(".page")),
+  face: getComputedStyle(document.querySelector(".face"))
+};
+const result = `
+BOOK:
+perspective: ${styles.book.perspective}
+perspectiveOrigin: ${styles.book.perspectiveOrigin}
+transformStyle: ${styles.book.transformStyle}
+width: ${styles.book.width}
+height: ${styles.book.height}
+transform: ${styles.book.transform}
+PAGE:
+position: ${styles.page.position}
+transformOrigin: ${styles.page.transformOrigin}
+transformStyle: ${styles.page.transformStyle}
+transform: ${styles.page.transform}
+transition: ${styles.page.transition}
+zIndex: ${styles.page.zIndex}
+FACE:
+backfaceVisibility: ${styles.face.backfaceVisibility}
+transform: ${styles.face.transform}
+position: ${styles.face.position}
+`;
+copy(result);
+console.log("Copié ! Collez ici avec Ctrl+V");
+console.log(result);
+console.js:36 Copié ! Collez ici avec Ctrl+V
+console.js:36 
+BOOK:
+perspective: 4000px
+perspectiveOrigin: 0px 282px
+transformStyle: preserve-3d
+width: 470px
+height: 564px
+transform: matrix(1, 0, 0, 1, 470, 0)
+PAGE:
+position: absolute
+transformOrigin: 0px 282px
+transformStyle: preserve-3d
+transform: matrix3d(-0.999848, 0, 0.0174524, 0, 0, 1, 0, 0, -0.0174524, 0, -0.999848, 0, 0, 0, 0, 1)
+transition: transform 1s
+zIndex: 0
+FACE:
+backfaceVisibility: hidden
+transform: none
+position: absolute
+
+undefined

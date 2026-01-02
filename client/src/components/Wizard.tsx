@@ -676,7 +676,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   
                   {/* Main cover with hardcover crease */}
                   <div className="absolute inset-0 rounded-sm overflow-hidden shadow-2xl bg-white">
-                    <img src={book.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                    {book.coverImage && <img src={book.coverImage} alt="Cover" className="w-full h-full object-cover" />}
                     
                     {/* Hardcover binding crease/groove - the characteristic indent of hardcover books */}
                     <div 

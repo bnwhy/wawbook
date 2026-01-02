@@ -333,8 +333,21 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   // --- MOBILE NAVIGATION ---
-  // Total mobile pages: cover (0) + content pages (1 to pageCount) + back cover (pageCount + 1)
-  const totalMobilePages = pageCount + 2; // cover + pages + back cover
+  // Build list of actual mobile pages that exist in generatedPages
+  const mobilePagesList = useMemo(() => {
+    const pages: number[] = [];
+    // Check for cover (index 0)
+    if (generatedPages[0]) pages.push(0);
+    // Content pages (1 to pageCount)
+    for (let i = 1; i <= pageCount; i++) {
+      if (generatedPages[i]) pages.push(i);
+    }
+    // Check for back cover (index 999)
+    if (generatedPages[999]) pages.push(999);
+    return pages;
+  }, [generatedPages, pageCount]);
+  
+  const totalMobilePages = mobilePagesList.length;
   
   const handleMobileNext = () => {
     if (mobilePageIndex < totalMobilePages - 1 && !isSliding) {
@@ -402,17 +415,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     touchEndX.current = null;
   };
   
-  // Get mobile page content
+  // Get mobile page content - uses mobilePagesList for actual page numbers
   const getMobilePageContent = (index: number) => {
-    // index 0 = cover
-    if (index === 0) {
-      if (generatedPages[0]) {
-        return (
-          <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
-            <img src={generatedPages[0]} className="w-full h-full object-contain" alt="Cover" />
-          </div>
-        );
-      }
+    const actualPageNum = mobilePagesList[index];
+    
+    // If we don't have this page, show placeholder
+    if (actualPageNum === undefined || !generatedPages[actualPageNum]) {
       return (
         <div className="w-full h-full bg-white rounded-lg shadow-xl flex items-center justify-center">
           {isGenerating ? <Loader2 className="animate-spin text-cloud-blue" size={32} /> : <BookOpen size={40} className="text-gray-200" />}
@@ -420,33 +428,22 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       );
     }
     
-    // index = totalMobilePages - 1 = back cover
-    if (index === totalMobilePages - 1) {
-      if (generatedPages[999]) {
-        return (
-          <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
-            <img src={generatedPages[999]} className="w-full h-full object-contain" alt="Back Cover" />
-          </div>
-        );
-      }
-      return <div className="w-full h-full bg-white rounded-lg shadow-xl" />;
-    }
-    
-    // Content pages: index 1 corresponds to page 1, etc.
-    const pageNum = index;
-    if (generatedPages[pageNum]) {
-      return (
-        <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
-          <img src={generatedPages[pageNum]} className="w-full h-full object-contain" alt={`Page ${pageNum}`} />
-        </div>
-      );
-    }
+    // Determine label based on page number
+    const altText = actualPageNum === 0 ? 'Cover' : actualPageNum === 999 ? 'Back Cover' : `Page ${actualPageNum}`;
     
     return (
-      <div className="w-full h-full bg-white rounded-lg shadow-xl flex items-center justify-center">
-        {isGenerating ? <Loader2 className="animate-spin text-cloud-blue" size={32} /> : <BookOpen size={40} className="text-gray-200" />}
+      <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
+        <img src={generatedPages[actualPageNum]} className="w-full h-full object-contain" alt={altText} />
       </div>
     );
+  };
+  
+  // Get mobile page label for indicator
+  const getMobilePageLabel = (index: number) => {
+    const actualPageNum = mobilePagesList[index];
+    if (actualPageNum === 0) return 'Couverture';
+    if (actualPageNum === 999) return 'Dos';
+    return `Page ${actualPageNum}`;
   };
 
   // --- CONTENT GENERATORS ---
@@ -778,10 +775,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   {/* Page indicator */}
                   <div className="mt-4 flex items-center justify-center gap-2">
                     <span className="text-sm font-medium text-stone-600">
-                      {mobilePageIndex === 0 ? 'Couverture' : mobilePageIndex === totalMobilePages - 1 ? 'Dos' : `Page ${mobilePageIndex}`}
+                      {getMobilePageLabel(mobilePageIndex)}
                     </span>
                     <span className="text-xs text-stone-400">
-                      ({mobilePageIndex + 1} / {totalMobilePages})
+                      ({mobilePageIndex + 1} / {totalMobilePages || 1})
                     </span>
                   </div>
                   

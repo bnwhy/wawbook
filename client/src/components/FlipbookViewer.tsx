@@ -40,7 +40,7 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
 
       flipbookRef.current = new FlipBook(flipbookEl, {
         canClose: true,
-        initialCall: true,
+        initialCall: false,
         arrowKeys: true,
         nextButton: nextButtonRef.current,
         previousButton: prevButtonRef.current,

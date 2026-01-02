@@ -785,7 +785,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   )}
                 </div>
               ) : (
-                /* DESKTOP FLIPBOOK - LIBRIO STYLE EXACT */
+                /* DESKTOP FLIPBOOK - LIBRIO EXACT 100% */
                 <>
               {/* Stage */}
               <div className={`relative z-10 flex items-center justify-center w-full animate-drop-in ${isModal ? 'h-[550px] scale-[0.85]' : 'h-[700px]'}`}>
@@ -798,146 +798,128 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     <ChevronRight size={32} strokeWidth={2.5} />
                 </button>
 
-                {/* LIBRIO BOOK - Exact CSS from Librio */}
-                <div 
-                  className="librio-book relative block mx-auto overflow-visible p-0"
-                  style={{ 
-                    perspective: '4000px',
-                    perspectiveOrigin: '0px 50%',
-                    transformStyle: 'preserve-3d',
-                    transition: 'transform 0.5s ease-in-out',
-                    width: `${Math.round(computedW * 0.42)}px`,
-                    height: `${Math.round(computedH * 0.85)}px`,
-                    transform: `translateX(${currentView > 0 ? Math.round(computedW * 0.21) : 0}px)`
-                  }}
-                >
-                  {/* Pages - Each page has front and rear face */}
-                  {Array.from({ length: totalViews }).map((_, pageIndex) => {
-                    const isActive = pageIndex === currentView;
-                    const isNextShown = pageIndex === currentView + 1;
-                    const isLastShown = pageIndex === currentView - 1;
-                    const isPastPage = pageIndex < currentView;
-                    const isFlippingPage = isFlipping && (
-                      (direction === 'next' && pageIndex === currentView) ||
-                      (direction === 'prev' && pageIndex === currentView - 1)
-                    );
-                    
-                    // Calculate rotation - EXACT Librio values
-                    // active: rotateY(1deg), flipped: rotateY(-178deg), others: none
-                    let rotation = 0;
-                    if (isActive) {
-                      rotation = 1; // Librio: matrix3d(0.999848...) ≈ rotateY(1deg)
-                    } else if (isPastPage) {
-                      rotation = -178; // Librio: matrix3d(-0.999391...) ≈ rotateY(-178deg)
-                    }
-                    if (isFlippingPage) {
-                      rotation = direction === 'next' ? -178 : 1;
-                    }
-                    
-                    // Z-index EXACT Librio: active=5, last-shown flipped=5, next-shown=1, others=0
-                    let zIndex = 0;
-                    if (isFlippingPage) zIndex = 10;
-                    else if (isActive) zIndex = 5;
-                    else if (isLastShown) zIndex = 5; // last-shown flipped (currentView - 1 is always < currentView)
-                    else if (isNextShown) zIndex = 1;
-                    
-                    // Get page content - front shows right side, rear shows left side of next
-                    const spread = getSpreadContent(pageIndex);
-                    const nextPageSpread = pageIndex + 1 < totalViews ? getSpreadContent(pageIndex + 1) : null;
-                    
-                    return (
-                      <div
-                        key={pageIndex}
-                        className="page absolute w-full h-full"
-                        style={{
-                          transformStyle: 'preserve-3d',
-                          transformOrigin: '0px 50%',
-                          transform: `rotateY(${rotation}deg)`,
-                          transition: 'transform 1s',
-                          zIndex,
-                          cursor: isActive ? 'pointer' : 'default',
-                          userSelect: 'none',
-                          WebkitTapHighlightColor: 'transparent'
-                        }}
-                        onClick={() => {
-                          if (isActive && !isFlipping && currentView < totalViews - 1) {
-                            handleNext();
-                          }
-                        }}
-                      >
-                        {/* FRONT FACE - visible when page not flipped */}
-                        <div 
-                          className="front face absolute inset-0 w-full h-full overflow-hidden bg-white"
-                          style={{
-                            backfaceVisibility: 'hidden',
-                            WebkitBackfaceVisibility: 'hidden',
-                            borderRadius: '0 4px 4px 0',
-                            boxShadow: isActive ? '2px 0 15px rgba(0,0,0,0.15)' : '1px 0 5px rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          <div className="w-full h-full bg-cover bg-center bg-no-repeat">
-                            {spread.right}
-                          </div>
-                          {/* Spine shadow */}
-                          <div 
-                            className="absolute left-0 top-0 bottom-0 w-6 pointer-events-none"
-                            style={{
-                              background: 'linear-gradient(to right, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.05) 40%, transparent 100%)'
-                            }}
-                          />
-                        </div>
-                        
-                        {/* REAR FACE - visible when page is flipped */}
-                        <div 
-                          className="rear face absolute inset-0 w-full h-full overflow-hidden bg-white"
-                          style={{
-                            backfaceVisibility: 'hidden',
-                            WebkitBackfaceVisibility: 'hidden',
-                            transform: 'rotateY(180deg)',
-                            borderRadius: '4px 0 0 4px',
-                            boxShadow: '-2px 0 15px rgba(0,0,0,0.15)'
-                          }}
-                        >
-                          <div className="w-full h-full bg-cover bg-center bg-no-repeat">
-                            {nextPageSpread?.left || <div className="w-full h-full bg-gray-100" />}
-                          </div>
-                          {/* Spine shadow on rear */}
-                          <div 
-                            className="absolute right-0 top-0 bottom-0 w-6 pointer-events-none"
-                            style={{
-                              background: 'linear-gradient(to left, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.05) 40%, transparent 100%)'
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* LIBRIO BOOK - 100% EXACT CSS */}
+                {(() => {
+                  const bookWidth = Math.round(computedW * 0.42);
+                  const bookHeight = Math.round(computedH * 0.85);
+                  const halfHeight = Math.round(bookHeight / 2);
+                  const halfWidth = Math.round(bookWidth / 2);
                   
-                  {/* LEFT PAGE - Static left side when book is open */}
-                  {currentView > 0 && (
+                  return (
                     <div 
-                      className="left-page absolute w-full h-full overflow-hidden bg-white cursor-pointer"
-                      style={{
-                        right: '100%',
-                        borderRadius: '4px 0 0 4px',
-                        boxShadow: '-2px 0 15px rgba(0,0,0,0.15)',
-                        zIndex: 2
+                      className="librio-book librio-book-loaded relative block overflow-visible"
+                      style={{ 
+                        perspective: '4000px',
+                        perspectiveOrigin: `0px ${halfHeight}px`,
+                        transformStyle: 'preserve-3d',
+                        transition: 'transform 0.5s ease-in-out',
+                        width: `${bookWidth}px`,
+                        height: `${bookHeight}px`,
+                        transform: `translateX(${currentView > 0 ? halfWidth : 0}px)`
                       }}
-                      onClick={() => { if (!isFlipping && currentView > 0) handlePrev(); }}
                     >
-                      <div className="w-full h-full bg-cover bg-center bg-no-repeat">
-                        {currentSpread.left}
-                      </div>
-                      {/* Spine shadow */}
-                      <div 
-                        className="absolute right-0 top-0 bottom-0 w-6 pointer-events-none"
-                        style={{
-                          background: 'linear-gradient(to left, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.05) 40%, transparent 100%)'
-                        }}
-                      />
+                      {Array.from({ length: totalViews }).map((_, pageIndex) => {
+                        const isFlipped = pageIndex < currentView;
+                        const isActive = pageIndex === currentView;
+                        const isNextShown = pageIndex === currentView + 1;
+                        const isLastShownFlipped = pageIndex === currentView - 1;
+                        
+                        let pageClass = 'page';
+                        if (isLastShownFlipped) pageClass += ' last-shown flipped';
+                        else if (isFlipped) pageClass += ' flipped';
+                        else if (isActive) pageClass += ' active';
+                        else if (isNextShown) pageClass += ' next-shown';
+                        
+                        let transform = 'none';
+                        if (isActive) {
+                          transform = `rotateY(1deg)`;
+                        } else if (isFlipped) {
+                          transform = `rotateY(-178deg)`;
+                        }
+                        
+                        let zIndex = 0;
+                        if (isActive) zIndex = 5;
+                        else if (isLastShownFlipped) zIndex = 5;
+                        else if (isNextShown) zIndex = 1;
+                        
+                        const spread = getSpreadContent(pageIndex);
+                        const nextSpread = pageIndex + 1 < totalViews ? getSpreadContent(pageIndex + 1) : null;
+                        
+                        return (
+                          <div
+                            key={pageIndex}
+                            className={pageClass}
+                            data-page={pageIndex}
+                            style={{
+                              position: 'absolute',
+                              width: '100%',
+                              height: '100%',
+                              transformStyle: 'preserve-3d',
+                              transformOrigin: `0px ${halfHeight}px`,
+                              transform,
+                              transition: 'transform 1s',
+                              zIndex,
+                              cursor: isActive ? 'pointer' : 'default'
+                            }}
+                            onClick={() => {
+                              if (isActive && !isFlipping && currentView < totalViews - 1) {
+                                handleNext();
+                              } else if (isLastShownFlipped && !isFlipping) {
+                                handlePrev();
+                              }
+                            }}
+                          >
+                            {/* FRONT FACE */}
+                            <div 
+                              className="front face"
+                              style={{
+                                position: 'absolute',
+                                width: '100%',
+                                height: '100%',
+                                backfaceVisibility: 'hidden',
+                                WebkitBackfaceVisibility: 'hidden',
+                                transform: 'none',
+                                overflow: 'hidden',
+                                backgroundColor: 'white',
+                                borderRadius: '0 4px 4px 0',
+                                boxShadow: '2px 0 15px rgba(0,0,0,0.15)'
+                              }}
+                            >
+                              <div className="w-full h-full">{spread.right}</div>
+                              <div 
+                                className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none"
+                                style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 30%, transparent 100%)' }}
+                              />
+                            </div>
+                            
+                            {/* REAR FACE - Librio: rotateY(180deg) */}
+                            <div 
+                              className="rear face"
+                              style={{
+                                position: 'absolute',
+                                width: '100%',
+                                height: '100%',
+                                backfaceVisibility: 'hidden',
+                                WebkitBackfaceVisibility: 'hidden',
+                                transform: 'rotateY(180deg)',
+                                overflow: 'hidden',
+                                backgroundColor: 'white',
+                                borderRadius: '4px 0 0 4px',
+                                boxShadow: '-2px 0 15px rgba(0,0,0,0.15)'
+                              }}
+                            >
+                              <div className="w-full h-full">{nextSpread?.left || <div className="w-full h-full bg-stone-100" />}</div>
+                              <div 
+                                className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none"
+                                style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 30%, transparent 100%)' }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
                 
                 {/* Book shadow */}
                 <div 

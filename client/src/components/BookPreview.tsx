@@ -702,16 +702,23 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   // Convert generatedPages to array for FlipbookViewer
   const flipbookPages = useMemo(() => {
     const pages: string[] = [];
-    // Cover (index 0)
-    if (generatedPages[0]) pages.push(generatedPages[0]);
-    // Content pages (1 to pageCount)
-    for (let i = 1; i <= pageCount; i++) {
-      if (generatedPages[i]) pages.push(generatedPages[i]);
-    }
-    // Back cover (index 999)
+    
+    // Get all page indices that exist in generatedPages, sorted
+    const existingIndices = Object.keys(generatedPages)
+      .map(k => parseInt(k, 10))
+      .filter(k => !isNaN(k) && k !== 999) // Exclude back cover for now
+      .sort((a, b) => a - b);
+    
+    // Add all pages in order
+    existingIndices.forEach(idx => {
+      if (generatedPages[idx]) pages.push(generatedPages[idx]);
+    });
+    
+    // Back cover (index 999) at the end
     if (generatedPages[999]) pages.push(generatedPages[999]);
+    
     return pages;
-  }, [generatedPages, pageCount]);
+  }, [generatedPages]);
 
   return (
       <div className={`flex flex-col font-sans bg-stone-100 ${isModal ? 'h-full' : 'min-h-screen'}`}>

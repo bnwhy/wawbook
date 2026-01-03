@@ -87,36 +87,9 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
       }
     }
     
-    // Convert font URLs to file:// protocol for direct local access (more reliable for Puppeteer)
+    // CSS is passed as-is - fonts should already be embedded as base64 data URIs
+    // This was done during EPUB extraction for maximum reliability
     let processedCss = css;
-    const workspaceRoot = process.cwd();
-    
-    // Convert /assets/books/... to file:// URLs for fonts
-    processedCss = processedCss.replace(
-      /url\(["']?(\/assets\/books\/[^"')]+)["']?\)/gi,
-      (match, path) => {
-        const filePath = `file://${workspaceRoot}/server${path}`;
-        console.log(`[pageRenderer] Converting font URL to file://: ${match} -> url("${filePath}")`);
-        return `url("${filePath}")`;
-      }
-    );
-    
-    // Also convert /assets/... to file:// for images in CSS backgrounds
-    processedCss = processedCss.replace(
-      /url\(["']?(\/assets\/[^"')]+)["']?\)/gi,
-      (match, path) => {
-        // Skip if already converted (starts with file://)
-        if (match.includes('file://')) return match;
-        const filePath = `file://${workspaceRoot}/server${path}`;
-        return `url("${filePath}")`;
-      }
-    );
-    
-    // Log the font-face declarations for debugging
-    const fontFaceMatch = processedCss.match(/@font-face\s*\{[^}]+\}/gi);
-    if (fontFaceMatch) {
-      console.log('[pageRenderer] Font-face declarations:', fontFaceMatch);
-    }
     
     const fullHtml = `
 <!DOCTYPE html>

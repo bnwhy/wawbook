@@ -628,21 +628,48 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
 
-      // Process CSS to update font paths - handle both relative and absolute paths
+      // Process CSS to embed fonts as base64 data URIs (most reliable for Puppeteer)
       let allCss = Object.values(cssContent).join('\n');
       
-      // First, replace all font url() references by matching the filename
+      // Convert each font to base64 and embed directly in CSS
       for (const [originalPath, serverPath] of Object.entries(fontMap)) {
         const filename = originalPath.split('/').pop() || originalPath;
-        // Match url() with any path containing this filename
-        const pattern = new RegExp(
-          `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
-          'gi'
-        );
-        allCss = allCss.replace(pattern, `url("${serverPath}")`);
+        const fontLocalPath = path.join(fontsDir, filename);
+        
+        try {
+          // Read font file and convert to base64
+          const fontBuffer = await fs.promises.readFile(fontLocalPath);
+          const fontBase64 = fontBuffer.toString('base64');
+          
+          // Determine MIME type based on extension
+          const ext = filename.toLowerCase().split('.').pop();
+          let mimeType = 'font/truetype';
+          if (ext === 'otf') mimeType = 'font/opentype';
+          else if (ext === 'woff') mimeType = 'font/woff';
+          else if (ext === 'woff2') mimeType = 'font/woff2';
+          
+          const dataUri = `data:${mimeType};base64,${fontBase64}`;
+          
+          // Match url() with any path containing this filename and replace with base64
+          const pattern = new RegExp(
+            `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
+            'gi'
+          );
+          allCss = allCss.replace(pattern, `url("${dataUri}")`);
+          
+          console.log(`[epub-extract] Embedded font as base64: ${filename} (${Math.round(fontBase64.length / 1024)}KB)`);
+        } catch (fontError) {
+          console.error(`[epub-extract] Failed to embed font ${filename}:`, fontError);
+          // Fallback to server path if base64 fails
+          const pattern = new RegExp(
+            `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
+            'gi'
+          );
+          allCss = allCss.replace(pattern, `url("${serverPath}")`);
+        }
       }
       
-      // Save processed CSS
+      // Save processed CSS with embedded fonts
       const processedCssPath = path.join(htmlDir, 'styles.css');
       await fs.promises.writeFile(processedCssPath, allCss, 'utf-8');
 

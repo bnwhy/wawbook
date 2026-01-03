@@ -44,20 +44,10 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     
     // Convert relative image paths to absolute URLs
     if (baseUrl) {
-      // Replace /objects/... paths with absolute URLs
-      processedHtml = processedHtml.replace(
-        /src=["'](\/objects\/[^"']+)["']/gi,
-        `src="${baseUrl}$1"`
-      );
-      // Also handle other relative paths
+      // Replace all relative paths starting with / to absolute URLs
       processedHtml = processedHtml.replace(
         /src=["'](\/[^"']+)["']/gi,
-        (match, path) => {
-          if (path.startsWith('/objects/')) {
-            return `src="${baseUrl}${path}"`;
-          }
-          return match;
-        }
+        (match, path) => `src="${baseUrl}${path}"`
       );
     }
     
@@ -87,9 +77,9 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     // Convert relative font URLs in CSS to absolute URLs
     let processedCss = css;
     if (baseUrl) {
-      // Match url() in @font-face src declarations and convert to absolute
+      // Match url() in @font-face src declarations and convert all relative paths to absolute
       processedCss = processedCss.replace(
-        /url\(["']?(\/objects\/[^"')]+)["']?\)/gi,
+        /url\(["']?(\/[^"')]+)["']?\)/gi,
         (match, path) => `url("${baseUrl}${path}")`
       );
     }
@@ -130,11 +120,16 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
       console.log('[pageRenderer] Font loading timeout, continuing...');
     });
     
-    // Wait for images to load
+    // Wait for images to load and ensure they loaded successfully
     await page.waitForFunction(() => {
       const images = document.querySelectorAll('img');
-      return Array.from(images).every(img => img.complete);
-    }, { timeout: 10000 }).catch(() => {});
+      return Array.from(images).every(img => img.complete && img.naturalWidth > 0);
+    }, { timeout: 15000 }).catch((err) => {
+      console.log('[pageRenderer] Image loading timeout or error:', err.message);
+    });
+    
+    // Additional small delay to ensure rendering is complete
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     const screenshot = await page.screenshot({
       type: 'png',

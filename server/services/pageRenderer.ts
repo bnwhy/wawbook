@@ -80,8 +80,18 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
       // Match url() in @font-face src declarations and convert all relative paths to absolute
       processedCss = processedCss.replace(
         /url\(["']?(\/[^"')]+)["']?\)/gi,
-        (match, path) => `url("${baseUrl}${path}")`
+        (match, path) => {
+          const absoluteUrl = `url("${baseUrl}${path}")`;
+          console.log(`[pageRenderer] Converting font URL: ${match} -> ${absoluteUrl}`);
+          return absoluteUrl;
+        }
       );
+    }
+    
+    // Log the font-face declarations for debugging
+    const fontFaceMatch = processedCss.match(/@font-face\s*\{[^}]+\}/gi);
+    if (fontFaceMatch) {
+      console.log('[pageRenderer] Font-face declarations:', fontFaceMatch);
     }
     
     const fullHtml = `

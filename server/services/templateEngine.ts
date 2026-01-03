@@ -61,27 +61,40 @@ function generateFontPreloadScript(fonts: FontInfo[]): string {
   const fontLoaders = fonts.map((font, i) => `
     (function() {
       try {
-        const font${i} = new FontFace('${font.family}', 'url(${font.src})', {
+        console.log('[fontPreload] Loading font ${i + 1}/${fonts.length}: ${font.family} (${font.weight} ${font.style})');
+        var srcData = '${font.src.substring(0, 50)}...';
+        var font${i} = new FontFace('${font.family}', 'url(${font.src})', {
           weight: '${font.weight}',
-          style: '${font.style}'
+          style: '${font.style}',
+          display: 'block'
         });
         fontPromises.push(
           font${i}.load().then(function(loadedFont) {
             document.fonts.add(loadedFont);
+            console.log('[fontPreload] SUCCESS: ${font.family}');
+            return { family: '${font.family}', status: 'loaded' };
           }).catch(function(err) {
-            console.error('[fontPreload] Failed:', err);
+            console.error('[fontPreload] FAILED: ${font.family}', err.message || err);
+            return { family: '${font.family}', status: 'error', error: err.message };
           })
         );
-      } catch(e) {}
+      } catch(e) {
+        console.error('[fontPreload] EXCEPTION: ${font.family}', e.message || e);
+      }
     })();
   `).join('\n');
   
   return `
     <script>
       (function() {
+        console.log('[fontPreload] Starting to load ${fonts.length} fonts...');
         var fontPromises = [];
         ${fontLoaders}
-        window.__fontsLoaded = Promise.all(fontPromises);
+        window.__fontsLoaded = Promise.all(fontPromises).then(function(results) {
+          var loaded = results.filter(function(r) { return r && r.status === 'loaded'; }).length;
+          console.log('[fontPreload] Completed: ' + loaded + '/${fonts.length} fonts loaded');
+          return results;
+        });
       })();
     </script>
   `;

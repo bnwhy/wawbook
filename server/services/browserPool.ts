@@ -69,7 +69,38 @@ class BrowserPool {
           timeout: 30000,
         });
 
-        await page.evaluate(() => document.fonts.ready).catch(() => {});
+        // Wait for custom fonts loaded via FontFace API (from generateFontPreloadScript)
+        const fontsLoaded = await page.evaluate(async () => {
+          // First wait for any custom font promises
+          if ((window as any).__fontsLoaded) {
+            try {
+              await (window as any).__fontsLoaded;
+            } catch (e) {
+              console.error('[BrowserPool] Custom fonts failed:', e);
+            }
+          }
+          // Then wait for document.fonts.ready
+          await document.fonts.ready;
+          
+          // Return font loading status for debugging
+          const loadedFonts: string[] = [];
+          document.fonts.forEach((font) => {
+            if (font.status === 'loaded') {
+              loadedFonts.push(`${font.family} ${font.weight} ${font.style}`);
+            }
+          });
+          return { count: loadedFonts.length, fonts: loadedFonts.slice(0, 10) };
+        }).catch((e) => {
+          console.error('[BrowserPool] Font loading error:', e);
+          return { count: 0, fonts: [] };
+        });
+        
+        if (fontsLoaded.count > 0) {
+          console.log(`[BrowserPool] Loaded ${fontsLoaded.count} fonts:`, fontsLoaded.fonts);
+        }
+
+        // Small delay to ensure fonts are fully applied to text
+        await page.waitForTimeout(100);
 
         await page.waitForFunction(() => {
           const images = document.querySelectorAll('img');

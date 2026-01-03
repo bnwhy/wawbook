@@ -31,6 +31,80 @@ interface RenderPageOptions {
   baseUrl?: string;
 }
 
+interface FontInfo {
+  family: string;
+  src: string;
+  weight?: string;
+  style?: string;
+}
+
+function extractFontsFromCss(css: string): FontInfo[] {
+  const fonts: FontInfo[] = [];
+  const fontFaceRegex = /@font-face\s*\{([^}]+)\}/gi;
+  
+  let match;
+  while ((match = fontFaceRegex.exec(css)) !== null) {
+    const block = match[1];
+    
+    const familyMatch = block.match(/font-family\s*:\s*["']?([^;"']+)["']?\s*;?/i);
+    const srcMatch = block.match(/src\s*:\s*url\(["']?(data:[^"')]+)["']?\)/i);
+    const weightMatch = block.match(/font-weight\s*:\s*([^;]+)\s*;?/i);
+    const styleMatch = block.match(/font-style\s*:\s*([^;]+)\s*;?/i);
+    
+    if (familyMatch && srcMatch) {
+      fonts.push({
+        family: familyMatch[1].trim(),
+        src: srcMatch[1],
+        weight: weightMatch ? weightMatch[1].trim() : 'normal',
+        style: styleMatch ? styleMatch[1].trim() : 'normal',
+      });
+      console.log(`[pageRenderer] Found embedded font: ${familyMatch[1].trim()}`);
+    }
+  }
+  
+  return fonts;
+}
+
+function generateFontPreloadScript(fonts: FontInfo[]): string {
+  if (fonts.length === 0) return '';
+  
+  const fontLoaders = fonts.map((font, i) => {
+    return `
+      (function() {
+        try {
+          const font${i} = new FontFace('${font.family}', 'url(${font.src})', {
+            weight: '${font.weight}',
+            style: '${font.style}'
+          });
+          fontPromises.push(
+            font${i}.load().then(function(loadedFont) {
+              document.fonts.add(loadedFont);
+              console.log('[fontPreload] Loaded: ${font.family}');
+            }).catch(function(err) {
+              console.error('[fontPreload] Failed to load ${font.family}:', err);
+            })
+          );
+        } catch(e) {
+          console.error('[fontPreload] Error creating FontFace for ${font.family}:', e);
+        }
+      })();
+    `;
+  }).join('\n');
+  
+  return `
+    <script>
+      (function() {
+        var fontPromises = [];
+        ${fontLoaders}
+        window.__fontsLoaded = Promise.all(fontPromises).then(function() {
+          console.log('[fontPreload] All fonts loaded');
+          return true;
+        });
+      })();
+    </script>
+  `;
+}
+
 export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buffer> {
   const { html, css, width, height, imageMap = {}, variables = {}, baseUrl = '' } = options;
   
@@ -89,7 +163,10 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
       }
     }
     
-    // CSS is passed as-is - fonts should already be embedded as base64 data URIs
+    // Extract fonts from CSS for preloading via FontFace API
+    const embeddedFonts = extractFontsFromCss(css);
+    const fontPreloadScript = generateFontPreloadScript(embeddedFonts);
+    
     let processedCss = css;
     
     const fullHtml = `
@@ -97,9 +174,7 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
 <html>
 <head>
   <meta charset="utf-8">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Nunito:wght@400;500;600;700&family=Patrick+Hand&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  ${fontPreloadScript}
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { 
@@ -117,16 +192,23 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
 </html>`;
     
     await page.setContent(fullHtml, { 
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: 30000 
     });
     
-    // Wait for fonts to load
-    await page.evaluate(() => {
-      return (document as any).fonts.ready;
-    }).catch(() => {
-      console.log('[pageRenderer] Font loading timeout, continuing...');
-    });
+    // Wait for fonts to be loaded via FontFace API
+    if (embeddedFonts.length > 0) {
+      await page.evaluate(() => {
+        return (window as any).__fontsLoaded || Promise.resolve();
+      }).catch((err) => {
+        console.log('[pageRenderer] Font preload error:', err.message);
+      });
+      
+      // Also wait for document.fonts.ready as a fallback
+      await page.evaluate(() => {
+        return document.fonts.ready;
+      }).catch(() => {});
+    }
     
     // Wait for images to load and ensure they loaded successfully
     await page.waitForFunction(() => {
@@ -135,9 +217,6 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     }, { timeout: 15000 }).catch((err) => {
       console.log('[pageRenderer] Image loading timeout or error:', err.message);
     });
-    
-    // Additional small delay to ensure rendering is complete
-    await page.waitForTimeout(500);
     
     const screenshot = await page.screenshot({
       type: 'png',

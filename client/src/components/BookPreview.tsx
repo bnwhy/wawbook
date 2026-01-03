@@ -717,6 +717,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     // Back cover (index 999) at the end
     if (generatedPages[999]) pages.push(generatedPages[999]);
     
+    console.log('[BookPreview] flipbookPages:', pages.length, 'pages', pages.slice(0, 2));
     return pages;
   }, [generatedPages]);
 

@@ -43,25 +43,25 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     
     let processedHtml = html;
     
-    // Convert image paths to file:// protocol for direct local access (more reliable for Puppeteer)
-    const workspaceRootForImages = process.cwd();
+    // Convert image paths to HTTP URLs via Express server (accessible by Puppeteer)
+    const serverBaseUrl = 'http://localhost:5000';
     
-    // Convert /assets/books/... images to file:// URLs
+    // Convert /assets/books/... images to HTTP URLs
     processedHtml = processedHtml.replace(
       /src=["'](\/assets\/books\/[^"']+)["']/gi,
       (match, path) => {
-        const filePath = `file://${workspaceRootForImages}/server${path}`;
-        return `src="${filePath}"`;
+        const httpUrl = `${serverBaseUrl}${path}`;
+        return `src="${httpUrl}"`;
       }
     );
     
-    // Fallback: Convert other /assets/... paths to file:// URLs
+    // Fallback: Convert other /assets/... paths to HTTP URLs
     processedHtml = processedHtml.replace(
       /src=["'](\/assets\/[^"']+)["']/gi,
       (match, path) => {
-        if (match.includes('file://')) return match;
-        const filePath = `file://${workspaceRootForImages}/server${path}`;
-        return `src="${filePath}"`;
+        if (match.includes('http://') || match.includes('https://')) return match;
+        const httpUrl = `${serverBaseUrl}${path}`;
+        return `src="${httpUrl}"`;
       }
     );
     

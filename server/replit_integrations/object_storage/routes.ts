@@ -469,7 +469,7 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
-   * List all EPUB files in the private bucket
+   * List all EPUB files in the private bucket (searches entire .private/ folder)
    */
   app.get("/api/epubs", async (req, res) => {
     try {
@@ -477,9 +477,13 @@ export function registerObjectStorageRoutes(app: Express): void {
       const { bucketName, objectName: basePath } = parseObjectPathSimple(privateDir);
       
       const bucket = objectStorageClient.bucket(bucketName);
-      const prefix = basePath ? `${basePath}/epubs/` : 'epubs/';
+      
+      // Search in the entire .private/ folder, not just epubs/ subfolder
+      const prefix = basePath ? `${basePath}/` : '';
+      console.log(`[list-epubs] Searching for EPUBs with prefix: "${prefix}" in bucket: ${bucketName}`);
       
       const [files] = await bucket.getFiles({ prefix });
+      console.log(`[list-epubs] Found ${files.length} total files`);
       
       const epubs = files
         .filter(f => f.name.toLowerCase().endsWith('.epub'))
@@ -490,6 +494,7 @@ export function registerObjectStorageRoutes(app: Express): void {
           updated: f.metadata?.updated,
         }));
 
+      console.log(`[list-epubs] Found ${epubs.length} EPUB files:`, epubs.map(e => e.name));
       res.json({ epubs });
     } catch (error) {
       console.error("Error listing EPUBs:", error);

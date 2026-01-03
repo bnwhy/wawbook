@@ -42,14 +42,27 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     
     let processedHtml = html;
     
-    // Convert relative image paths to absolute URLs
-    if (baseUrl) {
-      // Replace all relative paths starting with / to absolute URLs
-      processedHtml = processedHtml.replace(
-        /src=["'](\/[^"']+)["']/gi,
-        (match, path) => `src="${baseUrl}${path}"`
-      );
-    }
+    // Convert image paths to file:// protocol for direct local access (more reliable for Puppeteer)
+    const workspaceRootForImages = process.cwd();
+    
+    // Convert /assets/books/... images to file:// URLs
+    processedHtml = processedHtml.replace(
+      /src=["'](\/assets\/books\/[^"']+)["']/gi,
+      (match, path) => {
+        const filePath = `file://${workspaceRootForImages}/server${path}`;
+        return `src="${filePath}"`;
+      }
+    );
+    
+    // Fallback: Convert other /assets/... paths to file:// URLs
+    processedHtml = processedHtml.replace(
+      /src=["'](\/assets\/[^"']+)["']/gi,
+      (match, path) => {
+        if (match.includes('file://')) return match;
+        const filePath = `file://${workspaceRootForImages}/server${path}`;
+        return `src="${filePath}"`;
+      }
+    );
     
     for (const [originalPath, newPath] of Object.entries(imageMap)) {
       const escapedPath = originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -74,19 +87,30 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
       }
     }
     
-    // Convert relative font URLs in CSS to absolute URLs
+    // Convert font URLs to file:// protocol for direct local access (more reliable for Puppeteer)
     let processedCss = css;
-    if (baseUrl) {
-      // Match url() in @font-face src declarations and convert all relative paths to absolute
-      processedCss = processedCss.replace(
-        /url\(["']?(\/[^"')]+)["']?\)/gi,
-        (match, path) => {
-          const absoluteUrl = `url("${baseUrl}${path}")`;
-          console.log(`[pageRenderer] Converting font URL: ${match} -> ${absoluteUrl}`);
-          return absoluteUrl;
-        }
-      );
-    }
+    const workspaceRoot = process.cwd();
+    
+    // Convert /assets/books/... to file:// URLs for fonts
+    processedCss = processedCss.replace(
+      /url\(["']?(\/assets\/books\/[^"')]+)["']?\)/gi,
+      (match, path) => {
+        const filePath = `file://${workspaceRoot}/server${path}`;
+        console.log(`[pageRenderer] Converting font URL to file://: ${match} -> url("${filePath}")`);
+        return `url("${filePath}")`;
+      }
+    );
+    
+    // Also convert /assets/... to file:// for images in CSS backgrounds
+    processedCss = processedCss.replace(
+      /url\(["']?(\/assets\/[^"')]+)["']?\)/gi,
+      (match, path) => {
+        // Skip if already converted (starts with file://)
+        if (match.includes('file://')) return match;
+        const filePath = `file://${workspaceRoot}/server${path}`;
+        return `url("${filePath}")`;
+      }
+    );
     
     // Log the font-face declarations for debugging
     const fontFaceMatch = processedCss.match(/@font-face\s*\{[^}]+\}/gi);

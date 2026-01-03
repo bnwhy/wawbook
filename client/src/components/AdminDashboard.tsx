@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera, CreditCard } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera, CreditCard, CloudDownload, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType, RawHtmlPage } from '../types/admin';
@@ -210,6 +210,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [importSessionCssContent, setImportSessionCssContent] = useState<string>('');
   const [importSessionPageImages, setImportSessionPageImages] = useState<Array<{pageIndex: number; imageUrl: string}>>([]);
 
+  // EPUB from bucket state
+  const [availableEpubs, setAvailableEpubs] = useState<Array<{name: string; path: string; size?: number}>>([]);
+  const [showEpubSelector, setShowEpubSelector] = useState(false);
+  const [isExtractingEpub, setIsExtractingEpub] = useState(false);
 
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -338,6 +342,79 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Fulfillment Tracking State
   const [fulfillmentTracking, setFulfillmentTracking] = useState('');
+
+  // Function to load available EPUBs from bucket
+  const loadAvailableEpubs = async () => {
+    try {
+      const response = await fetch('/api/epubs');
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableEpubs(data.epubs || []);
+      }
+    } catch (error) {
+      console.error('Failed to load EPUBs:', error);
+    }
+  };
+
+  // Function to extract EPUB from bucket
+  const handleExtractEpub = async (epubPath: string) => {
+    if (!selectedBook) {
+      toast.error('Veuillez sélectionner un livre');
+      return;
+    }
+
+    setIsExtractingEpub(true);
+    try {
+      toast.info('Extraction de l\'EPUB en cours...');
+      const response = await fetch('/api/epubs/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          epubPath,
+          bookId: selectedBook.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to extract EPUB');
+      }
+
+      const result = await response.json();
+      console.log('[EPUB Extract] Result:', result);
+
+      // Update import session with extracted data
+      if (result.rawHtmlPages) {
+        setImportSessionRawHtmlPages(result.rawHtmlPages);
+      }
+      if (result.cssContent) {
+        setImportSessionCssContent(result.cssContent);
+      }
+      if (result.pageImages) {
+        setImportSessionPageImages(result.pageImages);
+        toast.success(`${result.pageImages.length} page(s) générée(s) en images sur le serveur.`);
+      }
+
+      // Auto-save the book with the new content
+      const updatedBook = {
+        ...selectedBook,
+        contentConfig: {
+          ...selectedBook.contentConfig,
+          rawHtmlPages: result.rawHtmlPages || [],
+          cssContent: result.cssContent || '',
+          pageImages: result.pageImages || [],
+        }
+      };
+      await handleSaveBook(updatedBook);
+
+      setShowEpubSelector(false);
+      toast.success(`EPUB extrait avec succès : ${result.pageImages?.length || 0} pages, ${Object.keys(result.images || {}).length} images, ${Object.keys(result.fonts || {}).length} polices`);
+    } catch (error) {
+      console.error('[EPUB Extract] Error:', error);
+      toast.error('Erreur lors de l\'extraction de l\'EPUB');
+    } finally {
+      setIsExtractingEpub(false);
+    }
+  };
 
   // Menu Dirty State Tracking
   const [originalMainMenu, setOriginalMainMenu] = useState<MenuItem[]>([]);
@@ -6018,6 +6095,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               >
                                   <FileCode size={18} />
                               </button>
+                              <button 
+                                  onClick={async () => {
+                                      await loadAvailableEpubs();
+                                      setShowEpubSelector(true);
+                                  }}
+                                  className="p-2 bg-green-100 hover:bg-green-200 rounded text-green-700 shrink-0" 
+                                  title="Importer depuis le stockage (EPUBs uploadés)"
+                              >
+                                  <CloudDownload size={18} />
+                              </button>
                               <button
                                   onClick={() => {
                                       if (confirm('ATTENTION: Voulez-vous réinitialiser TOUTE la configuration du livre ?\nCela effacera toutes les pages, textes, images et variantes.\nCette action est irréversible.')) {
@@ -6556,6 +6643,68 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </button>
                     </div>
                  </div>
+              )}
+
+              {/* EPUB Selector Modal */}
+              {showEpubSelector && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+                    <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-green-50 to-emerald-50">
+                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <CloudDownload size={20} className="text-green-600" />
+                        Importer depuis le stockage
+                      </h3>
+                      <button 
+                        onClick={() => setShowEpubSelector(false)}
+                        className="p-1 hover:bg-white rounded-lg transition-colors"
+                      >
+                        <X size={18} className="text-slate-500" />
+                      </button>
+                    </div>
+                    <div className="p-4 max-h-80 overflow-y-auto">
+                      {availableEpubs.length === 0 ? (
+                        <div className="text-center py-8 text-slate-500">
+                          <CloudDownload size={48} className="mx-auto mb-3 text-slate-300" />
+                          <p className="font-medium">Aucun EPUB disponible</p>
+                          <p className="text-sm text-slate-400 mt-1">
+                            Uploadez des fichiers EPUB dans le dossier <code className="bg-slate-100 px-1 rounded">.private/epubs/</code> de l'Object Storage
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {availableEpubs.map((epub) => (
+                            <button
+                              key={epub.path}
+                              onClick={() => handleExtractEpub(epub.path)}
+                              disabled={isExtractingEpub}
+                              className="w-full p-3 bg-slate-50 hover:bg-green-50 border border-slate-200 hover:border-green-300 rounded-lg text-left transition-all flex items-center justify-between group disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                                  <Book size={20} className="text-green-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-slate-700 group-hover:text-green-700">{epub.name}</p>
+                                  {epub.size && (
+                                    <p className="text-xs text-slate-400">{(epub.size / 1024 / 1024).toFixed(2)} MB</p>
+                                  )}
+                                </div>
+                              </div>
+                              {isExtractingEpub ? (
+                                <Loader2 size={18} className="text-green-600 animate-spin" />
+                              ) : (
+                                <ChevronRight size={18} className="text-slate-400 group-hover:text-green-600 transition-colors" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
+                      Les EPUBs sont extraits vers le serveur. Les images finales sont stockées dans le bucket public.
+                    </div>
+                  </div>
+                </div>
               )}
            </main>
         </div>

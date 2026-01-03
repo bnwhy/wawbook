@@ -32,53 +32,98 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // ===== ADMIN TEMPLATE UPLOAD =====
-  app.post("/api/admin/template", async (req, res) => {
+  // ===== ADMIN: LOAD TEMPLATE FROM EPUB =====
+  app.post("/api/admin/templates/:bookId/load", async (req, res) => {
     try {
-      const { data, bookId } = req.body;
-      if (!data || !bookId) return res.status(400).json({ error: "Missing data or bookId" });
+      const { bookId } = req.params;
+      const { data, epubPath } = req.body;
       
-      const buffer = Buffer.from(data, 'base64');
-      await templateEngine.loadFromEpub(buffer, bookId);
-      res.json({ success: true });
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['host'] || 'localhost:5000';
+      const baseUrl = `${protocol}://${host}`;
+      
+      if (data) {
+        const buffer = Buffer.from(data, 'base64');
+        const template = await templateEngine.loadTemplateFromBuffer(bookId, buffer, baseUrl);
+        res.json({ 
+          success: true, 
+          bookId,
+          pagesCount: template.pages.length,
+          imagesCount: Object.keys(template.imageMap).length,
+          fontsCount: Object.keys(template.fontDataUris).length,
+        });
+      } else if (epubPath) {
+        const template = await templateEngine.loadTemplateFromStorage(bookId, epubPath, baseUrl);
+        res.json({ 
+          success: true, 
+          bookId,
+          pagesCount: template.pages.length,
+          imagesCount: Object.keys(template.imageMap).length,
+          fontsCount: Object.keys(template.fontDataUris).length,
+        });
+      } else {
+        return res.status(400).json({ error: "Missing 'data' (base64 EPUB) or 'epubPath'" });
+      }
     } catch (error) {
-      console.error("Template upload error:", error);
+      console.error("[load-template] Error:", error);
       res.status(500).json({ error: "Failed to load template" });
     }
   });
 
-  // ===== GENERATE PREVIEWS =====
+  // ===== ADMIN: LIST LOADED TEMPLATES =====
+  app.get("/api/admin/templates", async (req, res) => {
+    try {
+      const templates = templateEngine.getLoadedTemplates();
+      res.json({ templates });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to list templates" });
+    }
+  });
+
+  // ===== ADMIN: UNLOAD TEMPLATE =====
+  app.delete("/api/admin/templates/:bookId", async (req, res) => {
+    try {
+      const { bookId } = req.params;
+      const removed = templateEngine.unloadTemplate(bookId);
+      res.json({ success: removed, bookId });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to unload template" });
+    }
+  });
+
+  // ===== USER: GENERATE PREVIEWS =====
   app.post("/api/books/:id/generate-previews", async (req, res) => {
     try {
       const { id } = req.params;
-      const { variables } = req.body;
+      const { variables = {}, userId } = req.body;
       
-      const { pages, css } = templateEngine.getTemplate();
-      const serverBaseUrl = `http://localhost:${process.env.PORT || 5000}`;
-      
-      const renderedUrls: string[] = [];
-      const sessionId = Math.random().toString(36).substring(7);
-
-      for (const page of pages) {
-        const imageBuffer = await renderHtmlToImage({
-          html: page.html,
-          css,
-          width: page.width,
-          height: page.height,
-          variables,
-          serverBaseUrl
+      if (!templateEngine.isTemplateLoaded(id)) {
+        return res.status(400).json({ 
+          error: "Template not loaded. Admin must load the template first.",
+          hint: "POST /api/admin/templates/:bookId/load"
         });
-
-        // Use base64 for mockup or upload to storage
-        renderedUrls.push(`data:image/jpeg;base64,${imageBuffer.toString('base64')}`);
       }
-
-      res.json({ pages: renderedUrls });
+      
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['host'] || 'localhost:5000';
+      const baseUrl = `${protocol}://${host}`;
+      
+      console.log(`[generate-previews] Generating previews for book ${id}, user: ${userId || 'anonymous'}`);
+      
+      const pages = await templateEngine.generatePreviews(id, variables, baseUrl);
+      
+      res.json({ 
+        success: true,
+        bookId: id,
+        userId,
+        pages,
+      });
     } catch (error) {
-      console.error("Preview generation error:", error);
+      console.error("[generate-previews] Error:", error);
       res.status(500).json({ error: "Failed to generate previews" });
     }
   });
+
   // Serve local book assets (images, fonts, templates extracted from EPUBs)
   const assetsPath = path.join(process.cwd(), 'server', 'assets');
   app.use('/assets', express.static(assetsPath, {

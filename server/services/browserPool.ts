@@ -1,28 +1,30 @@
-import { chromium, Browser, BrowserContext, Page } from 'playwright-core';
+import { chromium, Browser, Page, BrowserContext } from 'playwright-core';
 import PQueue from 'p-queue';
 
 const CHROMIUM_PATH = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
 
-export class BrowserPool {
-  private static instance: BrowserPool;
+class BrowserPool {
   private browser: Browser | null = null;
+  private isInitialized = false;
+  private initPromise: Promise<void> | null = null;
   private queue: PQueue;
+  private maxConcurrency: number;
 
-  private constructor() {
-    this.queue = new PQueue({ concurrency: 5 }); // Limit concurrent renders
+  constructor(maxConcurrency = 3) {
+    this.maxConcurrency = maxConcurrency;
+    this.queue = new PQueue({ concurrency: maxConcurrency });
   }
 
-  public static getInstance(): BrowserPool {
-    if (!BrowserPool.instance) {
-      BrowserPool.instance = new BrowserPool();
-    }
-    return BrowserPool.instance;
+  async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = this._doInit();
+    return this.initPromise;
   }
 
-  public async init() {
-    if (this.browser) return;
-    
-    console.log('[BrowserPool] Initializing persistent Playwright browser...');
+  private async _doInit(): Promise<void> {
+    console.log('[BrowserPool] Launching persistent Chromium instance...');
     this.browser = await chromium.launch({
       headless: true,
       executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || CHROMIUM_PATH,
@@ -32,36 +34,79 @@ export class BrowserPool {
         '--disable-dev-shm-usage',
         '--disable-gpu',
         '--disable-software-rasterizer',
+        '--disable-extensions',
+        '--single-process',
       ],
     });
-    console.log('[BrowserPool] Browser launched successfully.');
+    this.isInitialized = true;
+    console.log('[BrowserPool] Chromium ready for rendering');
   }
 
-  public async usePage<T>(fn: (page: Page) => Promise<T>): Promise<T> {
+  async renderPage(options: {
+    html: string;
+    width: number;
+    height: number;
+    format?: 'jpeg' | 'png';
+    quality?: number;
+  }): Promise<Buffer> {
+    await this.initialize();
+
     return this.queue.add(async () => {
-      if (!this.browser) await this.init();
-      
-      const context = await this.browser!.newContext({
-        viewport: { width: 1200, height: 800 }, // Default, will be overridden
+      if (!this.browser) {
+        throw new Error('Browser not initialized');
+      }
+
+      const context = await this.browser.newContext({
+        viewport: { width: options.width, height: options.height },
         deviceScaleFactor: 2,
       });
+
       const page = await context.newPage();
-      
+
       try {
-        return await fn(page);
+        await page.setContent(options.html, {
+          waitUntil: 'domcontentloaded',
+          timeout: 30000,
+        });
+
+        await page.evaluate(() => document.fonts.ready).catch(() => {});
+
+        await page.waitForFunction(() => {
+          const images = document.querySelectorAll('img');
+          return Array.from(images).every(img => img.complete && img.naturalWidth > 0);
+        }, { timeout: 15000 }).catch(() => {});
+
+        const screenshot = await page.screenshot({
+          type: options.format || 'jpeg',
+          quality: options.format === 'png' ? undefined : (options.quality || 85),
+          clip: { x: 0, y: 0, width: options.width, height: options.height },
+        });
+
+        return Buffer.from(screenshot);
       } finally {
         await page.close();
         await context.close();
       }
-    }) as Promise<T>;
+    }) as Promise<Buffer>;
   }
 
-  public async close() {
+  async shutdown(): Promise<void> {
     if (this.browser) {
+      console.log('[BrowserPool] Shutting down Chromium...');
       await this.browser.close();
       this.browser = null;
+      this.isInitialized = false;
+      this.initPromise = null;
     }
+  }
+
+  getQueueStats() {
+    return {
+      pending: this.queue.pending,
+      size: this.queue.size,
+      concurrency: this.maxConcurrency,
+    };
   }
 }
 
-export const browserPool = BrowserPool.getInstance();
+export const browserPool = new BrowserPool(3);

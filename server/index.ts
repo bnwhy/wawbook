@@ -137,7 +137,7 @@ app.use((req, res, next) => {
 import { browserPool } from "./services/browserPool";
 
 (async () => {
-  await browserPool.init();
+  await browserPool.initialize();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

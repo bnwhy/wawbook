@@ -39,6 +39,7 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }));
 
     useEffect(() => {
+      console.log('[FlipbookViewer] useEffect triggered, pages:', pages.length, 'width:', width, 'height:', height);
       if (!containerRef.current || pages.length === 0) return;
       
       const flipbookEl = containerRef.current.querySelector('.c-flipbook') as HTMLElement;

@@ -394,7 +394,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         toast.success(`${result.pageImages.length} page(s) générée(s) en images sur le serveur.`);
       }
 
-      // Auto-save the book with the new content
+      // Auto-save the book with the new content (including extracted texts and images)
       const updatedBook = {
         ...selectedBook,
         contentConfig: {
@@ -402,6 +402,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           rawHtmlPages: result.rawHtmlPages || [],
           cssContent: result.cssContent || '',
           pageImages: result.pageImages || [],
+          texts: result.texts || [],
+          imageElements: result.imageElements || [],
         }
       };
       await handleSaveBook(updatedBook);

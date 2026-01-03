@@ -661,6 +661,8 @@ export function registerObjectStorageRoutes(app: Express): void {
       
       const pageImages: Array<{ pageIndex: number; imageUrl: string }> = [];
       const rawHtmlPages: Array<{ html: string; width: number; height: number; pageIndex: number }> = [];
+      const extractedTexts: Array<any> = [];
+      const extractedImages: Array<any> = [];
       const sessionId = randomUUID().substring(0, 8);
 
       for (let i = 0; i < contentHtmlFiles.length; i++) {
@@ -690,6 +692,69 @@ export function registerObjectStorageRoutes(app: Express): void {
           pageIndex: i + 1,
         });
         
+        // Parse text elements from HTML (spans with text content)
+        const spanRegex = /<span[^>]*id=["']([^"']+)["'][^>]*>([^<]*)<\/span>/gi;
+        let spanMatch;
+        while ((spanMatch = spanRegex.exec(pageHtml)) !== null) {
+          const match = spanMatch;
+          const spanId = match[1];
+          const textContent = match[2].trim();
+          if (textContent) {
+            // Check if this is a variable (contains {variable_name})
+            const isVariable = /\{[^}]+\}/.test(textContent);
+            const variableMatch = textContent.match(/\{([^}]+)\}/);
+            
+            extractedTexts.push({
+              id: `text-${bookId}-${i + 1}-${spanId}`,
+              type: isVariable ? 'variable' : 'fixed',
+              label: spanId,
+              content: isVariable ? `{{${variableMatch?.[1] || 'name'}}}` : textContent,
+              originalContent: textContent,
+              style: {
+                color: '#000000',
+                fontSize: '16px',
+                textAlign: 'left',
+                fontFamily: 'serif',
+              },
+              position: {
+                x: 0,
+                y: 0,
+                layer: 50,
+                pageIndex: i + 1,
+                rotation: 0,
+              },
+              combinationKey: 'default',
+            });
+          }
+        }
+        
+        // Parse image elements from HTML
+        const imgRegex = /<img[^>]*(?:class=["']([^"']+)["'])?[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;
+        let imgMatch;
+        while ((imgMatch = imgRegex.exec(pageHtml)) !== null) {
+          const match = imgMatch;
+          const imgClass = match[1] || '';
+          const imgSrc = match[2];
+          const imgAlt = match[3] || '';
+          
+          extractedImages.push({
+            id: `img-${bookId}-${i + 1}-${randomUUID().substring(0, 8)}`,
+            type: 'static',
+            label: imgClass || imgAlt || `image-page-${i + 1}`,
+            url: imgSrc,
+            position: {
+              x: 0,
+              y: 0,
+              layer: 10,
+              pageIndex: i + 1,
+              rotation: 0,
+              width: 100,
+              height: 100,
+            },
+            combinationKey: 'default',
+          });
+        }
+        
         try {
           // Render HTML to image using Puppeteer
           const imageBuffer = await renderHtmlToImage({
@@ -718,7 +783,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
 
-      console.log(`[epub-extract] Complete: ${pageImages.length} pages rendered, ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts`);
+      console.log(`[epub-extract] Complete: ${pageImages.length} pages rendered, ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts, ${extractedTexts.length} texts, ${extractedImages.length} image elements`);
 
       res.json({
         success: true,
@@ -729,6 +794,8 @@ export function registerObjectStorageRoutes(app: Express): void {
         cssContent: allCss,
         rawHtmlPages,
         pageImages,
+        texts: extractedTexts,
+        imageElements: extractedImages,
       });
     } catch (error) {
       console.error("[epub-extract] Error:", error);

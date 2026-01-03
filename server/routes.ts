@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema } from "@shared/schema";
@@ -8,6 +9,7 @@ import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import { renderHtmlToImage } from "./services/pageRenderer";
 import { objectStorageClient } from "./replit_integrations/object_storage/objectStorage";
+import * as path from "path";
 
 // Helper to parse object storage path
 function parseObjectPath(path: string): { bucketName: string; objectName: string } {
@@ -28,6 +30,14 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Serve local book assets (images, fonts, templates extracted from EPUBs)
+  const assetsPath = path.join(process.cwd(), 'server', 'assets');
+  app.use('/assets', express.static(assetsPath, {
+    maxAge: '1y',
+    immutable: true,
+  }));
+  console.log(`[routes] Serving local assets from ${assetsPath}`);
+
   // ===== BOOKS =====
   app.get("/api/books", async (req, res) => {
     try {

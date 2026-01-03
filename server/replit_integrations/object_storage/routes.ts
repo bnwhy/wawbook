@@ -3,6 +3,8 @@ import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "
 import { randomUUID } from "crypto";
 import JSZip from "jszip";
 import { renderHtmlToImage } from "../../services/pageRenderer";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Register object storage routes for file uploads.
@@ -425,6 +427,287 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(404).json({ error: "Object not found" });
       }
       return res.status(500).json({ error: "Failed to serve object" });
+    }
+  });
+
+  /**
+   * Upload an EPUB file to the private bucket (.private/epubs/)
+   */
+  app.post("/api/uploads/epub", async (req, res) => {
+    try {
+      const { data, filename } = req.body;
+
+      if (!data || !filename) {
+        return res.status(400).json({ error: "Missing required fields: data, filename" });
+      }
+
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const { bucketName, objectName: basePath } = parseObjectPathSimple(privateDir);
+      
+      const epubPath = basePath ? `${basePath}/epubs/${filename}` : `epubs/${filename}`;
+      const buffer = Buffer.from(data, 'base64');
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(epubPath);
+
+      await file.save(buffer, {
+        contentType: 'application/epub+zip',
+        metadata: { cacheControl: 'private, max-age=31536000' },
+      });
+
+      const objectPath = `/objects/${bucketName}/${epubPath}`;
+      console.log(`[upload-epub] Uploaded EPUB to ${objectPath}`);
+
+      res.json({
+        objectPath,
+        filename,
+        size: buffer.length,
+      });
+    } catch (error) {
+      console.error("Error uploading EPUB:", error);
+      res.status(500).json({ error: "Failed to upload EPUB" });
+    }
+  });
+
+  /**
+   * List all EPUB files in the private bucket
+   */
+  app.get("/api/epubs", async (req, res) => {
+    try {
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const { bucketName, objectName: basePath } = parseObjectPathSimple(privateDir);
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const prefix = basePath ? `${basePath}/epubs/` : 'epubs/';
+      
+      const [files] = await bucket.getFiles({ prefix });
+      
+      const epubs = files
+        .filter(f => f.name.toLowerCase().endsWith('.epub'))
+        .map(f => ({
+          name: f.name.split('/').pop() || f.name,
+          path: `/objects/${bucketName}/${f.name}`,
+          size: f.metadata?.size,
+          updated: f.metadata?.updated,
+        }));
+
+      res.json({ epubs });
+    } catch (error) {
+      console.error("Error listing EPUBs:", error);
+      res.status(500).json({ error: "Failed to list EPUBs" });
+    }
+  });
+
+  /**
+   * Extract an EPUB from bucket to local server storage
+   */
+  app.post("/api/epubs/extract", async (req, res) => {
+    try {
+      const { epubPath, bookId } = req.body;
+
+      if (!epubPath || !bookId) {
+        return res.status(400).json({ error: "Missing required fields: epubPath, bookId" });
+      }
+
+      // Construct base URL for Puppeteer
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['host'] || 'localhost:5000';
+      const baseUrl = `${protocol}://${host}`;
+      console.log(`[epub-extract] Using base URL: ${baseUrl}`);
+
+      // Parse the epub path to get bucket and object name
+      const pathWithoutPrefix = epubPath.replace(/^\/objects\//, '');
+      const parts = pathWithoutPrefix.split('/');
+      const bucketName = parts[0];
+      const objectName = parts.slice(1).join('/');
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const epubFile = bucket.file(objectName);
+      
+      const [exists] = await epubFile.exists();
+      if (!exists) {
+        return res.status(404).json({ error: "EPUB file not found" });
+      }
+
+      // Download EPUB to memory
+      const [epubBuffer] = await epubFile.download();
+      console.log(`[epub-extract] Downloaded EPUB (${epubBuffer.length} bytes)`);
+
+      // Create local directories for this book
+      const bookAssetsDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId);
+      const imagesDir = path.join(bookAssetsDir, 'images');
+      const fontsDir = path.join(bookAssetsDir, 'fonts');
+      const htmlDir = path.join(bookAssetsDir, 'html');
+      
+      await fs.promises.mkdir(imagesDir, { recursive: true });
+      await fs.promises.mkdir(fontsDir, { recursive: true });
+      await fs.promises.mkdir(htmlDir, { recursive: true });
+
+      // Extract ZIP
+      const zip = await JSZip.loadAsync(epubBuffer);
+      
+      const imageMap: Record<string, string> = {};
+      const fontMap: Record<string, string> = {};
+      const htmlFiles: string[] = [];
+      const htmlContent: Record<string, string> = {};
+      const cssContent: Record<string, string> = {};
+      
+      // Extract all files
+      for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+        if (zipEntry.dir) continue;
+        
+        const lowerPath = relativePath.toLowerCase();
+        const fileName = relativePath.split('/').pop() || relativePath;
+        
+        // Handle images - save to local server
+        if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
+          const imageBuffer = await zipEntry.async('nodebuffer');
+          const localPath = path.join(imagesDir, fileName);
+          await fs.promises.writeFile(localPath, imageBuffer);
+          
+          // Create a URL path for Puppeteer to access
+          const serverPath = `/assets/books/${bookId}/images/${fileName}`;
+          imageMap[relativePath] = serverPath;
+          imageMap[fileName] = serverPath;
+          console.log(`[epub-extract] Saved image: ${fileName}`);
+        }
+        
+        // Handle fonts - save to local server
+        if (/\.(ttf|otf|woff|woff2|eot)$/i.test(relativePath)) {
+          const fontBuffer = await zipEntry.async('nodebuffer');
+          const localPath = path.join(fontsDir, fileName);
+          await fs.promises.writeFile(localPath, fontBuffer);
+          
+          const serverPath = `/assets/books/${bookId}/fonts/${fileName}`;
+          fontMap[relativePath] = serverPath;
+          fontMap[fileName] = serverPath;
+          console.log(`[epub-extract] Saved font: ${fileName}`);
+        }
+        
+        // Handle HTML/XHTML
+        if (/\.(xhtml|html)$/i.test(relativePath)) {
+          const content = await zipEntry.async('string');
+          htmlFiles.push(relativePath);
+          htmlContent[relativePath] = content;
+          
+          // Save HTML to local server
+          const localPath = path.join(htmlDir, fileName);
+          await fs.promises.writeFile(localPath, content, 'utf-8');
+        }
+        
+        // Handle CSS
+        if (/\.css$/i.test(relativePath)) {
+          const content = await zipEntry.async('string');
+          cssContent[relativePath] = content;
+          
+          // Save CSS to local server
+          const localPath = path.join(htmlDir, fileName);
+          await fs.promises.writeFile(localPath, content, 'utf-8');
+        }
+      }
+
+      // Process CSS to update font paths
+      let allCss = Object.values(cssContent).join('\n');
+      for (const [originalPath, serverPath] of Object.entries(fontMap)) {
+        const filename = originalPath.split('/').pop() || originalPath;
+        const patterns = [
+          new RegExp(`url\\(["']?[^"')]*${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`, 'gi'),
+        ];
+        for (const pattern of patterns) {
+          allCss = allCss.replace(pattern, `url("${serverPath}")`);
+        }
+      }
+      
+      // Save processed CSS
+      const processedCssPath = path.join(htmlDir, 'styles.css');
+      await fs.promises.writeFile(processedCssPath, allCss, 'utf-8');
+
+      // Get public bucket for final rendered images
+      const publicPaths = objectStorageService.getPublicObjectSearchPaths();
+      const publicPath = publicPaths[0];
+      const { bucketName: publicBucketName, objectName: publicBasePath } = parseObjectPathSimple(publicPath);
+      const publicBucket = objectStorageClient.bucket(publicBucketName);
+      
+      // Process each HTML page and render to images
+      const contentHtmlFiles = htmlFiles.filter(f => 
+        !f.toLowerCase().includes('toc') && 
+        !f.toLowerCase().includes('nav') &&
+        !f.toLowerCase().includes('cover')
+      ).sort();
+      
+      const pageImages: Array<{ pageIndex: number; imageUrl: string }> = [];
+      const rawHtmlPages: Array<{ html: string; width: number; height: number; pageIndex: number }> = [];
+      const sessionId = randomUUID().substring(0, 8);
+
+      for (let i = 0; i < contentHtmlFiles.length; i++) {
+        const htmlFile = contentHtmlFiles[i];
+        let pageHtml = htmlContent[htmlFile] || '';
+        
+        // Parse viewport dimensions
+        const viewportMatch = pageHtml.match(/width[=:](\d+).*?height[=:](\d+)/i);
+        const pageWidth = viewportMatch ? parseInt(viewportMatch[1]) : 595;
+        const pageHeight = viewportMatch ? parseInt(viewportMatch[2]) : 842;
+        
+        // Replace image paths with server paths
+        for (const [originalPath, serverPath] of Object.entries(imageMap)) {
+          const patterns = [
+            new RegExp(`src=["']([^"']*${originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})["']`, 'gi'),
+            new RegExp(`src=["']([^"']*${originalPath.split('/').pop()?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') || ''})["']`, 'gi'),
+          ];
+          for (const pattern of patterns) {
+            pageHtml = pageHtml.replace(pattern, `src="${serverPath}"`);
+          }
+        }
+        
+        rawHtmlPages.push({
+          html: pageHtml,
+          width: pageWidth,
+          height: pageHeight,
+          pageIndex: i + 1,
+        });
+        
+        try {
+          // Render HTML to image using Puppeteer
+          const imageBuffer = await renderHtmlToImage({
+            html: pageHtml,
+            css: allCss,
+            width: pageWidth,
+            height: pageHeight,
+            baseUrl,
+          });
+          
+          // Upload rendered image to public bucket
+          const pageImageName = `${bookId}_page_${i + 1}.png`;
+          const objectPath = publicBasePath ? `${publicBasePath}/${pageImageName}` : pageImageName;
+          const file = publicBucket.file(objectPath);
+          
+          await file.save(imageBuffer, {
+            contentType: 'image/png',
+            metadata: { cacheControl: 'public, max-age=31536000' },
+          });
+          
+          const imageUrl = `/objects/${publicBucketName}/${objectPath}`;
+          pageImages.push({ pageIndex: i + 1, imageUrl });
+          console.log(`[epub-extract] Rendered page ${i + 1} to ${imageUrl}`);
+        } catch (renderError) {
+          console.error(`[epub-extract] Failed to render page ${i + 1}:`, renderError);
+        }
+      }
+
+      console.log(`[epub-extract] Complete: ${pageImages.length} pages rendered, ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts`);
+
+      res.json({
+        success: true,
+        bookId,
+        assetsPath: `/assets/books/${bookId}`,
+        images: imageMap,
+        fonts: fontMap,
+        cssContent: allCss,
+        rawHtmlPages,
+        pageImages,
+      });
+    } catch (error) {
+      console.error("[epub-extract] Error:", error);
+      res.status(500).json({ error: "Failed to extract EPUB" });
     }
   });
 }

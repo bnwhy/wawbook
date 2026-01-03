@@ -26,10 +26,59 @@ function parseObjectPath(path: string): { bucketName: string; objectName: string
   };
 }
 
+import { templateEngine } from "./services/templateEngine";
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // ===== ADMIN TEMPLATE UPLOAD =====
+  app.post("/api/admin/template", async (req, res) => {
+    try {
+      const { data, bookId } = req.body;
+      if (!data || !bookId) return res.status(400).json({ error: "Missing data or bookId" });
+      
+      const buffer = Buffer.from(data, 'base64');
+      await templateEngine.loadFromEpub(buffer, bookId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Template upload error:", error);
+      res.status(500).json({ error: "Failed to load template" });
+    }
+  });
+
+  // ===== GENERATE PREVIEWS =====
+  app.post("/api/books/:id/generate-previews", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { variables } = req.body;
+      
+      const { pages, css } = templateEngine.getTemplate();
+      const serverBaseUrl = `http://localhost:${process.env.PORT || 5000}`;
+      
+      const renderedUrls: string[] = [];
+      const sessionId = Math.random().toString(36).substring(7);
+
+      for (const page of pages) {
+        const imageBuffer = await renderHtmlToImage({
+          html: page.html,
+          css,
+          width: page.width,
+          height: page.height,
+          variables,
+          serverBaseUrl
+        });
+
+        // Use base64 for mockup or upload to storage
+        renderedUrls.push(`data:image/jpeg;base64,${imageBuffer.toString('base64')}`);
+      }
+
+      res.json({ pages: renderedUrls });
+    } catch (error) {
+      console.error("Preview generation error:", error);
+      res.status(500).json({ error: "Failed to generate previews" });
+    }
+  });
   // Serve local book assets (images, fonts, templates extracted from EPUBs)
   const assetsPath = path.join(process.cwd(), 'server', 'assets');
   app.use('/assets', express.static(assetsPath, {

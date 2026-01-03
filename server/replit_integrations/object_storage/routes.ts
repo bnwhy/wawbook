@@ -121,17 +121,21 @@ export function registerObjectStorageRoutes(app: Express): void {
       const zip = await JSZip.loadAsync(buffer);
       
       const imageMap: Record<string, string> = {};
+      const fontMap: Record<string, string> = {};
       const htmlFiles: string[] = [];
       const htmlContent: Record<string, string> = {};
       const cssContent: Record<string, string> = {};
+      const fontWarnings: string[] = [];
       
       const bucket = objectStorageClient.bucket(bucketName);
       
+      // First pass: extract all assets (images and fonts)
       for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
         if (zipEntry.dir) continue;
         
         const lowerPath = relativePath.toLowerCase();
         
+        // Handle images
         if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
           const imageBuffer = await zipEntry.async('nodebuffer');
           const ext = relativePath.split('.').pop() || 'png';
@@ -155,14 +159,47 @@ export function registerObjectStorageRoutes(app: Express): void {
           imageMap[justFilename] = objectPath;
           
           // Also add partial paths (e.g., "image/1.png" from "OEBPS/image/1.png")
-          // This handles relative paths used in HTML files
           for (let i = 1; i < parts.length; i++) {
             const partialPath = parts.slice(i).join('/');
             if (!imageMap[partialPath]) {
               imageMap[partialPath] = objectPath;
             }
           }
-        } else if (/\.(html?|xhtml)$/i.test(relativePath)) {
+        }
+        // Handle fonts (.ttf, .otf, .woff, .woff2)
+        else if (/\.(ttf|otf|woff2?|eot)$/i.test(relativePath)) {
+          const fontBuffer = await zipEntry.async('nodebuffer');
+          const ext = relativePath.split('.').pop() || 'ttf';
+          const fontId = randomUUID().substring(0, 8);
+          const storageName = `${sessionId}_${fontId}.${ext}`;
+          const objectName = basePath ? `${basePath}/fonts/${storageName}` : `fonts/${storageName}`;
+          
+          const file = bucket.file(objectName);
+          const contentType = getFontContentType(ext);
+          
+          await file.save(fontBuffer, {
+            contentType,
+            metadata: { cacheControl: 'public, max-age=31536000' },
+          });
+          
+          const objectPath = `/objects/${bucketName}/${objectName}`;
+          fontMap[relativePath] = objectPath;
+          
+          // Add various path mappings for font references
+          const parts = relativePath.split('/');
+          const justFilename = parts[parts.length - 1];
+          fontMap[justFilename] = objectPath;
+          
+          for (let i = 1; i < parts.length; i++) {
+            const partialPath = parts.slice(i).join('/');
+            if (!fontMap[partialPath]) {
+              fontMap[partialPath] = objectPath;
+            }
+          }
+          
+          console.log(`[EPUB] Extracted font: ${justFilename} -> ${objectPath}`);
+        }
+        else if (/\.(html?|xhtml)$/i.test(relativePath)) {
           htmlFiles.push(relativePath);
           const content = await zipEntry.async('string');
           htmlContent[relativePath] = content;
@@ -172,11 +209,44 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
+      // Second pass: update CSS with correct font URLs and detect missing fonts
+      let allCssUpdated: Record<string, string> = {};
+      for (const [cssPath, css] of Object.entries(cssContent)) {
+        let updatedCss = css;
+        
+        // Find all @font-face declarations and update src URLs
+        updatedCss = updatedCss.replace(
+          /(@font-face\s*\{[^}]*src\s*:\s*url\(["']?)([^"')]+)(["']?\)[^}]*\})/gi,
+          (match, before, fontPath, after) => {
+            // Clean up the font path (remove quotes, ../, etc.)
+            const cleanPath = fontPath.replace(/^["']|["']$/g, '').replace(/^\.\.\//, '').replace(/^\.\//, '');
+            const justFilename = cleanPath.split('/').pop() || cleanPath;
+            
+            // Look for the font in our fontMap
+            const storedPath = fontMap[cleanPath] || fontMap[justFilename];
+            
+            if (storedPath) {
+              console.log(`[EPUB] Updated font reference: ${fontPath} -> ${storedPath}`);
+              return `${before}${storedPath}${after}`;
+            } else {
+              // Font not found in EPUB - check if it might be a system/Google font
+              const fontNameMatch = match.match(/font-family\s*:\s*["']?([^"';,]+)/i);
+              const fontName = fontNameMatch ? fontNameMatch[1].trim() : justFilename.replace(/\.[^.]+$/, '');
+              fontWarnings.push(`Police "${fontName}" non trouvée dans l'EPUB (fichier: ${fontPath})`);
+              console.warn(`[EPUB] Font not found: ${fontPath}`);
+              return match; // Keep original
+            }
+          }
+        );
+        
+        allCssUpdated[cssPath] = updatedCss;
+      }
+      
       // Now render HTML pages to images using Puppeteer
       const pageImages: Array<{ pageIndex: number; imageUrl: string }> = [];
       
-      // Combine all CSS content
-      const allCss = Object.values(cssContent).join('\n');
+      // Combine all updated CSS content (with font URLs updated)
+      const allCss = Object.values(allCssUpdated).join('\n');
       
       // Filter to only content pages (not TOC, etc.)
       const contentHtmlFiles = htmlFiles.filter(f => 
@@ -238,9 +308,11 @@ export function registerObjectStorageRoutes(app: Express): void {
       
       res.json({
         images: imageMap,
+        fonts: fontMap,
+        fontWarnings,
         htmlFiles,
         htmlContent,
-        cssContent,
+        cssContent: allCssUpdated,
         sessionId,
         pageImages,
       });
@@ -386,5 +458,16 @@ function getContentTypeFromExt(ext: string): string {
     'svg': 'image/svg+xml',
   };
   return map[ext.toLowerCase()] || 'image/png';
+}
+
+function getFontContentType(ext: string): string {
+  const map: Record<string, string> = {
+    'ttf': 'font/ttf',
+    'otf': 'font/otf',
+    'woff': 'font/woff',
+    'woff2': 'font/woff2',
+    'eot': 'application/vnd.ms-fontobject',
+  };
+  return map[ext.toLowerCase()] || 'font/ttf';
 }
 

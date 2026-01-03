@@ -84,6 +84,16 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
       }
     }
     
+    // Convert relative font URLs in CSS to absolute URLs
+    let processedCss = css;
+    if (baseUrl) {
+      // Match url() in @font-face src declarations and convert to absolute
+      processedCss = processedCss.replace(
+        /url\(["']?(\/objects\/[^"')]+)["']?\)/gi,
+        (match, path) => `url("${baseUrl}${path}")`
+      );
+    }
+    
     const fullHtml = `
 <!DOCTYPE html>
 <html>
@@ -100,7 +110,7 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
       overflow: hidden;
       background: white;
     }
-    ${css}
+    ${processedCss}
   </style>
 </head>
 <body>

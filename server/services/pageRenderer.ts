@@ -1,30 +1,24 @@
 import puppeteer, { Browser } from 'puppeteer';
 
-let browserInstance: Browser | null = null;
+const CHROMIUM_PATH = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
 
-async function getBrowser(): Promise<Browser> {
-  if (!browserInstance) {
-    browserInstance = await puppeteer.launch({
-      headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        '--single-process',
-      ],
-    });
-  }
-  return browserInstance;
+async function launchBrowser(): Promise<Browser> {
+  console.log('[pageRenderer] Launching new browser instance...');
+  return puppeteer.launch({
+    headless: true,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || CHROMIUM_PATH,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+    ],
+  });
 }
 
 export async function closeBrowser(): Promise<void> {
-  if (browserInstance) {
-    await browserInstance.close();
-    browserInstance = null;
-  }
+  // No-op now since we create fresh browsers
 }
 
 interface RenderPageOptions {
@@ -34,12 +28,13 @@ interface RenderPageOptions {
   height: number;
   imageMap?: Record<string, string>;
   variables?: Record<string, string>;
+  baseUrl?: string;
 }
 
 export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buffer> {
-  const { html, css, width, height, imageMap = {}, variables = {} } = options;
+  const { html, css, width, height, imageMap = {}, variables = {}, baseUrl = '' } = options;
   
-  const browser = await getBrowser();
+  const browser = await launchBrowser();
   const page = await browser.newPage();
   
   try {
@@ -47,15 +42,35 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     
     let processedHtml = html;
     
+    // Convert relative image paths to absolute URLs
+    if (baseUrl) {
+      // Replace /objects/... paths with absolute URLs
+      processedHtml = processedHtml.replace(
+        /src=["'](\/objects\/[^"']+)["']/gi,
+        `src="${baseUrl}$1"`
+      );
+      // Also handle other relative paths
+      processedHtml = processedHtml.replace(
+        /src=["'](\/[^"']+)["']/gi,
+        (match, path) => {
+          if (path.startsWith('/objects/')) {
+            return `src="${baseUrl}${path}"`;
+          }
+          return match;
+        }
+      );
+    }
+    
     for (const [originalPath, newPath] of Object.entries(imageMap)) {
       const escapedPath = originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const absolutePath = baseUrl ? `${baseUrl}${newPath}` : newPath;
       const regex = new RegExp(`(src=["'])([^"']*${escapedPath})["']`, 'gi');
-      processedHtml = processedHtml.replace(regex, `$1${newPath}"`);
+      processedHtml = processedHtml.replace(regex, `$1${absolutePath}"`);
       
       const simpleFilename = originalPath.split('/').pop();
       if (simpleFilename) {
         const simpleRegex = new RegExp(`(src=["'])([^"']*${simpleFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})["']`, 'gi');
-        processedHtml = processedHtml.replace(simpleRegex, `$1${newPath}"`);
+        processedHtml = processedHtml.replace(simpleRegex, `$1${absolutePath}"`);
       }
     }
     
@@ -119,6 +134,7 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     return screenshot as Buffer;
   } finally {
     await page.close();
+    await browser.close();
   }
 }
 

@@ -166,6 +166,12 @@ export async function registerRoutes(
         }
       }
       
+      // Get base URL for absolute image paths
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['host'] || 'localhost:5000';
+      const baseUrl = `${protocol}://${host}`;
+      console.log(`[render-pages] Using base URL: ${baseUrl}`);
+      
       // Render each page with Puppeteer
       for (const page of rawPages) {
         try {
@@ -176,6 +182,7 @@ export async function registerRoutes(
             height: page.height || 842,
             imageMap,
             variables,
+            baseUrl,
           });
           
           // Upload to Object Storage

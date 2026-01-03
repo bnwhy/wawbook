@@ -13,6 +13,7 @@ async function launchBrowser(): Promise<Browser> {
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--disable-software-rasterizer',
+      '--allow-file-access-from-files',
     ],
   });
 }

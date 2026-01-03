@@ -573,6 +573,15 @@ export function registerObjectStorageRoutes(app: Express): void {
           const serverPath = `/assets/books/${bookId}/images/${fileName}`;
           imageMap[relativePath] = serverPath;
           imageMap[fileName] = serverPath;
+          
+          // Add all partial paths (e.g., "image/1.jpg" from "OEBPS/image/1.jpg")
+          const parts = relativePath.split('/');
+          for (let i = 1; i < parts.length; i++) {
+            const partialPath = parts.slice(i).join('/');
+            if (!imageMap[partialPath]) {
+              imageMap[partialPath] = serverPath;
+            }
+          }
           console.log(`[epub-extract] Saved image: ${fileName}`);
         }
         
@@ -585,6 +594,15 @@ export function registerObjectStorageRoutes(app: Express): void {
           const serverPath = `/assets/books/${bookId}/fonts/${fileName}`;
           fontMap[relativePath] = serverPath;
           fontMap[fileName] = serverPath;
+          
+          // Add all partial paths (e.g., "font/Chiller.TTF" from "OEBPS/font/Chiller.TTF")
+          const parts = relativePath.split('/');
+          for (let i = 1; i < parts.length; i++) {
+            const partialPath = parts.slice(i).join('/');
+            if (!fontMap[partialPath]) {
+              fontMap[partialPath] = serverPath;
+            }
+          }
           console.log(`[epub-extract] Saved font: ${fileName}`);
         }
         
@@ -610,16 +628,18 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
 
-      // Process CSS to update font paths
+      // Process CSS to update font paths - handle both relative and absolute paths
       let allCss = Object.values(cssContent).join('\n');
+      
+      // First, replace all font url() references by matching the filename
       for (const [originalPath, serverPath] of Object.entries(fontMap)) {
         const filename = originalPath.split('/').pop() || originalPath;
-        const patterns = [
-          new RegExp(`url\\(["']?[^"')]*${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`, 'gi'),
-        ];
-        for (const pattern of patterns) {
-          allCss = allCss.replace(pattern, `url("${serverPath}")`);
-        }
+        // Match url() with any path containing this filename
+        const pattern = new RegExp(
+          `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
+          'gi'
+        );
+        allCss = allCss.replace(pattern, `url("${serverPath}")`);
       }
       
       // Save processed CSS

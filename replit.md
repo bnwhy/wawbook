@@ -51,7 +51,22 @@ Preferred communication style: Simple, everyday language.
 - **Neon Serverless PostgreSQL**: Cloud-hosted Postgres accessed via `@neondatabase/serverless`
 - **Connection**: `DATABASE_URL` environment variable required
 
+### Template Engine Architecture (January 2026)
+- **BrowserPool Service** (`server/services/browserPool.ts`): Persistent Playwright/Chromium instance launched at server startup, reused for all page renderings via `renderPage()` method
+- **TemplateEngine Service** (`server/services/templateEngine.ts`): Loads EPUB templates, extracts HTML/CSS/images/fonts, caches in memory, generates user previews with variable injection
+- **Key Features**:
+  - Admin uploads EPUB once → server caches template in memory
+  - Users send only variables for preview generation (no EPUB re-upload)
+  - Fonts converted to Data URIs during template load for exact rendering
+  - Images uploaded to object storage with URL mapping
+  - Concurrency-limited rendering via p-queue (max 3 concurrent renders)
+- **Admin Endpoints**: `/api/templates/load`, `/api/templates/list`, `/api/templates/:bookId/unload`
+- **User Endpoint**: `/api/templates/:bookId/preview` (POST with variables)
+
 ### Third-Party Libraries
+- **cheerio**: HTML parsing and manipulation for template processing
+- **sharp**: Image compression and optimization
+- **p-queue**: Concurrency control for browser rendering
 - **ag-psd**: PSD file parsing for importing design assets
 - **html2canvas**: Screenshot generation for book previews
 - **PDF Generation**: Custom utilities in `utils/pdfGenerator.ts`

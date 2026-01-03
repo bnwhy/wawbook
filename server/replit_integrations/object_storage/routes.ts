@@ -108,6 +108,12 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(400).json({ error: "Missing required field: data" });
       }
 
+      // Construct base URL for Puppeteer to access images
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['host'] || 'localhost:5000';
+      const baseUrl = `${protocol}://${host}`;
+      console.log(`[extract-zip] Using base URL: ${baseUrl}`);
+
       const publicPaths = objectStorageService.getPublicObjectSearchPaths();
       if (!publicPaths.length) {
         return res.status(500).json({ error: "No public object storage path configured" });
@@ -285,6 +291,7 @@ export function registerObjectStorageRoutes(app: Express): void {
             css: allCss,
             width: pageWidth,
             height: pageHeight,
+            baseUrl,
           });
           
           // Upload the rendered image to Object Storage

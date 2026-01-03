@@ -99,8 +99,22 @@ class BrowserPool {
           console.log(`[BrowserPool] Loaded ${fontsLoaded.count} fonts:`, fontsLoaded.fonts);
         }
 
-        // Small delay to ensure fonts are fully applied to text
-        await page.waitForTimeout(100);
+        // Force a reflow to ensure fonts are applied to all text elements
+        await page.evaluate(() => {
+          // Trigger reflow by accessing offsetHeight on body
+          document.body.offsetHeight;
+          // Force text elements to recalculate with new fonts
+          const textElements = document.querySelectorAll('p, span, div, h1, h2, h3, h4, h5, h6');
+          textElements.forEach(el => {
+            const htmlEl = el as HTMLElement;
+            htmlEl.style.opacity = '0.99';
+            void htmlEl.offsetHeight;
+            htmlEl.style.opacity = '1';
+          });
+        });
+
+        // Longer delay to ensure fonts are fully applied and rendered
+        await page.waitForTimeout(300);
 
         await page.waitForFunction(() => {
           const images = document.querySelectorAll('img');

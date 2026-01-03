@@ -45,11 +45,22 @@ function extractFontsFromCss(css: string): FontInfo[] {
   let match;
   while ((match = fontFaceRegex.exec(css)) !== null) {
     const block = match[1];
+    console.log(`[pageRenderer] Processing @font-face block`);
     
     const familyMatch = block.match(/font-family\s*:\s*["']?([^;"']+)["']?\s*;?/i);
-    const srcMatch = block.match(/src\s*:\s*url\(["']?(data:[^"')]+)["']?\)/i);
+    
+    // Improved regex to capture full base64 data URI - match everything between url(" and ")
+    let srcMatch = block.match(/src\s*:\s*url\(\s*["'](data:[^"']+)["']\s*\)/i);
+    if (!srcMatch) {
+      // Try without quotes around the URL
+      srcMatch = block.match(/src\s*:\s*url\(\s*(data:[^)]+)\s*\)/i);
+    }
+    
     const weightMatch = block.match(/font-weight\s*:\s*([^;]+)\s*;?/i);
     const styleMatch = block.match(/font-style\s*:\s*([^;]+)\s*;?/i);
+    
+    console.log(`[pageRenderer] Font family: ${familyMatch ? familyMatch[1] : 'NOT FOUND'}`);
+    console.log(`[pageRenderer] Font src found: ${srcMatch ? 'YES (length: ' + srcMatch[1].length + ')' : 'NO'}`);
     
     if (familyMatch && srcMatch) {
       fonts.push({
@@ -58,10 +69,13 @@ function extractFontsFromCss(css: string): FontInfo[] {
         weight: weightMatch ? weightMatch[1].trim() : 'normal',
         style: styleMatch ? styleMatch[1].trim() : 'normal',
       });
-      console.log(`[pageRenderer] Found embedded font: ${familyMatch[1].trim()}`);
+      console.log(`[pageRenderer] Found embedded font: ${familyMatch[1].trim()}, src length: ${srcMatch[1].length}`);
+    } else {
+      console.log(`[pageRenderer] Failed to extract font - family: ${!!familyMatch}, src: ${!!srcMatch}`);
     }
   }
   
+  console.log(`[pageRenderer] Total fonts extracted: ${fonts.length}`);
   return fonts;
 }
 

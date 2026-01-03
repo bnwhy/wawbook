@@ -6148,7 +6148,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                                             {importSessionRawHtmlPages.sort((a, b) => a.pageIndex - b.pageIndex).map((page) => {
                                                 const pageImagesFromSession = importSessionImages.filter((i: any) => i.position?.pageIndex === page.pageIndex) || [];
-                                                const thumbnailUrl = pageImagesFromSession.length > 0 ? pageImagesFromSession[0].url : null;
+                                                const serverPageImage = importSessionPageImages.find((pi: any) => pi.pageIndex === page.pageIndex);
+                                                const thumbnailUrl = serverPageImage?.imageUrl || serverPageImage?.url 
+                                                    || (pageImagesFromSession.length > 0 ? pageImagesFromSession[0].url : null);
                                                 const textsCount = importSessionTexts.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0;
                                                 const imagesCount = pageImagesFromSession.length;
                                                 
@@ -6416,7 +6418,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                                                         {sortedPages.map((page: any) => {
                                                             const pageImagesFromElements = selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex) || [];
-                                                            const thumbnailUrl = (pageImages.find((pi: any) => pi.pageIndex === page.pageIndex) as any)?.url 
+                                                            const pageImageEntry = pageImages.find((pi: any) => pi.pageIndex === page.pageIndex);
+                                                            const thumbnailUrl = pageImageEntry?.imageUrl || pageImageEntry?.url
                                                                 || (pageImagesFromElements.length > 0 ? pageImagesFromElements[0].url : null);
                                                             const isSelected = effectiveSelectedPage === page.pageIndex;
                                                             const textsCount = selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0;

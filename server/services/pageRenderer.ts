@@ -1,25 +1,24 @@
-import puppeteer, { Browser } from 'puppeteer';
+import { chromium, Browser } from 'playwright-core';
 
 const CHROMIUM_PATH = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
 
 async function launchBrowser(): Promise<Browser> {
-  console.log('[pageRenderer] Launching new browser instance...');
-  return puppeteer.launch({
+  console.log('[pageRenderer] Launching Playwright browser instance...');
+  return chromium.launch({
     headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || CHROMIUM_PATH,
+    executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || CHROMIUM_PATH,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--disable-software-rasterizer',
-      '--allow-file-access-from-files',
     ],
   });
 }
 
 export async function closeBrowser(): Promise<void> {
-  // No-op now since we create fresh browsers
+  // No-op now since we create fresh browsers per render
 }
 
 interface RenderPageOptions {
@@ -36,14 +35,16 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
   const { html, css, width, height, imageMap = {}, variables = {}, baseUrl = '' } = options;
   
   const browser = await launchBrowser();
-  const page = await browser.newPage();
+  const context = await browser.newContext({
+    viewport: { width, height },
+    deviceScaleFactor: 2,
+  });
+  const page = await context.newPage();
   
   try {
-    await page.setViewport({ width, height, deviceScaleFactor: 2 });
-    
     let processedHtml = html;
     
-    // Convert image paths to HTTP URLs via Express server (accessible by Puppeteer)
+    // Convert image paths to HTTP URLs via Express server
     const serverBaseUrl = 'http://localhost:5000';
     
     // Convert /assets/books/... images to HTTP URLs
@@ -89,7 +90,6 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     }
     
     // CSS is passed as-is - fonts should already be embedded as base64 data URIs
-    // This was done during EPUB extraction for maximum reliability
     let processedCss = css;
     
     const fullHtml = `
@@ -117,14 +117,14 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
 </html>`;
     
     await page.setContent(fullHtml, { 
-      waitUntil: ['load', 'networkidle0'],
+      waitUntil: 'networkidle',
       timeout: 30000 
     });
     
     // Wait for fonts to load
-    await page.waitForFunction(() => {
-      return (document as any).fonts.ready.then(() => true);
-    }, { timeout: 10000 }).catch(() => {
+    await page.evaluate(() => {
+      return (document as any).fonts.ready;
+    }).catch(() => {
       console.log('[pageRenderer] Font loading timeout, continuing...');
     });
     
@@ -137,16 +137,16 @@ export async function renderHtmlToImage(options: RenderPageOptions): Promise<Buf
     });
     
     // Additional small delay to ensure rendering is complete
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await page.waitForTimeout(500);
     
     const screenshot = await page.screenshot({
       type: 'png',
       clip: { x: 0, y: 0, width, height },
     });
     
-    return screenshot as Buffer;
+    return Buffer.from(screenshot);
   } finally {
-    await page.close();
+    await context.close();
     await browser.close();
   }
 }

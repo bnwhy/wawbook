@@ -142,7 +142,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "No raw HTML pages to render" });
       }
       
-      console.log(`[render-pages] Rendering ${rawPages.length} pages with Puppeteer...`);
+      console.log(`[render-pages] Rendering ${rawPages.length} pages with Playwright...`);
       
       const objectStorageService = new ObjectStorageService();
       const bucketName = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] || 'default-bucket';
@@ -182,7 +182,7 @@ export async function registerRoutes(
       const baseUrl = `${protocol}://${host}`;
       console.log(`[render-pages] Using base URL: ${baseUrl}`);
       
-      // Render each page with Puppeteer
+      // Render each page with Playwright
       for (const page of rawPages) {
         try {
           const imageBuffer = await renderHtmlToImage({

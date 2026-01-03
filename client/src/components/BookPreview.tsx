@@ -128,7 +128,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     return;
                 }
                 
-                // Priority 2: Request server-side rendering with Puppeteer
+                // Priority 2: Request server-side rendering with Playwright
                 const rawPages = book.contentConfig?.rawHtmlPages;
                 
                 if (rawPages && rawPages.length > 0) {

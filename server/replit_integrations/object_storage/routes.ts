@@ -628,7 +628,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
 
-      // Process CSS to embed fonts as base64 data URIs (most reliable for Puppeteer)
+      // Process CSS to embed fonts as base64 data URIs (most reliable for Playwright)
       let allCss = Object.values(cssContent).join('\n');
       
       // Convert each font to base64 and embed directly in CSS
@@ -655,7 +655,9 @@ export function registerObjectStorageRoutes(app: Express): void {
             `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
             'gi'
           );
-          allCss = allCss.replace(pattern, `url("${dataUri}")`);
+          // Add format() hint for better browser compatibility
+          const formatHint = ext === 'otf' ? 'opentype' : ext === 'woff' ? 'woff' : ext === 'woff2' ? 'woff2' : 'truetype';
+          allCss = allCss.replace(pattern, `url("${dataUri}") format('${formatHint}')`);
           
           console.log(`[epub-extract] Embedded font as base64: ${filename} (${Math.round(fontBase64.length / 1024)}KB)`);
         } catch (fontError) {

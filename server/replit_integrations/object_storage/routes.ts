@@ -578,7 +578,28 @@ export function registerObjectStorageRoutes(app: Express): void {
    */
   app.get("/objects/:objectPath(*)", async (req, res) => {
     try {
-      // Try to get file from private dir first
+      // Extract the object path from /objects/<path>
+      const objectPath = req.path.replace(/^\/objects\//, '');
+      const parts = objectPath.split('/');
+      
+      // PRIORITY 1: Check if first part looks like a bucket name (replit-objstore-*)
+      if (parts.length >= 2 && parts[0].startsWith('replit-objstore-')) {
+        const bucketName = parts[0];
+        const fileName = parts.slice(1).join('/');
+        try {
+          const bucket = objectStorageClient.bucket(bucketName);
+          const file = bucket.file(fileName);
+          const [exists] = await file.exists();
+          if (exists) {
+            await objectStorageService.downloadObject(file, res);
+            return;
+          }
+        } catch (bucketError) {
+          console.log(`[objects] Bucket ${bucketName} lookup failed, trying fallback`);
+        }
+      }
+      
+      // PRIORITY 2: Try to get file from private dir
       try {
         const objectFile = await objectStorageService.getObjectEntityFile(req.path);
         await objectStorageService.downloadObject(objectFile, res);
@@ -587,28 +608,11 @@ export function registerObjectStorageRoutes(app: Express): void {
         // If not found in private dir, try public paths
       }
 
-      // Extract the object path from /objects/<path>
-      const objectPath = req.path.replace(/^\/objects\//, '');
-      
-      // Search in public paths
+      // PRIORITY 3: Search in public paths
       const publicFile = await objectStorageService.searchPublicObject(objectPath);
       if (publicFile) {
         await objectStorageService.downloadObject(publicFile, res);
         return;
-      }
-      
-      // Also try direct bucket/path lookup
-      const parts = objectPath.split('/');
-      if (parts.length >= 2) {
-        const bucketName = parts[0];
-        const fileName = parts.slice(1).join('/');
-        const bucket = objectStorageClient.bucket(bucketName);
-        const file = bucket.file(fileName);
-        const [exists] = await file.exists();
-        if (exists) {
-          await objectStorageService.downloadObject(file, res);
-          return;
-        }
       }
 
       return res.status(404).json({ error: "Object not found" });

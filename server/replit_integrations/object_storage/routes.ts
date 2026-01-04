@@ -694,31 +694,7 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
-   * Extract an EPUB from direct file upload (base64)
-   */
-  app.post("/api/epubs/extract-upload", async (req, res) => {
-    try {
-      const { epubBase64, bookId } = req.body;
-
-      if (!epubBase64 || !bookId) {
-        return res.status(400).json({ error: "Missing required fields: epubBase64, bookId" });
-      }
-
-      // Decode base64 to buffer
-      const epubBuffer = Buffer.from(epubBase64, 'base64');
-      console.log(`[epub-extract-upload] Received EPUB (${epubBuffer.length} bytes)`);
-
-      // Use shared extraction logic
-      const result = await extractEpubFromBuffer(epubBuffer, bookId);
-      res.json(result);
-    } catch (error) {
-      console.error("[epub-extract-upload] Error:", error);
-      res.status(500).json({ error: "Failed to extract EPUB" });
-    }
-  });
-
-  /**
-   * Extract an EPUB from bucket to local server storage (kept for backward compatibility)
+   * Extract an EPUB from bucket to local server storage
    */
   app.post("/api/epubs/extract", async (req, res) => {
     try {

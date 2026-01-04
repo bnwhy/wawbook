@@ -98,6 +98,106 @@ export async function registerRoutes(
     }
   });
 
+  // ===== BOOK PAGE RENDERING =====
+  app.post("/api/books/:id/render-pages", async (req, res) => {
+    try {
+      const book = await storage.getBook(req.params.id);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+
+      const rawHtmlPages = book.contentConfig?.rawHtmlPages;
+      if (!rawHtmlPages || rawHtmlPages.length === 0) {
+        return res.status(400).json({ error: "No HTML pages to render" });
+      }
+
+      const { config = {}, characters = {} } = req.body;
+      const objectStorageService = new ObjectStorageService();
+      
+      // Import chromium dynamically
+      const { chromium } = await import('playwright-core');
+      
+      // Launch browser
+      const browser = await chromium.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+
+      const pages: Array<{ pageIndex: number; imageUrl: string }> = [];
+      const cssContent = book.contentConfig?.cssContent || '';
+      const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
+      const publicBucketPath = publicSearchPaths[0] || '/replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2/public';
+      
+      console.log(`[render-pages] Rendering ${rawHtmlPages.length} pages for book ${book.id}`);
+
+      for (const rawPage of rawHtmlPages) {
+        try {
+          const page = await browser.newPage();
+          await page.setViewportSize({ 
+            width: rawPage.width || 400, 
+            height: rawPage.height || 293 
+          });
+
+          // Decode HTML and inject CSS + variable substitution
+          let html = rawPage.html
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"');
+
+          // Inject CSS inline
+          if (cssContent) {
+            html = html.replace('</head>', `<style>${cssContent}</style></head>`);
+          }
+
+          // Replace variables
+          if (config.childName) {
+            html = html.replace(/\{\{nom_enfant\}\}/g, config.childName);
+            html = html.replace(/\{nom_enfant\}/g, config.childName);
+          }
+
+          // Fix image paths to use absolute URLs
+          const baseUrl = `${req.protocol}://${req.get('host')}`;
+          html = html.replace(/src="\/assets\//g, `src="${baseUrl}/assets/`);
+
+          await page.setContent(html, { waitUntil: 'networkidle' });
+          await page.waitForTimeout(100);
+
+          // Take screenshot
+          const screenshot = await page.screenshot({ type: 'jpeg', quality: 85 });
+          await page.close();
+
+          // Upload to bucket
+          const { objectStorageClient } = await import('./replit_integrations/object_storage/objectStorage');
+          const bucketName = 'replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2';
+          const objectPath = `public/previews/${book.id}/page-${rawPage.pageIndex}.jpg`;
+          
+          const bucket = objectStorageClient.bucket(bucketName);
+          const file = bucket.file(objectPath);
+          
+          await file.save(screenshot, {
+            contentType: 'image/jpeg',
+            metadata: { cacheControl: 'public, max-age=3600' },
+          });
+
+          const imageUrl = `/objects/${bucketName}/${objectPath}`;
+          pages.push({ pageIndex: rawPage.pageIndex, imageUrl });
+          
+          console.log(`[render-pages] Page ${rawPage.pageIndex} uploaded to ${imageUrl}`);
+        } catch (pageError) {
+          console.error(`[render-pages] Error rendering page ${rawPage.pageIndex}:`, pageError);
+        }
+      }
+
+      await browser.close();
+      
+      console.log(`[render-pages] Successfully rendered ${pages.length} pages`);
+      res.json({ success: true, pages });
+    } catch (error) {
+      console.error("[render-pages] Error:", error);
+      res.status(500).json({ error: "Failed to render pages" });
+    }
+  });
+
   // ===== CUSTOMERS =====
   app.get("/api/customers", async (req, res) => {
     try {

@@ -7,27 +7,7 @@ import { fromZodError } from "zod-validation-error";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
-import { renderHtmlToImage } from "./services/pageRenderer";
-import { objectStorageClient } from "./replit_integrations/object_storage/objectStorage";
 import * as path from "path";
-import { jobQueue } from "./services/jobQueue";
-
-// Helper to parse object storage path
-function parseObjectPath(path: string): { bucketName: string; objectName: string } {
-  if (!path.startsWith("/")) {
-    path = `/${path}`;
-  }
-  const pathParts = path.split("/");
-  if (pathParts.length < 3) {
-    throw new Error("Invalid path: must contain at least a bucket name");
-  }
-  return {
-    bucketName: pathParts[1],
-    objectName: pathParts.slice(2).join("/"),
-  };
-}
-
-import { templateEngine } from "./services/templateEngine";
 
 export async function registerRoutes(
   httpServer: Server,

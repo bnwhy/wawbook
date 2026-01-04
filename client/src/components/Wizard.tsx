@@ -5,9 +5,9 @@ import { BookConfig, Gender, Theme, HairStyle, Outfit, Activity } from '../types
 import { WizardVariant, WizardOption } from '../types/admin';
 import Navigation from './Navigation';
 import { useBooks } from '../context/BooksContext';
-import previewBackground from '@assets/generated_images/watercolor_paper_background_with_soft_pastel_splash.png';
-
 import Footer from './Footer';
+
+const previewBackground = '';
 
 interface WizardProps {
   onComplete: (config: BookConfig, context?: { theme?: Theme, productId?: string }) => void;

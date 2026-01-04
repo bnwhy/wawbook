@@ -6,7 +6,6 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import logoImage from "@assets/generated_images/wawbook_logo_pastel_playful.png";
 
 export function Navbar() {
   return (
@@ -35,8 +34,8 @@ export function Navbar() {
         <div className="flex items-center justify-center md:justify-start">
           <Link href="/">
             <a className="flex items-center gap-3 group transition-transform hover:scale-105 duration-300">
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30 bg-white p-1 shadow-sm">
-                 <img src={logoImage} alt="NuageBook Logo" className="w-full h-full object-contain" />
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30 bg-primary/10 p-1 shadow-sm flex items-center justify-center">
+                <span className="text-2xl">📚</span>
               </div>
               <span className="font-serif text-4xl text-primary drop-shadow-sm tracking-wide">
                 NuageBook

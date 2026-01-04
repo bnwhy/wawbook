@@ -8,10 +8,10 @@ import { useCart } from '../context/CartContext';
 import { generateBookPages } from '../utils/imageGenerator';
 import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
-import hardcoverIcon from '@assets/generated_images/hardcover_teal_book_isometric.png';
-import softcoverIcon from '@assets/generated_images/softcover_teal_book_isometric.png';
-
 import Footer from './Footer';
+
+const hardcoverIcon = '';
+const softcoverIcon = '';
 
 interface BookPreviewProps {
   story: Story;

@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import heroBg from "@assets/generated_images/pastel_hero_background_wawbook.png";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 export function Hero({ onStart }: { onStart: () => void }) {
@@ -75,11 +74,9 @@ export function Hero({ onStart }: { onStart: () => void }) {
               className="relative z-10"
             >
               <div className="absolute top-0 right-0 w-full h-full bg-accent rounded-[3rem] rotate-6 -z-10 transform translate-x-4 translate-y-4"></div>
-              <img 
-                src={heroBg} 
-                alt="NuageBook World" 
-                className="w-full h-auto rounded-[3rem] border-8 border-white shadow-xl object-cover aspect-square"
-              />
+              <div className="w-full h-auto rounded-[3rem] border-8 border-white shadow-xl aspect-square bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 flex items-center justify-center">
+                <span className="text-8xl">📖</span>
+              </div>
               
               {/* Sticker Badge */}
               <div className="absolute -bottom-4 -left-4 bg-yellow-200 text-yellow-800 p-4 rounded-full w-28 h-28 flex flex-col items-center justify-center text-center shadow-lg rotate-[-12deg] border-4 border-white font-serif leading-tight z-20 animate-bounce-slow">

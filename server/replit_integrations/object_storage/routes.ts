@@ -2,7 +2,6 @@ import type { Express, Request } from "express";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "./objectStorage";
 import { randomUUID } from "crypto";
 import JSZip from "jszip";
-import { renderHtmlToImage } from "../../services/pageRenderer";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -250,70 +249,8 @@ export function registerObjectStorageRoutes(app: Express): void {
         allCssUpdated[cssPath] = updatedCss;
       }
       
-      // Now render HTML pages to images using Puppeteer
-      const pageImages: Array<{ pageIndex: number; imageUrl: string }> = [];
-      
       // Combine all updated CSS content (with font URLs updated)
       const allCss = Object.values(allCssUpdated).join('\n');
-      
-      // Filter to only content pages (not TOC, etc.)
-      const contentHtmlFiles = htmlFiles.filter(f => 
-        !f.toLowerCase().includes('toc') && 
-        !f.toLowerCase().includes('nav') &&
-        !f.toLowerCase().includes('cover')
-      );
-      
-      // Process each HTML page
-      for (let i = 0; i < contentHtmlFiles.length; i++) {
-        const htmlFile = contentHtmlFiles[i];
-        let pageHtml = htmlContent[htmlFile] || '';
-        
-        // Parse viewport dimensions from the HTML
-        const viewportMatch = pageHtml.match(/width[=:](\d+).*?height[=:](\d+)/i);
-        const pageWidth = viewportMatch ? parseInt(viewportMatch[1]) : 595;
-        const pageHeight = viewportMatch ? parseInt(viewportMatch[2]) : 842;
-        
-        // Replace image paths with Object Storage URLs
-        for (const [originalPath, storagePath] of Object.entries(imageMap)) {
-          // Match various path patterns
-          const patterns = [
-            new RegExp(`src=["']([^"']*${originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})["']`, 'gi'),
-            new RegExp(`src=["']([^"']*${originalPath.split('/').pop()?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') || ''})["']`, 'gi'),
-          ];
-          
-          for (const pattern of patterns) {
-            pageHtml = pageHtml.replace(pattern, `src="${storagePath}"`);
-          }
-        }
-        
-        try {
-          // Render HTML to image
-          const imageBuffer = await renderHtmlToImage({
-            html: pageHtml,
-            css: allCss,
-            width: pageWidth,
-            height: pageHeight,
-            baseUrl,
-          });
-          
-          // Upload the rendered image to Object Storage
-          const pageImageName = `${sessionId}_page_${i + 1}.png`;
-          const objectName = basePath ? `${basePath}/${pageImageName}` : pageImageName;
-          const file = bucket.file(objectName);
-          
-          await file.save(imageBuffer, {
-            contentType: 'image/png',
-            metadata: { cacheControl: 'public, max-age=31536000' },
-          });
-          
-          const imageUrl = `/objects/${bucketName}/${objectName}`;
-          pageImages.push({ pageIndex: i + 1, imageUrl });
-          
-          console.log(`Rendered page ${i + 1} to ${imageUrl}`);
-        } catch (renderError) {
-          console.error(`Failed to render page ${i + 1}:`, renderError);
-        }
-      }
       
       res.json({
         images: imageMap,
@@ -323,7 +260,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         htmlContent,
         cssContent: allCssUpdated,
         sessionId,
-        pageImages,
       });
     } catch (error) {
       console.error("Error extracting ZIP:", error);
@@ -675,24 +611,16 @@ export function registerObjectStorageRoutes(app: Express): void {
       const processedCssPath = path.join(htmlDir, 'styles.css');
       await fs.promises.writeFile(processedCssPath, allCss, 'utf-8');
 
-      // Get public bucket for final rendered images
-      const publicPaths = objectStorageService.getPublicObjectSearchPaths();
-      const publicPath = publicPaths[0];
-      const { bucketName: publicBucketName, objectName: publicBasePath } = parseObjectPathSimple(publicPath);
-      const publicBucket = objectStorageClient.bucket(publicBucketName);
-      
-      // Process each HTML page and render to images
+      // Process each HTML page
       const contentHtmlFiles = htmlFiles.filter(f => 
         !f.toLowerCase().includes('toc') && 
         !f.toLowerCase().includes('nav') &&
         !f.toLowerCase().includes('cover')
       ).sort();
       
-      const pageImages: Array<{ pageIndex: number; imageUrl: string }> = [];
       const rawHtmlPages: Array<{ html: string; width: number; height: number; pageIndex: number }> = [];
       const extractedTexts: Array<any> = [];
       const extractedImages: Array<any> = [];
-      const sessionId = randomUUID().substring(0, 8);
 
       for (let i = 0; i < contentHtmlFiles.length; i++) {
         const htmlFile = contentHtmlFiles[i];
@@ -784,35 +712,9 @@ export function registerObjectStorageRoutes(app: Express): void {
           });
         }
         
-        try {
-          // Render HTML to image using Puppeteer
-          const imageBuffer = await renderHtmlToImage({
-            html: pageHtml,
-            css: allCss,
-            width: pageWidth,
-            height: pageHeight,
-            baseUrl,
-          });
-          
-          // Upload rendered image to public bucket
-          const pageImageName = `${bookId}_page_${i + 1}.png`;
-          const objectPath = publicBasePath ? `${publicBasePath}/${pageImageName}` : pageImageName;
-          const file = publicBucket.file(objectPath);
-          
-          await file.save(imageBuffer, {
-            contentType: 'image/png',
-            metadata: { cacheControl: 'public, max-age=31536000' },
-          });
-          
-          const imageUrl = `/objects/${publicBucketName}/${objectPath}`;
-          pageImages.push({ pageIndex: i + 1, imageUrl });
-          console.log(`[epub-extract] Rendered page ${i + 1} to ${imageUrl}`);
-        } catch (renderError) {
-          console.error(`[epub-extract] Failed to render page ${i + 1}:`, renderError);
-        }
       }
 
-      console.log(`[epub-extract] Complete: ${pageImages.length} pages rendered, ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts, ${extractedTexts.length} texts, ${extractedImages.length} image elements`);
+      console.log(`[epub-extract] Complete: ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts, ${extractedTexts.length} texts, ${extractedImages.length} image elements`);
 
       res.json({
         success: true,
@@ -822,7 +724,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         fonts: fontMap,
         cssContent: allCss,
         rawHtmlPages,
-        pageImages,
         texts: extractedTexts,
         imageElements: extractedImages,
       });

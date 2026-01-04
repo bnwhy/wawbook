@@ -6148,7 +6148,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     );
                                 })()}
                             </div>
-                        )}
                     </div>
 
                  </div>

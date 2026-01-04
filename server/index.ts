@@ -135,9 +135,11 @@ app.use((req, res, next) => {
 });
 
 import { browserPool } from "./services/browserPool";
+import { startRenderWorker } from "./services/renderWorker";
 
 (async () => {
   await browserPool.initialize();
+  startRenderWorker();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

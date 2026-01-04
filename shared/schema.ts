@@ -196,3 +196,47 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
 
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type Setting = typeof settings.$inferSelect;
+
+// ===== RENDER JOBS (Queue for scalable book generation) =====
+export const renderJobs = pgTable("render_jobs", {
+  id: varchar("id").primaryKey(),
+  bookId: varchar("book_id").notNull(),
+  orderId: varchar("order_id"),
+  status: text("status").notNull().default("pending"), // 'pending' | 'processing' | 'completed' | 'failed'
+  priority: integer("priority").default(0).notNull(), // higher = more urgent
+  variables: jsonb("variables").$type<Record<string, string>>(),
+  result: jsonb("result").$type<{
+    pages?: Array<{ pageIndex: number; imageUrl: string }>;
+    pdfUrl?: string;
+    error?: string;
+  }>(),
+  progress: integer("progress").default(0), // 0-100
+  totalPages: integer("total_pages"),
+  renderedPages: integer("rendered_pages").default(0),
+  workerHost: text("worker_host"), // which worker is processing
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  expiresAt: timestamp("expires_at"), // for cleanup
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertRenderJobSchema = createInsertSchema(renderJobs).omit({
+  createdAt: true,
+  startedAt: true,
+  completedAt: true,
+});
+
+export type InsertRenderJob = z.infer<typeof insertRenderJobSchema>;
+export type RenderJob = typeof renderJobs.$inferSelect;
+
+// ===== TEMPLATE CACHE METADATA =====
+export const templateCache = pgTable("template_cache", {
+  bookId: varchar("book_id").primaryKey(),
+  storagePath: text("storage_path").notNull(), // path in Object Storage
+  pageCount: integer("page_count").notNull(),
+  cssHash: text("css_hash"), // for cache invalidation
+  lastAccessed: timestamp("last_accessed").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type TemplateCache = typeof templateCache.$inferSelect;

@@ -368,6 +368,88 @@ class TemplateEngine {
     return Array.from(this.templates.keys());
   }
 
+  async renderSinglePage(options: {
+    html: string;
+    css: string;
+    width: number;
+    height: number;
+    variables: Record<string, string>;
+    baseUrl: string;
+  }): Promise<{ imageUrl: string }> {
+    const { html, css, width, height, variables, baseUrl } = options;
+    
+    let processedHtml = html;
+    const $ = cheerio.load(processedHtml, { xmlMode: true });
+
+    for (const [key, value] of Object.entries(variables)) {
+      $('body').html(
+        ($('body').html() || '').replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value)
+      );
+      $('body').html(
+        ($('body').html() || '').replace(new RegExp(`\\{${key}\\}`, 'g'), value)
+      );
+    }
+
+    processedHtml = $.html();
+
+    const embeddedFonts = extractFontsFromCss(css);
+    const fontPreloadScript = generateFontPreloadScript(embeddedFonts);
+
+    const bodyMatch = processedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const bodyContent = bodyMatch ? bodyMatch[1] : processedHtml;
+
+    const fullHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  ${fontPreloadScript}
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { 
+      width: ${width}px; 
+      height: ${height}px; 
+      overflow: hidden;
+      background: white;
+    }
+    ${css}
+  </style>
+</head>
+<body>
+  ${bodyContent}
+</body>
+</html>`;
+
+    let imageBuffer = await browserPool.renderPage({
+      html: fullHtml,
+      width,
+      height,
+      format: 'jpeg',
+      quality: 85,
+    });
+
+    imageBuffer = await sharp(imageBuffer)
+      .jpeg({ quality: 85, progressive: true })
+      .toBuffer();
+
+    const publicPaths = this.objectStorageService.getPublicObjectSearchPaths();
+    const publicPath = publicPaths[0];
+    const { bucketName, objectName: basePath } = this.parseObjectPath(publicPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    
+    const sessionId = `render_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 6)}`;
+    const imageName = `${sessionId}.jpg`;
+    const objectName = basePath ? `${basePath}/${imageName}` : imageName;
+    const file = bucket.file(objectName);
+    
+    await file.save(imageBuffer, {
+      contentType: 'image/jpeg',
+      metadata: { cacheControl: 'public, max-age=3600' },
+    });
+
+    return { imageUrl: `/objects/${bucketName}/${objectName}` };
+  }
+
   private parseObjectPath(path: string): { bucketName: string; objectName: string } {
     if (!path.startsWith('/')) path = `/${path}`;
     const parts = path.split('/');

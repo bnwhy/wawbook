@@ -10,6 +10,7 @@ import { getStripePublishableKey } from "./stripeClient";
 import { renderHtmlToImage } from "./services/pageRenderer";
 import { objectStorageClient } from "./replit_integrations/object_storage/objectStorage";
 import * as path from "path";
+import { jobQueue } from "./services/jobQueue";
 
 // Helper to parse object storage path
 function parseObjectPath(path: string): { bucketName: string; objectName: string } {
@@ -91,7 +92,7 @@ export async function registerRoutes(
     }
   });
 
-  // ===== USER: GENERATE PREVIEWS =====
+  // ===== USER: GENERATE PREVIEWS (Synchronous - for backward compatibility) =====
   app.post("/api/books/:id/generate-previews", async (req, res) => {
     try {
       const { id } = req.params;
@@ -121,6 +122,88 @@ export async function registerRoutes(
     } catch (error) {
       console.error("[generate-previews] Error:", error);
       res.status(500).json({ error: "Failed to generate previews" });
+    }
+  });
+
+  // ===== ASYNC RENDER JOBS (Scalable for production) =====
+  
+  // Submit a render job (returns immediately with job ID)
+  app.post("/api/render-jobs", async (req, res) => {
+    try {
+      const { bookId, orderId, variables, priority = 0 } = req.body;
+      
+      if (!bookId) {
+        return res.status(400).json({ error: "bookId is required" });
+      }
+
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+
+      const contentConfig = book.contentConfig as { rawHtmlPages?: any[] };
+      const totalPages = contentConfig?.rawHtmlPages?.length || 0;
+
+      const job = await jobQueue.enqueue({
+        bookId,
+        orderId,
+        variables: variables || {},
+        priority,
+        totalPages,
+        status: 'pending',
+        progress: 0,
+        renderedPages: 0,
+      });
+
+      res.status(202).json({
+        success: true,
+        jobId: job.id,
+        status: job.status,
+        totalPages,
+        message: "Render job queued. Poll /api/render-jobs/:id for status.",
+      });
+    } catch (error) {
+      console.error("[render-jobs] Error creating job:", error);
+      res.status(500).json({ error: "Failed to create render job" });
+    }
+  });
+
+  // Get queue statistics (admin) - MUST be before :id route
+  app.get("/api/render-jobs/stats/summary", async (req, res) => {
+    try {
+      const stats = await jobQueue.getQueueStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("[render-jobs] Error getting stats:", error);
+      res.status(500).json({ error: "Failed to get queue stats" });
+    }
+  });
+
+  // Get job status and result
+  app.get("/api/render-jobs/:id", async (req, res) => {
+    try {
+      const job = await jobQueue.getJob(req.params.id);
+      
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      res.json({
+        id: job.id,
+        bookId: job.bookId,
+        orderId: job.orderId,
+        status: job.status,
+        progress: job.progress,
+        renderedPages: job.renderedPages,
+        totalPages: job.totalPages,
+        result: job.result,
+        createdAt: job.createdAt,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt,
+      });
+    } catch (error) {
+      console.error("[render-jobs] Error getting job:", error);
+      res.status(500).json({ error: "Failed to get job status" });
     }
   });
 

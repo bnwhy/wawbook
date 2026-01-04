@@ -83,3 +83,27 @@ Preferred communication style: Simple, everyday language.
 ### Shipping & Payments
 - Architecture prepared for Stripe integration (dependency listed)
 - Shipping zones configured per-country with multiple methods
+
+## Scalability Architecture (January 2026)
+
+### Asynchronous Render Job Queue
+For handling thousands of concurrent book generation requests in production:
+
+- **JobQueue Service** (`server/services/jobQueue.ts`): PostgreSQL-based job queue using FOR UPDATE SKIP LOCKED pattern for atomic job claim without Redis dependency
+- **RenderWorker Service** (`server/services/renderWorker.ts`): Background worker polling for pending jobs, processes renders asynchronously
+- **LRU Cache Service** (`server/services/lruCache.ts`): Memory-efficient template caching with size limits and TTL expiration
+
+### Async API Endpoints
+- `POST /api/render-jobs` - Submit render job (returns immediately with jobId)
+- `GET /api/render-jobs/:id` - Poll job status and result
+- `GET /api/render-jobs/stats/summary` - Queue statistics for monitoring
+
+### Database Schema
+- `render_jobs` table: Tracks job status (pending/processing/completed/failed), progress, variables, results
+- Uses priority queue ordering and job timeout handling
+
+### Worker Configuration
+- Max 2 concurrent renders per worker
+- 2-second poll interval
+- 5-minute job timeout
+- Progress tracking with page-by-page updates

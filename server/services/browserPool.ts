@@ -71,32 +71,52 @@ class BrowserPool {
 
         // Wait for custom fonts loaded via FontFace API (from generateFontPreloadScript)
         const fontsLoaded = await page.evaluate(async () => {
-          // First wait for any custom font promises
+          // First wait for any custom font promises with extended timeout
           if ((window as any).__fontsLoaded) {
             try {
-              await (window as any).__fontsLoaded;
+              await Promise.race([
+                (window as any).__fontsLoaded,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Font load timeout')), 10000))
+              ]);
             } catch (e) {
-              console.error('[BrowserPool] Custom fonts failed:', e);
+              console.error('[BrowserPool] Custom fonts failed or timed out:', e);
             }
           }
-          // Then wait for document.fonts.ready
+          
+          // Wait for document.fonts.ready
+          await document.fonts.ready;
+          
+          // Additional wait for fonts to be fully rendered
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Check again after timeout
           await document.fonts.ready;
           
           // Return font loading status for debugging
           const loadedFonts: string[] = [];
+          const pendingFonts: string[] = [];
           document.fonts.forEach((font) => {
             if (font.status === 'loaded') {
               loadedFonts.push(`${font.family} ${font.weight} ${font.style}`);
+            } else {
+              pendingFonts.push(`${font.family} (${font.status})`);
             }
           });
-          return { count: loadedFonts.length, fonts: loadedFonts.slice(0, 10) };
+          return { 
+            count: loadedFonts.length, 
+            fonts: loadedFonts.slice(0, 10),
+            pending: pendingFonts.slice(0, 5)
+          };
         }).catch((e) => {
           console.error('[BrowserPool] Font loading error:', e);
-          return { count: 0, fonts: [] };
+          return { count: 0, fonts: [], pending: [] };
         });
         
         if (fontsLoaded.count > 0) {
           console.log(`[BrowserPool] Loaded ${fontsLoaded.count} fonts:`, fontsLoaded.fonts);
+        }
+        if (fontsLoaded.pending && fontsLoaded.pending.length > 0) {
+          console.warn(`[BrowserPool] Pending fonts:`, fontsLoaded.pending);
         }
 
         // Force a reflow to ensure fonts are applied to all text elements
@@ -107,14 +127,17 @@ class BrowserPool {
           const textElements = document.querySelectorAll('p, span, div, h1, h2, h3, h4, h5, h6');
           textElements.forEach(el => {
             const htmlEl = el as HTMLElement;
-            htmlEl.style.opacity = '0.99';
+            // Force font re-application
+            const originalFontFamily = getComputedStyle(htmlEl).fontFamily;
+            htmlEl.style.fontFamily = 'sans-serif';
             void htmlEl.offsetHeight;
-            htmlEl.style.opacity = '1';
+            htmlEl.style.fontFamily = originalFontFamily;
+            void htmlEl.offsetHeight;
           });
         });
 
         // Longer delay to ensure fonts are fully applied and rendered
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(800);
 
         await page.waitForFunction(() => {
           const images = document.querySelectorAll('img');

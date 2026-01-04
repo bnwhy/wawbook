@@ -62,7 +62,6 @@ function generateFontPreloadScript(fonts: FontInfo[]): string {
     (function() {
       try {
         console.log('[fontPreload] Loading font ${i + 1}/${fonts.length}: ${font.family} (${font.weight} ${font.style})');
-        var srcData = '${font.src.substring(0, 50)}...';
         var font${i} = new FontFace('${font.family}', 'url(${font.src})', {
           weight: '${font.weight}',
           style: '${font.style}',
@@ -93,6 +92,15 @@ function generateFontPreloadScript(fonts: FontInfo[]): string {
         window.__fontsLoaded = Promise.all(fontPromises).then(function(results) {
           var loaded = results.filter(function(r) { return r && r.status === 'loaded'; }).length;
           console.log('[fontPreload] Completed: ' + loaded + '/${fonts.length} fonts loaded');
+          // Force text elements to use the loaded fonts
+          setTimeout(function() {
+            var textElements = document.querySelectorAll('span, p, div, h1, h2, h3, h4, h5, h6');
+            textElements.forEach(function(el) {
+              el.style.visibility = 'hidden';
+              void el.offsetHeight;
+              el.style.visibility = 'visible';
+            });
+          }, 50);
           return results;
         });
       })();

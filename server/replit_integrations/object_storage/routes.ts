@@ -6,6 +6,19 @@ import * as fs from "fs";
 import * as path from "path";
 
 /**
+ * Clean CSS syntax errors that can prevent fonts from loading
+ * - Fixes spaces before colons (e.g., "src : url" -> "src: url")
+ * - Normalizes @font-face declarations
+ */
+function cleanCssSyntax(css: string): string {
+  return css
+    .replace(/\s+:/g, ':')
+    .replace(/:\s+/g, ': ')
+    .replace(/\(\s+/g, '(')
+    .replace(/\s+\)/g, ')');
+}
+
+/**
  * Shared EPUB extraction logic - extracts an EPUB buffer to local server storage
  */
 async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
@@ -100,7 +113,8 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
   }
 
   // Process CSS to embed fonts as base64 data URIs
-  let allCss = Object.values(cssContent).join('\n');
+  // Clean CSS syntax errors (e.g., "src : url" -> "src: url")
+  let allCss = cleanCssSyntax(Object.values(cssContent).join('\n'));
   
   // Convert each font to base64 and embed directly in CSS
   for (const [originalPath, serverPath] of Object.entries(fontMap)) {
@@ -474,7 +488,8 @@ export function registerObjectStorageRoutes(app: Express): void {
       // Second pass: update CSS with correct font URLs and detect missing fonts
       let allCssUpdated: Record<string, string> = {};
       for (const [cssPath, css] of Object.entries(cssContent)) {
-        let updatedCss = css;
+        // Clean CSS syntax errors (e.g., "src : url" -> "src: url")
+        let updatedCss = cleanCssSyntax(css);
         
         // Find all @font-face declarations and update src URLs
         updatedCss = updatedCss.replace(

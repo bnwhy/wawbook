@@ -583,9 +583,11 @@ export function registerObjectStorageRoutes(app: Express): void {
       const parts = objectPath.split('/');
       
       // PRIORITY 1: Check if first part looks like a bucket name (replit-objstore-*)
+      // If bucket is explicitly specified, ONLY use that bucket - no fallback
       if (parts.length >= 2 && parts[0].startsWith('replit-objstore-')) {
         const bucketName = parts[0];
         const fileName = parts.slice(1).join('/');
+        console.log(`[objects] Direct bucket access: ${bucketName}/${fileName}`);
         try {
           const bucket = objectStorageClient.bucket(bucketName);
           const file = bucket.file(fileName);
@@ -593,13 +595,17 @@ export function registerObjectStorageRoutes(app: Express): void {
           if (exists) {
             await objectStorageService.downloadObject(file, res);
             return;
+          } else {
+            console.log(`[objects] File not found in bucket ${bucketName}: ${fileName}`);
+            return res.status(404).json({ error: "Object not found" });
           }
         } catch (bucketError) {
-          console.log(`[objects] Bucket ${bucketName} lookup failed, trying fallback`);
+          console.error(`[objects] Bucket ${bucketName} error:`, bucketError);
+          return res.status(500).json({ error: "Failed to access object storage" });
         }
       }
       
-      // PRIORITY 2: Try to get file from private dir
+      // PRIORITY 2: Try to get file from private dir (for paths without explicit bucket)
       try {
         const objectFile = await objectStorageService.getObjectEntityFile(req.path);
         await objectStorageService.downloadObject(objectFile, res);
@@ -608,7 +614,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         // If not found in private dir, try public paths
       }
 
-      // PRIORITY 3: Search in public paths
+      // PRIORITY 3: Search in public paths (for paths without explicit bucket)
       const publicFile = await objectStorageService.searchPublicObject(objectPath);
       if (publicFile) {
         await objectStorageService.downloadObject(publicFile, res);

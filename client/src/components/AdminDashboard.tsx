@@ -200,7 +200,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // EPUB from bucket state
   const [showEpubSelector, setShowEpubSelector] = useState(false);
   const [isExtractingEpub, setIsExtractingEpub] = useState(false);
-  const [manualEpubPath, setManualEpubPath] = useState('.private/epubs/');
+  const [bucketEpubs, setBucketEpubs] = useState<Array<{name: string, path: string, size?: number}>>([]);
+  const [isLoadingEpubs, setIsLoadingEpubs] = useState(false);
 
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -260,6 +261,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Fulfillment Tracking State
   const [fulfillmentTracking, setFulfillmentTracking] = useState('');
+
+  // Load EPUBs from bucket when modal opens
+  const loadBucketEpubs = async () => {
+    setIsLoadingEpubs(true);
+    try {
+      const response = await fetch('/api/epubs');
+      if (response.ok) {
+        const data = await response.json();
+        setBucketEpubs(data.epubs || []);
+      }
+    } catch (error) {
+      console.error('[loadBucketEpubs] Error:', error);
+      toast.error('Erreur lors du chargement des EPUBs');
+    } finally {
+      setIsLoadingEpubs(false);
+    }
+  };
+
+  // Load EPUBs when modal opens
+  React.useEffect(() => {
+    if (showEpubSelector) {
+      loadBucketEpubs();
+    }
+  }, [showEpubSelector]);
 
   // Function to extract EPUB from bucket
   const handleExtractEpub = async (epubPath: string) => {
@@ -6169,53 +6194,69 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     <div className="p-4 space-y-4">
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
                         <p className="font-medium mb-1">Instructions :</p>
-                        <ol className="list-decimal list-inside space-y-1 text-xs text-blue-700">
-                          <li>Ouvrez l'outil <strong>Object Storage</strong> dans le panneau de gauche de Replit</li>
-                          <li>Uploadez votre fichier EPUB dans le dossier <code className="bg-blue-100 px-1 rounded">.private/</code></li>
-                          <li>Copiez le chemin complet du fichier (ex: <code className="bg-blue-100 px-1 rounded">.private/mon-livre.epub</code>)</li>
-                          <li>Collez-le ci-dessous et cliquez sur Importer</li>
-                        </ol>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Chemin du fichier EPUB
-                        </label>
-                        <input
-                          type="text"
-                          value={manualEpubPath}
-                          onChange={(e) => setManualEpubPath(e.target.value)}
-                          placeholder=".private/epubs/mon-livre.epub"
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm font-mono"
-                        />
-                        <p className="text-xs text-slate-400 mt-1">
-                          Le fichier doit exister dans l'Object Storage de votre projet
+                        <p className="text-xs text-blue-700">
+                          Uploadez vos fichiers EPUB dans le dossier <code className="bg-blue-100 px-1 rounded">.private/</code> de l'Object Storage (panneau de gauche), puis sélectionnez-les ci-dessous.
                         </p>
                       </div>
                       
-                      <button
-                        onClick={() => {
-                          if (manualEpubPath && manualEpubPath.endsWith('.epub')) {
-                            handleExtractEpub(`/objects/replit-objstore-90dfe834-8458-4073-876b-8e57fcd8249d/${manualEpubPath}`);
-                          } else {
-                            toast.error("Le chemin doit pointer vers un fichier .epub");
-                          }
-                        }}
-                        disabled={isExtractingEpub || !manualEpubPath}
-                        className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isExtractingEpub ? (
-                          <>
-                            <Loader2 size={18} className="animate-spin" />
-                            Extraction en cours...
-                          </>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-slate-700">
+                            EPUBs disponibles
+                          </label>
+                          <button
+                            onClick={loadBucketEpubs}
+                            className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                          >
+                            <RotateCcw size={12} />
+                            Rafraîchir
+                          </button>
+                        </div>
+                        
+                        {isLoadingEpubs ? (
+                          <div className="flex items-center justify-center py-8 text-slate-400">
+                            <Loader2 size={20} className="animate-spin mr-2" />
+                            Chargement...
+                          </div>
+                        ) : bucketEpubs.length === 0 ? (
+                          <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                            <FileCode size={32} className="mx-auto text-slate-300 mb-2" />
+                            <p className="text-sm text-slate-500">Aucun EPUB trouvé</p>
+                            <p className="text-xs text-slate-400 mt-1">Uploadez des fichiers .epub dans le dossier .private/</p>
+                          </div>
                         ) : (
-                          <>
-                            <CloudDownload size={18} />
-                            Importer l'EPUB
-                          </>
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {bucketEpubs.map((epub) => (
+                              <div 
+                                key={epub.path}
+                                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-green-300 transition-colors"
+                              >
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <FileCode size={18} className="text-green-600 shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-slate-700 truncate">{epub.name}</p>
+                                    {epub.size && (
+                                      <p className="text-xs text-slate-400">{(epub.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleExtractEpub(epub.path)}
+                                  disabled={isExtractingEpub}
+                                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1 shrink-0"
+                                >
+                                  {isExtractingEpub ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                  ) : (
+                                    <CloudDownload size={14} />
+                                  )}
+                                  Importer
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         )}
-                      </button>
+                      </div>
                     </div>
                     <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
                       Les EPUBs sont extraits et les images sont stockées dans le bucket public.

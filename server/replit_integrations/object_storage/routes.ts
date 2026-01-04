@@ -6,6 +6,261 @@ import * as fs from "fs";
 import * as path from "path";
 
 /**
+ * Shared EPUB extraction logic - extracts an EPUB buffer to local server storage
+ */
+async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
+  // Create local directories for this book
+  const bookAssetsDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId);
+  const imagesDir = path.join(bookAssetsDir, 'images');
+  const fontsDir = path.join(bookAssetsDir, 'fonts');
+  const htmlDir = path.join(bookAssetsDir, 'html');
+  
+  await fs.promises.mkdir(imagesDir, { recursive: true });
+  await fs.promises.mkdir(fontsDir, { recursive: true });
+  await fs.promises.mkdir(htmlDir, { recursive: true });
+
+  // Extract ZIP
+  const zip = await JSZip.loadAsync(epubBuffer);
+  
+  const imageMap: Record<string, string> = {};
+  const fontMap: Record<string, string> = {};
+  const htmlFiles: string[] = [];
+  const htmlContent: Record<string, string> = {};
+  const cssContent: Record<string, string> = {};
+  
+  // Extract all files
+  for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+    if (zipEntry.dir) continue;
+    
+    const fileName = relativePath.split('/').pop() || relativePath;
+    
+    // Handle images - save to local server
+    if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
+      const imageBuffer = await zipEntry.async('nodebuffer');
+      const localPath = path.join(imagesDir, fileName);
+      await fs.promises.writeFile(localPath, imageBuffer);
+      
+      // Create a URL path for browser to access
+      const serverPath = `/assets/books/${bookId}/images/${fileName}`;
+      imageMap[relativePath] = serverPath;
+      imageMap[fileName] = serverPath;
+      
+      // Add all partial paths (e.g., "image/1.jpg" from "OEBPS/image/1.jpg")
+      const parts = relativePath.split('/');
+      for (let i = 1; i < parts.length; i++) {
+        const partialPath = parts.slice(i).join('/');
+        if (!imageMap[partialPath]) {
+          imageMap[partialPath] = serverPath;
+        }
+      }
+      console.log(`[epub-extract] Saved image: ${fileName}`);
+    }
+    
+    // Handle fonts - save to local server
+    if (/\.(ttf|otf|woff|woff2|eot)$/i.test(relativePath)) {
+      const fontBuffer = await zipEntry.async('nodebuffer');
+      const localPath = path.join(fontsDir, fileName);
+      await fs.promises.writeFile(localPath, fontBuffer);
+      
+      const serverPath = `/assets/books/${bookId}/fonts/${fileName}`;
+      fontMap[relativePath] = serverPath;
+      fontMap[fileName] = serverPath;
+      
+      // Add all partial paths
+      const parts = relativePath.split('/');
+      for (let i = 1; i < parts.length; i++) {
+        const partialPath = parts.slice(i).join('/');
+        if (!fontMap[partialPath]) {
+          fontMap[partialPath] = serverPath;
+        }
+      }
+      console.log(`[epub-extract] Saved font: ${fileName}`);
+    }
+    
+    // Handle HTML/XHTML
+    if (/\.(xhtml|html)$/i.test(relativePath)) {
+      const content = await zipEntry.async('string');
+      htmlFiles.push(relativePath);
+      htmlContent[relativePath] = content;
+      
+      // Save HTML to local server
+      const localPath = path.join(htmlDir, fileName);
+      await fs.promises.writeFile(localPath, content, 'utf-8');
+    }
+    
+    // Handle CSS
+    if (/\.css$/i.test(relativePath)) {
+      const content = await zipEntry.async('string');
+      cssContent[relativePath] = content;
+      
+      // Save CSS to local server
+      const localPath = path.join(htmlDir, fileName);
+      await fs.promises.writeFile(localPath, content, 'utf-8');
+    }
+  }
+
+  // Process CSS to embed fonts as base64 data URIs
+  let allCss = Object.values(cssContent).join('\n');
+  
+  // Convert each font to base64 and embed directly in CSS
+  for (const [originalPath, serverPath] of Object.entries(fontMap)) {
+    const filename = originalPath.split('/').pop() || originalPath;
+    const fontLocalPath = path.join(fontsDir, filename);
+    
+    try {
+      // Read font file and convert to base64
+      const fontBuffer = await fs.promises.readFile(fontLocalPath);
+      const fontBase64 = fontBuffer.toString('base64');
+      
+      // Determine MIME type based on extension
+      const ext = filename.toLowerCase().split('.').pop();
+      let mimeType = 'font/truetype';
+      if (ext === 'otf') mimeType = 'font/opentype';
+      else if (ext === 'woff') mimeType = 'font/woff';
+      else if (ext === 'woff2') mimeType = 'font/woff2';
+      
+      const dataUri = `data:${mimeType};base64,${fontBase64}`;
+      
+      // Match url() with any path containing this filename and replace with base64
+      const pattern = new RegExp(
+        `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
+        'gi'
+      );
+      const formatHint = ext === 'otf' ? 'opentype' : ext === 'woff' ? 'woff' : ext === 'woff2' ? 'woff2' : 'truetype';
+      allCss = allCss.replace(pattern, `url("${dataUri}") format('${formatHint}')`);
+      
+      console.log(`[epub-extract] Embedded font as base64: ${filename} (${Math.round(fontBase64.length / 1024)}KB)`);
+    } catch (fontError) {
+      console.error(`[epub-extract] Failed to embed font ${filename}:`, fontError);
+      const pattern = new RegExp(
+        `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
+        'gi'
+      );
+      allCss = allCss.replace(pattern, `url("${serverPath}")`);
+    }
+  }
+  
+  // Save processed CSS with embedded fonts
+  const processedCssPath = path.join(htmlDir, 'styles.css');
+  await fs.promises.writeFile(processedCssPath, allCss, 'utf-8');
+
+  // Process each HTML page
+  const contentHtmlFiles = htmlFiles.filter(f => 
+    !f.toLowerCase().includes('toc') && 
+    !f.toLowerCase().includes('nav') &&
+    !f.toLowerCase().includes('cover')
+  ).sort();
+  
+  const rawHtmlPages: Array<{ html: string; width: number; height: number; pageIndex: number }> = [];
+  const extractedTexts: Array<any> = [];
+  const extractedImages: Array<any> = [];
+
+  for (let i = 0; i < contentHtmlFiles.length; i++) {
+    const htmlFile = contentHtmlFiles[i];
+    let pageHtml = htmlContent[htmlFile] || '';
+    
+    // Parse viewport dimensions
+    const viewportMatch = pageHtml.match(/width[=:](\d+).*?height[=:](\d+)/i);
+    const pageWidth = viewportMatch ? parseInt(viewportMatch[1]) : 595;
+    const pageHeight = viewportMatch ? parseInt(viewportMatch[2]) : 842;
+    
+    // Replace image paths with server paths
+    for (const [originalPath, serverPath] of Object.entries(imageMap)) {
+      const patterns = [
+        new RegExp(`src=["']([^"']*${originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})["']`, 'gi'),
+        new RegExp(`src=["']([^"']*${originalPath.split('/').pop()?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') || ''})["']`, 'gi'),
+      ];
+      for (const pattern of patterns) {
+        pageHtml = pageHtml.replace(pattern, `src="${serverPath}"`);
+      }
+    }
+    
+    rawHtmlPages.push({
+      html: pageHtml,
+      width: pageWidth,
+      height: pageHeight,
+      pageIndex: i + 1,
+    });
+    
+    // Parse text elements from HTML (spans with text content)
+    const spanRegex = /<span[^>]*id=["']([^"']+)["'][^>]*>([^<]*)<\/span>/gi;
+    let spanMatch;
+    while ((spanMatch = spanRegex.exec(pageHtml)) !== null) {
+      const match = spanMatch;
+      const spanId = match[1];
+      const textContent = match[2].trim();
+      if (textContent) {
+        const isVariable = /\{[^}]+\}/.test(textContent);
+        const variableMatch = textContent.match(/\{([^}]+)\}/);
+        
+        extractedTexts.push({
+          id: `text-${bookId}-${i + 1}-${spanId}`,
+          type: isVariable ? 'variable' : 'fixed',
+          label: spanId,
+          content: isVariable ? `{{${variableMatch?.[1] || 'name'}}}` : textContent,
+          originalContent: textContent,
+          style: {
+            color: '#000000',
+            fontSize: '16px',
+            textAlign: 'left',
+            fontFamily: 'serif',
+          },
+          position: {
+            x: 0,
+            y: 0,
+            layer: 50,
+            pageIndex: i + 1,
+            rotation: 0,
+          },
+          combinationKey: 'default',
+        });
+      }
+    }
+    
+    // Parse image elements from HTML
+    const imgRegex = /<img[^>]*(?:class=["']([^"']+)["'])?[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;
+    let imgMatch;
+    while ((imgMatch = imgRegex.exec(pageHtml)) !== null) {
+      const match = imgMatch;
+      const imgClass = match[1] || '';
+      const imgSrc = match[2];
+      const imgAlt = match[3] || '';
+      
+      extractedImages.push({
+        id: `img-${bookId}-${i + 1}-${randomUUID().substring(0, 8)}`,
+        type: 'static',
+        label: imgClass || imgAlt || `image-page-${i + 1}`,
+        url: imgSrc,
+        position: {
+          x: 0,
+          y: 0,
+          layer: 10,
+          pageIndex: i + 1,
+          rotation: 0,
+          width: 100,
+          height: 100,
+        },
+        combinationKey: 'default',
+      });
+    }
+  }
+
+  console.log(`[epub-extract] Complete: ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts, ${extractedTexts.length} texts, ${extractedImages.length} image elements`);
+
+  return {
+    success: true,
+    bookId,
+    assetsPath: `/assets/books/${bookId}`,
+    images: imageMap,
+    fonts: fontMap,
+    cssContent: allCss,
+    rawHtmlPages,
+    texts: extractedTexts,
+    imageElements: extractedImages,
+  };
+}
+
+/**
  * Register object storage routes for file uploads.
  *
  * This provides example routes for the presigned URL upload flow:
@@ -439,7 +694,31 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
-   * Extract an EPUB from bucket to local server storage
+   * Extract an EPUB from direct file upload (base64)
+   */
+  app.post("/api/epubs/extract-upload", async (req, res) => {
+    try {
+      const { epubBase64, bookId } = req.body;
+
+      if (!epubBase64 || !bookId) {
+        return res.status(400).json({ error: "Missing required fields: epubBase64, bookId" });
+      }
+
+      // Decode base64 to buffer
+      const epubBuffer = Buffer.from(epubBase64, 'base64');
+      console.log(`[epub-extract-upload] Received EPUB (${epubBuffer.length} bytes)`);
+
+      // Use shared extraction logic
+      const result = await extractEpubFromBuffer(epubBuffer, bookId);
+      res.json(result);
+    } catch (error) {
+      console.error("[epub-extract-upload] Error:", error);
+      res.status(500).json({ error: "Failed to extract EPUB" });
+    }
+  });
+
+  /**
+   * Extract an EPUB from bucket to local server storage (kept for backward compatibility)
    */
   app.post("/api/epubs/extract", async (req, res) => {
     try {
@@ -449,11 +728,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(400).json({ error: "Missing required fields: epubPath, bookId" });
       }
 
-      // Construct base URL for Puppeteer
-      const protocol = req.headers['x-forwarded-proto'] || 'http';
-      const host = req.headers['host'] || 'localhost:5000';
-      const baseUrl = `${protocol}://${host}`;
-      console.log(`[epub-extract] Using base URL: ${baseUrl}`);
+      console.log(`[epub-extract] Attempting to extract from bucket: ${epubPath}`);
 
       // Parse the epub path to get bucket and object name
       const pathWithoutPrefix = epubPath.replace(/^\/objects\//, '');
@@ -473,263 +748,12 @@ export function registerObjectStorageRoutes(app: Express): void {
       const [epubBuffer] = await epubFile.download();
       console.log(`[epub-extract] Downloaded EPUB (${epubBuffer.length} bytes)`);
 
-      // Create local directories for this book
-      const bookAssetsDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId);
-      const imagesDir = path.join(bookAssetsDir, 'images');
-      const fontsDir = path.join(bookAssetsDir, 'fonts');
-      const htmlDir = path.join(bookAssetsDir, 'html');
-      
-      await fs.promises.mkdir(imagesDir, { recursive: true });
-      await fs.promises.mkdir(fontsDir, { recursive: true });
-      await fs.promises.mkdir(htmlDir, { recursive: true });
-
-      // Extract ZIP
-      const zip = await JSZip.loadAsync(epubBuffer);
-      
-      const imageMap: Record<string, string> = {};
-      const fontMap: Record<string, string> = {};
-      const htmlFiles: string[] = [];
-      const htmlContent: Record<string, string> = {};
-      const cssContent: Record<string, string> = {};
-      
-      // Extract all files
-      for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
-        if (zipEntry.dir) continue;
-        
-        const lowerPath = relativePath.toLowerCase();
-        const fileName = relativePath.split('/').pop() || relativePath;
-        
-        // Handle images - save to local server
-        if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
-          const imageBuffer = await zipEntry.async('nodebuffer');
-          const localPath = path.join(imagesDir, fileName);
-          await fs.promises.writeFile(localPath, imageBuffer);
-          
-          // Create a URL path for Puppeteer to access
-          const serverPath = `/assets/books/${bookId}/images/${fileName}`;
-          imageMap[relativePath] = serverPath;
-          imageMap[fileName] = serverPath;
-          
-          // Add all partial paths (e.g., "image/1.jpg" from "OEBPS/image/1.jpg")
-          const parts = relativePath.split('/');
-          for (let i = 1; i < parts.length; i++) {
-            const partialPath = parts.slice(i).join('/');
-            if (!imageMap[partialPath]) {
-              imageMap[partialPath] = serverPath;
-            }
-          }
-          console.log(`[epub-extract] Saved image: ${fileName}`);
-        }
-        
-        // Handle fonts - save to local server
-        if (/\.(ttf|otf|woff|woff2|eot)$/i.test(relativePath)) {
-          const fontBuffer = await zipEntry.async('nodebuffer');
-          const localPath = path.join(fontsDir, fileName);
-          await fs.promises.writeFile(localPath, fontBuffer);
-          
-          const serverPath = `/assets/books/${bookId}/fonts/${fileName}`;
-          fontMap[relativePath] = serverPath;
-          fontMap[fileName] = serverPath;
-          
-          // Add all partial paths (e.g., "font/Chiller.TTF" from "OEBPS/font/Chiller.TTF")
-          const parts = relativePath.split('/');
-          for (let i = 1; i < parts.length; i++) {
-            const partialPath = parts.slice(i).join('/');
-            if (!fontMap[partialPath]) {
-              fontMap[partialPath] = serverPath;
-            }
-          }
-          console.log(`[epub-extract] Saved font: ${fileName}`);
-        }
-        
-        // Handle HTML/XHTML
-        if (/\.(xhtml|html)$/i.test(relativePath)) {
-          const content = await zipEntry.async('string');
-          htmlFiles.push(relativePath);
-          htmlContent[relativePath] = content;
-          
-          // Save HTML to local server
-          const localPath = path.join(htmlDir, fileName);
-          await fs.promises.writeFile(localPath, content, 'utf-8');
-        }
-        
-        // Handle CSS
-        if (/\.css$/i.test(relativePath)) {
-          const content = await zipEntry.async('string');
-          cssContent[relativePath] = content;
-          
-          // Save CSS to local server
-          const localPath = path.join(htmlDir, fileName);
-          await fs.promises.writeFile(localPath, content, 'utf-8');
-        }
-      }
-
-      // Process CSS to embed fonts as base64 data URIs (most reliable for Playwright)
-      let allCss = Object.values(cssContent).join('\n');
-      
-      // Convert each font to base64 and embed directly in CSS
-      for (const [originalPath, serverPath] of Object.entries(fontMap)) {
-        const filename = originalPath.split('/').pop() || originalPath;
-        const fontLocalPath = path.join(fontsDir, filename);
-        
-        try {
-          // Read font file and convert to base64
-          const fontBuffer = await fs.promises.readFile(fontLocalPath);
-          const fontBase64 = fontBuffer.toString('base64');
-          
-          // Determine MIME type based on extension
-          const ext = filename.toLowerCase().split('.').pop();
-          let mimeType = 'font/truetype';
-          if (ext === 'otf') mimeType = 'font/opentype';
-          else if (ext === 'woff') mimeType = 'font/woff';
-          else if (ext === 'woff2') mimeType = 'font/woff2';
-          
-          const dataUri = `data:${mimeType};base64,${fontBase64}`;
-          
-          // Match url() with any path containing this filename and replace with base64
-          const pattern = new RegExp(
-            `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
-            'gi'
-          );
-          // Add format() hint for better browser compatibility
-          const formatHint = ext === 'otf' ? 'opentype' : ext === 'woff' ? 'woff' : ext === 'woff2' ? 'woff2' : 'truetype';
-          allCss = allCss.replace(pattern, `url("${dataUri}") format('${formatHint}')`);
-          
-          console.log(`[epub-extract] Embedded font as base64: ${filename} (${Math.round(fontBase64.length / 1024)}KB)`);
-        } catch (fontError) {
-          console.error(`[epub-extract] Failed to embed font ${filename}:`, fontError);
-          // Fallback to server path if base64 fails
-          const pattern = new RegExp(
-            `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
-            'gi'
-          );
-          allCss = allCss.replace(pattern, `url("${serverPath}")`);
-        }
-      }
-      
-      // Save processed CSS with embedded fonts
-      const processedCssPath = path.join(htmlDir, 'styles.css');
-      await fs.promises.writeFile(processedCssPath, allCss, 'utf-8');
-
-      // Process each HTML page
-      const contentHtmlFiles = htmlFiles.filter(f => 
-        !f.toLowerCase().includes('toc') && 
-        !f.toLowerCase().includes('nav') &&
-        !f.toLowerCase().includes('cover')
-      ).sort();
-      
-      const rawHtmlPages: Array<{ html: string; width: number; height: number; pageIndex: number }> = [];
-      const extractedTexts: Array<any> = [];
-      const extractedImages: Array<any> = [];
-
-      for (let i = 0; i < contentHtmlFiles.length; i++) {
-        const htmlFile = contentHtmlFiles[i];
-        let pageHtml = htmlContent[htmlFile] || '';
-        
-        // Parse viewport dimensions
-        const viewportMatch = pageHtml.match(/width[=:](\d+).*?height[=:](\d+)/i);
-        const pageWidth = viewportMatch ? parseInt(viewportMatch[1]) : 595;
-        const pageHeight = viewportMatch ? parseInt(viewportMatch[2]) : 842;
-        
-        // Replace image paths with server paths
-        for (const [originalPath, serverPath] of Object.entries(imageMap)) {
-          const patterns = [
-            new RegExp(`src=["']([^"']*${originalPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})["']`, 'gi'),
-            new RegExp(`src=["']([^"']*${originalPath.split('/').pop()?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') || ''})["']`, 'gi'),
-          ];
-          for (const pattern of patterns) {
-            pageHtml = pageHtml.replace(pattern, `src="${serverPath}"`);
-          }
-        }
-        
-        rawHtmlPages.push({
-          html: pageHtml,
-          width: pageWidth,
-          height: pageHeight,
-          pageIndex: i + 1,
-        });
-        
-        // Parse text elements from HTML (spans with text content)
-        const spanRegex = /<span[^>]*id=["']([^"']+)["'][^>]*>([^<]*)<\/span>/gi;
-        let spanMatch;
-        while ((spanMatch = spanRegex.exec(pageHtml)) !== null) {
-          const match = spanMatch;
-          const spanId = match[1];
-          const textContent = match[2].trim();
-          if (textContent) {
-            // Check if this is a variable (contains {variable_name})
-            const isVariable = /\{[^}]+\}/.test(textContent);
-            const variableMatch = textContent.match(/\{([^}]+)\}/);
-            
-            extractedTexts.push({
-              id: `text-${bookId}-${i + 1}-${spanId}`,
-              type: isVariable ? 'variable' : 'fixed',
-              label: spanId,
-              content: isVariable ? `{{${variableMatch?.[1] || 'name'}}}` : textContent,
-              originalContent: textContent,
-              style: {
-                color: '#000000',
-                fontSize: '16px',
-                textAlign: 'left',
-                fontFamily: 'serif',
-              },
-              position: {
-                x: 0,
-                y: 0,
-                layer: 50,
-                pageIndex: i + 1,
-                rotation: 0,
-              },
-              combinationKey: 'default',
-            });
-          }
-        }
-        
-        // Parse image elements from HTML
-        const imgRegex = /<img[^>]*(?:class=["']([^"']+)["'])?[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;
-        let imgMatch;
-        while ((imgMatch = imgRegex.exec(pageHtml)) !== null) {
-          const match = imgMatch;
-          const imgClass = match[1] || '';
-          const imgSrc = match[2];
-          const imgAlt = match[3] || '';
-          
-          extractedImages.push({
-            id: `img-${bookId}-${i + 1}-${randomUUID().substring(0, 8)}`,
-            type: 'static',
-            label: imgClass || imgAlt || `image-page-${i + 1}`,
-            url: imgSrc,
-            position: {
-              x: 0,
-              y: 0,
-              layer: 10,
-              pageIndex: i + 1,
-              rotation: 0,
-              width: 100,
-              height: 100,
-            },
-            combinationKey: 'default',
-          });
-        }
-        
-      }
-
-      console.log(`[epub-extract] Complete: ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts, ${extractedTexts.length} texts, ${extractedImages.length} image elements`);
-
-      res.json({
-        success: true,
-        bookId,
-        assetsPath: `/assets/books/${bookId}`,
-        images: imageMap,
-        fonts: fontMap,
-        cssContent: allCss,
-        rawHtmlPages,
-        texts: extractedTexts,
-        imageElements: extractedImages,
-      });
+      // Use shared extraction logic
+      const result = await extractEpubFromBuffer(epubBuffer, bookId);
+      res.json(result);
     } catch (error) {
       console.error("[epub-extract] Error:", error);
-      res.status(500).json({ error: "Failed to extract EPUB" });
+      res.status(500).json({ error: "Failed to extract EPUB from bucket. Try direct file upload instead." });
     }
   });
 }

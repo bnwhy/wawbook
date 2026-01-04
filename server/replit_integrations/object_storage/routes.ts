@@ -660,33 +660,55 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
-   * List all EPUB files in the private bucket (searches entire .private/ folder)
+   * List all EPUB files from all known buckets
    */
   app.get("/api/epubs", async (req, res) => {
     try {
-      const privateDir = objectStorageService.getPrivateObjectDir();
-      const { bucketName, objectName: basePath } = parseObjectPathSimple(privateDir);
+      const allEpubs: Array<{name: string, path: string, size?: number, updated?: string}> = [];
       
-      const bucket = objectStorageClient.bucket(bucketName);
+      // List of buckets to search (default bucket + any configured private dir bucket)
+      const bucketsToSearch = new Set<string>();
       
-      // Search in the entire .private/ folder, not just epubs/ subfolder
-      const prefix = basePath ? `${basePath}/` : '';
-      console.log(`[list-epubs] Searching for EPUBs with prefix: "${prefix}" in bucket: ${bucketName}`);
+      // Add default bucket
+      const defaultBucket = 'replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2';
+      bucketsToSearch.add(defaultBucket);
       
-      const [files] = await bucket.getFiles({ prefix });
-      console.log(`[list-epubs] Found ${files.length} total files`);
+      // Also check the configured private dir bucket if different
+      try {
+        const privateDir = objectStorageService.getPrivateObjectDir();
+        const { bucketName } = parseObjectPathSimple(privateDir);
+        bucketsToSearch.add(bucketName);
+      } catch (e) {
+        // Ignore if PRIVATE_OBJECT_DIR is not set
+      }
       
-      const epubs = files
-        .filter(f => f.name.toLowerCase().endsWith('.epub'))
-        .map(f => ({
-          name: f.name.split('/').pop() || f.name,
-          path: `/objects/${bucketName}/${f.name}`,
-          size: f.metadata?.size,
-          updated: f.metadata?.updated,
-        }));
+      console.log(`[list-epubs] Searching in buckets:`, Array.from(bucketsToSearch));
+      
+      for (const bucketName of bucketsToSearch) {
+        try {
+          const bucket = objectStorageClient.bucket(bucketName);
+          
+          // Search entire bucket for EPUB files
+          const [files] = await bucket.getFiles();
+          console.log(`[list-epubs] Bucket ${bucketName}: found ${files.length} total files`);
+          
+          const epubs = files
+            .filter(f => f.name.toLowerCase().endsWith('.epub'))
+            .map(f => ({
+              name: f.name.split('/').pop() || f.name,
+              path: `/objects/${bucketName}/${f.name}`,
+              size: f.metadata?.size ? Number(f.metadata.size) : undefined,
+              updated: f.metadata?.updated,
+            }));
+          
+          allEpubs.push(...epubs);
+        } catch (bucketError) {
+          console.warn(`[list-epubs] Could not access bucket ${bucketName}:`, bucketError);
+        }
+      }
 
-      console.log(`[list-epubs] Found ${epubs.length} EPUB files:`, epubs.map(e => e.name));
-      res.json({ epubs });
+      console.log(`[list-epubs] Found ${allEpubs.length} EPUB files total:`, allEpubs.map(e => e.name));
+      res.json({ epubs: allEpubs });
     } catch (error) {
       console.error("Error listing EPUBs:", error);
       res.status(500).json({ error: "Failed to list EPUBs" });

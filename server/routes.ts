@@ -106,7 +106,8 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Book not found" });
       }
 
-      const rawHtmlPages = book.contentConfig?.rawHtmlPages;
+      const contentConfig = book.contentConfig as any;
+      const rawHtmlPages = contentConfig?.rawHtmlPages;
       if (!rawHtmlPages || rawHtmlPages.length === 0) {
         return res.status(400).json({ error: "No HTML pages to render" });
       }
@@ -124,7 +125,7 @@ export async function registerRoutes(
       });
 
       const pages: Array<{ pageIndex: number; imageUrl: string }> = [];
-      const cssContent = book.contentConfig?.cssContent || '';
+      const cssContent = contentConfig?.cssContent || '';
       const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
       const publicBucketPath = publicSearchPaths[0] || '/replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2/public';
       
@@ -162,8 +163,8 @@ export async function registerRoutes(
 
           await page.setContent(html, { waitUntil: 'networkidle' });
           
-          // Ensure all fonts are loaded before taking the screenshot
-          await page.evaluate(() => document.fonts.ready);
+          // Ensure Chiller font is loaded before taking the screenshot
+          await page.evaluate(() => document.fonts.load('380px Chiller'));
 
           // Take screenshot
           const screenshot = await page.screenshot({ type: 'jpeg', quality: 85 });

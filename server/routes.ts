@@ -161,7 +161,9 @@ export async function registerRoutes(
           html = html.replace(/src="\/assets\//g, `src="${baseUrl}/assets/`);
 
           await page.setContent(html, { waitUntil: 'networkidle' });
-          await page.waitForTimeout(100);
+          
+          // Ensure all fonts are loaded before taking the screenshot
+          await page.evaluate(() => document.fonts.ready);
 
           // Take screenshot
           const screenshot = await page.screenshot({ type: 'jpeg', quality: 85 });

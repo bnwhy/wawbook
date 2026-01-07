@@ -8,6 +8,7 @@ import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_inte
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import * as path from "path";
+import { extractFontsFromCss } from "./utils/fontExtractor";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -77,6 +78,21 @@ export async function registerRoutes(
         const firstWithConditions = body.contentConfig.imageElements.find((img: any) => img.conditions?.length > 0);
         console.log('[PATCH /api/books/:id] First image with conditions:', JSON.stringify(firstWithConditions));
       }
+      
+      if (body.contentConfig?.cssContent) {
+        const assetsBasePath = path.join(process.cwd(), 'server', 'assets');
+        const { processedCss, fonts } = await extractFontsFromCss(
+          body.contentConfig.cssContent,
+          req.params.id,
+          assetsBasePath
+        );
+        if (fonts.length > 0) {
+          console.log(`[PATCH /api/books/:id] Extracted ${fonts.length} fonts from CSS`);
+          body.contentConfig.cssContent = processedCss;
+          body.contentConfig.extractedFonts = fonts;
+        }
+      }
+      
       const book = await storage.updateBook(req.params.id, body);
       if (!book) {
         return res.status(404).json({ error: "Book not found" });

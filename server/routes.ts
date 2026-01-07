@@ -179,8 +179,13 @@ export async function registerRoutes(
 
           await page.setContent(html, { waitUntil: 'networkidle' });
           
-          // Ensure Chiller font is loaded before taking the screenshot
-          await page.waitForFunction(() => document.fonts.check('380px Chiller'), { timeout: 5000 }).catch(() => {});
+          // Wait for all fonts to be loaded
+          await page.evaluate(async () => {
+            await document.fonts.ready;
+          });
+          
+          // Additional delay to ensure font rendering is complete
+          await new Promise(resolve => setTimeout(resolve, 300));
 
           // Take screenshot
           const screenshot = await page.screenshot({ type: 'jpeg', quality: 85 });

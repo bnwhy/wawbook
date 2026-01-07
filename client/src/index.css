@@ -124,3 +124,56 @@
     to { opacity: 1; transform: translateY(0); }
   }
 }
+
+/* 3D Book Spine Effect for Flipbook */
+.c-flipbook {
+  perspective: 1500px;
+  transform-style: preserve-3d;
+}
+
+.c-flipbook::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: -12px;
+  width: 12px;
+  height: calc(100% - 4px);
+  background: linear-gradient(
+    to right,
+    #e8e0d4 0%,
+    #f5f0e8 10%,
+    #ebe5db 20%,
+    #f5f0e8 30%,
+    #e8e0d4 40%,
+    #f5f0e8 50%,
+    #ebe5db 60%,
+    #f5f0e8 70%,
+    #e8e0d4 80%,
+    #f0ebe3 90%,
+    #d4ccc0 100%
+  );
+  border-radius: 0 3px 3px 0;
+  box-shadow: 
+    2px 0 4px rgba(0, 0, 0, 0.15),
+    inset -1px 0 2px rgba(0, 0, 0, 0.1);
+  transform: rotateY(-10deg);
+  transform-origin: left center;
+  z-index: -1;
+}
+
+.c-flipbook::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: -8px;
+  width: 8px;
+  height: calc(100% - 8px);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.02) 50%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
+  z-index: -2;
+  border-radius: 0 2px 2px 0;
+}

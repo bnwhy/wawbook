@@ -5942,56 +5942,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 {/* Left Sidebar - Page Thumbnails */}
                                                 <ResizablePanel defaultSize={20} minSize={15} maxSize={40} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                                     <div className="p-3 border-b border-slate-100 bg-slate-50">
-                                                        <div className="flex items-center justify-between">
-                                                            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide">Pages ({sortedPages.length})</h4>
-                                                            <button
-                                                                onClick={async (e) => {
-                                                                    e.preventDefault();
-                                                                    e.stopPropagation();
-                                                                    console.log('[Preview Button] Clicked, starting render...');
-                                                                    toast.promise(
-                                                                        (async () => {
-                                                                            console.log('[Preview Button] Fetching render-pages...');
-                                                                            const response = await fetch(`/api/books/${selectedBook.id}/render-pages`, {
-                                                                                method: 'POST',
-                                                                                headers: { 'Content-Type': 'application/json' },
-                                                                                body: JSON.stringify({ config: {}, characters: {} })
-                                                                            });
-                                                                            console.log('[Preview Button] Response status:', response.status);
-                                                                            if (!response.ok) throw new Error('Erreur de rendu');
-                                                                            const result = await response.json();
-                                                                            console.log('[Preview Button] Result:', result);
-                                                                            if (result.pages && result.pages.length > 0) {
-                                                                                const updatedBook = {
-                                                                                    ...selectedBook,
-                                                                                    contentConfig: {
-                                                                                        ...selectedBook.contentConfig,
-                                                                                        pageImages: result.pages
-                                                                                    }
-                                                                                };
-                                                                                await fetch(`/api/books/${selectedBook.id}`, {
-                                                                                    method: 'PATCH',
-                                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                                    body: JSON.stringify({ contentConfig: updatedBook.contentConfig })
-                                                                                });
-                                                                                window.location.reload();
-                                                                            }
-                                                                            return result;
-                                                                        })(),
-                                                                        {
-                                                                            loading: 'Génération des aperçus en cours...',
-                                                                            success: 'Aperçus générés !',
-                                                                            error: 'Erreur lors de la génération'
-                                                                        }
-                                                                    );
-                                                                }}
-                                                                className="px-2 py-1 text-[10px] font-medium bg-brand-coral/10 text-brand-coral hover:bg-brand-coral hover:text-white rounded flex items-center gap-1 transition-colors"
-                                                                title="Générer les aperçus rendus"
-                                                            >
-                                                                <Eye size={12} />
-                                                                <span>Aperçu</span>
-                                                            </button>
-                                                        </div>
+                                                        <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide">Pages ({sortedPages.length})</h4>
                                                     </div>
                                                     <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                                                         {sortedPages.map((page: any) => {

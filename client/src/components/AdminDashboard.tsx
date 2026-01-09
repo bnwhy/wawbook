@@ -5942,7 +5942,49 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 {/* Left Sidebar - Page Thumbnails */}
                                                 <ResizablePanel defaultSize={20} minSize={15} maxSize={40} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                                     <div className="p-3 border-b border-slate-100 bg-slate-50">
-                                                        <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide">Pages ({sortedPages.length})</h4>
+                                                        <div className="flex items-center justify-between">
+                                                            <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide">Pages ({sortedPages.length})</h4>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    toast.promise(
+                                                                        (async () => {
+                                                                            const response = await fetch(`/api/books/${selectedBook.id}/render-pages`, {
+                                                                                method: 'POST',
+                                                                                headers: { 'Content-Type': 'application/json' },
+                                                                                body: JSON.stringify({ config: {}, characters: {} })
+                                                                            });
+                                                                            if (!response.ok) throw new Error('Erreur de rendu');
+                                                                            const result = await response.json();
+                                                                            if (result.pages && result.pages.length > 0) {
+                                                                                const updatedBook = {
+                                                                                    ...selectedBook,
+                                                                                    contentConfig: {
+                                                                                        ...selectedBook.contentConfig,
+                                                                                        pageImages: result.pages
+                                                                                    }
+                                                                                };
+                                                                                await fetch(`/api/books/${selectedBook.id}`, {
+                                                                                    method: 'PATCH',
+                                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                                    body: JSON.stringify({ contentConfig: updatedBook.contentConfig })
+                                                                                });
+                                                                                window.location.reload();
+                                                                            }
+                                                                            return result;
+                                                                        })(),
+                                                                        {
+                                                                            loading: 'Génération des aperçus en cours...',
+                                                                            success: 'Aperçus générés !',
+                                                                            error: 'Erreur lors de la génération'
+                                                                        }
+                                                                    );
+                                                                }}
+                                                                className="text-[10px] font-medium text-brand-coral hover:text-red-600 flex items-center gap-1"
+                                                                title="Générer les aperçus rendus"
+                                                            >
+                                                                <Eye size={12} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                     <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                                                         {sortedPages.map((page: any) => {
@@ -5976,28 +6018,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                 <FileCode size={24} className="text-slate-300" />
                                                                             </div>
                                                                         )}
-                                                                        {/* Overlay texts on thumbnail */}
-                                                                        {pageTextsForThumb.map((text: any, idx: number) => {
-                                                                            const pos = text.position || {};
-                                                                            const style: React.CSSProperties = {
-                                                                                position: 'absolute',
-                                                                                left: pos.x ? `${pos.x}%` : '5%',
-                                                                                top: pos.y ? `${pos.y}%` : `${10 + idx * 8}%`,
-                                                                                maxWidth: pos.width ? `${pos.width}%` : '90%',
-                                                                                fontSize: '6px',
-                                                                                lineHeight: '1.2',
-                                                                                color: text.type === 'variable' ? '#3b82f6' : '#374151',
-                                                                                textShadow: '0 0 2px white, 0 0 2px white',
-                                                                                overflow: 'hidden',
-                                                                                textOverflow: 'ellipsis',
-                                                                                whiteSpace: 'nowrap',
-                                                                            };
-                                                                            return (
-                                                                                <div key={text.id || idx} style={style} title={text.content}>
-                                                                                    {text.content?.substring(0, 30) || ''}
-                                                                                </div>
-                                                                            );
-                                                                        })}
                                                                         <div className={`absolute top-1 left-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${
                                                                             isSelected ? 'bg-brand-coral text-white' : 'bg-white/90 text-slate-600 shadow-sm'
                                                                         }`}>

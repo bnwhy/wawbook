@@ -5951,7 +5951,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             const thumbnailUrl = pageImageEntry?.imageUrl || pageImageEntry?.url
                                                                 || (pageImagesFromElements.length > 0 ? pageImagesFromElements[0].url : null);
                                                             const isSelected = effectiveSelectedPage === page.pageIndex;
-                                                            const textsCount = selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0;
+                                                            const pageTextsForThumb = selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex) || [];
                                                             const imagesCount = pageImagesFromElements.length;
                                                             
                                                             return (
@@ -5976,6 +5976,28 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                 <FileCode size={24} className="text-slate-300" />
                                                                             </div>
                                                                         )}
+                                                                        {/* Overlay texts on thumbnail */}
+                                                                        {pageTextsForThumb.map((text: any, idx: number) => {
+                                                                            const pos = text.position || {};
+                                                                            const style: React.CSSProperties = {
+                                                                                position: 'absolute',
+                                                                                left: pos.x ? `${pos.x}%` : '5%',
+                                                                                top: pos.y ? `${pos.y}%` : `${10 + idx * 8}%`,
+                                                                                maxWidth: pos.width ? `${pos.width}%` : '90%',
+                                                                                fontSize: '6px',
+                                                                                lineHeight: '1.2',
+                                                                                color: text.type === 'variable' ? '#3b82f6' : '#374151',
+                                                                                textShadow: '0 0 2px white, 0 0 2px white',
+                                                                                overflow: 'hidden',
+                                                                                textOverflow: 'ellipsis',
+                                                                                whiteSpace: 'nowrap',
+                                                                            };
+                                                                            return (
+                                                                                <div key={text.id || idx} style={style} title={text.content}>
+                                                                                    {text.content?.substring(0, 30) || ''}
+                                                                                </div>
+                                                                            );
+                                                                        })}
                                                                         <div className={`absolute top-1 left-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${
                                                                             isSelected ? 'bg-brand-coral text-white' : 'bg-white/90 text-slate-600 shadow-sm'
                                                                         }`}>
@@ -5984,7 +6006,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     </div>
                                                                     <div className="p-1.5 bg-white rounded-b-md">
                                                                         <div className="flex justify-between items-center text-[9px] text-slate-500">
-                                                                            <span>{textsCount}T</span>
+                                                                            <span>{pageTextsForThumb.length}T</span>
                                                                             <span>{imagesCount}I</span>
                                                                         </div>
                                                                     </div>

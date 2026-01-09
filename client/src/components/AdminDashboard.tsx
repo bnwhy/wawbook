@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
 
 import { generateCoverPDF, generateInteriorPDF } from '../utils/pdfGenerator';
 
@@ -5937,9 +5938,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             : [];
                                         
                                         return (
-                                            <div className="flex gap-4 h-full">
+                                            <ResizablePanelGroup direction="horizontal" className="h-full rounded-xl">
                                                 {/* Left Sidebar - Page Thumbnails */}
-                                                <div className="w-48 shrink-0 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                                <ResizablePanel defaultSize={20} minSize={15} maxSize={40} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                                     <div className="p-3 border-b border-slate-100 bg-slate-50">
                                                         <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide">Pages ({sortedPages.length})</h4>
                                                     </div>
@@ -5991,10 +5992,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             );
                                                         })}
                                                     </div>
-                                                </div>
+                                                </ResizablePanel>
+                                                
+                                                <ResizableHandle withHandle className="mx-2" />
                                                 
                                                 {/* Right Content Panel - Texts & Images for Selected Page */}
-                                                <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                                <ResizablePanel defaultSize={80} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                                                     <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-brand-coral/5 to-transparent">
                                                         <div className="flex items-center justify-between">
                                                             <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -6106,8 +6109,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             )}
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </div>
+                                                </ResizablePanel>
+                                            </ResizablePanelGroup>
                                         );
                                     }
                                     

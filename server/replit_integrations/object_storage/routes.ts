@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import JSZip from "jszip";
 import * as fs from "fs";
 import * as path from "path";
+import * as cheerio from "cheerio";
 
 /**
  * Clean CSS syntax errors that can prevent fonts from loading
@@ -196,22 +197,33 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
       pageIndex: i + 1,
     });
     
-    // Parse text elements from HTML (spans with text content)
-    const spanRegex = /<span[^>]*id=["']([^"']+)["'][^>]*>([^<]*)<\/span>/gi;
-    let spanMatch;
-    while ((spanMatch = spanRegex.exec(pageHtml)) !== null) {
-      const match = spanMatch;
-      const spanId = match[1];
-      const textContent = match[2].trim();
+    // Parse text elements from HTML using cheerio
+    // Detect InDesign text frames (Bloc-de-texte-standard) and extract complete text blocks
+    const $ = cheerio.load(pageHtml);
+    
+    // Find all text frame divs (InDesign exports them with class "Bloc-de-texte-standard")
+    $('div.Bloc-de-texte-standard').each((index, element) => {
+      const $element = $(element);
+      const containerId = $element.attr('id') || `textblock-${index}`;
+      
+      // Get the full text content of the block (all nested text combined)
+      const textContent = $element.text().replace(/\s+/g, ' ').trim();
+      
       if (textContent) {
+        // Check for variables in the format {variable_name}
         const isVariable = /\{[^}]+\}/.test(textContent);
-        const variableMatch = textContent.match(/\{([^}]+)\}/);
+        
+        // Process content: replace {var} with {{var}} for template engine
+        let processedContent = textContent;
+        if (isVariable) {
+          processedContent = textContent.replace(/\{([^}]+)\}/g, '{{$1}}');
+        }
         
         extractedTexts.push({
-          id: `text-${bookId}-${i + 1}-${spanId}`,
+          id: `text-${bookId}-${i + 1}-${containerId}`,
           type: isVariable ? 'variable' : 'fixed',
-          label: spanId,
-          content: isVariable ? `{{${variableMatch?.[1] || 'name'}}}` : textContent,
+          label: containerId,
+          content: processedContent,
           originalContent: textContent,
           style: {
             color: '#000000',
@@ -229,7 +241,7 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
           combinationKey: 'default',
         });
       }
-    }
+    });
     
     // Parse image elements from HTML
     const imgRegex = /<img[^>]*(?:class=["']([^"']+)["'])?[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;

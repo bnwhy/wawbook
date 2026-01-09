@@ -488,28 +488,80 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
             }
         }
         // IS IT TEXT?
-        // We look for headings, paragraphs, spans, divs that contain direct text
+        // For InDesign FXL exports: detect text containers (_idContainer* divs) as complete blocks
+        // instead of extracting individual spans word by word
         else if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'DIV'].includes(el.tagName)) {
-             // Use textContent to check for non-empty text, even if nested
              const textContent = el.textContent?.trim() || '';
              
-             // Check if it has direct text nodes that are not empty, or if it's a leaf node with text
-             // Relaxed condition: if it has meaningful text content, we might want to keep it
              if (textContent.length > 0) {
-                 // To avoid duplicates (parent div + child span), we prefer leaf nodes OR nodes with direct text content
+                 // Check if this is an InDesign text container (div with _idContainer ID)
+                 const elId = el.id || '';
+                 const isInDesignTextContainer = el.tagName === 'DIV' && 
+                     elId.match(/^_idContainer\d+$/) &&
+                     !el.querySelector('img'); // Not an image container
                  
-                 // Check for direct text nodes
+                 // Check if element is inside an already-processed text container
+                 const isInsideTextContainer = (() => {
+                     let parent = el.parentElement;
+                     while (parent) {
+                         const parentId = parent.id || '';
+                         if (parentId.match(/^_idContainer\d+$/) && !parent.querySelector('img')) {
+                             return true;
+                         }
+                         parent = parent.parentElement;
+                     }
+                     return false;
+                 })();
+                 
+                 // Skip if inside a text container (we'll extract at container level)
+                 if (isInsideTextContainer && !isInDesignTextContainer) {
+                     return; // Skip individual spans/paragraphs inside containers
+                 }
+                 
+                 // For InDesign containers, extract as a complete text block
+                 if (isInDesignTextContainer) {
+                     // Get style from first span or paragraph inside
+                     const firstStyledEl = el.querySelector('span, p') as HTMLElement;
+                     const blockStyle = firstStyledEl ? getComputedStyleMock(firstStyledEl) : style;
+                     
+                     const fontSizeStr = blockStyle.fontSize;
+                     const colorStr = blockStyle.color;
+                     const fontFamilyStr = blockStyle.fontFamily;
+                     const textAlignStr = blockStyle.textAlign;
+                     
+                     texts.push({
+                          id: `text-${sourceName}-${pageIndex}-${elId}`,
+                          label: elId || `text-block-${texts.length + 1}`,
+                          type: 'fixed',
+                          content: textContent,
+                          combinationKey: 'default',
+                          style: {
+                              color: colorStr || '#000000',
+                              fontSize: fontSizeStr || '16px',
+                              fontFamily: fontFamilyStr?.replace(/['"]/g, '') || 'serif',
+                              textAlign: (textAlignStr as any) || 'left'
+                          },
+                          position: {
+                              pageIndex,
+                              zoneId: 'body',
+                              x, y, width: w,
+                              rotation: 0,
+                              layer: 50
+                          }
+                     });
+                     markKeep(el);
+                     return;
+                 }
+                 
+                 // Fallback for non-InDesign content: original logic
                  const hasDirectText = Array.from(el.childNodes).some(node => 
                      node.nodeType === Node.TEXT_NODE && (node.textContent?.trim().length || 0) > 0
                  );
 
-                 // Keep if it has direct text or if it has children but they are inline elements (formatting)
-                 // This is a heuristic.
                  const isContentBlock = hasDirectText || el.children.length === 0 || 
                      Array.from(el.children).every(child => ['B', 'I', 'U', 'STRONG', 'EM', 'SPAN', 'BR'].includes(child.tagName));
 
                  if (isContentBlock) {
-                     // Basic style extraction
                      const fontSizeStr = style.fontSize;
                      const colorStr = style.color;
                      const fontFamilyStr = style.fontFamily;

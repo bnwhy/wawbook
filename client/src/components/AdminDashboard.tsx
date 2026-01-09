@@ -5945,16 +5945,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         <div className="flex items-center justify-between">
                                                             <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wide">Pages ({sortedPages.length})</h4>
                                                             <button
-                                                                onClick={async () => {
+                                                                onClick={async (e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    console.log('[Preview Button] Clicked, starting render...');
                                                                     toast.promise(
                                                                         (async () => {
+                                                                            console.log('[Preview Button] Fetching render-pages...');
                                                                             const response = await fetch(`/api/books/${selectedBook.id}/render-pages`, {
                                                                                 method: 'POST',
                                                                                 headers: { 'Content-Type': 'application/json' },
                                                                                 body: JSON.stringify({ config: {}, characters: {} })
                                                                             });
+                                                                            console.log('[Preview Button] Response status:', response.status);
                                                                             if (!response.ok) throw new Error('Erreur de rendu');
                                                                             const result = await response.json();
+                                                                            console.log('[Preview Button] Result:', result);
                                                                             if (result.pages && result.pages.length > 0) {
                                                                                 const updatedBook = {
                                                                                     ...selectedBook,
@@ -5979,10 +5985,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                         }
                                                                     );
                                                                 }}
-                                                                className="text-[10px] font-medium text-brand-coral hover:text-red-600 flex items-center gap-1"
+                                                                className="px-2 py-1 text-[10px] font-medium bg-brand-coral/10 text-brand-coral hover:bg-brand-coral hover:text-white rounded flex items-center gap-1 transition-colors"
                                                                 title="Générer les aperçus rendus"
                                                             >
                                                                 <Eye size={12} />
+                                                                <span>Aperçu</span>
                                                             </button>
                                                         </div>
                                                     </div>

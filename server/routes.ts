@@ -8,6 +8,7 @@ import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_inte
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import * as path from "path";
+import * as fs from "fs";
 import { extractFontsFromCss } from "./utils/fontExtractor";
 
 export async function registerRoutes(
@@ -141,7 +142,21 @@ export async function registerRoutes(
       });
 
       const pages: Array<{ pageIndex: number; imageUrl: string }> = [];
-      const cssContent = contentConfig?.cssContent || '';
+      
+      // Try to load CSS from local file (which has base64 embedded fonts) for accurate rendering
+      let cssContent = contentConfig?.cssContent || '';
+      const localCssPath = path.join(process.cwd(), 'server', 'assets', 'books', book.id, 'html', 'styles.css');
+      try {
+        const localCss = await fs.promises.readFile(localCssPath, 'utf-8');
+        if (localCss && localCss.includes('data:font/')) {
+          console.log(`[render-pages] Using base64-embedded CSS from local file`);
+          cssContent = localCss;
+        }
+      } catch (e) {
+        // Local CSS not found, use database CSS
+        console.log(`[render-pages] Local CSS not found, using database CSS`);
+      }
+      
       const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
       const publicBucketPath = publicSearchPaths[0] || '/replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2/public';
       

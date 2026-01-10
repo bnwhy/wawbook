@@ -219,6 +219,74 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
           processedContent = textContent.replace(/\{([^}]+)\}/g, '{{$1}}');
         }
         
+        // Extract CSS position from the container element
+        // Look for transform, width, height in CSS (via #id selector in allCss)
+        // Handle CSS where multiple IDs share rules OR individual ID rules
+        const idPattern = new RegExp(`#${containerId}[^{]*\\{([^}]+)\\}`, 'i');
+        const cssMatch = allCss.match(idPattern);
+        let cssProps: Record<string, string> = {};
+        
+        console.log(`[epub-extract] Looking for CSS of #${containerId}, found:`, !!cssMatch);
+        
+        if (cssMatch) {
+          const cssBlock = cssMatch[1];
+          // Parse CSS properties
+          const propRegex = /([a-z-]+)\s*:\s*([^;]+)/gi;
+          let propMatch;
+          while ((propMatch = propRegex.exec(cssBlock)) !== null) {
+            cssProps[propMatch[1].toLowerCase().trim()] = propMatch[2].trim();
+          }
+        }
+        
+        // Extract transform values (translate X, Y)
+        let translateX = 0, translateY = 0, rotation = 0, scaleX = 1, scaleY = 1;
+        const transformVal = cssProps['transform'] || cssProps['-webkit-transform'] || '';
+        const translateMatch = transformVal.match(/translate\(([^,]+),\s*([^)]+)\)/);
+        if (translateMatch) {
+          translateX = parseFloat(translateMatch[1]) || 0;
+          translateY = parseFloat(translateMatch[2]) || 0;
+        }
+        const rotateMatch = transformVal.match(/rotate\(([^)]+)\)/);
+        if (rotateMatch) {
+          rotation = parseFloat(rotateMatch[1]) || 0;
+        }
+        const scaleMatch = transformVal.match(/scale\(([^,]+),\s*([^)]+)\)/);
+        if (scaleMatch) {
+          scaleX = parseFloat(scaleMatch[1]) || 1;
+          scaleY = parseFloat(scaleMatch[2]) || 1;
+        }
+        
+        // Get width/height
+        const blockWidth = parseFloat(cssProps['width']) || 100;
+        const blockHeight = parseFloat(cssProps['height']) || 30;
+        
+        console.log(`[epub-extract] Block ${containerId}: x=${translateX}, y=${translateY}, w=${blockWidth}, h=${blockHeight}`);
+        
+        // Extract text style from first span with CharOverride class
+        const $firstSpan = $element.find('span[class*="CharOverride"]').first();
+        let fontFamily = 'serif';
+        let fontSize = '16px';
+        let color = '#000000';
+        
+        if ($firstSpan.length) {
+          // Get class name to find style in CSS
+          const spanClass = $firstSpan.attr('class') || '';
+          const charOverrideMatch = spanClass.match(/CharOverride-\d+/);
+          if (charOverrideMatch) {
+            const charPattern = new RegExp(`span\\.${charOverrideMatch[0]}\\s*\\{([^}]+)\\}`, 'i');
+            const charCssMatch = allCss.match(charPattern);
+            if (charCssMatch) {
+              const charCss = charCssMatch[1];
+              const fontFamilyMatch = charCss.match(/font-family\s*:\s*([^;]+)/i);
+              if (fontFamilyMatch) fontFamily = fontFamilyMatch[1].trim();
+              const fontSizeMatch = charCss.match(/font-size\s*:\s*([^;]+)/i);
+              if (fontSizeMatch) fontSize = fontSizeMatch[1].trim();
+              const colorMatch = charCss.match(/color\s*:\s*([^;]+)/i);
+              if (colorMatch) color = colorMatch[1].trim();
+            }
+          }
+        }
+        
         extractedTexts.push({
           id: `text-${bookId}-${i + 1}-${containerId}`,
           type: isVariable ? 'variable' : 'fixed',
@@ -226,18 +294,23 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
           content: processedContent,
           originalContent: textContent,
           style: {
-            color: '#000000',
-            fontSize: '16px',
+            color,
+            fontSize,
             textAlign: 'left',
-            fontFamily: 'serif',
+            fontFamily,
           },
           position: {
-            x: 0,
-            y: 0,
+            x: translateX,
+            y: translateY,
+            width: blockWidth,
+            height: blockHeight,
+            scaleX,
+            scaleY,
             layer: 50,
             pageIndex: i + 1,
-            rotation: 0,
+            rotation,
           },
+          cssSelector: `#${containerId}`,
           combinationKey: 'default',
         });
       }
@@ -721,7 +794,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       
       console.log(`[list-epubs] Searching in buckets:`, Array.from(bucketsToSearch));
       
-      for (const bucketName of bucketsToSearch) {
+      for (const bucketName of Array.from(bucketsToSearch)) {
         try {
           const bucket = objectStorageClient.bucket(bucketName);
           

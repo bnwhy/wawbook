@@ -262,10 +262,22 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
         
         console.log(`[epub-extract] Block ${containerId}: x=${translateX}, y=${translateY}, w=${blockWidth}, h=${blockHeight}`);
         
+        // Check for inline scale transform in child divs (InDesign often uses this)
+        let inlineScale = 1;
+        const $innerDiv = $element.find('div[style*="scale"]').first();
+        if ($innerDiv.length) {
+          const innerStyle = $innerDiv.attr('style') || '';
+          const inlineScaleMatch = innerStyle.match(/scale\(([^,)]+)(?:,\s*([^)]+))?\)/);
+          if (inlineScaleMatch) {
+            inlineScale = parseFloat(inlineScaleMatch[2] || inlineScaleMatch[1]) || 1;
+          }
+        }
+        
         // Extract text style from first span with CharOverride class
         const $firstSpan = $element.find('span[class*="CharOverride"]').first();
         let fontFamily = 'serif';
         let fontSize = '16px';
+        let rawFontSize = 16;
         let color = '#000000';
         
         if ($firstSpan.length) {
@@ -280,12 +292,19 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
               const fontFamilyMatch = charCss.match(/font-family\s*:\s*([^;]+)/i);
               if (fontFamilyMatch) fontFamily = fontFamilyMatch[1].trim();
               const fontSizeMatch = charCss.match(/font-size\s*:\s*([^;]+)/i);
-              if (fontSizeMatch) fontSize = fontSizeMatch[1].trim();
+              if (fontSizeMatch) {
+                rawFontSize = parseFloat(fontSizeMatch[1]) || 16;
+                // Apply inline scale to get effective font size
+                const effectiveFontSize = Math.round(rawFontSize * inlineScale);
+                fontSize = `${effectiveFontSize}px`;
+              }
               const colorMatch = charCss.match(/color\s*:\s*([^;]+)/i);
               if (colorMatch) color = colorMatch[1].trim();
             }
           }
         }
+        
+        console.log(`[epub-extract] Text ${containerId}: rawFontSize=${rawFontSize}, inlineScale=${inlineScale}, effectiveFontSize=${fontSize}`);
         
         extractedTexts.push({
           id: `text-${bookId}-${i + 1}-${containerId}`,

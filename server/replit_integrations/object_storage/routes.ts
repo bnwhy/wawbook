@@ -20,48 +20,47 @@ function cleanCssSyntax(css: string): string {
 }
 
 /**
- * List of fonts that are NOT available in Playwright/Linux server environment
- * These are typically Windows/macOS proprietary fonts or display fonts
+ * Polices natives disponibles sur Linux/Playwright (serveur Chromium headless)
+ * Seules ces polices sont garanties de fonctionner SANS être embarquées en base64
+ * Source: polices installées par défaut sur les systèmes Linux/NixOS
  */
-const UNAVAILABLE_SYSTEM_FONTS = new Set([
-  'agency fb', 'arial', 'arial black', 'arial narrow', 'arial unicode ms',
-  'calibri', 'cambria', 'candara', 'chiller', 'comic sans ms', 'comic sans',
-  'consolas', 'constantia', 'corbel', 'courier new', 'courier',
-  'franklin gothic', 'garamond', 'georgia', 'impact', 'lucida console',
-  'lucida grande', 'lucida sans', 'microsoft sans serif', 'ms sans serif',
-  'palatino linotype', 'segoe ui', 'tahoma', 'times new roman', 'times',
-  'trebuchet ms', 'verdana', 'webdings', 'wingdings', 'symbol',
-  'minion pro', 'myriad pro', 'adobe garamond', 'helvetica', 'helvetica neue',
-  'futura', 'gill sans', 'optima', 'avenir', 'baskerville', 'bodoni',
-  'century gothic', 'rockwell', 'copperplate',
+const NATIVE_LINUX_FONTS = new Set([
+  // Polices génériques CSS (toujours disponibles)
+  'serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 
+  'system-ui', 'ui-serif', 'ui-sans-serif', 'ui-monospace', 'ui-rounded',
+  // Polices Liberation (remplacements open-source de Microsoft fonts)
+  'liberation sans', 'liberation serif', 'liberation mono',
+  // DejaVu (basées sur Bitstream Vera, très communes sur Linux)
+  'dejavu sans', 'dejavu serif', 'dejavu sans mono', 'dejavu sans condensed',
+  // Noto (Google, couverture Unicode complète)
+  'noto sans', 'noto serif', 'noto mono', 'noto color emoji',
+  // Autres polices open-source souvent présentes
+  'freesans', 'freeserif', 'freemono',
+  'ubuntu', 'ubuntu mono', 'ubuntu condensed',
+  'droid sans', 'droid serif', 'droid sans mono',
+  'roboto', 'roboto mono', 'roboto condensed', 'roboto slab',
+  'open sans', 'lato', 'source sans pro', 'source serif pro', 'source code pro',
 ]);
 
 interface FontWarning {
   fontFamily: string;
-  reason: 'no_font_face' | 'system_font' | 'missing_file';
+  reason: 'not_embedded' | 'no_font_face' | 'missing_base64';
   severity: 'warning' | 'error';
   message: string;
 }
 
 /**
- * Detect font issues in CSS - checks for missing @font-face definitions
- * and unavailable system fonts
+ * Detect font issues in CSS - ANY font not native to Linux/Playwright 
+ * MUST be embedded as base64 to display correctly
  */
 function detectFontIssues(css: string, fontMap: Record<string, string>): FontWarning[] {
   const warnings: FontWarning[] = [];
-  const definedFonts = new Set<string>();
   const usedFonts = new Set<string>();
   
-  // Extract all font-family names from @font-face declarations
-  const fontFaceRegex = /@font-face\s*\{[^}]*font-family\s*:\s*["']?([^;"']+)["']?/gi;
-  let match;
-  while ((match = fontFaceRegex.exec(css)) !== null) {
-    definedFonts.add(match[1].trim().toLowerCase());
-  }
-  
-  // Check if fonts have embedded base64 data
+  // Check if fonts have embedded base64 data in @font-face
   const fontsWithBase64 = new Set<string>();
   const fontFaceBlockRegex = /@font-face\s*\{([^}]+)\}/gi;
+  let match;
   while ((match = fontFaceBlockRegex.exec(css)) !== null) {
     const block = match[1];
     const familyMatch = block.match(/font-family\s*:\s*["']?([^;"']+)["']?/i);
@@ -87,42 +86,18 @@ function detectFontIssues(css: string, fontMap: Record<string, string>): FontWar
   
   // Check each used font
   for (const font of usedFonts) {
-    // Skip generic font families
-    if (['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-serif', 'ui-sans-serif', 'ui-monospace'].includes(font)) {
+    // If it's a native Linux font, it's safe
+    if (NATIVE_LINUX_FONTS.has(font)) {
       continue;
     }
     
-    // Check if it's a system font that won't be available
-    if (UNAVAILABLE_SYSTEM_FONTS.has(font)) {
-      if (!fontsWithBase64.has(font)) {
-        warnings.push({
-          fontFamily: font,
-          reason: 'system_font',
-          severity: 'error',
-          message: `La police "${font}" est une police système Windows/macOS non disponible sur le serveur. Elle doit être embarquée dans l'EPUB.`
-        });
-      }
-      continue;
-    }
-    
-    // Check if font is defined in @font-face
-    if (!definedFonts.has(font)) {
-      warnings.push({
-        fontFamily: font,
-        reason: 'no_font_face',
-        severity: 'warning',
-        message: `La police "${font}" est utilisée mais aucune définition @font-face n'a été trouvée.`
-      });
-      continue;
-    }
-    
-    // Check if font has base64 data embedded
+    // For ANY non-native font, it MUST be embedded as base64
     if (!fontsWithBase64.has(font)) {
       warnings.push({
         fontFamily: font,
-        reason: 'missing_file',
-        severity: 'warning',
-        message: `La police "${font}" a une définition @font-face mais le fichier de police n'a pas pu être embarqué en base64.`
+        reason: 'not_embedded',
+        severity: 'error',
+        message: `La police "${font}" n'est pas disponible sur le serveur (Playwright/Linux). Elle doit être embarquée en base64 dans l'EPUB pour s'afficher correctement.`
       });
     }
   }

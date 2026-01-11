@@ -323,12 +323,33 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           pageImages: result.pageImages || [],
           texts: result.texts || [],
           imageElements: result.imageElements || [],
+          fontWarnings: result.fontWarnings || [],
         }
       };
       await handleSaveBook(updatedBook);
 
       setShowEpubSelector(false);
-      toast.success(`EPUB extrait avec succès : ${result.pageImages?.length || 0} pages, ${Object.keys(result.images || {}).length} images, ${Object.keys(result.fonts || {}).length} polices`);
+      
+      // Show font warnings if any
+      if (result.fontWarnings && result.fontWarnings.length > 0) {
+        const errors = result.fontWarnings.filter((w: any) => w.severity === 'error');
+        const warnings = result.fontWarnings.filter((w: any) => w.severity === 'warning');
+        
+        if (errors.length > 0) {
+          toast.error(
+            `Polices manquantes (${errors.length}) : ${errors.map((w: any) => w.fontFamily).join(', ')}. Ces polices ne s'afficheront pas correctement.`,
+            { duration: 10000 }
+          );
+        }
+        if (warnings.length > 0) {
+          toast.warning(
+            `Avertissements polices (${warnings.length}) : ${warnings.map((w: any) => w.fontFamily).join(', ')}`,
+            { duration: 8000 }
+          );
+        }
+      }
+      
+      toast.success(`EPUB extrait avec succès : ${result.pages?.length || 0} pages, ${Object.keys(result.images || {}).length} images, ${Object.keys(result.fonts || {}).length} polices`);
     } catch (error) {
       console.error('[EPUB Extract] Error:', error);
       toast.error('Erreur lors de l\'extraction de l\'EPUB');

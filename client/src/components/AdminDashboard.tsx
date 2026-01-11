@@ -700,17 +700,40 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const usedFonts = new Set<string>();
     selectedBook.contentConfig.texts.forEach(text => {
         if (text.style?.fontFamily) {
-            usedFonts.add(text.style.fontFamily);
+            // Extract primary font name (before comma for fallbacks)
+            let fontName = text.style.fontFamily.split(',')[0].trim();
+            // Remove quotes if present
+            fontName = fontName.replace(/["']/g, '');
+            if (fontName) usedFonts.add(fontName);
         }
     });
 
+    // Local/system fonts that are NOT on Google Fonts - skip loading these
+    const nonGoogleFonts = new Set([
+      'Agency FB', 'Chiller', 'Arial', 'Helvetica', 'Times New Roman', 
+      'Courier New', 'Georgia', 'Verdana', 'Comic Sans MS', 'Impact',
+      'serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'
+    ]);
+
     usedFonts.forEach(font => {
+         // Skip non-Google fonts
+         if (nonGoogleFonts.has(font)) return;
+         
+         const fontEncoded = encodeURIComponent(font.replace(/ /g, '+'));
          const href = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}&display=swap`;
-         if (!document.querySelector(`link[href="${href}"]`)) {
-             const link = document.createElement('link');
-             link.href = href;
-             link.rel = 'stylesheet';
-             document.head.appendChild(link);
+         
+         // Use try-catch to avoid querySelector errors with special characters
+         try {
+           const existingLink = document.querySelector(`link[href*="family=${fontEncoded}"]`);
+           if (!existingLink) {
+               const link = document.createElement('link');
+               link.href = href;
+               link.rel = 'stylesheet';
+               document.head.appendChild(link);
+           }
+         } catch (e) {
+           // Skip fonts with special characters that break querySelector
+           console.warn(`[Fonts] Could not check/load font: ${font}`);
          }
     });
   }, [selectedBook?.contentConfig?.texts]);

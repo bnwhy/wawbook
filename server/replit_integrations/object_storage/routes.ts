@@ -20,6 +20,117 @@ function cleanCssSyntax(css: string): string {
 }
 
 /**
+ * List of fonts that are NOT available in Playwright/Linux server environment
+ * These are typically Windows/macOS proprietary fonts or display fonts
+ */
+const UNAVAILABLE_SYSTEM_FONTS = new Set([
+  'agency fb', 'arial', 'arial black', 'arial narrow', 'arial unicode ms',
+  'calibri', 'cambria', 'candara', 'chiller', 'comic sans ms', 'comic sans',
+  'consolas', 'constantia', 'corbel', 'courier new', 'courier',
+  'franklin gothic', 'garamond', 'georgia', 'impact', 'lucida console',
+  'lucida grande', 'lucida sans', 'microsoft sans serif', 'ms sans serif',
+  'palatino linotype', 'segoe ui', 'tahoma', 'times new roman', 'times',
+  'trebuchet ms', 'verdana', 'webdings', 'wingdings', 'symbol',
+  'minion pro', 'myriad pro', 'adobe garamond', 'helvetica', 'helvetica neue',
+  'futura', 'gill sans', 'optima', 'avenir', 'baskerville', 'bodoni',
+  'century gothic', 'rockwell', 'copperplate',
+]);
+
+interface FontWarning {
+  fontFamily: string;
+  reason: 'no_font_face' | 'system_font' | 'missing_file';
+  severity: 'warning' | 'error';
+  message: string;
+}
+
+/**
+ * Detect font issues in CSS - checks for missing @font-face definitions
+ * and unavailable system fonts
+ */
+function detectFontIssues(css: string, fontMap: Record<string, string>): FontWarning[] {
+  const warnings: FontWarning[] = [];
+  const definedFonts = new Set<string>();
+  const usedFonts = new Set<string>();
+  
+  // Extract all font-family names from @font-face declarations
+  const fontFaceRegex = /@font-face\s*\{[^}]*font-family\s*:\s*["']?([^;"']+)["']?/gi;
+  let match;
+  while ((match = fontFaceRegex.exec(css)) !== null) {
+    definedFonts.add(match[1].trim().toLowerCase());
+  }
+  
+  // Check if fonts have embedded base64 data
+  const fontsWithBase64 = new Set<string>();
+  const fontFaceBlockRegex = /@font-face\s*\{([^}]+)\}/gi;
+  while ((match = fontFaceBlockRegex.exec(css)) !== null) {
+    const block = match[1];
+    const familyMatch = block.match(/font-family\s*:\s*["']?([^;"']+)["']?/i);
+    if (familyMatch) {
+      const fontName = familyMatch[1].trim().toLowerCase();
+      if (block.includes('data:font') || block.includes('data:application')) {
+        fontsWithBase64.add(fontName);
+      }
+    }
+  }
+  
+  // Extract all font-family usages in CSS rules (not in @font-face)
+  const cssWithoutFontFace = css.replace(/@font-face\s*\{[^}]+\}/gi, '');
+  const fontFamilyUsageRegex = /font-family\s*:\s*([^;]+);/gi;
+  while ((match = fontFamilyUsageRegex.exec(cssWithoutFontFace)) !== null) {
+    const fontList = match[1].split(',').map(f => f.trim().replace(/["']/g, '').toLowerCase());
+    fontList.forEach(f => {
+      if (f && f !== 'inherit' && f !== 'initial' && f !== 'unset') {
+        usedFonts.add(f);
+      }
+    });
+  }
+  
+  // Check each used font
+  for (const font of usedFonts) {
+    // Skip generic font families
+    if (['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-serif', 'ui-sans-serif', 'ui-monospace'].includes(font)) {
+      continue;
+    }
+    
+    // Check if it's a system font that won't be available
+    if (UNAVAILABLE_SYSTEM_FONTS.has(font)) {
+      if (!fontsWithBase64.has(font)) {
+        warnings.push({
+          fontFamily: font,
+          reason: 'system_font',
+          severity: 'error',
+          message: `La police "${font}" est une police système Windows/macOS non disponible sur le serveur. Elle doit être embarquée dans l'EPUB.`
+        });
+      }
+      continue;
+    }
+    
+    // Check if font is defined in @font-face
+    if (!definedFonts.has(font)) {
+      warnings.push({
+        fontFamily: font,
+        reason: 'no_font_face',
+        severity: 'warning',
+        message: `La police "${font}" est utilisée mais aucune définition @font-face n'a été trouvée.`
+      });
+      continue;
+    }
+    
+    // Check if font has base64 data embedded
+    if (!fontsWithBase64.has(font)) {
+      warnings.push({
+        fontFamily: font,
+        reason: 'missing_file',
+        severity: 'warning',
+        message: `La police "${font}" a une définition @font-face mais le fichier de police n'a pas pu être embarqué en base64.`
+      });
+    }
+  }
+  
+  return warnings;
+}
+
+/**
  * Shared EPUB extraction logic - extracts an EPUB buffer to local server storage
  */
 async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
@@ -362,6 +473,13 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     }
   }
 
+  // Detect font issues
+  const fontWarnings = detectFontIssues(allCss, fontMap);
+  if (fontWarnings.length > 0) {
+    console.log(`[epub-extract] Font warnings detected: ${fontWarnings.length}`);
+    fontWarnings.forEach(w => console.log(`  - [${w.severity}] ${w.fontFamily}: ${w.reason}`));
+  }
+
   console.log(`[epub-extract] Complete: ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts, ${extractedTexts.length} texts, ${extractedImages.length} image elements`);
 
   return {
@@ -374,6 +492,7 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     pages: pagesDimensions,
     texts: extractedTexts,
     imageElements: extractedImages,
+    fontWarnings,
   };
 }
 

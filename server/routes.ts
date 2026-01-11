@@ -199,7 +199,13 @@ export async function registerRoutes(
               content = content.replace(/\{nom_enfant\}/g, config.childName);
             }
             
-            return `<div style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;overflow:hidden;font-family:${style.fontFamily || 'sans-serif'};font-size:${style.fontSize || '16px'};color:${style.color || '#000'};text-align:${style.textAlign || 'left'};transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});">${content}</div>`;
+            const textColor = style.color || '#000000';
+            const textFontSize = style.fontSize || '16px';
+            const textFontFamily = style.fontFamily || 'sans-serif';
+            
+            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize}`);
+            
+            return `<div style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;overflow:visible;font-family:${textFontFamily};font-size:${textFontSize};color:${textColor} !important;text-align:${style.textAlign || 'left'};transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});line-height:1.2;white-space:nowrap;">${content}</div>`;
           }).join('\n');
           
           let html = `<!DOCTYPE html>

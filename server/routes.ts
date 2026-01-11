@@ -124,9 +124,9 @@ export async function registerRoutes(
       }
 
       const contentConfig = book.contentConfig as any;
-      const rawHtmlPages = contentConfig?.rawHtmlPages;
-      if (!rawHtmlPages || rawHtmlPages.length === 0) {
-        return res.status(400).json({ error: "No HTML pages to render" });
+      const pages = contentConfig?.pages;
+      if (!pages || pages.length === 0) {
+        return res.status(400).json({ error: "No pages to render" });
       }
 
       const { config = {}, characters = {} } = req.body;
@@ -141,7 +141,7 @@ export async function registerRoutes(
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
       });
 
-      const pages: Array<{ pageIndex: number; imageUrl: string }> = [];
+      const renderedPages: Array<{ pageIndex: number; imageUrl: string }> = [];
       
       // Try to load CSS from local file (which has base64 embedded fonts) for accurate rendering
       let cssContent = contentConfig?.cssContent || '';
@@ -160,25 +160,25 @@ export async function registerRoutes(
       const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
       const publicBucketPath = publicSearchPaths[0] || '/replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2/public';
       
-      console.log(`[render-pages] Rendering ${rawHtmlPages.length} pages for book ${book.id}`);
+      console.log(`[render-pages] Rendering ${pages.length} pages for book ${book.id}`);
 
-      for (const rawPage of rawHtmlPages) {
+      for (const pageData of pages) {
         try {
-          const page = await browser.newPage();
-          const pageWidth = rawPage.width || 400;
-          const pageHeight = rawPage.height || 293;
-          await page.setViewportSize({ width: pageWidth, height: pageHeight });
+          const browserPage = await browser.newPage();
+          const pageWidth = pageData.width || 400;
+          const pageHeight = pageData.height || 293;
+          await browserPage.setViewportSize({ width: pageWidth, height: pageHeight });
 
           const baseUrl = `${req.protocol}://${req.get('host')}`;
           
           // Get images for this page
           const pageImages = (contentConfig?.imageElements || []).filter(
-            (img: any) => img.position?.pageIndex === rawPage.pageIndex
+            (img: any) => img.position?.pageIndex === pageData.pageIndex
           );
           
           // Get text zones for this page
           const pageTexts = (contentConfig?.texts || []).filter(
-            (txt: any) => txt.position?.pageIndex === rawPage.pageIndex
+            (txt: any) => txt.position?.pageIndex === pageData.pageIndex
           );
           
           // Build clean HTML with positioned zones instead of raw InDesign HTML
@@ -220,10 +220,10 @@ ${textsHtml}
 </body>
 </html>`;
 
-          await page.setContent(html, { waitUntil: 'networkidle' });
+          await browserPage.setContent(html, { waitUntil: 'networkidle' });
           
           // Wait for all fonts to be loaded
-          await page.evaluate(async () => {
+          await browserPage.evaluate(async () => {
             await document.fonts.ready;
           });
           
@@ -231,13 +231,13 @@ ${textsHtml}
           await new Promise(resolve => setTimeout(resolve, 300));
 
           // Take screenshot
-          const screenshot = await page.screenshot({ type: 'jpeg', quality: 85 });
-          await page.close();
+          const screenshot = await browserPage.screenshot({ type: 'jpeg', quality: 85 });
+          await browserPage.close();
 
           // Upload to bucket
           const { objectStorageClient } = await import('./replit_integrations/object_storage/objectStorage');
           const bucketName = 'replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2';
-          const objectPath = `public/previews/${book.id}/page-${rawPage.pageIndex}.jpg`;
+          const objectPath = `public/previews/${book.id}/page-${pageData.pageIndex}.jpg`;
           
           const bucket = objectStorageClient.bucket(bucketName);
           const file = bucket.file(objectPath);
@@ -248,18 +248,18 @@ ${textsHtml}
           });
 
           const imageUrl = `/objects/${bucketName}/${objectPath}`;
-          pages.push({ pageIndex: rawPage.pageIndex, imageUrl });
+          renderedPages.push({ pageIndex: pageData.pageIndex, imageUrl });
           
-          console.log(`[render-pages] Page ${rawPage.pageIndex} uploaded to ${imageUrl}`);
+          console.log(`[render-pages] Page ${pageData.pageIndex} uploaded to ${imageUrl}`);
         } catch (pageError) {
-          console.error(`[render-pages] Error rendering page ${rawPage.pageIndex}:`, pageError);
+          console.error(`[render-pages] Error rendering page ${pageData.pageIndex}:`, pageError);
         }
       }
 
       await browser.close();
       
-      console.log(`[render-pages] Successfully rendered ${pages.length} pages`);
-      res.json({ success: true, pages });
+      console.log(`[render-pages] Successfully rendered ${renderedPages.length} pages`);
+      res.json({ success: true, pages: renderedPages });
     } catch (error) {
       console.error("[render-pages] Error:", error);
       res.status(500).json({ error: "Failed to render pages" });

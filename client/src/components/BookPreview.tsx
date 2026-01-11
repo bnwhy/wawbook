@@ -129,10 +129,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 }
                 
                 // Priority 2: Request server-side rendering with Playwright
-                const rawPages = book.contentConfig?.rawHtmlPages;
+                const bookPages = book.contentConfig?.pages;
                 
-                if (rawPages && rawPages.length > 0) {
-                    console.log(`[BookPreview] Requesting server-side render for ${rawPages.length} pages...`);
+                if (bookPages && bookPages.length > 0) {
+                    console.log(`[BookPreview] Requesting server-side render for ${bookPages.length} pages...`);
                     try {
                         const response = await fetch(`/api/books/${book.id}/render-pages`, {
                             method: 'POST',
@@ -185,9 +185,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   // --- DIMENSIONS & SCALE ---
   // Use EPUB dimensions if available, otherwise fall back to features or default
   const getBookDimensions = () => {
-    // Priority 1: Use rawHtmlPages dimensions (EPUB import)
-    if (book?.contentConfig?.rawHtmlPages?.length) {
-      const firstPage = book.contentConfig.rawHtmlPages[0];
+    // Priority 1: Use pages dimensions (EPUB import)
+    if (book?.contentConfig?.pages?.length) {
+      const firstPage = book.contentConfig.pages[0];
       if (firstPage.width && firstPage.height) {
         return { width: firstPage.width, height: firstPage.height };
       }
@@ -313,22 +313,15 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const contentPages = getContentPages();
   let pageCount = contentPages.length;
 
-  // Check for rawHtmlPages first (EPUB import)
-  if (book?.contentConfig?.rawHtmlPages?.length) {
-      // Use rawHtmlPages count if available
-      const rawPages = book.contentConfig.rawHtmlPages;
-      const maxPageIndex = Math.max(...rawPages.map(p => p.pageIndex));
+  // Check for pages (EPUB import) - use max pageIndex
+  if (book?.contentConfig?.pages?.length) {
+      const bookPagesData = book.contentConfig.pages;
+      const maxPageIndex = Math.max(...bookPagesData.map(p => p.pageIndex));
       pageCount = Math.max(pageCount, maxPageIndex);
-  } else if (book?.contentConfig?.pages?.length) {
-      // If using admin config, find the highest page number (excluding back cover 999)
-      const validPages = book.contentConfig.pages.filter(p => p.pageNumber < 900);
-      if (validPages.length > 0) {
-          pageCount = Math.max(...validPages.map(p => p.pageNumber));
-      }
   }
 
   // Ensure at least 1 page if we have any content
-  if (pageCount === 0 && (book?.contentConfig?.rawHtmlPages?.length || Object.keys(generatedPages).length > 0)) {
+  if (pageCount === 0 && (book?.contentConfig?.pages?.length || Object.keys(generatedPages).length > 0)) {
       pageCount = Math.max(1, ...Object.keys(generatedPages).map(k => parseInt(k)).filter(n => n < 900));
   }
 

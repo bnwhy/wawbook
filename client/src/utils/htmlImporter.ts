@@ -613,7 +613,7 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
   return { texts, images, cleanedHtml: doc.documentElement.outerHTML, width: finalWidth, height: finalHeight };
 };
 
-import { RawHtmlPage } from '../types/admin';
+import { PageDimension } from '../types/admin';
 
 // Parse ZIP data that was extracted on the server (with permanent image URLs)
 export interface PageImage {
@@ -633,7 +633,7 @@ export const parseServerExtractedZip = async (
   defaultWidth = 800, 
   defaultHeight = 600,
   sourceName = 'server-extract'
-): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number, rawHtmlPages: RawHtmlPage[], cssContentStr: string, imageMap: Record<string, string>, pageImages: PageImage[] }> => {
+): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number, pages: PageDimension[], cssContentStr: string, imageMap: Record<string, string>, pageImages: PageImage[] }> => {
     
     const { images: imageMap, htmlFiles, htmlContent, cssContent } = serverData;
     
@@ -720,8 +720,8 @@ export const parseServerExtractedZip = async (
         console.error('Error replacing images in preview HTML:', e);
     }
     
-    // Build rawHtmlPages for all HTML files and extract images from each page
-    const rawHtmlPages: RawHtmlPage[] = [];
+    // Build pages dimensions for all HTML files and extract images from each page
+    const pages: PageDimension[] = [];
     const sortedFiles = [...htmlFiles].filter(f => !f.toLowerCase().includes('toc')).sort();
     
     // Collect all images from all pages
@@ -749,9 +749,8 @@ export const parseServerExtractedZip = async (
         if (widthMatch) pageWidth = parseInt(widthMatch[1]);
         if (heightMatch) pageHeight = parseInt(heightMatch[1]);
         
-        rawHtmlPages.push({
+        pages.push({
             pageIndex,
-            html: fileHtml,
             width: pageWidth,
             height: pageHeight
         });
@@ -790,7 +789,7 @@ export const parseServerExtractedZip = async (
         htmlContent: previewHtml,
         width: parsed.width,
         height: parsed.height,
-        rawHtmlPages,
+        pages,
         cssContentStr: combinedCss,
         imageMap,
         pageImages: serverData.pageImages || []

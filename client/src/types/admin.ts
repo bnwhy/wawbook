@@ -79,21 +79,19 @@ export interface PageImage {
   imageUrl: string;
 }
 
+export interface PageDimension {
+  pageIndex: number;
+  width: number;
+  height: number;
+}
+
 export interface ContentConfiguration {
-  pages: PageDefinition[];
+  pages: PageDimension[];
   texts: TextElement[];
   images: ImageVariant[];
   imageElements?: ImageElement[];
-  rawHtmlPages?: RawHtmlPage[];
   cssContent?: string;
   pageImages?: PageImage[];
-}
-
-export interface RawHtmlPage {
-  pageIndex: number;
-  html: string;
-  width: number;
-  height: number;
 }
 
 export interface PageDefinition {

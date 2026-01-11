@@ -166,7 +166,7 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     !f.toLowerCase().includes('cover')
   ).sort();
   
-  const rawHtmlPages: Array<{ html: string; width: number; height: number; pageIndex: number }> = [];
+  const pagesDimensions: Array<{ width: number; height: number; pageIndex: number }> = [];
   const extractedTexts: Array<any> = [];
   const extractedImages: Array<any> = [];
 
@@ -190,8 +190,7 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
       }
     }
     
-    rawHtmlPages.push({
-      html: pageHtml,
+    pagesDimensions.push({
       width: pageWidth,
       height: pageHeight,
       pageIndex: i + 1,
@@ -372,7 +371,7 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     images: imageMap,
     fonts: fontMap,
     cssContent: allCss,
-    rawHtmlPages,
+    pages: pagesDimensions,
     texts: extractedTexts,
     imageElements: extractedImages,
   };

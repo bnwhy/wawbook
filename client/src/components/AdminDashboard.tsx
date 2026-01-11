@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera, CreditCard, CloudDownload, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Theme } from '../types';
-import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType, RawHtmlPage } from '../types/admin';
+import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType, PageDimension } from '../types/admin';
 import { ShippingZone, ShippingMethod } from '../types/ecommerce';
 import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
@@ -318,7 +318,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         ...selectedBook,
         contentConfig: {
           ...selectedBook.contentConfig,
-          rawHtmlPages: result.rawHtmlPages || [],
+          pages: result.pages || [],
           cssContent: result.cssContent || '',
           pageImages: result.pageImages || [],
           texts: result.texts || [],
@@ -5929,10 +5929,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         {/* Storyboard Grid */}
                         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 rounded-xl border border-slate-200/50">
                                 {(() => {
-                                    const hasLegacyPages = selectedBook.contentConfig.pages && selectedBook.contentConfig.pages.length > 0;
-                                    const hasRawHtmlPages = selectedBook.contentConfig.rawHtmlPages && selectedBook.contentConfig.rawHtmlPages.length > 0;
+                                    const hasPages = selectedBook.contentConfig.pages && selectedBook.contentConfig.pages.length > 0;
                                     
-                                    if (!hasLegacyPages && !hasRawHtmlPages) {
+                                    if (!hasPages) {
                                         return (
                                             <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
                                                 <div className="p-4 bg-slate-100 rounded-full">
@@ -5946,9 +5945,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         );
                                     }
                                     
-                                    if (hasRawHtmlPages) {
+                                    {
                                         const currentBookForPage = draftBook || selectedBook;
-                                        const sortedPages = selectedBook.contentConfig.rawHtmlPages!.sort((a: any, b: any) => a.pageIndex - b.pageIndex);
+                                        const sortedPages = [...selectedBook.contentConfig.pages].sort((a: any, b: any) => a.pageIndex - b.pageIndex);
                                         const pageImages = selectedBook.contentConfig.pageImages || [];
                                         
                                         const effectiveSelectedPage = selectedEpubPageIndex ?? (sortedPages.length > 0 ? sortedPages[0].pageIndex : null);

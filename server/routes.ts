@@ -205,7 +205,7 @@ export async function registerRoutes(
             
             console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize}`);
             
-            return `<div style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;overflow:visible;font-family:${textFontFamily};font-size:${textFontSize};color:${textColor} !important;text-align:${style.textAlign || 'left'};transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});line-height:1.2;white-space:nowrap;">${content}</div>`;
+            return `<div style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;overflow:hidden;font-family:${textFontFamily};font-size:${textFontSize};color:${textColor} !important;text-align:${style.textAlign || 'left'};transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});line-height:1.2;white-space:nowrap;">${content}</div>`;
           }).join('\n');
           
           let html = `<!DOCTYPE html>

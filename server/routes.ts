@@ -165,32 +165,54 @@ export async function registerRoutes(
       for (const rawPage of rawHtmlPages) {
         try {
           const page = await browser.newPage();
-          await page.setViewportSize({ 
-            width: rawPage.width || 400, 
-            height: rawPage.height || 293 
-          });
+          const pageWidth = rawPage.width || 400;
+          const pageHeight = rawPage.height || 293;
+          await page.setViewportSize({ width: pageWidth, height: pageHeight });
 
-          // Decode HTML and inject CSS + variable substitution
-          let html = rawPage.html
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&amp;/g, '&')
-            .replace(/&quot;/g, '"');
-
-          // Inject CSS inline
-          if (cssContent) {
-            html = html.replace('</head>', `<style>${cssContent}</style></head>`);
-          }
-
-          // Replace variables
-          if (config.childName) {
-            html = html.replace(/\{\{nom_enfant\}\}/g, config.childName);
-            html = html.replace(/\{nom_enfant\}/g, config.childName);
-          }
-
-          // Fix image paths to use absolute URLs
           const baseUrl = `${req.protocol}://${req.get('host')}`;
-          html = html.replace(/src="\/assets\//g, `src="${baseUrl}/assets/`);
+          
+          // Get images for this page
+          const pageImages = (contentConfig?.imageElements || []).filter(
+            (img: any) => img.position?.pageIndex === rawPage.pageIndex
+          );
+          
+          // Get text zones for this page
+          const pageTexts = (contentConfig?.texts || []).filter(
+            (txt: any) => txt.position?.pageIndex === rawPage.pageIndex
+          );
+          
+          // Build clean HTML with positioned zones instead of raw InDesign HTML
+          let imagesHtml = pageImages.map((img: any) => {
+            const pos = img.position || {};
+            const imgUrl = img.url?.startsWith('/') ? `${baseUrl}${img.url}` : img.url;
+            return `<img src="${imgUrl}" style="position:absolute;left:${pos.x || 0}%;top:${pos.y || 0}%;width:${pos.width || 100}%;height:${pos.height || 100}%;object-fit:cover;" />`;
+          }).join('\n');
+          
+          let textsHtml = pageTexts.map((txt: any) => {
+            const pos = txt.position || {};
+            const style = txt.style || {};
+            let content = txt.content || '';
+            
+            // Replace variables
+            if (config.childName) {
+              content = content.replace(/\{\{nom_enfant\}\}/g, config.childName);
+              content = content.replace(/\{nom_enfant\}/g, config.childName);
+            }
+            
+            return `<div style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;overflow:hidden;font-family:${style.fontFamily || 'sans-serif'};font-size:${style.fontSize || '16px'};color:${style.color || '#000'};text-align:${style.textAlign || 'left'};transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});">${content}</div>`;
+          }).join('\n');
+          
+          let html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>${cssContent}</style>
+</head>
+<body style="margin:0;padding:0;width:${pageWidth}px;height:${pageHeight}px;position:relative;overflow:hidden;">
+${imagesHtml}
+${textsHtml}
+</body>
+</html>`;
 
           await page.setContent(html, { waitUntil: 'networkidle' });
           

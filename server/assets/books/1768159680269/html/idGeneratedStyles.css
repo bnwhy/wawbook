@@ -1,9 +1,9 @@
 @font-face {
-	font-family:"Agency FB";
+	font-family:Chiller;
 	font-style:normal;
 	font-weight:normal;
-	font-stretch:condensed;
-	src : url("../font/AgencyFB-Reg.TTF");
+	font-stretch:semi-expanded;
+	src : url("../font/Chiller-Regular.TTF");
 }
 body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure {
 	margin:0;
@@ -20,7 +20,7 @@ p.ParaOverride-1 {
 }
 span.CharOverride-1 {
 	color:#ffffff;
-	font-family:"Agency FB", sans-serif;
+	font-family:Chiller, serif;
 	font-size:380px;
 	font-style:normal;
 	font-weight:normal;
@@ -37,13 +37,13 @@ span.CharOverride-1 {
 	width:400.00px;
 }
 #_idContainer001 {
-	-webkit-transform:translate(35.000px,8.325px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	-webkit-transform:translate(35.000px,12.500px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
 	-webkit-transform-origin:0% 0%;
-	height:41.17px;
+	height:37.00px;
 	left:0px;
 	position:absolute;
 	top:0px;
-	transform:translate(35.000px,8.325px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	transform:translate(35.000px,12.500px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
 	transform-origin:0% 0%;
 	width:165.00px;
 }

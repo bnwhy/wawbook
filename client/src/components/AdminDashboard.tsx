@@ -6077,8 +6077,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                     </span>
                                                                                 )}
                                                                             </div>
-                                                                            <div className="text-sm text-slate-700 mb-3 p-2 bg-white rounded border border-slate-100 italic">
+                                                                            <div className="text-sm text-slate-700 mb-2 p-2 bg-white rounded border border-slate-100 italic">
                                                                                 "{text.content?.length > 80 ? text.content.substring(0, 80) + '...' : text.content || '(vide)'}"
+                                                                            </div>
+                                                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                                                {text.style?.fontFamily && (
+                                                                                    <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-medium" title="Police">
+                                                                                        {text.style.fontFamily.split(',')[0].replace(/["']/g, '')}
+                                                                                    </span>
+                                                                                )}
+                                                                                {text.style?.fontSize && (
+                                                                                    <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium" title="Taille">
+                                                                                        {text.style.fontSize}
+                                                                                    </span>
+                                                                                )}
+                                                                                {text.style?.color && (
+                                                                                    <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium flex items-center gap-1" title="Couleur">
+                                                                                        <span className="w-2 h-2 rounded-full border border-slate-300" style={{ backgroundColor: text.style.color }}></span>
+                                                                                        {text.style.color}
+                                                                                    </span>
+                                                                                )}
                                                                             </div>
                                                                             <select
                                                                                 value={text.type === 'variable' ? text.content : ''}

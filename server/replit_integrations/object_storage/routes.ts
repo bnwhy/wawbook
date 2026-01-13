@@ -422,7 +422,10 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     
     // Parse image elements from HTML - find images inside positioned containers
     // InDesign exports images inside div containers with CSS positioning
-    $('div[id^="_idContainer"]').each((index, element) => {
+    const imageContainers = $('div[id^="_idContainer"]');
+    console.log(`[epub-extract] Found ${imageContainers.length} _idContainer divs in page ${i + 1}`);
+    
+    imageContainers.each((index, element) => {
       const $container = $(element);
       const containerId = $container.attr('id') || `container-${index}`;
       

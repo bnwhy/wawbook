@@ -420,32 +420,79 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
       }
     });
     
-    // Parse image elements from HTML
-    const imgRegex = /<img[^>]*(?:class=["']([^"']+)["'])?[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)["'])?[^>]*\/?>/gi;
-    let imgMatch;
-    while ((imgMatch = imgRegex.exec(pageHtml)) !== null) {
-      const match = imgMatch;
-      const imgClass = match[1] || '';
-      const imgSrc = match[2];
-      const imgAlt = match[3] || '';
+    // Parse image elements from HTML - find images inside positioned containers
+    // InDesign exports images inside div containers with CSS positioning
+    $('div[id^="_idContainer"]').each((index, element) => {
+      const $container = $(element);
+      const containerId = $container.attr('id') || `container-${index}`;
+      
+      // Check if this container has an image
+      const $img = $container.find('img').first();
+      if ($img.length === 0) return;
+      
+      const imgSrc = $img.attr('src') || '';
+      const imgClass = $img.attr('class') || '';
+      const imgAlt = $img.attr('alt') || '';
+      
+      // Get CSS position from the container (same logic as for text)
+      let translateX = 0, translateY = 0, blockWidth = pageWidth, blockHeight = pageHeight;
+      let scaleX = 1, scaleY = 1, rotation = 0;
+      
+      // Try to find CSS for this container ID
+      const containerIdPattern = new RegExp(`#${containerId}[^{]*\\{([^}]+)\\}`, 'i');
+      const containerCssMatch = allCss.match(containerIdPattern);
+      
+      if (containerCssMatch) {
+        const containerCss = containerCssMatch[1];
+        
+        // Parse transform: translate(X, Y) rotate(R) skew(...) scale(SX, SY)
+        const transformMatch = containerCss.match(/transform\s*:\s*translate\(([^,]+),\s*([^)]+)\)/i);
+        if (transformMatch) {
+          translateX = parseFloat(transformMatch[1]) || 0;
+          translateY = parseFloat(transformMatch[2]) || 0;
+        }
+        
+        // Parse width and height
+        const widthMatch = containerCss.match(/width\s*:\s*([\d.]+)px/i);
+        const heightMatch = containerCss.match(/height\s*:\s*([\d.]+)px/i);
+        if (widthMatch) blockWidth = parseFloat(widthMatch[1]) || pageWidth;
+        if (heightMatch) blockHeight = parseFloat(heightMatch[1]) || pageHeight;
+        
+        // Parse scale
+        const scaleMatch = containerCss.match(/scale\(([^,]+),\s*([^)]+)\)/i);
+        if (scaleMatch) {
+          scaleX = parseFloat(scaleMatch[1]) || 1;
+          scaleY = parseFloat(scaleMatch[2]) || 1;
+        }
+        
+        // Parse rotation
+        const rotateMatch = containerCss.match(/rotate\(([^)]+)deg\)/i);
+        if (rotateMatch) {
+          rotation = parseFloat(rotateMatch[1]) || 0;
+        }
+      }
+      
+      console.log(`[epub-extract] Image ${containerId}: x=${translateX}, y=${translateY}, w=${blockWidth}, h=${blockHeight}`);
       
       extractedImages.push({
         id: `img-${bookId}-${i + 1}-${randomUUID().substring(0, 8)}`,
         type: 'static',
-        label: imgClass || imgAlt || `image-page-${i + 1}`,
+        label: imgClass || imgAlt || containerId,
         url: imgSrc,
         position: {
-          x: 0,
-          y: 0,
+          x: translateX,
+          y: translateY,
+          width: blockWidth,
+          height: blockHeight,
+          scaleX,
+          scaleY,
           layer: 10,
           pageIndex: i + 1,
-          rotation: 0,
-          width: 100,
-          height: 100,
+          rotation,
         },
         combinationKey: 'default',
       });
-    }
+    });
   }
 
   // Detect font issues

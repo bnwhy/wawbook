@@ -182,10 +182,15 @@ export async function registerRoutes(
           );
           
           // Build clean HTML with positioned zones instead of raw InDesign HTML
+          // Images use pixel positions from EPUB CSS (same as texts)
           let imagesHtml = pageImages.map((img: any) => {
             const pos = img.position || {};
             const imgUrl = img.url?.startsWith('/') ? `${baseUrl}${img.url}` : img.url;
-            return `<img src="${imgUrl}" style="position:absolute;left:${pos.x || 0}%;top:${pos.y || 0}%;width:${pos.width || 100}%;height:${pos.height || 100}%;object-fit:cover;" />`;
+            const scaleX = pos.scaleX || 1;
+            const scaleY = pos.scaleY || 1;
+            const rotation = pos.rotation || 0;
+            // Use pixel positions like texts, with transform for scale/rotation
+            return `<img src="${imgUrl}" style="position:absolute;left:${pos.x || 0}px;top:${pos.y || 0}px;width:${pos.width || pageWidth}px;height:${pos.height || pageHeight}px;object-fit:cover;transform:rotate(${rotation}deg) scale(${scaleX}, ${scaleY});transform-origin:0% 0%;" />`;
           }).join('\n');
           
           let textsHtml = pageTexts.map((txt: any) => {

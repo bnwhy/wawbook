@@ -191,10 +191,8 @@ export async function registerRoutes(
         return res.status(400).json({ error: "No pages to render" });
       }
 
-      const { config = {}, combinationKey = 'default' } = req.body;
+      const { config = {}, combinationKey = 'default', characters = {} } = req.body;
       const objectStorageService = new ObjectStorageService();
-      
-      console.log(`[render-pages] Using combinationKey: ${combinationKey}`);
       
       // Parse combinationKey into key-value pairs for partial matching
       // e.g., "haircolor:blond_skin:light" -> { haircolor: "blond", skin: "light" }
@@ -209,7 +207,6 @@ export async function registerRoutes(
       };
       
       const userSelections = parseKeyToCharacteristics(combinationKey);
-      console.log(`[render-pages] Parsed user selections:`, userSelections);
       
       // Check if an image matches user selections (partial matching)
       // An image matches if ALL its characteristics are satisfied by user selections
@@ -227,6 +224,22 @@ export async function registerRoutes(
           }
         }
         return true; // All image characteristics match (or user hasn't selected that characteristic)
+      };
+      
+      // Check if an image's conditions are satisfied by user selections
+      const imageMatchesConditions = (img: any, userCharacters: Record<string, Record<string, any>>): boolean => {
+        if (!img.conditions || img.conditions.length === 0) {
+          return true;
+        }
+        
+        return img.conditions.every((cond: any) => {
+          for (const tabSelections of Object.values(userCharacters)) {
+            if (tabSelections[cond.variantId] === cond.optionId) {
+              return true;
+            }
+          }
+          return false;
+        });
       };
       
       // Import chromium dynamically
@@ -277,15 +290,107 @@ export async function registerRoutes(
 
           const baseUrl = `${req.protocol}://${req.get('host')}`;
           
-          // Get images for this page, filtered by combinationKey
+          // Get images for this page, filtered by conditions, combinationKey, or characteristics
+          // Priority: conditions > combinationKey > characteristics > default
           const pageImages = (contentConfig?.imageElements || []).filter(
             (img: any) => {
+              // Must be on the correct page
               if (img.position?.pageIndex !== pageData.pageIndex) return false;
-              // Include if: no combinationKey, matches exactly, is 'default', or is 'all'
-              if (!img.combinationKey || img.combinationKey === 'default' || img.combinationKey === 'all') return true;
-              return img.combinationKey === combinationKey;
+              
+              // If image has conditions, check them
+              if (img.conditions && img.conditions.length > 0) {
+                // ALL conditions must match
+                const allMatch = img.conditions.every((cond: any) => {
+                  // Find if user selected this variant with this value
+                  for (const tabSelections of Object.values(characters)) {
+                    if (tabSelections[cond.variantId] === cond.optionId) {
+                      return true; // Found matching selection
+                    }
+                  }
+                  return false; // This condition not satisfied
+                });
+                
+                return allMatch;
+              }
+              
+              // Static images or images without conditions always match
+              return true;
             }
           );
+          
+          // Group images by position to avoid duplicates
+          // If multiple images have the same position, keep only the one that best matches user selections
+          const imagesByPosition = new Map<string, any[]>();
+          for (const img of pageImages) {
+            const pos = img.position || {};
+            // Create a position key (rounded to avoid floating point issues)
+            const posKey = `${Math.round(pos.x || 0)}_${Math.round(pos.y || 0)}_${Math.round(pos.width || 0)}_${Math.round(pos.height || 0)}`;
+            
+            if (!imagesByPosition.has(posKey)) {
+              imagesByPosition.set(posKey, []);
+            }
+            imagesByPosition.get(posKey)!.push(img);
+          }
+          
+          // For each position, keep only the best matching image
+          const finalImages: any[] = [];
+          for (const [posKey, imagesAtPosition] of imagesByPosition.entries()) {
+            if (imagesAtPosition.length === 1) {
+              // Only one image at this position, use it
+              finalImages.push(imagesAtPosition[0]);
+            } else {
+              // Multiple images at same position - choose the one that best matches
+              // Priority: images with conditions that match > images with combinationKey match > others
+              let bestImage = imagesAtPosition[0];
+              let bestScore = 0;
+              
+              for (const img of imagesAtPosition) {
+                let score = 0;
+                
+                // Score based on conditions: if ALL conditions match, highest priority
+                if (img.conditions && img.conditions.length > 0) {
+                  const allConditionsMatch = imageMatchesConditions(img, characters);
+                  if (allConditionsMatch) {
+                    score = 1000 + img.conditions.length; // Highest priority, more conditions = better match
+                  } else {
+                    // Partial match - count how many conditions match
+                    const matchingCount = img.conditions.filter((cond: any) => {
+                      for (const [tabId, tabSelections] of Object.entries(characters)) {
+                        if (tabSelections[cond.variantId] === cond.optionId) {
+                          return true;
+                        }
+                      }
+                      return false;
+                    }).length;
+                    score = matchingCount * 10; // Lower priority for partial matches
+                  }
+                } else if (img.combinationKey && img.combinationKey !== 'default' && img.combinationKey !== 'all') {
+                  // Score based on combinationKey match
+                  if (img.combinationKey === combinationKey) {
+                    score = 500; // High priority for exact combinationKey match
+                  } else if (imageMatchesSelections(img)) {
+                    score = 300; // Medium priority for partial combinationKey match
+                  }
+                } else {
+                  // Static/default image - lowest priority
+                  score = 1;
+                }
+                
+                if (score > bestScore) {
+                  bestScore = score;
+                  bestImage = img;
+                }
+              }
+              
+              console.log(`[render-pages] Page ${pageData.pageIndex}: Position ${posKey} has ${imagesAtPosition.length} images, selected: ${bestImage.id} (score: ${bestScore})`);
+              finalImages.push(bestImage);
+            }
+          }
+          
+          // Sort by layer if available
+          finalImages.sort((a, b) => (a.position?.layer || 0) - (b.position?.layer || 0));
+          
+          console.log(`[render-pages] Page ${pageData.pageIndex}: Filtered ${pageImages.length} images to ${finalImages.length} (removed ${pageImages.length - finalImages.length} duplicates at same position)`);
           
           // Get text zones for this page
           const pageTexts = (contentConfig?.texts || []).filter(
@@ -294,7 +399,7 @@ export async function registerRoutes(
           
           // Build clean HTML with positioned zones instead of raw InDesign HTML
           // Images use pixel positions from EPUB CSS (same as texts)
-          let imagesHtml = pageImages.map((img: any) => {
+          let imagesHtml = finalImages.map((img: any) => {
             const pos = img.position || {};
             const imgUrl = img.url?.startsWith('/') ? `${baseUrl}${img.url}` : img.url;
             const scaleX = pos.scaleX || 1;
@@ -353,17 +458,25 @@ ${textsHtml}
           // Upload to bucket
           const { objectStorageClient } = await import('./replit_integrations/object_storage/objectStorage');
           const bucketName = 'replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2';
-          const objectPath = `public/previews/${book.id}/page-${pageData.pageIndex}.jpg`;
+          
+          // Generate a stable hash from combinationKey for the file path
+          // This ensures different combinations get different files, preventing cache issues
+                const crypto = await import('node:crypto');
+                const keyHash = combinationKey !== 'default'
+                  ? crypto.createHash('md5').update(combinationKey).digest('hex').substring(0, 16)
+                  : 'default';
+                const objectPath = `public/previews/${book.id}/${keyHash}/page-${pageData.pageIndex}.jpg`;
           
           const bucket = objectStorageClient.bucket(bucketName);
           const file = bucket.file(objectPath);
           
           await file.save(screenshot, {
             contentType: 'image/jpeg',
-            metadata: { cacheControl: 'public, max-age=3600' },
+            metadata: { cacheControl: 'public, max-age=31536000' }, // 1 year cache for production
           });
 
           const imageUrl = `/objects/${bucketName}/${objectPath}`;
+          console.log(`[render-pages] Generated imageUrl: ${imageUrl}`);
           renderedPages.push({ pageIndex: pageData.pageIndex, imageUrl });
           
           console.log(`[render-pages] Page ${pageData.pageIndex} uploaded to ${imageUrl}`);
@@ -375,6 +488,7 @@ ${textsHtml}
       await browser.close();
       
       console.log(`[render-pages] Successfully rendered ${renderedPages.length} pages`);
+      console.log(`[render-pages] Returning pages:`, renderedPages.map(p => ({ pageIndex: p.pageIndex, url: p.imageUrl })));
       res.json({ success: true, pages: renderedPages });
     } catch (error) {
       console.error("[render-pages] Error:", error);

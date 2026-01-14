@@ -1,5 +1,137 @@
-import { BookProduct, ContentConfiguration, ImageElement, TextElement, ImageVariant } from '../types/admin';
+import { BookProduct, ContentConfiguration, ImageElement, TextElement, ImageVariant, ImageCondition } from '../types/admin';
 import { BookConfig } from '../types';
+
+/**
+ * Checks if all image conditions are satisfied by the current wizard selections.
+ * 
+ * @param conditions - Array of conditions that must all be satisfied
+ * @param selections - Current wizard selections: { [tabId]: { [variantId]: optionId } }
+ * @param book - Optional book to help resolve tab/variant relationships
+ * @returns true if all conditions are satisfied, false otherwise
+ */
+export const matchesImageConditions = (
+  conditions: ImageCondition[] | undefined,
+  selections: Record<string, Record<string, any>>,
+  book?: BookProduct
+): boolean => {
+  if (!conditions || conditions.length === 0) {
+    return true;
+  }
+  
+  const result = conditions.every(cond => {
+    // Normalize the condition values for comparison
+    const normalizedVariantId = cond.variantId.toLowerCase().trim();
+    const normalizedOptionId = cond.optionId.toLowerCase().trim();
+    
+    console.log(`[matchesImageConditions] Checking condition: variantId="${cond.variantId}", optionId="${cond.optionId}"`);
+    
+    // Strategy 1: For characteristic-based wizards, tabId often equals variantId
+    // Try direct lookup: selections[variantId][variantId] = optionId
+    const directTabSelections = selections[cond.variantId];
+    if (directTabSelections) {
+      console.log(`[matchesImageConditions] Strategy 1: Found direct tab selections for "${cond.variantId}":`, directTabSelections);
+      // Check exact match
+      if (directTabSelections[cond.variantId] === cond.optionId) {
+        console.log(`[matchesImageConditions] ✓ Strategy 1: Exact match found`);
+        return true;
+      }
+      // Check normalized match
+      const selectedValue = directTabSelections[cond.variantId];
+      if (selectedValue && String(selectedValue).toLowerCase().trim() === normalizedOptionId) {
+        console.log(`[matchesImageConditions] ✓ Strategy 1: Normalized match found (${selectedValue} === ${cond.optionId})`);
+        return true;
+      }
+    }
+    
+    // Strategy 2: Search through all tabs to find where this variant exists
+    // This handles cases like tabId="father", variantId="haircolor"
+    for (const [tabId, tabSelections] of Object.entries(selections)) {
+      console.log(`[matchesImageConditions] Strategy 2: Checking tab "${tabId}" with selections:`, tabSelections);
+      // Check exact variant ID match in this tab's selections
+      if (tabSelections[cond.variantId] === cond.optionId) {
+        console.log(`[matchesImageConditions] ✓ Strategy 2: Exact match in tab "${tabId}" (${tabSelections[cond.variantId]} === ${cond.optionId})`);
+        return true;
+      }
+      // Check normalized match
+      const selectedValue = tabSelections[cond.variantId];
+      if (selectedValue && String(selectedValue).toLowerCase().trim() === normalizedOptionId) {
+        console.log(`[matchesImageConditions] ✓ Strategy 2: Normalized match in tab "${tabId}" (${selectedValue} === ${cond.optionId})`);
+        return true;
+      }
+      
+      // Also check if tabId matches variantId (characteristic-based wizard)
+      // e.g., tabId="hair", variantId="hair"
+      const normalizedTabId = tabId.toLowerCase().trim();
+      if (normalizedTabId === normalizedVariantId) {
+        // For characteristic-based: tabId="hair", variantId="hair"
+        // Check all variants in this tab
+        for (const [variantKey, variantValue] of Object.entries(tabSelections)) {
+          if (variantKey.toLowerCase().trim() === normalizedVariantId) {
+            const normalizedVariantValue = String(variantValue).toLowerCase().trim();
+            if (normalizedVariantValue === normalizedOptionId) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    
+    // Strategy 3: If we have the book config, try to find the tab that contains this variant
+    if (book?.wizardConfig?.tabs) {
+      console.log(`[matchesImageConditions] Strategy 3: Searching in ${book.wizardConfig.tabs.length} tabs`);
+      for (const tab of book.wizardConfig.tabs) {
+        if (tab.type === 'character' && tab.variants) {
+          for (const variant of tab.variants) {
+            // Check if variant ID matches (exact or normalized)
+            const variantIdMatches = variant.id === cond.variantId || 
+                                    variant.id.toLowerCase().trim() === normalizedVariantId;
+            
+            if (variantIdMatches) {
+              console.log(`[matchesImageConditions] Strategy 3: Found matching variant "${variant.id}" in tab "${tab.id}"`);
+              // Found the tab containing this variant
+              const tabSelections = selections[tab.id] || {};
+              console.log(`[matchesImageConditions] Strategy 3: Tab "${tab.id}" selections:`, tabSelections);
+              
+              // Check exact match
+              if (tabSelections[cond.variantId] === cond.optionId) {
+                console.log(`[matchesImageConditions] ✓ Strategy 3: Exact match in tab "${tab.id}"`);
+                return true;
+              }
+              
+              // Check normalized match
+              const selectedValue = tabSelections[cond.variantId];
+              if (selectedValue && String(selectedValue).toLowerCase().trim() === normalizedOptionId) {
+                console.log(`[matchesImageConditions] ✓ Strategy 3: Normalized match in tab "${tab.id}" (${selectedValue} === ${cond.optionId})`);
+                return true;
+              }
+              
+              // Also check if variant.id is in tabSelections (for characteristic-based)
+              if (tabSelections[variant.id] === cond.optionId) {
+                console.log(`[matchesImageConditions] ✓ Strategy 3: Match via variant.id in tab "${tab.id}"`);
+                return true;
+              }
+              const variantSelectedValue = tabSelections[variant.id];
+              if (variantSelectedValue && String(variantSelectedValue).toLowerCase().trim() === normalizedOptionId) {
+                console.log(`[matchesImageConditions] ✓ Strategy 3: Normalized match via variant.id in tab "${tab.id}"`);
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    console.log(`[matchesImageConditions] ✗ No match found for variantId="${cond.variantId}", optionId="${cond.optionId}"`);
+    // #region agent log
+    setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:127',message:'Condition not matched',data:{variantId:cond.variantId,optionId:cond.optionId,selections},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{}),0);
+    // #endregion
+    return false; // Condition not satisfied
+  });
+  // #region agent log
+  setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:129',message:'matchesImageConditions result',data:{conditions,result},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{}),0);
+  // #endregion
+  return result;
+};
 
 /**
  * Resolves the effective combination key based on user configuration and book wizard config.
@@ -19,9 +151,6 @@ export const getCombinationKey = (book: BookProduct, config: BookConfig): string
               if (v.type === 'options') {
                   const selectedOptId = config.characters![tab.id][v.id];
                   if (selectedOptId) {
-                      // For characteristic-based wizard (tabId = variantId = characteristic key)
-                      // e.g., tabId='hero', variantId='hero', selectedOptId='father'
-                      // Build key as "hero:father"
                       characteristicParts.push(`${v.id}:${selectedOptId}`);
                   }
               }
@@ -30,7 +159,6 @@ export const getCombinationKey = (book: BookProduct, config: BookConfig): string
   });
   
   if (characteristicParts.length === 0) return 'default';
-  // Sort for consistency with server-side key generation
   characteristicParts.sort();
   return characteristicParts.join('_');
 };
@@ -57,7 +185,6 @@ export const generateBookPages = async (
   config: BookConfig, 
   combinationKey: string = 'default'
 ): Promise<Record<number, string>> => {
-  console.log("Generating book pages for:", book.name, "Key:", combinationKey);
   
   const pages: Record<number, string> = {};
   
@@ -150,16 +277,52 @@ export const generateBookPages = async (
       }
       
       // 2. Draw Image Elements (Layers)
+      // #region agent log
+      const allPageImages = book.contentConfig?.imageElements?.filter(el => el.position.pageIndex === pageIndex) || [];
+      setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:280',message:'All images for page before filter',data:{pageIndex,count:allPageImages.length,images:allPageImages.map(i=>({id:i.id,label:i.label,url:i.url?.substring(0,50),combinationKey:i.combinationKey,conditions:i.conditions,position:i.position}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{}),0);
+      // #endregion
       const imageLayers = book.contentConfig?.imageElements?.filter(
-          el => el.position.pageIndex === pageIndex && 
-                (!el.combinationKey || el.combinationKey === combinationKey || el.combinationKey === 'default' || el.combinationKey === 'all')
+          el => {
+            // Must be on the correct page
+            if (el.position.pageIndex !== pageIndex) return false;
+            
+            // Check combinationKey match
+            const keyMatches = !el.combinationKey || 
+                              el.combinationKey === combinationKey || 
+                              el.combinationKey === 'default' || 
+                              el.combinationKey === 'all';
+            
+            // Check conditions match (if conditions exist, they must all be satisfied)
+            const conditionsMatch = matchesImageConditions(el.conditions, config.characters || {}, book);
+            // #region agent log
+            setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:292',message:'Image filter evaluation',data:{pageIndex,imageId:el.id,label:el.label,url:el.url?.substring(0,50),hasConditions:!!(el.conditions&&el.conditions.length>0),conditions:el.conditions,combinationKey:el.combinationKey,keyMatches,conditionsMatch,willInclude:el.conditions&&el.conditions.length>0?conditionsMatch:keyMatches},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{}),0);
+            // #endregion
+            
+            // Image is included if either:
+            // - No conditions AND key matches, OR
+            // - Conditions exist AND all are satisfied (key check is secondary)
+            if (el.conditions && el.conditions.length > 0) {
+              return conditionsMatch; // Conditions take precedence
+            }
+            
+            return keyMatches; // Fall back to key matching if no conditions
+          }
       ) || [];
+      // #region agent log
+      setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:303',message:'Filtered images after evaluation',data:{pageIndex,count:imageLayers.length,images:imageLayers.map(i=>({id:i.id,label:i.label,url:i.url?.substring(0,50),layer:i.position.layer,conditions:i.conditions}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{}),0);
+      // #endregion
       
       // Sort by layer if available
        imageLayers.sort((a, b) => (a.position.layer || 0) - (b.position.layer || 0));
+      // #region agent log
+      setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:306',message:'Images sorted by layer',data:{pageIndex,layers:imageLayers.map(i=>({id:i.id,label:i.label,layer:i.position.layer,url:i.url?.substring(0,50)}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{}),0);
+      // #endregion
       
       for (const layer of imageLayers) {
           if (layer.url) {
+             // #region agent log
+             setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:309',message:'Drawing image layer',data:{pageIndex,imageId:layer.id,label:layer.label,url:layer.url?.substring(0,50),x:layer.position.x,y:layer.position.y,width:layer.position.width,height:layer.position.height,layer:layer.position.layer},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{}),0);
+             // #endregion
              try {
                  const img = await loadImage(layer.url);
                  

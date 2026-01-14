@@ -5,7 +5,7 @@ import { Story, BookConfig, Gender } from '../types';
 import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
-import { generateBookPages } from '../utils/imageGenerator';
+import { generateBookPages, matchesImageConditions, getCombinationKey as getCombinationKeyUtil } from '../utils/imageGenerator';
 import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
 import Footer from './Footer';
@@ -84,48 +84,20 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     return content;
   };
 
-  const getCombinationKey = () => {
-    if (!book?.wizardConfig?.tabs) return 'default';
-    
-    // Collect characteristics from wizard selections
-    // Structure: config.characters[tabId][variantId] = selectedOptionId
-    const characteristicParts: string[] = [];
-    
-    book.wizardConfig.tabs.forEach((tab: any) => {
-        if (tab.type === 'character' && config.characters?.[tab.id]) {
-            tab.variants?.forEach((v: any) => {
-                if (v.type === 'options') {
-                    const selectedOptId = config.characters![tab.id][v.id];
-                    if (selectedOptId) {
-                        // For characteristic-based wizard (tabId = variantId = characteristic key)
-                        // e.g., tabId='hero', variantId='hero', selectedOptId='father'
-                        // Build key as "hero:father"
-                        characteristicParts.push(`${v.id}:${selectedOptId}`);
-                    }
-                }
-            });
-        }
-    });
-    
-    if (characteristicParts.length === 0) return 'default';
-    // Sort for consistency with server-side key generation
-    characteristicParts.sort();
-    return characteristicParts.join('_');
-  };
+  const currentCombinationKey = useMemo(() => {
+    return book ? getCombinationKeyUtil(book, config) : 'default';
+  }, [book, config.characters]);
 
-  const currentCombinationKey = getCombinationKey();
-
-  // --- LOAD PAGE IMAGES (SERVER-SIDE RENDERING) ---
   useEffect(() => {
     if (book) {
         setIsGenerating(true);
+        setGeneratedPages({});
         const timer = setTimeout(async () => {
             try {
                 // Priority 1: Use pre-rendered page images from server (EPUB import)
                 const pageImages = book.contentConfig?.pageImages;
                 
                 if (pageImages && pageImages.length > 0) {
-                    console.log(`Using ${pageImages.length} pre-rendered page images from server`);
                     const pages: Record<number, string> = {};
                     pageImages.forEach(pi => {
                         pages[pi.pageIndex] = pi.imageUrl;
@@ -135,11 +107,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     return;
                 }
                 
-                // Priority 2: Request server-side rendering with Playwright
                 const bookPages = book.contentConfig?.pages;
                 
                 if (bookPages && bookPages.length > 0) {
-                    console.log(`[BookPreview] Requesting server-side render for ${bookPages.length} pages...`);
                     try {
                         const response = await fetch(`/api/books/${book.id}/render-pages`, {
                             method: 'POST',
@@ -158,26 +128,23 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         
                         if (response.ok) {
                             const result = await response.json();
-                            console.log(`[BookPreview] Server rendered ${result.pages?.length} pages`);
                             
                             if (result.pages && result.pages.length > 0) {
                                 const pages: Record<number, string> = {};
+                                const cacheBust = Date.now();
                                 result.pages.forEach((p: { pageIndex: number; imageUrl: string }) => {
-                                    pages[p.pageIndex] = p.imageUrl;
+                                    pages[p.pageIndex] = `${p.imageUrl}?t=${cacheBust}`;
                                 });
                                 setGeneratedPages(pages);
                                 setIsGenerating(false);
                                 return;
                             }
-                        } else {
-                            console.error('[BookPreview] Server render failed:', await response.text());
                         }
                     } catch (renderErr) {
-                        console.error('[BookPreview] Server render request failed:', renderErr);
+                        console.error('Server render failed:', renderErr);
                     }
                 }
                 
-                // Priority 3: Fallback to canvas-based generation for non-EPUB books
                 const pages = await generateBookPages(book, config, currentCombinationKey);
                 setGeneratedPages(pages);
                 setIsGenerating(false);
@@ -188,7 +155,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         }, 100);
         return () => clearTimeout(timer);
     }
-  }, [book, config, currentCombinationKey]);
+  }, [book, currentCombinationKey]);
 
   // --- DIMENSIONS & SCALE ---
   // Use EPUB dimensions if available, otherwise fall back to features or default
@@ -551,7 +518,21 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       // Find configured cover elements if available
       const coverTexts = (book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [])
         .map(t => ({...t, _kind: 'text'}));
-      const coverImages = (book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 0) || [])
+      const coverImages = (book?.contentConfig?.imageElements?.filter(i => {
+        if (i.position.pageIndex !== 0) return false;
+        // Check combinationKey match
+        const keyMatches = !i.combinationKey || 
+                          i.combinationKey === currentCombinationKey || 
+                          i.combinationKey === 'default' || 
+                          i.combinationKey === 'all';
+        // Check conditions match
+        const conditionsMatch = matchesImageConditions(i.conditions, config.characters || {}, book);
+        // If conditions exist, they take precedence
+        if (i.conditions && i.conditions.length > 0) {
+          return conditionsMatch;
+        }
+        return keyMatches;
+      }) || [])
         .map(i => ({...i, _kind: 'image'}));
       // Also check for background image specifically for page 0
       const coverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
@@ -604,12 +585,40 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     if (index === totalViews - 1) {
         // Find configured BACK cover elements (Page 999)
         const backCoverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 999) || [];
-        const backCoverImages = book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 999) || [];
+        const backCoverImages = book?.contentConfig?.imageElements?.filter(i => {
+          if (i.position.pageIndex !== 999) return false;
+          // Check combinationKey match
+          const keyMatches = !i.combinationKey || 
+                            i.combinationKey === currentCombinationKey || 
+                            i.combinationKey === 'default' || 
+                            i.combinationKey === 'all';
+          // Check conditions match
+          const conditionsMatch = matchesImageConditions(i.conditions, config.characters || {}, book);
+          // If conditions exist, they take precedence
+          if (i.conditions && i.conditions.length > 0) {
+            return conditionsMatch;
+          }
+          return keyMatches;
+        }) || [];
         const backCoverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 999 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
         
         // Also check Front Cover for fallback logic (Page 0) - to determine if we are in "custom mode"
         const frontCoverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [];
-        const frontCoverImages = book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 0) || [];
+        const frontCoverImages = book?.contentConfig?.imageElements?.filter(i => {
+          if (i.position.pageIndex !== 0) return false;
+          // Check combinationKey match
+          const keyMatches = !i.combinationKey || 
+                            i.combinationKey === currentCombinationKey || 
+                            i.combinationKey === 'default' || 
+                            i.combinationKey === 'all';
+          // Check conditions match
+          const conditionsMatch = matchesImageConditions(i.conditions, config.characters || {}, book);
+          // If conditions exist, they take precedence
+          if (i.conditions && i.conditions.length > 0) {
+            return conditionsMatch;
+          }
+          return keyMatches;
+        }) || [];
         const frontCoverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
 
         // Check if we have a custom BACK cover configuration
@@ -725,6 +734,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   // Convert generatedPages to array for FlipbookViewer
   const flipbookPages = useMemo(() => {
+    console.log('[BookPreview] Building flipbookPages from generatedPages:', Object.keys(generatedPages).length, 'pages available');
+    console.log('[BookPreview] generatedPages keys:', Object.keys(generatedPages));
+    
     const pages: string[] = [];
     
     // Get all page indices that exist in generatedPages, sorted
@@ -733,15 +745,26 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       .filter(k => !isNaN(k) && k !== 999) // Exclude back cover for now
       .sort((a, b) => a - b);
     
+    console.log('[BookPreview] Existing page indices (excluding 999):', existingIndices);
+    
     // Add all pages in order
     existingIndices.forEach(idx => {
-      if (generatedPages[idx]) pages.push(generatedPages[idx]);
+      if (generatedPages[idx]) {
+        pages.push(generatedPages[idx]);
+        console.log(`[BookPreview] Added page ${idx}:`, generatedPages[idx].substring(0, 80));
+      }
     });
     
     // Back cover (index 999) at the end
-    if (generatedPages[999]) pages.push(generatedPages[999]);
+    if (generatedPages[999]) {
+      pages.push(generatedPages[999]);
+      console.log('[BookPreview] Added back cover (999)');
+    }
     
-    console.log('[BookPreview] flipbookPages:', pages.length, 'pages', pages.slice(0, 2));
+    console.log('[BookPreview] Final flipbookPages array:', pages.length, 'pages');
+    if (pages.length > 0) {
+      console.log('[BookPreview] First page URL:', pages[0]);
+    }
     return pages;
   }, [generatedPages]);
 

@@ -95,12 +95,12 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
         <div className="c-flipbook" style={{ width, height, position: 'relative', zIndex: 50 }}>
           {pages.map((pageUrl, index) => (
             <div key={`page-${index}-${pageUrl.substring(0, 30)}`} className="c-flipbook__page">
-              <img
-                src={pageUrl}
-                alt={`Page ${index + 1}`}
-                className="w-full h-full object-contain"
-                draggable={false}
-              />
+            <img
+              src={pageUrl}
+              alt={`Page ${index + 1}`}
+              className="w-full h-full object-contain"
+              draggable={false}
+            />
             </div>
           ))}
         </div>

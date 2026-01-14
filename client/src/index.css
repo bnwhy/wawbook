@@ -25,9 +25,9 @@
   --color-ring: hsl(var(--ring));
   
   /* Typography matching the uploaded design expectations */
-  --font-sans: "Outfit", sans-serif; 
-  --font-display: "Chewy", cursive;  /* Mapped to match uploaded components */
-  --font-hand: "Chewy", cursive;     /* Mapped to match uploaded components */
+  --font-sans: "Quicksand", sans-serif; 
+  --font-display: "Nunito", sans-serif;
+  --font-hand: "Patrick Hand", cursive;
   
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -45,13 +45,38 @@
   --color-accent-sun: #FFD54F;
   --color-accent-melon: #FF8A65;
   --color-accent-mint: #69F0AE;
+  --color-accent-lilac: #C4B5FD;
   
   --color-cloud-sky: #B3E5FC;
   --color-cloud-blue: #29B6F6;
   --color-cloud-deep: #0288D1;
   --color-cloud-light: #E1F5FE;
   --color-cloud-lightest: #F0F9FF;
+  --color-cloud-lighter: #E0F2FE;
   --color-cloud-dark: #37474F;
+  
+  /* Cloud color palette */
+  --color-cloud-lightest: #F0F9FF;
+  --color-cloud-lighter: #E0F2FE;
+  --color-cloud-light: #BAE6FD;
+  --color-cloud-sky: #38BDF8;
+  --color-cloud-blue: #0EA5E9;
+  --color-cloud-deep: #0284C7;
+  --color-cloud-dark: #0C4A6E;
+  
+  /* Accent colors */
+  --color-accent-sun: #FCD34D;
+  --color-accent-melon: #FDA4AF;
+  --color-accent-mint: #6EE7B7;
+  --color-accent-lilac: #C4B5FD;
+  
+  /* Background patterns */
+  --bg-cloud-pattern: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+  
+  /* Box shadows */
+  --shadow-cloud: 0 20px 25px -5px rgba(14, 165, 233, 0.15), 0 10px 10px -5px rgba(14, 165, 233, 0.1);
+  --shadow-cloud-hover: 0 25px 50px -12px rgba(14, 165, 233, 0.25);
+  --shadow-inner-light: inset 0 2px 4px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* LIGHT MODE - WawBook Pastel Playful */

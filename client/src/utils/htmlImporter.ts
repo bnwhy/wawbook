@@ -471,12 +471,36 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
                  // If it's a file path reference, we can't really read it unless it's a Data URI.
                  // We'll skip images that aren't data URIs or http links.
                  if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('blob:') || src.startsWith('/objects/')) {
+                    // Extract filename from URL to detect conditions
+                    const filename = src.substring(src.lastIndexOf('/') + 1);
+                    
+                    // Parse filename to extract conditions
+                    // Format: page1_hero-father_hairstyle-normal_haircolor-brown.png
+                    // Extract key-value pairs like haircolor-brown, hero-father, etc.
+                    const conditions: Array<{variantId: string, optionId: string}> = [];
+                    
+                    // Match patterns like: word-word (e.g., haircolor-brown, hero-father)
+                    const matches = filename.matchAll(/([a-z]+)-([a-z]+)/gi);
+                    for (const match of matches) {
+                        const variantId = match[1].toLowerCase();
+                        const optionId = match[2].toLowerCase();
+                        
+                        // Only add if it looks like a variant (not just any hyphenated word)
+                        // Common variants: haircolor, hairstyle, skin, hero
+                        if (['haircolor', 'hairstyle', 'skin', 'hero', 'gender'].includes(variantId)) {
+                            conditions.push({ variantId, optionId });
+                        }
+                    }
+                    
+                    console.log(`[htmlImporter] Image ${filename}: detected ${conditions.length} conditions`, conditions);
+                    
                     images.push({
                         id: `img-html-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                         label: cleanLabel,
-                        type: 'static',
+                        type: conditions.length > 0 ? 'personalized' : 'static',
                         url: src,
-                        combinationKey: 'default',
+                        combinationKey: conditions.length > 0 ? undefined : 'default',
+                        conditions: conditions.length > 0 ? conditions : undefined,
                         position: {
                             pageIndex,
                             x, y, width: w, height: h,

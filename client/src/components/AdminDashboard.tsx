@@ -53,36 +53,13 @@ const CHARACTERISTIC_LABELS: Record<string, string> = {
   accessory: 'Accessoire',
 };
 
-// Image Card Component - shows extracted characteristics and wizard link
+// Image Card Component - shows extracted characteristics from EPUB
 interface ImageCardProps {
   img: any;
   wizardConfig: any;
-  conditions: { variantId: string; optionId: string }[];
-  imageVariantOptions: { value: string; label: string; tabLabel?: string; variantOptions?: { id: string; label: string }[] }[];
-  onConditionsChange: (conditions: { variantId: string; optionId: string }[]) => void;
 }
 
-const ImageCard: React.FC<ImageCardProps> = ({ img, wizardConfig, conditions, imageVariantOptions, onConditionsChange }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState<string>('');
-  const [selectedOption, setSelectedOption] = useState<string>('');
-
-  const currentVariantOptions = useMemo(() => {
-    const variant = imageVariantOptions.find(v => v.value === selectedVariant);
-    return variant?.variantOptions || [];
-  }, [selectedVariant, imageVariantOptions]);
-
-  const addCondition = () => {
-    if (selectedVariant && selectedOption) {
-      onConditionsChange([...conditions, { variantId: selectedVariant, optionId: selectedOption }]);
-      setSelectedVariant('');
-      setSelectedOption('');
-    }
-  };
-
-  const removeCondition = (idx: number) => {
-    onConditionsChange(conditions.filter((_, i) => i !== idx));
-  };
+const ImageCard: React.FC<ImageCardProps> = ({ img, wizardConfig }) => {
 
   const isStatic = img.type === 'static' || img.combinationKey === 'default';
   const characteristics = img.characteristics || {};
@@ -178,82 +155,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ img, wizardConfig, conditions, im
             </div>
           )}
         </div>
-
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-            conditions.length > 0 ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-          }`}
-        >
-          <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-        </button>
       </div>
-
-      {isExpanded && (
-        <div className="border-t border-slate-200 bg-white/50 p-3 space-y-2">
-          <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide flex items-center gap-2">
-            <Filter size={10} />
-            Conditions manuelles ({conditions.length})
-          </p>
-
-          {conditions.map((cond, condIdx) => {
-            const variantOpt = imageVariantOptions.find(o => o.value === cond.variantId);
-            const optionLabel = variantOpt?.variantOptions?.find(o => o.id === cond.optionId)?.label || cond.optionId;
-
-            return (
-              <div key={condIdx} className="flex items-center gap-1 bg-white rounded-lg px-2 py-1.5 border border-blue-200">
-                <span className="text-[10px] text-brand-coral font-medium">{variantOpt?.label || cond.variantId}</span>
-                <span className="text-[10px] text-slate-400">=</span>
-                <span className="text-[10px] text-slate-700 font-medium">{optionLabel}</span>
-                <button
-                  onClick={() => removeCondition(condIdx)}
-                  className="ml-auto p-0.5 hover:bg-red-50 rounded text-red-400 hover:text-red-600"
-                >
-                  <X size={10} />
-                </button>
-              </div>
-            );
-          })}
-
-          <div className="flex gap-1">
-            <select
-              value={selectedVariant}
-              onChange={(e) => {
-                setSelectedVariant(e.target.value);
-                setSelectedOption('');
-              }}
-              className="flex-1 text-[10px] border border-slate-200 rounded px-2 py-1.5 bg-white"
-            >
-              <option value="">Variante...</option>
-              {imageVariantOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedOption}
-              onChange={(e) => setSelectedOption(e.target.value)}
-              className="flex-1 text-[10px] border border-slate-200 rounded px-2 py-1.5 bg-white"
-              disabled={!selectedVariant}
-            >
-              <option value="">Option...</option>
-              {currentVariantOptions.map(opt => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={addCondition}
-              disabled={!selectedVariant || !selectedOption}
-              className="px-3 py-1.5 bg-blue-500 text-white text-[10px] rounded hover:bg-blue-600 font-bold disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              +
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -261,19 +163,14 @@ const ImageCard: React.FC<ImageCardProps> = ({ img, wizardConfig, conditions, im
 // Legacy component kept for compatibility
 interface ImageConditionEditorProps {
   img: any;
-  conditions: { variantId: string; optionId: string }[];
-  imageVariantOptions: { value: string; label: string; tabLabel?: string; variantOptions?: { id: string; label: string }[] }[];
-  onConditionsChange: (conditions: { variantId: string; optionId: string }[]) => void;
+  wizardConfig: any;
 }
 
-const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, conditions, imageVariantOptions, onConditionsChange }) => {
+const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, wizardConfig }) => {
   return (
     <ImageCard 
       img={img} 
-      wizardConfig={null}
-      conditions={conditions} 
-      imageVariantOptions={imageVariantOptions} 
-      onConditionsChange={onConditionsChange} 
+      wizardConfig={wizardConfig}
     />
   );
 };
@@ -427,6 +324,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       console.log('[EPUB Extract] Result:', result);
 
       // Auto-save the book with the new content (including extracted texts and images)
+      // IMPORTANT: Replace imageElements completely, don't merge with old data
       const updatedBook = {
         ...selectedBook,
         contentConfig: {
@@ -435,11 +333,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           cssContent: result.cssContent || '',
           pageImages: result.pageImages || [],
           texts: result.texts || [],
+          // Replace imageElements completely with new data from extraction
           imageElements: result.imageElements || [],
           fontWarnings: result.fontWarnings || [],
         }
       };
-      await handleSaveBook(updatedBook);
+      
+      // Save immediately to database (not just draft)
+      await updateBook(updatedBook);
+      setDraftBook(updatedBook);
 
       setShowEpubSelector(false);
       
@@ -462,7 +364,32 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       }
       
-      toast.success(`EPUB extrait avec succès : ${result.pages?.length || 0} pages, ${Object.keys(result.images || {}).length} images, ${Object.keys(result.fonts || {}).length} polices`);
+      // Show unmapped characteristics warning if any
+      if (result.unmappedCharacteristics && Object.keys(result.unmappedCharacteristics).length > 0) {
+        const unmappedList = Object.entries(result.unmappedCharacteristics)
+          .map(([key, values]: [string, any]) => `${key}: ${Array.isArray(values) ? values.join(', ') : values}`)
+          .join('; ');
+        
+        toast.warning(
+          `Caractéristiques non mappées détectées : ${unmappedList}. Ces caractéristiques n'ont pas d'équivalent dans la configuration du wizard actuelle.`,
+          { duration: 12000 }
+        );
+        console.warn('[EPUB Extract] Unmapped characteristics:', result.unmappedCharacteristics);
+      }
+      
+      // Count successfully mapped images
+      const mappedImagesCount = result.imageElements?.filter((img: any) => 
+        img.conditions && img.conditions.length > 0
+      ).length || 0;
+      const totalImagesWithCharacteristics = result.imageElements?.filter((img: any) => 
+        img.characteristics && Object.keys(img.characteristics).length > 0
+      ).length || 0;
+      
+      const successMessage = totalImagesWithCharacteristics > 0
+        ? `EPUB extrait avec succès : ${result.pages?.length || 0} pages, ${Object.keys(result.images || {}).length} images, ${Object.keys(result.fonts || {}).length} polices. ${mappedImagesCount}/${totalImagesWithCharacteristics} images mappées au wizard.`
+        : `EPUB extrait avec succès : ${result.pages?.length || 0} pages, ${Object.keys(result.images || {}).length} images, ${Object.keys(result.fonts || {}).length} polices`;
+      
+      toast.success(successMessage);
     } catch (error) {
       console.error('[EPUB Extract] Error:', error);
       toast.error('Erreur lors de l\'extraction de l\'EPUB');
@@ -739,10 +666,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [editingPrinterId, setEditingPrinterId] = useState<string | null>(null);
   
   // Content Editor State
-  const [selectedVariant, setSelectedVariant] = useState<string>('default'); // Used for previewing specific combinations
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedEpubPageIndex, setSelectedEpubPageIndex] = useState<number | null>(null);
-  const [selectedAvatarTabId, setSelectedAvatarTabId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
   const [expandedVariantIds, setExpandedVariantIds] = useState<Set<string>>(new Set());
@@ -887,7 +812,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [gridSizeMm, setGridSizeMm] = useState(10); // 10mm grid default
   const [snapToGrid, setSnapToGrid] = useState(false);
-  const [avatarFilters, setAvatarFilters] = useState<Record<string, string[]>>({}); // Top-level state for avatar filters, string[] for multiselect
 
   // Keyboard Nudge Logic
   React.useEffect(() => {
@@ -1135,127 +1059,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [isDragging, activeLayerId, dragStartPos, dragStartElementPos, selectedBook, viewMode, selectedPageId, resizeHandle, initialDims]);
   const hasUnsavedChanges = JSON.stringify(draftBook) !== JSON.stringify(contextBook);
 
-  // Sync active layer with selected variant visibility
-  React.useEffect(() => {
-     if (!activeLayerId || !selectedBook) return;
-
-     const textLayer = selectedBook.contentConfig.texts.find(t => t.id === activeLayerId);
-     const imgLayer = (selectedBook.contentConfig.imageElements || []).find(i => i.id === activeLayerId);
-     const layer = textLayer || imgLayer;
-
-     if (layer && layer.combinationKey && layer.combinationKey !== selectedVariant) {
-        setActiveLayerId(null);
-     }
-  }, [selectedVariant, selectedBook, activeLayerId]);
-
-  const currentCombinations = React.useMemo(() => {
-    if (!selectedBook) return [];
-    
-    // 1. Find all "character" tabs
-    const charTabs = selectedBook.wizardConfig.tabs.filter(t => t.type === 'character');
-    
-    if (charTabs.length === 0) return ['Défaut'];
-
-    // 2. Find all "options" variants within those tabs
-    const allOptionSets: { label: string, options: any[] }[] = [];
-
-    charTabs.forEach(tab => {
-        tab.variants.forEach(variant => {
-            if (variant.type === 'options' && variant.options && variant.options.length > 0) {
-                allOptionSets.push({
-                    label: variant.label,
-                    options: variant.options
-                });
-            }
-        });
-    });
-
-    if (allOptionSets.length === 0) return ['Défaut'];
-
-    // 3. Cartesian Product with LIMIT
-    const cartesian = (args: any[]) => {
-        const r: any[] = [];
-        const max = args.length - 1;
-        const LIMIT = 2000; // Limit to prevent crash
-
-        function helper(arr: any[], i: number) {
-            if (r.length >= LIMIT) return;
-
-            for (let j = 0, l = args[i].length; j < l; j++) {
-                const a = arr.slice(0);
-                a.push(args[i][j]);
-                if (i === max) {
-                    r.push(a);
-                    if (r.length >= LIMIT) return;
-                }
-                else {
-                    helper(a, i + 1);
-                    if (r.length >= LIMIT) return;
-                }
-            }
-        }
-        helper([], 0);
-        return r;
-    };
-
-    const optionsLists = allOptionSets.map(s => s.options);
-    const combinations = cartesian(optionsLists);
-
-    // 4. Map to strings (keys)
-    const results = combinations.map(combo => {
-        const ids = combo.map((o: any) => o.id); // Remove sort to avoid collisions (e.g. A_B vs B_A)
-        return ids.join('_');
-    });
-
-    if (results.length >= 2000) {
-        results.push('... (Liste tronquée pour la performance)');
-    }
-    
-    return results;
-  }, [selectedBook]);
-
-  // Helper to generate combinations for Avatar Mappings (Per Tab)
-  const generateAvatarCombinations = (tab: WizardTab) => {
-     // Filter out text variants or variants without options
-     const relevantVariants = tab.variants.filter(v => v.type !== 'text' && v.options && v.options.length > 0);
-     
-     if (relevantVariants.length === 0) return [];
-     
-    // Recursively generate combinations for this specific tab
-    const variants = relevantVariants;
-    const variantOptions = variants.map(v => v.options);
-    
-    const cartesian = (args: any[]) => {
-        const r: any[] = [];
-        const max = args.length - 1;
-        function helper(arr: any[], i: number) {
-            for (let j = 0, l = args[i].length; j < l; j++) {
-                const a = arr.slice(0);
-                a.push(args[i][j]);
-                if (i === max) r.push(a);
-                else helper(a, i + 1);
-            }
-        }
-        helper([], 0);
-        return r;
-    };
-
-    const combinations = cartesian(variantOptions);
-    
-    return combinations.map(combo => {
-       const parts = combo.map((opt: any, index: number) => ({
-          label: opt.label,
-          id: opt.id,
-          // Find which variant this option belongs to
-          variantId: variants[index].id
-       }));
-       
-       // Key is combination of option IDs (preserve order for uniqueness)
-       const key = parts.map((p: any) => p.id).join('_');
-       
-       return { key, parts };
-    });
-  };
 
   // Calculate aspect ratio style
   const bookDimensions = selectedBook?.features?.dimensions || { width: 210, height: 210 }; // Default square 21x21
@@ -5565,108 +5368,72 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  </div>
               )}
 
-              {/* --- VIEW: AVATARS & PREVIEWS --- */}
-              {activeTab === 'avatars' && selectedBookId && selectedBook && (
-                 <div className="max-w-6xl mx-auto h-[calc(100vh-180px)] flex flex-col">
+              {/* --- VIEW: AVATARS & PREVIEWS (Removed - avatars are now auto-generated from EPUB) --- */}
+
+              {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
+              {activeTab === 'content' && selectedBookId && selectedBook && (
+                 <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
                     
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 shrink-0">
-                       <div className="flex justify-between items-start mb-4">
-                          <div>
-                              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                                  <Eye size={24} className="text-indigo-600" />
-                                  Prévisualisation des Personnages
-                              </h2>
-                              <p className="text-sm text-slate-500 mt-1">
-                                  Configurez l'apparence finale (avatar) pour chaque combinaison d'options possible.
-                                  Ces images seront affichées dans le Wizard lors de la sélection.
-                              </p>
+                    {/* Toolbar */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex justify-between items-center shrink-0">
+                       <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 text-slate-600 font-bold">
+                             <Layout size={18} />
+                             <span>Vue Storyboard</span>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
                               <button 
-                                  onClick={() => {
-                                      if (!selectedBook) return;
-                                      
-                                      // Generate all possible keys to ensure export is complete (even empty ones)
-                                      const completeMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
-                                      
-                                      selectedBook.wizardConfig.tabs.forEach(tab => {
-                                         if (tab.type === 'character') {
-                                            const combos = generateAvatarCombinations(tab);
-                                            combos.forEach(c => {
-                                               if (!completeMappings[c.key]) {
-                                                  completeMappings[c.key] = ""; // Empty placeholder
-                                               }
-                                            });
-                                         }
-                                      });
-
-                                      const exportData = {
-                                          version: '1.0',
-                                          type: 'avatar_mappings',
-                                          timestamp: new Date().toISOString(),
-                                          bookId: selectedBook.id,
-                                          avatarMappings: completeMappings
-                                      };
-                                      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                                      const url = URL.createObjectURL(blob);
-                                      const link = document.createElement('a');
-                                      link.href = url;
-                                      link.download = `${slugify(selectedBook.name || 'book')}_avatars_export_${new Date().toISOString().slice(0, 10)}.json`;
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
-                                      URL.revokeObjectURL(url);
-                                      toast.success('Mappings Avatars exportés (toutes combinaisons)');
-                                  }}
-                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
-                                  title="Exporter les mappings (JSON)"
+                                  onClick={handleExportContent}
+                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
+                                  title="Exporter la configuration (JSON)"
                               >
                                   <Download size={18} />
                               </button>
                               <button 
-                                  onClick={() => {
-                                      const input = document.createElement('input');
-                                      input.type = 'file';
-                                      input.accept = '.json';
-                                      input.onchange = (e: any) => {
-                                          const file = e.target.files?.[0];
-                                          if (!file) return;
-                                          const reader = new FileReader();
-                                          reader.onload = (re: any) => {
-                                              try {
-                                                  const imported = JSON.parse(re.target.result);
-                                                  if (!imported.avatarMappings) {
-                                                      toast.error('Format invalide (avatarMappings manquant)');
-                                                      return;
-                                                  }
-                                                  if (confirm('Remplacer tous les mappings d\'avatars ?')) {
-                                                      handleSaveBook({
-                                                          ...selectedBook,
-                                                          wizardConfig: {
-                                                              ...selectedBook.wizardConfig,
-                                                              avatarMappings: imported.avatarMappings
-                                                          }
-                                                      });
-                                                      toast.success('Mappings Avatars importés');
-                                                  }
-                                              } catch (err) {
-                                                  toast.error('Erreur de lecture du fichier');
-                                              }
-                                          };
-                                          reader.readAsText(file);
-                                      };
-                                      input.click();
-                                  }}
-                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600" 
-                                  title="Importer les mappings (JSON)"
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
+                                  title="Importer la configuration (JSON)"
                               >
                                   <Upload size={18} />
                               </button>
+                              <button 
+                                  onClick={() => setShowEpubSelector(true)}
+                                  className="p-2 bg-green-100 hover:bg-green-200 rounded text-green-700 shrink-0" 
+                                  title="Importer depuis le stockage (EPUBs uploadés)"
+                              >
+                                  <CloudDownload size={18} />
+                              </button>
+                              <button
+                                  onClick={() => {
+                                      if (confirm('Voulez-vous réinitialiser le storyboard ?\nCela supprimera le template EPUB généré (pages, textes, images).\nLe wizard sera conservé.\nCette action est irréversible.')) {
+                                          handleSaveBook({
+                                              ...selectedBook,
+                                              contentConfig: { pages: [], texts: [], images: [], imageElements: [], pageImages: [] }
+                                          });
+                                          setSelectedPageId(null);
+                                          setSelectedEpubPageIndex(null);
+                                          toast.success('Storyboard réinitialisé avec succès');
+                                      }
+                                  }}
+                                  className="p-2 bg-red-50 hover:bg-red-100 rounded text-red-600 shrink-0 ml-2 border border-red-200"
+                                  title="Réinitialiser le storyboard EPUB"
+                              >
+                                  <RotateCcw size={18} />
+                              </button>
+                              <input 
+                                 type="file" 
+                                 ref={fileInputRef}
+                                 className="hidden"
+                                 accept=".json"
+                                 onChange={handleImportContent}
+                              />
                           </div>
                        </div>
+                    </div>
 
-                       {/* Tab Selector */}
+                    {/* Avatar Grid - Tab Selector */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 shrink-0">
                        <div className="flex gap-2 border-b border-gray-100 pb-1">
                           {selectedBook.wizardConfig.tabs.map(tab => (
                              <button
@@ -5680,7 +5447,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </div>
                     </div>
 
-                    {/* Grid Area */}
+                    {/* Avatar Grid Area */}
                     <div className="flex-1 overflow-y-auto bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                        {(() => {
                           const targetTab = selectedBook.wizardConfig.tabs.find(t => t.id === (selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id));
@@ -5906,106 +5673,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              <span>Vue Storyboard</span>
                           </div>
 
-                          {/* Variant Selector */}
-                          <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
-                             <label className="text-[10px] font-bold text-gray-400 uppercase">Variante</label>
-                             <select 
-                                value={selectedVariant}
-                                onChange={(e) => setSelectedVariant(e.target.value)}
-                                className="h-7 text-xs border border-gray-200 rounded px-2 font-medium bg-white focus:ring-brand-coral focus:border-brand-coral w-48 max-w-[200px]"
-                                title={selectedVariant}
-                             >
-                                {currentCombinations.map(c => {
-                                   const parts = c.split('_');
-                                   
-                                   // Try to format as requested: idperso_choix...-idperso_choix
-                                   // We need to parse the variant string which is typically "perso_value_perso_value"
-                                   // and group them. Since we don't strictly know the schema here, we'll try a best effort grouping
-                                   // or just display it in a technical but cleaner way.
-                                   
-                                   // Actually, based on the user request "idperso_choix...-idperso_choix", 
-                                   // if the string is like "child_boy_skin_light", they probably want "child_boy-skin_light"
-                                   // But typically the combination key IS just values joined by underscores.
-                                   // The user seems to want a specific technical format.
-                                   // Let's assume the combination key 'c' is already the value they want, or close to it.
-                                   // If they want "idperso_choix", maybe they mean grouping by character ID?
-                                   
-                                   // Let's look at how currentCombinations are built. They are just strings.
-                                   // If the input is "child_boy_skin_light", maybe they want it to look like that?
-                                   // The previous implementation was: {c}
-                                   
-                                   // The user says: "Nom des variables plus claire perso_choix...-perso_choix"
-                                   // And "Je veux un nom technique type idperso_choix...-idperso_choix"
-                                   
-                                   // If the data is stored as flat strings, we might just need to replace underscores with dashes 
-                                   // between groups, but we don't know the groups.
-                                   // However, looking at the previous user message example: "Claire   ClaireClaire   FonceeFoncee"
-                                   // It seems my previous "Capitalize" logic made it weird if the keys were simple.
-                                   
-                                   // Let's go with a raw technical display but perhaps slightly formatted if needed,
-                                   // or simply revert to the raw string if that's what "nom technique" implies, 
-                                   // possibly just ensuring it fits the "idperso_choix" pattern.
-                                   
-                                   // Actually, looking at the user's specific request: "idperso_choix...-idperso_choix"
-                                   // It implies they want to see the ID of the person/variable and the choice selected.
-                                   // Since `c` is likely just the combination string (e.g. "boy_light"), 
-                                   // we might just want to display `c` directly but maybe replace separators?
-                                   
-                                   // If `c` is "child_boy_skin_light", and they want "child_boy-skin_light", 
-                                   // we need to know where to split.
-                                   // Without metadata, we can't perfectly split.
-                                   
-                                   // BUT, maybe the user just wants the RAW value back because my "Readable" version was too "Clean"?
-                                   // "Claire Claire" is confusing. "claire_claire" is technical.
-                                   
-                                   // Let's try to format it as "key: value" if we can, or just return the raw string `c` 
-                                   // but maybe with a separator if we can detect pairs.
-                                   
-                                   // If we assume the format is value_value_value (as generated by generateCombinations),
-                                   // and we don't have the keys here easily (they are in `tabs`), we can't easily reconstruction "idperso".
-                                   
-                                   // However, the user provided example "idperso_choix...-idperso_choix".
-                                   // This looks like they want to see the variable names too?
-                                   
-                                   // Let's revert to a "technical" view which is likely just the raw string, 
-                                   // but maybe we can make it slightly better by replacing underscores with dashes 
-                                   // if that helps readability, or just keeping underscores.
-                                   
-                                   // Re-reading: "Je veux un nom technique type idperso_choix...-idperso_choix"
-                                   // This suggests `idperso` is the variable name (e.g. 'child') and `choix` is the value (e.g. 'boy').
-                                   // The current `c` might just be values "boy_light".
-                                   // If `c` DOES NOT contain the keys, we can't invent them.
-                                   
-                                   // Wait, `currentCombinations` comes from `generateCombinations`.
-                                   // If it's just values, we can't add keys without looking up `wizardConfig`.
-                                   
-                                   // Let's try to look up keys if possible, or just revert to `c` if that's "technical" enough compared to "Claire Claire".
-                                   // The user's complaint "Claire ClaireClaire Foncee..." suggests my previous code did a bad job 
-                                   // (it printed "Claire - Claire" etc).
-                                   
-                                   // If I just revert to `{c}`, it prints "claire_claire" (assuming snake case).
-                                   // The user wants "idperso_choix".
-                                   
-                                   // Let's try to inspect `selectedBook.wizardConfig.tabs` to build a better string.
-                                   // We have `selectedBook` in scope.
-                                   
-                                   let technicalName = c;
-                                   
-                                   // Attempt to reconstruct "key_value" format if we have the config
-                                   if (selectedBook && selectedBook.wizardConfig && selectedBook.wizardConfig.tabs) {
-                                       const values = c.split('_');
-                                       if (values.length === selectedBook.wizardConfig.tabs.length) {
-                                            technicalName = selectedBook.wizardConfig.tabs.map((tab, idx) => {
-                                                return `${tab.id}_${values[idx]}`;
-                                            }).join('-');
-                                       }
-                                   }
-
-                                   return <option key={c} value={c}>{technicalName}</option>
-                                })}
-                             </select>
-                          </div>
-
                           <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
                               <button 
                                   onClick={handleExportContent}
@@ -6030,34 +5697,31 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               </button>
                               <button
                                   onClick={() => {
-                                      if (confirm('ATTENTION: Voulez-vous réinitialiser TOUTE la configuration du livre ?\nCela effacera toutes les pages, textes, images et variantes.\nCette action est irréversible.')) {
+                                      if (confirm('Voulez-vous réinitialiser le storyboard ?\nCela supprimera le template EPUB généré (pages, textes, images).\nLe wizard sera conservé.\nCette action est irréversible.')) {
                                           handleSaveBook({
                                               ...selectedBook,
-                                              wizardConfig: { avatarStyle: 'watercolor', tabs: [] },
-                                              contentConfig: { pages: [], texts: [], images: [], imageElements: [] },
-                                              features: { ...selectedBook.features, dimensions: { width: 210, height: 210 } }
+                                              contentConfig: { pages: [], texts: [], images: [], imageElements: [], pageImages: [] }
                                           });
                                           setSelectedPageId(null);
-                                          toast.success('Configuration réinitialisée avec succès');
+                                          setSelectedEpubPageIndex(null);
+                                          toast.success('Storyboard réinitialisé avec succès');
                                       }
                                   }}
                                   className="p-2 bg-red-50 hover:bg-red-100 rounded text-red-600 shrink-0 ml-2 border border-red-200"
-                                  title="Réinitialiser la configuration (Reset complet)"
+                                  title="Réinitialiser le storyboard EPUB"
                               >
                                   <RotateCcw size={18} />
                               </button>
                               <input 
-                                  type="file" 
-                                  ref={fileInputRef}
-                                  onChange={handleImportContent}
-                                  accept=".json,.html"
-                                  className="hidden"
+                                 type="file" 
+                                 ref={fileInputRef}
+                                 className="hidden"
+                                 accept=".json"
+                                 onChange={handleImportContent}
                               />
                           </div>
-                       
+                       </div>
                     </div>
-
-                 </div>
 
                     <div className="flex-1 min-h-0 flex gap-6">
                         {/* Storyboard Grid */}
@@ -6257,7 +5921,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             ) : (
                                                                 <div className="space-y-3">
                                                                     {pageImagesForSelected.map((img: any, idx: number) => {
-                                                                        const conditions = img.conditions || [];
                                                                         const currentBook = draftBook || selectedBook;
                                                                         
                                                                         return (
@@ -6265,22 +5928,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                 key={img.id || idx}
                                                                                 img={img}
                                                                                 wizardConfig={currentBook?.wizardConfig}
-                                                                                conditions={conditions}
-                                                                                imageVariantOptions={imageVariantOptions}
-                                                                                onConditionsChange={(newConditions) => {
-                                                                                    const currentImages = currentBook.contentConfig.imageElements || [];
-                                                                                    const updatedImages = currentImages.map((i: any) =>
-                                                                                        i.id === img.id ? { ...i, conditions: newConditions } : i
-                                                                                    );
-                                                                                    const updatedBook = {
-                                                                                        ...currentBook,
-                                                                                        contentConfig: {
-                                                                                            ...currentBook.contentConfig,
-                                                                                            imageElements: updatedImages
-                                                                                        }
-                                                                                    };
-                                                                                    setDraftBook(updatedBook);
-                                                                                }}
                                                                             />
                                                                         );
                                                                     })}

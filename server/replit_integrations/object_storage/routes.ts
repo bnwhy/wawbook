@@ -656,6 +656,12 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
       const srcFilename = imgSrc.split('/').pop() || '';
       const imgCharacteristics = imageCharacteristicsMap[srcFilename] || { pageIndex: null, characteristics: {}, combinationKey: 'default' };
       
+      // Log the filename and extracted characteristics for debugging
+      if (Object.keys(imgCharacteristics.characteristics).length > 0) {
+        console.log(`[epub-extract] Image filename: ${srcFilename}`);
+        console.log(`[epub-extract] Extracted characteristics from filename:`, imgCharacteristics.characteristics);
+      }
+      
       // Use parsed page index if available, otherwise use HTML page order
       const effectivePageIndex = imgCharacteristics.pageIndex || (i + 1);
       
@@ -1260,34 +1266,392 @@ export function registerObjectStorageRoutes(app: Express): void {
             }
           }
           
+          // Special handling for 'hero' characteristic: create lookup from all character tabs
+          // This allows mapping hero:father → tab id="father"
+          if (!wizardLookup['hero']) {
+            wizardLookup['hero'] = {};
+          }
+          
+          // Create wizardLookup['hero'] from all tabs of type 'character'
+          // This allows direct mapping: hero:father → tab id="father"
+          for (const tab of wizardConfig.tabs) {
+            if (tab.type === 'character') {
+              // For each character tab, map its ID as a possible hero value
+              const firstVariant = tab.variants?.find(v => v.type === 'options' && v.options && v.options.length > 0);
+              if (firstVariant && firstVariant.options) {
+                const firstOption = firstVariant.options[0];
+                // Map tab.id → this tab (for hero:tabId)
+                wizardLookup['hero'][tab.id] = {
+                  tabId: tab.id,
+                  variantId: firstVariant.id,
+                  optionId: firstOption.id,
+                  optionLabel: firstOption.label,
+                };
+                // Also map all options from this tab
+                for (const option of firstVariant.options) {
+                  if (!wizardLookup['hero'][option.id]) {
+                    wizardLookup['hero'][option.id] = {
+                      tabId: tab.id,
+                      variantId: firstVariant.id,
+                      optionId: option.id,
+                      optionLabel: option.label,
+                    };
+                  }
+                }
+              }
+            }
+          }
+          
+          console.log(`[epub-extract] Created wizardLookup['hero'] with ${Object.keys(wizardLookup['hero']).length} entries from character tabs`);
+          
+          // Always try direct mapping by tab ID: if hero="father", look for tab with id="father"
+          // Collect all hero values from images
+          const heroValuesFromImages = new Set<string>();
+          for (const img of result.imageElements) {
+            if (img.characteristics?.hero) {
+              heroValuesFromImages.add(img.characteristics.hero);
+            }
+          }
+          
+          // For each hero value, check if there's a tab with matching ID
+          for (const heroValue of heroValuesFromImages) {
+            // Normalize hero value for comparison
+            const normalizedHeroValue = heroValue.toLowerCase().trim();
+            
+            // Skip if this value is already mapped (check both original and normalized)
+            if (wizardLookup['hero'][heroValue] || 
+                Object.keys(wizardLookup['hero']).some(key => key.toLowerCase().trim() === normalizedHeroValue)) {
+              continue;
+            }
+            
+            // Find tab with matching ID (normalized comparison)
+            const matchingTab = wizardConfig.tabs.find(
+              tab => tab.type === 'character' && tab.id.toLowerCase().trim() === normalizedHeroValue
+            );
+            
+            if (matchingTab && matchingTab.variants) {
+              // Direct match found! Use variants from this tab
+              
+              // Map the hero value itself to the corresponding tab
+              // First, look for a variant/option that exactly matches the hero value
+              let heroMapped = false;
+              for (const variant of matchingTab.variants) {
+                if (variant.type === 'options' && variant.options) {
+                  // Look for an option with ID matching heroValue
+                  const matchingOption = variant.options.find(opt => opt.id === heroValue);
+                  if (matchingOption) {
+                    wizardLookup['hero'][heroValue] = {
+                      tabId: matchingTab.id,
+                      variantId: variant.id,
+                      optionId: matchingOption.id,
+                      optionLabel: matchingOption.label,
+                    };
+                    heroMapped = true;
+                    break;
+                  }
+                }
+              }
+              
+              // If no exact option found, use the first variant/option available
+              if (!heroMapped) {
+                for (const variant of matchingTab.variants) {
+                  if (variant.type === 'options' && variant.options && variant.options.length > 0) {
+                    // Use tab ID as variantId and optionId to identify the character
+                    wizardLookup['hero'][heroValue] = {
+                      tabId: matchingTab.id,
+                      variantId: variant.id,
+                      optionId: variant.options[0].id,
+                      optionLabel: variant.options[0].label,
+                    };
+                    break;
+                  }
+                }
+              }
+              
+              // Map all options from all variants to allow other mappings
+              for (const variant of matchingTab.variants) {
+                if (variant.type === 'options' && variant.options) {
+                  for (const option of variant.options) {
+                    // Only add if not already mapped (enrich existing lookup)
+                    if (!wizardLookup['hero'][option.id]) {
+                      wizardLookup['hero'][option.id] = {
+                        tabId: matchingTab.id,
+                        variantId: variant.id,
+                        optionId: option.id,
+                        optionLabel: option.label,
+                      };
+                    }
+                  }
+                }
+              }
+              console.log(`[epub-extract] Mappé hero="${heroValue}" vers onglet id="${matchingTab.id}"`);
+              // Continue processing all hero values (removed break)
+            }
+          }
+          
+          // If some hero values are still unmapped, use fallback logic
+          // Check which hero values from images are not yet mapped
+          const unmappedHeroValues = Array.from(heroValuesFromImages).filter(
+            hv => {
+              const normalized = hv.toLowerCase().trim();
+              return !wizardLookup['hero'][hv] && 
+                     !Object.keys(wizardLookup['hero']).some(key => 
+                       key.toLowerCase().trim() === normalized
+                     );
+            }
+          );
+          
+          if (unmappedHeroValues.length > 0) {
+            console.log(`[epub-extract] Unmapped hero values found: ${unmappedHeroValues.join(', ')}. Using fallback logic...`);
+              console.log(`[epub-extract] 'hero' not found directly, searching in character tabs...`);
+              
+              // Hero values that might appear in EPUB
+              const heroValues = ['father', 'mother', 'boy', 'girl', 'grandpa', 'grandma', 'grandfather', 'grandmother'];
+              
+              // Search through all character tabs to find a variant that contains hero-like options
+              for (const tab of wizardConfig.tabs) {
+                if (tab.type === 'character' && tab.variants) {
+                  for (const variant of tab.variants) {
+                    if (variant.type === 'options' && variant.options) {
+                      // Check if this variant has options that match hero values
+                      const matchingOptions = variant.options.filter(opt => 
+                        heroValues.includes(opt.id) || 
+                        heroValues.some(hv => opt.label.toLowerCase().includes(hv.toLowerCase()))
+                      );
+                      
+                      if (matchingOptions.length > 0) {
+                        console.log(`[epub-extract] Found hero-like options in tab '${tab.id}', variant '${variant.id}'`);
+                        
+                        // Create lookup for 'hero' using this variant
+                        wizardLookup['hero'] = {};
+                        for (const option of variant.options) {
+                          wizardLookup['hero'][option.id] = {
+                            tabId: tab.id,
+                            variantId: variant.id,
+                            optionId: option.id,
+                            optionLabel: option.label,
+                          };
+                        }
+                        
+                        // Also create reverse mapping for hero values
+                        // Map hero values to option IDs if they don't match exactly
+                        const heroValueMap: Record<string, string> = {
+                          'father': 'father',
+                          'mother': 'mother',
+                          'boy': 'boy',
+                          'girl': 'girl',
+                          'grandpa': 'grandpa',
+                          'grandfather': 'grandpa',
+                          'grandma': 'grandma',
+                          'grandmother': 'grandma',
+                        };
+                        
+                        // Try to find matching options by ID or label
+                        for (const heroValue of heroValues) {
+                          if (!wizardLookup['hero'][heroValue]) {
+                            // Try exact ID match
+                            const exactMatch = variant.options.find(opt => opt.id === heroValue);
+                            if (exactMatch) {
+                              wizardLookup['hero'][heroValue] = {
+                                tabId: tab.id,
+                                variantId: variant.id,
+                                optionId: exactMatch.id,
+                                optionLabel: exactMatch.label,
+                              };
+                            } else {
+                              // Try mapped value
+                              const mappedValue = heroValueMap[heroValue];
+                              if (mappedValue && wizardLookup['hero'][mappedValue]) {
+                                wizardLookup['hero'][heroValue] = wizardLookup['hero'][mappedValue];
+                              } else {
+                                // Try label match (case-insensitive)
+                                const labelMatch = variant.options.find(opt => 
+                                  opt.label.toLowerCase().includes(heroValue.toLowerCase()) ||
+                                  heroValue.toLowerCase().includes(opt.label.toLowerCase())
+                                );
+                                if (labelMatch) {
+                                  wizardLookup['hero'][heroValue] = {
+                                    tabId: tab.id,
+                                    variantId: variant.id,
+                                    optionId: labelMatch.id,
+                                    optionLabel: labelMatch.label,
+                                  };
+                                }
+                              }
+                            }
+                          }
+                        }
+                        
+                        break; // Use the first matching variant found
+                      }
+                    }
+                  }
+                }
+              }
+              
+              if (unmappedHeroValues.length > 0 && Object.keys(wizardLookup['hero']).length === 0) {
+                console.warn(`[epub-extract] Could not find any character tab with hero-like options`);
+              }
+          }
+          
           console.log(`[epub-extract] Wizard lookup keys:`, Object.keys(wizardLookup));
+          if (wizardLookup['hero']) {
+            console.log(`[epub-extract] 'hero' mapped to tab/variant with ${Object.keys(wizardLookup['hero']).length} options`);
+          }
           
           // Match each image's characteristics to wizard options
           let matchedCount = 0;
+          const unmappedCharacteristics: Record<string, Set<string>> = {};
+          
           for (const img of result.imageElements) {
             if (img.characteristics && Object.keys(img.characteristics).length > 0) {
               const conditions: Array<{ variantId: string; optionId: string }> = [];
+              // IMPORTANT: originalCharacteristics must come ONLY from the filename, not from anywhere else
+              const originalCharacteristics = { ...img.characteristics };
+              console.log(`[epub-extract] ===== Processing image ${img.id || img.label} =====`);
+              console.log(`[epub-extract] Image URL: ${img.url}`);
+              console.log(`[epub-extract] Original characteristics from filename (img.characteristics):`, originalCharacteristics);
               
               for (const [charKey, charValue] of Object.entries(img.characteristics)) {
+                // Skip 'hero' - it's just a marker for which character, not a condition
+                if (charKey === 'hero') {
+                  console.log(`[epub-extract] Skipping hero characteristic "${charValue}" - it's just a marker, not creating condition`);
+                  continue;
+                }
+                
+                // Normalize the characteristic value
+                const normalizedValue = (charValue as string).toLowerCase().trim();
                 const lookup = wizardLookup[charKey];
+                
+                // Try exact match first (original value)
                 if (lookup && lookup[charValue as string]) {
                   const match = lookup[charValue as string];
                   conditions.push({
                     variantId: match.variantId,
                     optionId: match.optionId,
                   });
-                  console.log(`[epub-extract] Matched ${charKey}:${charValue} -> ${match.tabId}/${match.variantId}/${match.optionId}`);
+                  console.log(`[epub-extract] Matched ${charKey}:${charValue} -> tab:${match.tabId}/variant:${match.variantId}/option:${match.optionId} (${match.optionLabel})`);
+                } else if (lookup) {
+                  // Try normalized match (case-insensitive, trimmed)
+                  const normalizedMatch = Object.entries(lookup).find(([optId]) => 
+                    optId.toLowerCase().trim() === normalizedValue
+                  );
+                  
+                  if (normalizedMatch) {
+                    const match = lookup[normalizedMatch[0]];
+                    conditions.push({
+                      variantId: match.variantId,
+                      optionId: match.optionId,
+                    });
+                    console.log(`[epub-extract] Matched ${charKey}:${charValue} (normalized) -> tab:${match.tabId}/variant:${match.variantId}/option:${match.optionId} (${match.optionLabel})`);
+                  } else {
+                    // Track unmapped characteristics
+                    if (!unmappedCharacteristics[charKey]) {
+                      unmappedCharacteristics[charKey] = new Set<string>();
+                    }
+                    unmappedCharacteristics[charKey].add(charValue as string);
+                    console.warn(`[epub-extract] Unmapped characteristic: ${charKey}:${charValue} (no matching option in wizard)`);
+                  }
+                } else {
+                  // No lookup exists for this characteristic key
+                  if (!unmappedCharacteristics[charKey]) {
+                    unmappedCharacteristics[charKey] = new Set<string>();
+                  }
+                  unmappedCharacteristics[charKey].add(charValue as string);
+                  console.warn(`[epub-extract] Unmapped characteristic: ${charKey}:${charValue} (no lookup found for this key)`);
                 }
               }
               
               if (conditions.length > 0) {
                 img.conditions = conditions;
+                
+                // Regenerate combinationKey ONLY from the original characteristics of the image
+                // This ensures the key matches what's actually in the filename
+                // Format: "variantId:optionId_variantId:optionId" (sorted alphabetically)
+                // Map each original characteristic to its condition, but only include those that were in the original filename
+                const keyPartsFromOriginal: string[] = [];
+                for (const [charKey, charValue] of Object.entries(originalCharacteristics)) {
+                  // Find the condition that was created from this specific original characteristic
+                  // We can identify it by checking which condition matches the lookup for this charKey/charValue
+                  const lookup = wizardLookup[charKey];
+                  if (lookup) {
+                    // Find the match that was used for this characteristic
+                    const match = lookup[charValue as string] || 
+                                 Object.entries(lookup).find(([optId]) => 
+                                   optId.toLowerCase().trim() === String(charValue).toLowerCase().trim()
+                                 )?.[1];
+                    
+                    if (match) {
+                      // Find the condition that corresponds to this match
+                      const matchingCondition = conditions.find(c => 
+                        c.variantId === match.variantId && c.optionId === match.optionId
+                      );
+                      
+                      if (matchingCondition) {
+                        keyPartsFromOriginal.push(`${matchingCondition.variantId}:${matchingCondition.optionId}`);
+                      }
+                    }
+                  }
+                }
+                
+                // Sort and join
+                keyPartsFromOriginal.sort();
+                img.combinationKey = keyPartsFromOriginal.length > 0 ? keyPartsFromOriginal.join('_') : 'default';
+                
                 matchedCount++;
+                console.log(`[epub-extract] ===== Result for image ${img.id} =====`);
+                console.log(`[epub-extract] Final combinationKey: ${img.combinationKey}`);
+                console.log(`[epub-extract] Original characteristics keys: ${Object.keys(originalCharacteristics).join(', ')}`);
+                console.log(`[epub-extract] Key parts generated: ${keyPartsFromOriginal.join(', ')}`);
+                console.log(`[epub-extract] Total conditions created: ${conditions.length}`);
+                console.log(`[epub-extract] Conditions:`, conditions);
+                
+                // Verify: combinationKey should only contain characteristics from originalCharacteristics
+                const originalKeys = Object.keys(originalCharacteristics);
+                const keyPartsKeys = keyPartsFromOriginal.map(kp => kp.split(':')[0]);
+                const extraKeys = keyPartsKeys.filter(k => !originalKeys.includes(k));
+                if (extraKeys.length > 0) {
+                  console.error(`[epub-extract] ⚠️ ERROR: combinationKey contains keys not in original characteristics!`);
+                  console.error(`[epub-extract]   Original keys: ${originalKeys.join(', ')}`);
+                  console.error(`[epub-extract]   Key parts keys: ${keyPartsKeys.join(', ')}`);
+                  console.error(`[epub-extract]   Extra keys: ${extraKeys.join(', ')}`);
+                } else {
+                  console.log(`[epub-extract] ✓ Verification passed: combinationKey only contains original characteristics`);
+                }
+              } else {
+                // No conditions matched, keep original combinationKey or set to 'default'
+                if (!img.combinationKey || img.combinationKey === 'default') {
+                  // Try to build from original characteristics if possible
+                  const originalKeyParts = Object.entries(originalCharacteristics)
+                    .map(([k, v]) => `${k}:${v}`)
+                    .sort()
+                    .join('_');
+                  img.combinationKey = originalKeyParts || 'default';
+                }
+                console.warn(`[epub-extract] Image ${img.id}: No conditions matched, using combinationKey=${img.combinationKey}`);
               }
             }
           }
           
+          // Convert unmapped characteristics to plain object for response
+          const unmappedSummary = Object.fromEntries(
+            Object.entries(unmappedCharacteristics).map(([key, values]) => [key, Array.from(values)])
+          );
+          
+          if (Object.keys(unmappedSummary).length > 0) {
+            console.warn(`[epub-extract] Unmapped characteristics found:`, unmappedSummary);
+            result.unmappedCharacteristics = unmappedSummary;
+          }
+          
           console.log(`[epub-extract] Matched ${matchedCount}/${result.imageElements.length} images to wizard`);
+          
+          // Log final combinationKeys for verification
+          console.log(`[epub-extract] ===== Final imageElements combinationKeys =====`);
+          result.imageElements.forEach((img: any, idx: number) => {
+            if (img.combinationKey && img.combinationKey !== 'default') {
+              console.log(`[epub-extract] Image ${idx + 1} (${img.id}): combinationKey="${img.combinationKey}", characteristics:`, img.characteristics);
+            }
+          });
         } else {
           console.log(`[epub-extract] No wizard config found, skipping image matching`);
         }

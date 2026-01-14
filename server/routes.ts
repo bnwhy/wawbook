@@ -196,6 +196,39 @@ export async function registerRoutes(
       
       console.log(`[render-pages] Using combinationKey: ${combinationKey}`);
       
+      // Parse combinationKey into key-value pairs for partial matching
+      // e.g., "haircolor:blond_skin:light" -> { haircolor: "blond", skin: "light" }
+      const parseKeyToCharacteristics = (key: string): Record<string, string> => {
+        if (!key || key === 'default' || key === 'all') return {};
+        const result: Record<string, string> = {};
+        key.split('_').forEach(part => {
+          const [k, v] = part.split(':');
+          if (k && v) result[k] = v;
+        });
+        return result;
+      };
+      
+      const userSelections = parseKeyToCharacteristics(combinationKey);
+      console.log(`[render-pages] Parsed user selections:`, userSelections);
+      
+      // Check if an image matches user selections (partial matching)
+      // An image matches if ALL its characteristics are satisfied by user selections
+      const imageMatchesSelections = (img: any): boolean => {
+        if (!img.combinationKey || img.combinationKey === 'default' || img.combinationKey === 'all') {
+          return true; // Static images always match
+        }
+        
+        const imgCharacteristics = img.characteristics || parseKeyToCharacteristics(img.combinationKey);
+        
+        // For each characteristic in the image, check if user has same selection
+        for (const [key, value] of Object.entries(imgCharacteristics)) {
+          if (userSelections[key] && userSelections[key] !== value) {
+            return false; // User selected a different value for this characteristic
+          }
+        }
+        return true; // All image characteristics match (or user hasn't selected that characteristic)
+      };
+      
       // Import chromium dynamically
       const { chromium } = await import('playwright-core');
       const { execSync } = await import('child_process');

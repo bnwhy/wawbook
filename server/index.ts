@@ -49,9 +49,18 @@ async function initStripe() {
       console.log('No REPLIT_DOMAINS set, skipping webhook setup');
     }
 
-    stripeSync.syncBackfill()
-      .then(() => console.log('Stripe data synced'))
-      .catch((err: any) => console.error('Error syncing Stripe data:', err));
+    // syncBackfill peut prendre très longtemps ou tourner indéfiniment
+    // On le rend optionnel via STRIPE_SYNC_BACKFILL pour éviter qu'il bloque le démarrage
+    // Par défaut, on le désactive car les webhooks gèrent la synchronisation en temps réel
+    if (process.env.STRIPE_SYNC_BACKFILL === 'true') {
+      console.log('Starting Stripe backfill sync (this may take a while)...');
+      stripeSync.syncBackfill()
+        .then(() => console.log('Stripe data synced'))
+        .catch((err: any) => console.error('Error syncing Stripe data:', err));
+    } else {
+      console.log('Stripe backfill sync skipped (set STRIPE_SYNC_BACKFILL=true to enable)');
+      console.log('Note: Stripe data will be synced via webhooks in real-time');
+    }
   } catch (error) {
     console.error('Failed to initialize Stripe:', error);
   }

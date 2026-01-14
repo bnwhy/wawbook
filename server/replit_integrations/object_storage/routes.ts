@@ -1224,6 +1224,75 @@ export function registerObjectStorageRoutes(app: Express): void {
 
       // Use shared extraction logic
       const result = await extractEpubFromBuffer(epubBuffer, bookId);
+      
+      // Match image characteristics to existing wizard configuration
+      if (result.imageElements && result.imageElements.length > 0) {
+        // Load existing book to get its wizardConfig
+        const { storage } = await import('../../storage');
+        const existingBook = await storage.getBook(bookId);
+        const wizardConfig = existingBook?.wizardConfig as any;
+        
+        if (wizardConfig?.tabs && wizardConfig.tabs.length > 0) {
+          console.log(`[epub-extract] Matching images to existing wizard with ${wizardConfig.tabs.length} tabs`);
+          
+          // Build a lookup: characteristic key -> { tabId, variantId, optionId, optionLabel }
+          const wizardLookup: Record<string, Record<string, { tabId: string; variantId: string; optionId: string; optionLabel: string }>> = {};
+          
+          for (const tab of wizardConfig.tabs) {
+            if (tab.type === 'character' && tab.variants) {
+              for (const variant of tab.variants) {
+                if (variant.type === 'options' && variant.options) {
+                  // The variant.id is the characteristic key (e.g., 'skin', 'haircolor', 'hero')
+                  const charKey = variant.id;
+                  if (!wizardLookup[charKey]) {
+                    wizardLookup[charKey] = {};
+                  }
+                  for (const option of variant.options) {
+                    wizardLookup[charKey][option.id] = {
+                      tabId: tab.id,
+                      variantId: variant.id,
+                      optionId: option.id,
+                      optionLabel: option.label,
+                    };
+                  }
+                }
+              }
+            }
+          }
+          
+          console.log(`[epub-extract] Wizard lookup keys:`, Object.keys(wizardLookup));
+          
+          // Match each image's characteristics to wizard options
+          let matchedCount = 0;
+          for (const img of result.imageElements) {
+            if (img.characteristics && Object.keys(img.characteristics).length > 0) {
+              const conditions: Array<{ variantId: string; optionId: string }> = [];
+              
+              for (const [charKey, charValue] of Object.entries(img.characteristics)) {
+                const lookup = wizardLookup[charKey];
+                if (lookup && lookup[charValue as string]) {
+                  const match = lookup[charValue as string];
+                  conditions.push({
+                    variantId: match.variantId,
+                    optionId: match.optionId,
+                  });
+                  console.log(`[epub-extract] Matched ${charKey}:${charValue} -> ${match.tabId}/${match.variantId}/${match.optionId}`);
+                }
+              }
+              
+              if (conditions.length > 0) {
+                img.conditions = conditions;
+                matchedCount++;
+              }
+            }
+          }
+          
+          console.log(`[epub-extract] Matched ${matchedCount}/${result.imageElements.length} images to wizard`);
+        } else {
+          console.log(`[epub-extract] No wizard config found, skipping image matching`);
+        }
+      }
+      
       res.json(result);
     } catch (error) {
       console.error("[epub-extract] Error:", error);

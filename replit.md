@@ -97,3 +97,11 @@ Preferred communication style: Simple, everyday language.
 ### Shipping & Payments
 - Architecture prepared for Stripe integration (dependency listed)
 - Shipping zones configured per-country with multiple methods
+
+### Stripe Integration & Performance (January 2026)
+- **Stripe Sync Backfill**: The `syncBackfill()` function from `stripe-replit-sync` is disabled by default to prevent the Replit agent from running indefinitely
+  - **Problem**: `syncBackfill()` synchronizes all historical Stripe data and can take hours or run indefinitely, blocking server startup
+  - **Solution**: Made optional via `STRIPE_SYNC_BACKFILL` environment variable (default: disabled)
+  - **Location**: `server/index.ts` in `initStripe()` function
+  - **Rationale**: Webhooks handle real-time synchronization, so backfill is only needed for initial setup
+  - **Usage**: Set `STRIPE_SYNC_BACKFILL=true` in environment variables only if you need to sync historical data (not recommended for production)

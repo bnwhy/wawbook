@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
-import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
+import { registerObjectStorageRoutes, ObjectStorageService, objectStorageClient } from "./replit_integrations/object_storage";
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import * as path from "path";
@@ -107,7 +107,69 @@ export async function registerRoutes(
 
   app.delete("/api/books/:id", async (req, res) => {
     try {
-      await storage.deleteBook(req.params.id);
+      const bookId = req.params.id;
+      
+      // Security: Validate bookId format (only alphanumeric and hyphens allowed)
+      if (!/^[a-zA-Z0-9_-]+$/.test(bookId)) {
+        return res.status(400).json({ error: "Invalid book ID format" });
+      }
+      
+      // Verify the book exists in database before deleting files
+      const existingBook = await storage.getBook(bookId);
+      if (!existingBook) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      // 1. Delete local assets folder (images, fonts, CSS)
+      const booksBasePath = path.join(process.cwd(), 'server', 'assets', 'books');
+      const localAssetsPath = path.join(booksBasePath, bookId);
+      
+      // Security: Ensure resolved path is within the books directory (prevent path traversal)
+      const resolvedPath = path.resolve(localAssetsPath);
+      const resolvedBasePath = path.resolve(booksBasePath);
+      if (!resolvedPath.startsWith(resolvedBasePath + path.sep)) {
+        return res.status(400).json({ error: "Invalid book ID" });
+      }
+      
+      try {
+        if (fs.existsSync(resolvedPath)) {
+          fs.rmSync(resolvedPath, { recursive: true, force: true });
+          console.log(`[DELETE /api/books/:id] Deleted local assets: ${resolvedPath}`);
+        }
+      } catch (fsError) {
+        console.error(`[DELETE /api/books/:id] Error deleting local assets:`, fsError);
+      }
+      
+      // 2. Delete previews from object storage
+      try {
+        const objectStorageService = new ObjectStorageService();
+        const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
+        const publicBucketPath = publicSearchPaths[0] || '';
+        
+        if (publicBucketPath) {
+          // Parse bucket name from path like /replit-objstore-xxx/public
+          const pathParts = publicBucketPath.startsWith('/') 
+            ? publicBucketPath.slice(1).split('/') 
+            : publicBucketPath.split('/');
+          const bucketName = pathParts[0];
+          const previewPrefix = pathParts.slice(1).join('/') + `/previews/${bookId}/`;
+          
+          const bucket = objectStorageClient.bucket(bucketName);
+          const [files] = await bucket.getFiles({ prefix: previewPrefix });
+          
+          if (files.length > 0) {
+            await Promise.all(files.map(file => file.delete()));
+            console.log(`[DELETE /api/books/:id] Deleted ${files.length} preview files from object storage`);
+          }
+        }
+      } catch (storageError) {
+        console.error(`[DELETE /api/books/:id] Error deleting from object storage:`, storageError);
+      }
+      
+      // 3. Delete book from database
+      await storage.deleteBook(bookId);
+      console.log(`[DELETE /api/books/:id] Deleted book ${bookId} from database`);
+      
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting book:", error);
@@ -136,10 +198,19 @@ export async function registerRoutes(
       
       // Import chromium dynamically
       const { chromium } = await import('playwright-core');
+      const { execSync } = await import('child_process');
+      
+      // Find chromium path dynamically
+      let chromiumPath = 'chromium';
+      try {
+        chromiumPath = execSync('which chromium', { encoding: 'utf-8' }).trim();
+      } catch {
+        console.log('[render-pages] Could not find chromium in PATH, using default');
+      }
       
       // Launch browser using system Chromium
       const browser = await chromium.launch({
-        executablePath: 'chromium',
+        executablePath: chromiumPath,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
       });
 

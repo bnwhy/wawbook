@@ -40,19 +40,32 @@ import googleFonts from 'google-fonts-complete';
 import { readPsd } from 'ag-psd';
 import { uploadFileToStorage } from '../utils/imageUploader';
 
-// Image Condition Editor Component
-interface ImageConditionEditorProps {
+// Characteristic labels for French display
+const CHARACTERISTIC_LABELS: Record<string, string> = {
+  hero: 'Personnage',
+  skin: 'Peau',
+  hair: 'Cheveux',
+  haircolor: 'Couleur cheveux',
+  hairstyle: 'Coiffure',
+  eyes: 'Yeux',
+  gender: 'Genre',
+  outfit: 'Tenue',
+  accessory: 'Accessoire',
+};
+
+// Image Card Component - shows extracted characteristics and wizard link
+interface ImageCardProps {
   img: any;
+  wizardConfig: any;
   conditions: { variantId: string; optionId: string }[];
   imageVariantOptions: { value: string; label: string; tabLabel?: string; variantOptions?: { id: string; label: string }[] }[];
   onConditionsChange: (conditions: { variantId: string; optionId: string }[]) => void;
 }
 
-const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, conditions, imageVariantOptions, onConditionsChange }) => {
+const ImageCard: React.FC<ImageCardProps> = ({ img, wizardConfig, conditions, imageVariantOptions, onConditionsChange }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string>('');
   const [selectedOption, setSelectedOption] = useState<string>('');
-
-  console.log('[ImageConditionEditor] Render for img:', img.id, 'available variants:', imageVariantOptions.length, 'current conditions:', conditions.length);
 
   const currentVariantOptions = useMemo(() => {
     const variant = imageVariantOptions.find(v => v.value === selectedVariant);
@@ -60,16 +73,10 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
   }, [selectedVariant, imageVariantOptions]);
 
   const addCondition = () => {
-    console.log('[ImageConditionEditor] + button clicked, selectedVariant:', selectedVariant, 'selectedOption:', selectedOption);
     if (selectedVariant && selectedOption) {
-      const newConditions = [...conditions, { variantId: selectedVariant, optionId: selectedOption }];
-      console.log('[ImageConditionEditor] Adding condition:', { variantId: selectedVariant, optionId: selectedOption });
-      console.log('[ImageConditionEditor] New conditions array:', newConditions);
-      onConditionsChange(newConditions);
+      onConditionsChange([...conditions, { variantId: selectedVariant, optionId: selectedOption }]);
       setSelectedVariant('');
       setSelectedOption('');
-    } else {
-      console.log('[ImageConditionEditor] Cannot add - missing variant or option');
     }
   };
 
@@ -77,51 +84,137 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
     onConditionsChange(conditions.filter((_, i) => i !== idx));
   };
 
+  const isStatic = img.type === 'static' || img.combinationKey === 'default';
+  const characteristics = img.characteristics || {};
+  const hasCharacteristics = Object.keys(characteristics).length > 0;
+  
+  const imageUrl = img.url || img.imagePath || img.filePath || '';
+
+  const findWizardMapping = (charKey: string, charValue: string) => {
+    if (!wizardConfig?.tabs) return null;
+    for (const tab of wizardConfig.tabs) {
+      for (const variant of (tab.variants || [])) {
+        if (variant.id === charKey) {
+          const option = variant.options?.find((o: any) => o.id === charValue);
+          if (option) {
+            return { tabLabel: tab.label, variantLabel: variant.label, optionLabel: option.label };
+          }
+        }
+      }
+    }
+    return null;
+  };
+
   return (
-    <div className={`rounded-lg p-3 border ${conditions.length > 0 ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-100'}`}>
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">
-          {img.id || 'img'}
-        </span>
-        <div className="flex gap-1">
-          {conditions.length > 0 && (
-            <span className="text-[10px] font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded">
-              {conditions.length} condition{conditions.length > 1 ? 's' : ''}
-            </span>
+    <div className={`rounded-xl border-2 overflow-hidden transition-all ${
+      isStatic ? 'bg-slate-50 border-slate-200' : 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200'
+    }`}>
+      <div className="flex gap-3 p-3">
+        <div className="w-16 h-16 rounded-lg overflow-hidden bg-white border border-slate-200 shrink-0 shadow-sm">
+          {imageUrl ? (
+            <img 
+              src={imageUrl} 
+              alt={img.label || 'Image'}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%2394a3b8" font-size="12">?</text></svg>';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+              <ImageIcon size={20} />
+            </div>
           )}
-          <span className="text-[10px] text-slate-400">
-            {img.position?.width || '?'}x{img.position?.height || '?'}px
-          </span>
         </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+              isStatic 
+                ? 'bg-slate-200 text-slate-600' 
+                : 'bg-purple-500 text-white'
+            }`}>
+              {isStatic ? 'Statique' : 'Personnalisée'}
+            </span>
+            <span className="text-[10px] text-slate-400">
+              {Math.round(img.position?.width || 0)}×{Math.round(img.position?.height || 0)}
+            </span>
+          </div>
+          
+          {hasCharacteristics && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {Object.entries(characteristics).map(([key, value]) => {
+                const mapping = findWizardMapping(key, value as string);
+                return (
+                  <div 
+                    key={key}
+                    className="group relative"
+                  >
+                    <span className="inline-flex items-center gap-1 text-[10px] bg-white border border-purple-200 rounded-full px-2 py-0.5 text-purple-700">
+                      <span className="font-medium">{CHARACTERISTIC_LABELS[key] || key}:</span>
+                      <span className="text-purple-900">{value as string}</span>
+                      {mapping && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" title="Lié au wizard" />
+                      )}
+                    </span>
+                    {mapping && (
+                      <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block z-10">
+                        <div className="bg-slate-900 text-white text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                          Wizard: {mapping.tabLabel} → {mapping.variantLabel} → {mapping.optionLabel}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          
+          {img.combinationKey && img.combinationKey !== 'default' && (
+            <div className="mt-2">
+              <span className="text-[9px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded break-all">
+                {img.combinationKey}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+            conditions.length > 0 ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+          }`}
+        >
+          <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        </button>
       </div>
 
-      {/* Conditions List */}
-      <div className="space-y-2">
-        <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">
-          Conditions ({conditions.length})
-        </p>
+      {isExpanded && (
+        <div className="border-t border-slate-200 bg-white/50 p-3 space-y-2">
+          <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide flex items-center gap-2">
+            <Filter size={10} />
+            Conditions manuelles ({conditions.length})
+          </p>
 
-        {conditions.map((cond, condIdx) => {
-          const variantOpt = imageVariantOptions.find(o => o.value === cond.variantId);
-          const optionLabel = variantOpt?.variantOptions?.find(o => o.id === cond.optionId)?.label || cond.optionId;
+          {conditions.map((cond, condIdx) => {
+            const variantOpt = imageVariantOptions.find(o => o.value === cond.variantId);
+            const optionLabel = variantOpt?.variantOptions?.find(o => o.id === cond.optionId)?.label || cond.optionId;
 
-          return (
-            <div key={condIdx} className="flex items-center gap-1 bg-white rounded px-2 py-1 border border-slate-200">
-              <span className="text-[10px] text-brand-coral font-medium">{variantOpt?.label || cond.variantId}</span>
-              <span className="text-[10px] text-slate-400">=</span>
-              <span className="text-[10px] text-slate-700 font-medium">{optionLabel}</span>
-              <button
-                onClick={() => removeCondition(condIdx)}
-                className="ml-auto p-0.5 hover:bg-red-50 rounded text-red-400 hover:text-red-600"
-              >
-                <X size={10} />
-              </button>
-            </div>
-          );
-        })}
+            return (
+              <div key={condIdx} className="flex items-center gap-1 bg-white rounded-lg px-2 py-1.5 border border-blue-200">
+                <span className="text-[10px] text-brand-coral font-medium">{variantOpt?.label || cond.variantId}</span>
+                <span className="text-[10px] text-slate-400">=</span>
+                <span className="text-[10px] text-slate-700 font-medium">{optionLabel}</span>
+                <button
+                  onClick={() => removeCondition(condIdx)}
+                  className="ml-auto p-0.5 hover:bg-red-50 rounded text-red-400 hover:text-red-600"
+                >
+                  <X size={10} />
+                </button>
+              </div>
+            );
+          })}
 
-        {/* Add Condition */}
-        <div className="flex flex-col gap-1">
           <div className="flex gap-1">
             <select
               value={selectedVariant}
@@ -129,19 +222,19 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
                 setSelectedVariant(e.target.value);
                 setSelectedOption('');
               }}
-              className="flex-1 text-[10px] border border-slate-200 rounded px-1 py-1 bg-white"
+              className="flex-1 text-[10px] border border-slate-200 rounded px-2 py-1.5 bg-white"
             >
               <option value="">Variante...</option>
               {imageVariantOptions.map(opt => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label} ({opt.tabLabel})
+                  {opt.label}
                 </option>
               ))}
             </select>
             <select
               value={selectedOption}
               onChange={(e) => setSelectedOption(e.target.value)}
-              className="flex-1 text-[10px] border border-slate-200 rounded px-1 py-1 bg-white"
+              className="flex-1 text-[10px] border border-slate-200 rounded px-2 py-1.5 bg-white"
               disabled={!selectedVariant}
             >
               <option value="">Option...</option>
@@ -151,17 +244,37 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, condit
                 </option>
               ))}
             </select>
+            <button
+              onClick={addCondition}
+              disabled={!selectedVariant || !selectedOption}
+              className="px-3 py-1.5 bg-blue-500 text-white text-[10px] rounded hover:bg-blue-600 font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              +
+            </button>
           </div>
-          <button
-            onClick={addCondition}
-            disabled={!selectedVariant || !selectedOption}
-            className="w-full py-1.5 bg-green-500 text-white text-[11px] rounded hover:bg-green-600 font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1"
-          >
-            <span className="text-lg leading-none">+</span> Ajouter cette condition
-          </button>
         </div>
-      </div>
+      )}
     </div>
+  );
+};
+
+// Legacy component kept for compatibility
+interface ImageConditionEditorProps {
+  img: any;
+  conditions: { variantId: string; optionId: string }[];
+  imageVariantOptions: { value: string; label: string; tabLabel?: string; variantOptions?: { id: string; label: string }[] }[];
+  onConditionsChange: (conditions: { variantId: string; optionId: string }[]) => void;
+}
+
+const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, conditions, imageVariantOptions, onConditionsChange }) => {
+  return (
+    <ImageCard 
+      img={img} 
+      wizardConfig={null}
+      conditions={conditions} 
+      imageVariantOptions={imageVariantOptions} 
+      onConditionsChange={onConditionsChange} 
+    />
   );
 };
 
@@ -6134,6 +6247,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2 sticky top-0 bg-white py-1">
                                                                 <ImageIcon size={14} className="text-emerald-500" />
                                                                 Images ({pageImagesForSelected.length})
+                                                                <span className="ml-auto text-[10px] font-normal text-slate-400">
+                                                                    {pageImagesForSelected.filter((i: any) => i.type === 'static' || i.combinationKey === 'default').length} statiques, 
+                                                                    {pageImagesForSelected.filter((i: any) => i.type === 'personalized' && i.combinationKey !== 'default').length} personnalisées
+                                                                </span>
                                                             </h4>
                                                             {pageImagesForSelected.length === 0 ? (
                                                                 <p className="text-xs text-slate-400 italic py-4 text-center bg-slate-50 rounded-lg">Aucune image sur cette page</p>
@@ -6141,15 +6258,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 <div className="space-y-3">
                                                                     {pageImagesForSelected.map((img: any, idx: number) => {
                                                                         const conditions = img.conditions || [];
+                                                                        const currentBook = draftBook || selectedBook;
                                                                         
                                                                         return (
-                                                                            <ImageConditionEditor
+                                                                            <ImageCard
                                                                                 key={img.id || idx}
                                                                                 img={img}
+                                                                                wizardConfig={currentBook?.wizardConfig}
                                                                                 conditions={conditions}
                                                                                 imageVariantOptions={imageVariantOptions}
                                                                                 onConditionsChange={(newConditions) => {
-                                                                                    const currentBook = draftBook || selectedBook;
                                                                                     const currentImages = currentBook.contentConfig.imageElements || [];
                                                                                     const updatedImages = currentImages.map((i: any) =>
                                                                                         i.id === img.id ? { ...i, conditions: newConditions } : i

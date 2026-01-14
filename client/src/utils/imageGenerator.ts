@@ -3,42 +3,36 @@ import { BookConfig } from '../types';
 
 /**
  * Resolves the effective combination key based on user configuration and book wizard config.
- * For example: "boy_light_blue"
+ * For example: "hair:brown_hero:father_skin:light" (sorted alphabetically)
+ * 
+ * Structure: config.characters[tabId][variantId] = selectedOptionId
+ * For characteristic-based wizard: tabId = variantId = characteristic key (e.g., 'hero', 'skin')
  */
 export const getCombinationKey = (book: BookProduct, config: BookConfig): string => {
   if (!book.wizardConfig || !book.wizardConfig.tabs) return 'default';
   
-  // Iterate through tabs in order and find selected values in config
-  // This logic must match how keys are built in the admin/wizard
-  // We assume the config keys match the tab IDs or variant IDs.
+  const characteristicParts: string[] = [];
   
-  const parts: string[] = [];
-  
-  book.wizardConfig.tabs.forEach(tab => {
-      tab.variants.forEach(variant => {
-          // Check if this variant has a selection in config
-          // The config structure is dynamic: config.characters?.[variant.id] or similar?
-          // Or is it flattened in config?
-          
-          // Based on Wizard.tsx, it seems config might have properties like 'gender', 'hairColor' etc.
-          // OR it uses the new `characters` map.
-          
-          // Let's try to find the value.
-          // If the variant.id is 'gender', look for config.gender or config.characters.main.gender
-          
-          // Simple fallback for now: just join known values if they exist
-          // This part is tricky without knowing the exact runtime structure of 'config' 
-          // vs the 'wizardConfig' structure.
-          
-          // However, for the purpose of the mockup, we can try to match what's in the book content.
-          // If we can't find a match, we fallback to 'default'.
-      });
+  book.wizardConfig.tabs.forEach((tab: any) => {
+      if (tab.type === 'character' && config.characters?.[tab.id]) {
+          tab.variants?.forEach((v: any) => {
+              if (v.type === 'options') {
+                  const selectedOptId = config.characters![tab.id][v.id];
+                  if (selectedOptId) {
+                      // For characteristic-based wizard (tabId = variantId = characteristic key)
+                      // e.g., tabId='hero', variantId='hero', selectedOptId='father'
+                      // Build key as "hero:father"
+                      characteristicParts.push(`${v.id}:${selectedOptId}`);
+                  }
+              }
+          });
+      }
   });
-
-  // For now, let's assume the 'default' key or try to match basic ones if simple.
-  // Ideally, the 'BookPreview' already knows the currentCombinationKey.
-  // We will pass it as an argument instead of re-deriving it.
-  return 'default';
+  
+  if (characteristicParts.length === 0) return 'default';
+  // Sort for consistency with server-side key generation
+  characteristicParts.sort();
+  return characteristicParts.join('_');
 };
 
 /**

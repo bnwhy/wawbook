@@ -50,6 +50,161 @@ interface FontWarning {
 }
 
 /**
+ * Parse image filename to extract page index and personalization characteristics
+ * Format: page1_hero-father_skin-light_hair-brown.png
+ * Returns: { pageIndex: 1, characteristics: { hero: 'father', skin: 'light', hair: 'brown' }, combinationKey: 'hero:father_skin:light_hair:brown' }
+ */
+interface ImageCharacteristics {
+  pageIndex: number | null;
+  characteristics: Record<string, string>;
+  combinationKey: string;
+}
+
+function parseImageFilename(filename: string): ImageCharacteristics {
+  const result: ImageCharacteristics = {
+    pageIndex: null,
+    characteristics: {},
+    combinationKey: 'default',
+  };
+  
+  // Remove extension
+  const nameWithoutExt = filename.replace(/\.(jpg|jpeg|png|gif|svg|webp)$/i, '');
+  
+  // Split by underscore to get parts
+  const parts = nameWithoutExt.split('_');
+  
+  if (parts.length === 0) return result;
+  
+  const characteristicParts: string[] = [];
+  
+  for (const part of parts) {
+    // Check for page number (page1, page2, etc.)
+    const pageMatch = part.match(/^page(\d+)$/i);
+    if (pageMatch) {
+      result.pageIndex = parseInt(pageMatch[1], 10);
+      continue;
+    }
+    
+    // Check for characteristic (key-value format like hero-father, skin-light)
+    const charMatch = part.match(/^([a-z]+)-([a-z0-9]+)$/i);
+    if (charMatch) {
+      const key = charMatch[1].toLowerCase();
+      const value = charMatch[2].toLowerCase();
+      result.characteristics[key] = value;
+      characteristicParts.push(`${key}:${value}`);
+    }
+  }
+  
+  // Build combination key from sorted characteristics for consistency
+  if (characteristicParts.length > 0) {
+    // Sort by key name for consistent ordering
+    characteristicParts.sort();
+    result.combinationKey = characteristicParts.join('_');
+  }
+  
+  return result;
+}
+
+/**
+ * Build wizard configuration from detected characteristics across all images
+ * Returns tabs with variants for each characteristic type (hero, skin, hair, etc.)
+ * Compatible with WizardTab/WizardVariant structure from client types
+ */
+interface WizardOptionServer {
+  id: string;
+  label: string;
+  thumbnail?: string;
+  resource?: string;
+}
+
+interface WizardVariantServer {
+  id: string;
+  label: string;
+  title?: string;
+  type: 'options' | 'text' | 'checkbox';
+  options?: WizardOptionServer[];
+}
+
+interface WizardTabServer {
+  id: string;
+  label: string;
+  type: 'character' | 'element';
+  options: string[];
+  variants: WizardVariantServer[];
+}
+
+function buildWizardConfigFromCharacteristics(allCharacteristics: Record<string, Set<string>>): WizardTabServer[] {
+  const tabs: WizardTabServer[] = [];
+  
+  // Labels in French for known characteristics
+  const labelMap: Record<string, string> = {
+    hero: 'Personnage principal',
+    skin: 'Couleur de peau',
+    hair: 'Couleur des cheveux',
+    eyes: 'Couleur des yeux',
+    gender: 'Genre',
+    outfit: 'Tenue',
+    accessory: 'Accessoire',
+  };
+  
+  // Value labels in French
+  const valueLabels: Record<string, Record<string, string>> = {
+    hero: { father: 'Papa', mother: 'Maman', boy: 'Garçon', girl: 'Fille', grandpa: 'Grand-père', grandma: 'Grand-mère' },
+    skin: { light: 'Claire', medium: 'Moyenne', dark: 'Foncée', tan: 'Bronzée' },
+    hair: { brown: 'Brun', black: 'Noir', blonde: 'Blond', red: 'Roux', grey: 'Gris', white: 'Blanc' },
+    eyes: { brown: 'Marron', blue: 'Bleu', green: 'Vert', hazel: 'Noisette' },
+    gender: { male: 'Masculin', female: 'Féminin' },
+  };
+  
+  // Sort keys for consistent ordering (hero first, then appearance)
+  const orderedKeys = ['hero', 'gender', 'skin', 'hair', 'eyes', 'outfit', 'accessory'];
+  const sortedKeys = Object.keys(allCharacteristics).sort((a, b) => {
+    const aIndex = orderedKeys.indexOf(a);
+    const bIndex = orderedKeys.indexOf(b);
+    if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
+  
+  for (const key of sortedKeys) {
+    const values = allCharacteristics[key];
+    if (!values || values.size === 0) continue;
+    
+    const options: WizardOptionServer[] = [];
+    const sortedValues = Array.from(values).sort();
+    
+    for (const value of sortedValues) {
+      const label = valueLabels[key]?.[value] || value.charAt(0).toUpperCase() + value.slice(1);
+      options.push({
+        id: value, // Use the value directly as the option ID for cleaner key generation
+        label,
+      });
+    }
+    
+    // Create a single variant per characteristic tab
+    // The variant ID matches the tab ID for simplicity
+    const variant: WizardVariantServer = {
+      id: key, // variantId = characteristic key (hero, skin, hair)
+      label: labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1),
+      title: labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1),
+      type: 'options',
+      options,
+    };
+    
+    tabs.push({
+      id: key, // tabId = characteristic key (hero, skin, hair)
+      label: labelMap[key] || key.charAt(0).toUpperCase() + key.slice(1),
+      type: 'character', // Use 'character' type for personalization
+      options: [], // Legacy field, empty
+      variants: [variant],
+    });
+  }
+  
+  return tabs;
+}
+
+/**
  * Detect font issues in CSS - ANY font not native to Linux/Playwright 
  * MUST be embedded as base64 to display correctly
  */
@@ -85,7 +240,8 @@ function detectFontIssues(css: string, fontMap: Record<string, string>): FontWar
   }
   
   // Check each used font
-  for (const font of usedFonts) {
+  const usedFontsArray = Array.from(usedFonts);
+  for (const font of usedFontsArray) {
     // If it's a native Linux font, it's safe
     if (NATIVE_LINUX_FONTS.has(font)) {
       continue;
@@ -128,6 +284,10 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
   const htmlContent: Record<string, string> = {};
   const cssContent: Record<string, string> = {};
   
+  // Track image characteristics for wizard config generation
+  const imageCharacteristicsMap: Record<string, ImageCharacteristics> = {};
+  const allCharacteristics: Record<string, Set<string>> = {};
+  
   // Extract all files
   for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
     if (zipEntry.dir) continue;
@@ -144,6 +304,23 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
       const serverPath = `/assets/books/${bookId}/images/${fileName}`;
       imageMap[relativePath] = serverPath;
       imageMap[fileName] = serverPath;
+      
+      // Parse filename for personalization characteristics
+      // Format: page1_hero-father_skin-light_hair-brown.png
+      const parsedFilename = parseImageFilename(fileName);
+      imageCharacteristicsMap[fileName] = parsedFilename;
+      
+      // Collect all characteristics for wizard config generation
+      for (const [key, value] of Object.entries(parsedFilename.characteristics)) {
+        if (!allCharacteristics[key]) {
+          allCharacteristics[key] = new Set<string>();
+        }
+        allCharacteristics[key].add(value);
+      }
+      
+      if (Object.keys(parsedFilename.characteristics).length > 0) {
+        console.log(`[epub-extract] Parsed image: ${fileName} -> page=${parsedFilename.pageIndex}, key=${parsedFilename.combinationKey}`);
+      }
       
       // Add all partial paths (e.g., "image/1.jpg" from "OEBPS/image/1.jpg")
       const parts = relativePath.split('/');
@@ -475,11 +652,22 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
         }
       }
       
-      console.log(`[epub-extract] Image ${containerId}: x=${translateX}, y=${translateY}, w=${blockWidth}, h=${blockHeight}`);
+      // Get the actual filename from src to look up characteristics
+      const srcFilename = imgSrc.split('/').pop() || '';
+      const imgCharacteristics = imageCharacteristicsMap[srcFilename] || { pageIndex: null, characteristics: {}, combinationKey: 'default' };
+      
+      // Use parsed page index if available, otherwise use HTML page order
+      const effectivePageIndex = imgCharacteristics.pageIndex || (i + 1);
+      
+      // Determine image type based on characteristics
+      const hasCharacteristics = Object.keys(imgCharacteristics.characteristics).length > 0;
+      const imageType = hasCharacteristics ? 'personalized' : 'static';
+      
+      console.log(`[epub-extract] Image ${containerId}: x=${translateX}, y=${translateY}, w=${blockWidth}, h=${blockHeight}, type=${imageType}, key=${imgCharacteristics.combinationKey}`);
       
       extractedImages.push({
-        id: `img-${bookId}-${i + 1}-${randomUUID().substring(0, 8)}`,
-        type: 'static',
+        id: `img-${bookId}-${effectivePageIndex}-${randomUUID().substring(0, 8)}`,
+        type: imageType,
         label: imgClass || imgAlt || containerId,
         url: imgSrc,
         position: {
@@ -490,10 +678,11 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
           scaleX,
           scaleY,
           layer: 10,
-          pageIndex: i + 1,
+          pageIndex: effectivePageIndex,
           rotation,
         },
-        combinationKey: 'default',
+        combinationKey: imgCharacteristics.combinationKey,
+        characteristics: hasCharacteristics ? imgCharacteristics.characteristics : undefined,
       });
     });
   }
@@ -503,6 +692,17 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
   if (fontWarnings.length > 0) {
     console.log(`[epub-extract] Font warnings detected: ${fontWarnings.length}`);
     fontWarnings.forEach(w => console.log(`  - [${w.severity}] ${w.fontFamily}: ${w.reason}`));
+  }
+
+  // Generate wizard configuration from detected characteristics
+  const generatedWizardTabs = buildWizardConfigFromCharacteristics(allCharacteristics);
+  if (generatedWizardTabs.length > 0) {
+    console.log(`[epub-extract] Generated wizard config with ${generatedWizardTabs.length} tabs:`);
+    generatedWizardTabs.forEach(tab => {
+      const variant = tab.variants[0];
+      const optionIds = variant?.options?.map(o => o.id).join(', ') || 'none';
+      console.log(`  - ${tab.id}: ${variant?.options?.length || 0} options (${optionIds})`);
+    });
   }
 
   console.log(`[epub-extract] Complete: ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts, ${extractedTexts.length} texts, ${extractedImages.length} image elements`);
@@ -518,6 +718,10 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     texts: extractedTexts,
     imageElements: extractedImages,
     fontWarnings,
+    generatedWizardTabs,
+    detectedCharacteristics: Object.fromEntries(
+      Object.entries(allCharacteristics).map(([key, values]) => [key, Array.from(values)])
+    ),
   };
 }
 

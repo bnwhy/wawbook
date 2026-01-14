@@ -88,22 +88,30 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const getCombinationKey = () => {
     if (!book?.wizardConfig?.tabs) return 'default';
     
-    // Collect all option IDs from character tabs
-    const optionIds: string[] = [];
+    // Collect characteristics from wizard selections
+    // Structure: config.characters[tabId][variantId] = selectedOptionId
+    const characteristicParts: string[] = [];
     
-    book.wizardConfig.tabs.forEach(tab => {
+    book.wizardConfig.tabs.forEach((tab: any) => {
         if (tab.type === 'character' && config.characters?.[tab.id]) {
-            tab.variants.forEach(v => {
+            tab.variants?.forEach((v: any) => {
                 if (v.type === 'options') {
                     const selectedOptId = config.characters![tab.id][v.id];
-                    if (selectedOptId) optionIds.push(selectedOptId);
+                    if (selectedOptId) {
+                        // For characteristic-based wizard (tabId = variantId = characteristic key)
+                        // e.g., tabId='hero', variantId='hero', selectedOptId='father'
+                        // Build key as "hero:father"
+                        characteristicParts.push(`${v.id}:${selectedOptId}`);
+                    }
                 }
             });
         }
     });
     
-    if (optionIds.length === 0) return 'default';
-    return optionIds.join('_');
+    if (characteristicParts.length === 0) return 'default';
+    // Sort for consistency with server-side key generation
+    characteristicParts.sort();
+    return characteristicParts.join('_');
   };
 
   const currentCombinationKey = getCombinationKey();

@@ -63,6 +63,20 @@ Preferred communication style: Simple, everyday language.
 - **Admin Endpoints**: `/api/templates/load`, `/api/templates/list`, `/api/templates/:bookId/unload`
 - **User Endpoint**: `/api/templates/:bookId/preview` (POST with variables)
 
+### Image Personalization System (January 2026)
+- **Filename Convention**: `page1_hero-father_skin-light_hair-brown.png`
+  - `page{N}`: Specifies which page this image belongs to
+  - `{characteristic}-{value}`: Key-value pairs for personalization options
+- **Supported Characteristics**: hero, skin, hair, eyes, gender, outfit, accessory
+- **Auto-generated Wizard**: From detected characteristics, system creates wizard tabs with French labels
+- **CombinationKey Format**: Sorted alphabetically, e.g., `hair:brown_hero:father_skin:light`
+- **Data Flow**:
+  1. Admin uploads EPUB with named images
+  2. Server parses filenames → extracts characteristics → builds wizardConfig
+  3. Wizard displays tabs: Personnage principal, Couleur de peau, Couleur des cheveux, etc.
+  4. User selections stored as `config.characters[tabId][variantId] = optionId`
+  5. BookPreview generates combinationKey from selections → filters matching images
+
 ### Third-Party Libraries
 - **cheerio**: HTML parsing and manipulation for template processing
 - **sharp**: Image compression and optimization

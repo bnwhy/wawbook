@@ -129,30 +129,9 @@ export async function registerRoutes(
         return res.status(400).json({ error: "No pages to render" });
       }
 
-      const { config = {}, characters = {} } = req.body;
+      const { config = {}, combinationKey = 'default' } = req.body;
       const objectStorageService = new ObjectStorageService();
       
-      // Generate combinationKey from wizard selections
-      const wizardConfig = book.wizardConfig as any;
-      let combinationKey = 'default';
-      if (wizardConfig?.tabs && characters) {
-        const characteristicParts: string[] = [];
-        for (const tab of wizardConfig.tabs) {
-          if (tab.type === 'character' && characters[tab.id]) {
-            for (const variant of (tab.variants || [])) {
-              if (variant.type === 'options') {
-                const selectedOptId = characters[tab.id]?.[variant.id];
-                if (selectedOptId) {
-                  characteristicParts.push(`${variant.id}:${selectedOptId}`);
-                }
-              }
-            }
-          }
-        }
-        if (characteristicParts.length > 0) {
-          combinationKey = characteristicParts.sort().join('_');
-        }
-      }
       console.log(`[render-pages] Using combinationKey: ${combinationKey}`);
       
       // Import chromium dynamically

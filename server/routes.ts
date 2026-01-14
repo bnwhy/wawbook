@@ -194,9 +194,14 @@ export async function registerRoutes(
 
           const baseUrl = `${req.protocol}://${req.get('host')}`;
           
-          // Get images for this page
+          // Get images for this page, filtered by combinationKey
           const pageImages = (contentConfig?.imageElements || []).filter(
-            (img: any) => img.position?.pageIndex === pageData.pageIndex
+            (img: any) => {
+              if (img.position?.pageIndex !== pageData.pageIndex) return false;
+              // Include if: no combinationKey, matches exactly, is 'default', or is 'all'
+              if (!img.combinationKey || img.combinationKey === 'default' || img.combinationKey === 'all') return true;
+              return img.combinationKey === combinationKey;
+            }
           );
           
           // Get text zones for this page

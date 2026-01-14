@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Loader2 } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { Story, BookConfig } from '../types';
+import { Story, BookConfig, Gender } from '../types';
 import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
@@ -10,8 +10,8 @@ import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
 import Footer from './Footer';
 
-const hardcoverIcon = '';
-const softcoverIcon = '';
+const hardcoverIcon = null;
+const softcoverIcon = null;
 
 interface BookPreviewProps {
   story: Story;
@@ -64,8 +64,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         if (k === 'dedication') return config.dedication || '';
         if (k === 'age') return config.age?.toString() || '';
         if (k === 'heroName') return config.childName || 'Héros';
-        if (k === 'city') return config.city || '';
-        if (k === 'gender') return config.gender === 'girl' ? 'Fille' : 'Garçon';
+        if (k === 'gender') return config.gender === Gender.Girl ? 'Fille' : 'Garçon';
 
         return match;
     });
@@ -153,6 +152,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                     gender: config.gender,
                                 },
                                 characters: config.characters,
+                                combinationKey: currentCombinationKey,
                             }),
                         });
                         
@@ -904,8 +904,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                onClick={() => setSelectedFormat('hardcover')}
                                className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === 'hardcover' ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                            >
-                               <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0">
-                                   <img src={hardcoverIcon} alt="Couverture rigide" className="w-full h-full object-cover" />
+                               <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0 flex items-center justify-center">
+                                   {hardcoverIcon ? (
+                                     <img src={hardcoverIcon} alt="Couverture rigide" className="w-full h-full object-cover" />
+                                   ) : (
+                                     <BookOpen size={32} className="text-gray-300" />
+                                   )}
                                </div>
                                <div className="flex flex-col flex-1">
                                    <span className="font-bold text-cloud-dark text-sm">Couverture rigide</span>
@@ -925,8 +929,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                onClick={() => setSelectedFormat('softcover')}
                                className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === 'softcover' ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                            >
-                               <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0">
-                                   <img src={softcoverIcon} alt="Couverture souple" className="w-full h-full object-cover" />
+                               <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0 flex items-center justify-center">
+                                   {softcoverIcon ? (
+                                     <img src={softcoverIcon} alt="Couverture souple" className="w-full h-full object-cover" />
+                                   ) : (
+                                     <BookOpen size={32} className="text-gray-300" />
+                                   )}
                                </div>
                                <div className="flex flex-col flex-1">
                                    <span className="font-bold text-cloud-dark text-sm">Couverture souple</span>

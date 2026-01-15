@@ -236,19 +236,19 @@ export const generateInteriorPDF = async (order: Order, books: BookProduct[]): P
       // Iterate through all pages in config
       // Filter valid pages (exclude covers)
       const pages = book.contentConfig.pages
-        .filter(p => p.pageNumber > 0 && p.pageNumber < 900)
-        .sort((a, b) => a.pageNumber - b.pageNumber);
+        .filter(p => p.pageIndex > 0 && p.pageIndex < 900)
+        .sort((a, b) => a.pageIndex - b.pageIndex);
         
       for (let j = 0; j < pages.length; j++) {
           const page = pages[j];
           if (j > 0) doc.addPage();
           
-          await renderPageContent(doc, book, page.pageNumber, item, PAGE_WIDTH, PAGE_HEIGHT);
+          await renderPageContent(doc, book, page.pageIndex, item, PAGE_WIDTH, PAGE_HEIGHT);
           
           // Add page number at bottom if interior
           doc.setFontSize(8);
           doc.setTextColor(150, 150, 150);
-          doc.text(`${page.pageNumber}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 5, { align: "center" });
+          doc.text(`${page.pageIndex}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 5, { align: "center" });
       }
       
       if (pages.length === 0) {

@@ -230,8 +230,7 @@ export const generateBookPages = async (
           if (k === 'age') return config.age?.toString() || '';
           if (k === 'dedication') return config.dedication || '';
           if (k === 'heroName') return config.childName || 'Héros';
-          if (k === 'city') return config.city || '';
-          if (k === 'gender') return config.gender === 'girl' ? 'Fille' : 'Garçon';
+          if (k === 'gender') return config.gender || 'Garçon';
           
           // Try to find in custom characters config if it matches a variant ID
           // Structure: config.characters[tabId] = selectedValue (for options) or value (for text)

@@ -5,11 +5,16 @@ import { ProductGrid } from "@/components/home/ProductGrid";
 import { Features } from "@/components/home/Features";
 
 export default function Home() {
+  const handleStart = () => {
+    // Rediriger vers la page principale pour démarrer la création
+    window.location.href = '/';
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        <Hero />
+        <Hero onStart={handleStart} />
         <Features />
         <ProductGrid />
         

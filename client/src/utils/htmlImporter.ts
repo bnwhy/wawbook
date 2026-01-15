@@ -480,8 +480,9 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
                     const conditions: Array<{variantId: string, optionId: string}> = [];
                     
                     // Match patterns like: word-word (e.g., haircolor-brown, hero-father)
-                    const matches = filename.matchAll(/([a-z]+)-([a-z]+)/gi);
-                    for (const match of matches) {
+                    const regex = /([a-z]+)-([a-z]+)/gi;
+                    let match;
+                    while ((match = regex.exec(filename)) !== null) {
                         const variantId = match[1].toLowerCase();
                         const optionId = match[2].toLowerCase();
                         
@@ -497,7 +498,7 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
                     images.push({
                         id: `img-html-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                         label: cleanLabel,
-                        type: conditions.length > 0 ? 'personalized' : 'static',
+                        type: conditions.length > 0 ? 'variable' : 'static',
                         url: src,
                         combinationKey: conditions.length > 0 ? undefined : 'default',
                         conditions: conditions.length > 0 ? conditions : undefined,

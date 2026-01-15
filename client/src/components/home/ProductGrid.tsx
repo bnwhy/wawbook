@@ -70,7 +70,7 @@ export function ProductGrid() {
                     {book.description || "Une histoire personnalisée pour votre enfant"}
                   </p>
                   <div className="font-serif text-2xl text-primary">
-                    {book.basePrice ? `${book.basePrice.toFixed(2)} €` : "29,99 €"}
+                    {book.price ? `${book.price.toFixed(2)} €` : "29,99 €"}
                   </div>
                 </CardContent>
                 <CardFooter className="p-6 pt-0 bg-white/50 backdrop-blur-sm">

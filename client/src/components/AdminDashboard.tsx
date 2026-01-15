@@ -668,6 +668,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // Content Editor State
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [selectedEpubPageIndex, setSelectedEpubPageIndex] = useState<number | null>(null);
+  const [selectedAvatarTabId, setSelectedAvatarTabId] = useState<string | null>(null);
+  const [avatarFilters, setAvatarFilters] = useState<Record<string, string[]>>({});
+  
+  // Helper function to generate avatar combinations
+  const generateAvatarCombinations = (tab: any): Array<{ parts: Array<{ variantId: string; id: string }>, key: string }> => {
+    if (!tab || !tab.variants) return [];
+    // This is a placeholder - implement based on your needs
+    // Return empty array with proper type
+    return [];
+  };
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
   const [expandedVariantIds, setExpandedVariantIds] = useState<Set<string>>(new Set());
@@ -947,7 +957,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         if (viewMode === 'spread') {
              const dims = selectedBook.features?.dimensions || { width: 210, height: 210 };
              const pages = selectedBook.contentConfig.pages;
-             const idx = pages.findIndex(p => p.id === selectedPageId);
+             const idx = pages.findIndex(p => p.pageIndex.toString() === selectedPageId);
              const isCover = idx === 0 || idx === pages.length - 1;
              
              if (isCover) {
@@ -1165,8 +1175,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     if (!selectedBook) return;
 
     // Filter out orphaned elements (elements pointing to non-existent pages)
-    // We strictly use pageNumber as the reference since that's what we use in rendering
-    const validPageNumbers = new Set(selectedBook.contentConfig.pages.map(p => p.pageNumber));
+    // We strictly use pageIndex as the reference since that's what we use in rendering
+    const validPageNumbers = new Set(selectedBook.contentConfig.pages.map(p => p.pageIndex));
     
     // Create a clean copy of content config removing orphaned items and stripping 'zoneId' from position
     const cleanContentConfig = {
@@ -1451,7 +1461,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                      <button
                         onClick={() => {
-                           if (selectedBookId) {
+                           if (selectedBookId && selectedBook) {
                                window.open(`/?preview_book=${selectedBook.id}`, '_blank');
                            }
                         }}
@@ -2661,7 +2671,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                </div>
                                                <p className="text-sm text-slate-500 mb-1">Quantité: {item.quantity}</p>
                                                <pre className="text-xs text-slate-600 bg-slate-50 p-2 rounded max-w-md overflow-x-auto whitespace-pre-wrap">
-                                                  {JSON.stringify(item.config || item.configuration, null, 2)}
+                                                  {JSON.stringify(item.configuration, null, 2)}
                                                </pre>
                                             </div>
                                          </div>
@@ -3015,7 +3025,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                onChange={(e) => setNewComment(e.target.value)}
                                                onKeyDown={(e) => {
                                                   if (e.key === 'Enter' && newComment.trim()) {
-                                                     addOrderLog(order.id, newComment.trim(), 'comment');
+                                                     addOrderLog(order.id, { type: 'comment', message: newComment.trim() });
                                                      setNewComment('');
                                                   }
                                                }}
@@ -3024,7 +3034,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          <button 
                                             onClick={() => {
                                                if (newComment.trim()) {
-                                                  addOrderLog(order.id, newComment.trim(), 'comment');
+                                                  addOrderLog(order.id, { type: 'comment', message: newComment.trim() });
                                                   setNewComment('');
                                                }
                                             }}
@@ -5368,87 +5378,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  </div>
               )}
 
-              {/* --- VIEW: AVATARS & PREVIEWS (Removed - avatars are now auto-generated from EPUB) --- */}
-
-              {/* --- VIEW: EDIT CONTENT (STORYBOARD) --- */}
-              {activeTab === 'content' && selectedBookId && selectedBook && (
+              {/* --- VIEW: AVATARS & PREVIEWS --- */}
+              {activeTab === 'avatars' && selectedBookId && selectedBook && (
                  <div className="flex flex-col gap-6 h-[calc(100vh-180px)]">
-                    
-                    {/* Toolbar */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex justify-between items-center shrink-0">
-                       <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2 text-slate-600 font-bold">
-                             <Layout size={18} />
-                             <span>Vue Storyboard</span>
-                          </div>
-
-                          <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
-                              <button 
-                                  onClick={handleExportContent}
-                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
-                                  title="Exporter la configuration (JSON)"
-                              >
-                                  <Download size={18} />
-                              </button>
-                              <button 
-                                  onClick={() => fileInputRef.current?.click()}
-                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
-                                  title="Importer la configuration (JSON)"
-                              >
-                                  <Upload size={18} />
-                              </button>
-                              <button 
-                                  onClick={() => setShowEpubSelector(true)}
-                                  className="p-2 bg-green-100 hover:bg-green-200 rounded text-green-700 shrink-0" 
-                                  title="Importer depuis le stockage (EPUBs uploadés)"
-                              >
-                                  <CloudDownload size={18} />
-                              </button>
-                              <button
-                                  onClick={() => {
-                                      if (confirm('Voulez-vous réinitialiser le storyboard ?\nCela supprimera le template EPUB généré (pages, textes, images).\nLe wizard sera conservé.\nCette action est irréversible.')) {
-                                          handleSaveBook({
-                                              ...selectedBook,
-                                              contentConfig: { pages: [], texts: [], images: [], imageElements: [], pageImages: [] }
-                                          });
-                                          setSelectedPageId(null);
-                                          setSelectedEpubPageIndex(null);
-                                          toast.success('Storyboard réinitialisé avec succès');
-                                      }
-                                  }}
-                                  className="p-2 bg-red-50 hover:bg-red-100 rounded text-red-600 shrink-0 ml-2 border border-red-200"
-                                  title="Réinitialiser le storyboard EPUB"
-                              >
-                                  <RotateCcw size={18} />
-                              </button>
-                              <input 
-                                 type="file" 
-                                 ref={fileInputRef}
-                                 className="hidden"
-                                 accept=".json"
-                                 onChange={handleImportContent}
-                              />
-                          </div>
-                       </div>
-                    </div>
-
-                    {/* Avatar Grid - Tab Selector */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 shrink-0">
-                       <div className="flex gap-2 border-b border-gray-100 pb-1">
-                          {selectedBook.wizardConfig.tabs.map(tab => (
-                             <button
-                                key={tab.id}
-                                onClick={() => setSelectedAvatarTabId(tab.id)}
-                                className={`px-4 py-2 rounded-t-lg font-bold text-sm transition-colors relative top-[1px] ${selectedAvatarTabId === tab.id || (!selectedAvatarTabId && tab === selectedBook.wizardConfig.tabs[0]) ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 border-b-transparent' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-                             >
-                                {tab.label}
-                             </button>
-                          ))}
-                       </div>
-                    </div>
-
                     {/* Avatar Grid Area */}
                     <div className="flex-1 overflow-y-auto bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                       {/* Avatar Grid - Tab Selector */}
+                       <div className="mb-4 pb-4 border-b border-gray-200 shrink-0">
+                          <div className="flex gap-2">
+                             {selectedBook.wizardConfig.tabs.map(tab => (
+                                <button
+                                   key={tab.id}
+                                   onClick={() => setSelectedAvatarTabId(tab.id)}
+                                   className={`px-4 py-2 rounded-t-lg font-bold text-sm transition-colors relative top-[1px] ${selectedAvatarTabId === tab.id || (!selectedAvatarTabId && tab === selectedBook.wizardConfig.tabs[0]) ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 border-b-transparent' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                   {tab.label}
+                                </button>
+                             ))}
+                          </div>
+                       </div>
                        {(() => {
                           const targetTab = selectedBook.wizardConfig.tabs.find(t => t.id === (selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id));
                           if (!targetTab) return <div className="text-gray-400">Aucun personnage trouvé.</div>;
@@ -5768,7 +5716,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         {sortedPages.map((page: any) => {
                                                             const pageImagesFromElements = selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex) || [];
                                                             const pageImageEntry = pageImages.find((pi: any) => pi.pageIndex === page.pageIndex);
-                                                            const thumbnailUrl = pageImageEntry?.imageUrl || pageImageEntry?.url
+                                                            const thumbnailUrl = pageImageEntry?.imageUrl
                                                                 || (pageImagesFromElements.length > 0 ? pageImagesFromElements[0].url : null);
                                                             const isSelected = effectiveSelectedPage === page.pageIndex;
                                                             const pageTextsForThumb = selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex) || [];
@@ -5942,29 +5890,29 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     
                                     return (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                            {selectedBook.contentConfig.pages.sort((a: any, b: any) => a.pageNumber - b.pageNumber).map((page: any) => (
+                                            {selectedBook?.contentConfig?.pages?.sort((a: any, b: any) => a.pageIndex - b.pageIndex).map((page: any) => (
                                                 <div 
-                                                    key={page.id}
+                                                    key={page.pageIndex}
                                                     className={`relative group bg-white rounded-xl border-2 transition-all cursor-pointer hover:shadow-lg hover:-translate-y-1 ${
-                                                        selectedPageId === page.id ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' : 'border-slate-100 hover:border-brand-coral/30'
+                                                        selectedPageId === page.pageIndex.toString() ? 'border-brand-coral shadow-md ring-2 ring-brand-coral/20' : 'border-slate-100 hover:border-brand-coral/30'
                                                     }`}
-                                                    onClick={() => setSelectedPageId(page.id)}
+                                                    onClick={() => setSelectedPageId(page.pageIndex.toString())}
                                                 >
                                                     <div className="p-3 border-b border-slate-50 flex justify-between items-center bg-white rounded-t-xl">
                                                         <span className="font-bold text-slate-700 text-sm flex items-center gap-2">
                                                             <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] flex items-center justify-center font-mono">
-                                                                {page.pageNumber}
+                                                                {page.pageIndex}
                                                             </span>
-                                                            Page {page.pageNumber}
+                                                            Page {page.pageIndex}
                                                         </span>
                                                     </div>
                                                     <div className="aspect-[3/2] bg-slate-50/50 relative overflow-hidden flex items-center justify-center m-1 rounded-lg border border-slate-100">
                                                         <div className="text-center space-y-1">
                                                             <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                                {selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageNumber).length || 0} Textes
+                                                                {selectedBook?.contentConfig?.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex).length || 0} Textes
                                                             </div>
                                                             <div className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded shadow-sm border border-slate-100">
-                                                                {selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageNumber).length || 0} Images
+                                                                {selectedBook?.contentConfig?.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex).length || 0} Images
                                                             </div>
                                                         </div>
                                                     </div>

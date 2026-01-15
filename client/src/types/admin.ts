@@ -152,6 +152,13 @@ export interface ImageVariant {
   imageUrl: string;
 }
 
+export interface RawHtmlPage {
+  pageIndex: number;
+  html: string;
+  width: number;
+  height: number;
+}
+
 export interface Printer {
   id: string;
   name: string;

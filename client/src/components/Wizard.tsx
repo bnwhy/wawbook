@@ -504,9 +504,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
                   // --- RENDER: VISUAL OPTIONS (Colors/Icons) ---
                   // Check if options have 'resource' (colors/images) or just labels
-                  const isColorPicker = variant.options.some(o => o.resource && o.resource.startsWith('#'));
-                  const hasThumbnails = variant.options.some(o => o.thumbnail || o.resource);
-                  const isGrid = variant.options.length > 6 && !isColorPicker;
+                  const isColorPicker = variant.options?.some(o => o.resource && o.resource.startsWith('#')) || false;
+                  const hasThumbnails = variant.options?.some(o => o.thumbnail || o.resource) || false;
+                  const isGrid = (variant.options?.length || 0) > 6 && !isColorPicker;
 
                   if (variant.type === 'checkbox') {
                     // Checkbox handling (using first option or defaulting if no option exists)
@@ -545,7 +545,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                          <label className="font-bold text-gray-600 text-sm w-24 shrink-0">{variant.label}</label>
                          <div className="flex gap-2 flex-wrap flex-1">
-                            {variant.options.map((opt) => (
+                            {variant.options?.map((opt) => (
                               <button
                                 key={opt.id}
                                 onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
@@ -564,7 +564,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                           <label className="font-bold text-gray-600 text-sm w-24 shrink-0">{variant.label}</label>
                           <div className="flex gap-2 flex-wrap flex-1">
-                             {variant.options.map((opt) => {
+                             {(variant.options || []).map((opt) => {
                                // Prefer resource (uploaded image) over legacy thumbnail
                                const imageUrl = opt.resource && !opt.resource.startsWith('#') ? opt.resource : opt.thumbnail;
                                
@@ -592,7 +592,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     <div className="space-y-2">
                        <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
                        <div className={`grid ${isGrid ? 'grid-cols-4' : 'grid-cols-2'} gap-2`}>
-                          {variant.options.map((opt) => (
+                          {variant.options?.map((opt) => (
                             <button
                               key={opt.id}
                               onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}

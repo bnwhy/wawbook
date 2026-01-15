@@ -214,6 +214,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [bucketEpubs, setBucketEpubs] = useState<Array<{name: string, path: string, size?: number}>>([]);
   const [isLoadingEpubs, setIsLoadingEpubs] = useState(false);
 
+  // EPUB + IDML import state
+  const [showIdmlImporter, setShowIdmlImporter] = useState(false);
+  const [isImportingStoryboard, setIsImportingStoryboard] = useState(false);
+  const [epubFile, setEpubFile] = useState<File | null>(null);
+  const [idmlFile, setIdmlFile] = useState<File | null>(null);
+
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
 
@@ -395,6 +401,215 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       toast.error('Erreur lors de l\'extraction de l\'EPUB');
     } finally {
       setIsExtractingEpub(false);
+    }
+  };
+
+  // Function to import storyboard from EPUB + IDML
+  const handleImportStoryboard = async () => {
+    if (!selectedBook) {
+      toast.error('Veuillez sélectionner un livre');
+      return;
+    }
+    
+    if (!epubFile || !idmlFile) {
+      toast.error('Veuillez sélectionner un fichier EPUB et un fichier IDML');
+      return;
+    }
+
+    setIsImportingStoryboard(true);
+    try {
+      toast.info('Import du storyboard EPUB + IDML en cours...');
+      
+      // Convert files to base64
+      const epubBase64 = await fileToBase64(epubFile);
+      const idmlBase64 = await fileToBase64(idmlFile);
+      
+      const response = await fetch('/api/books/import-storyboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          epub: epubBase64,
+          idml: idmlBase64,
+          bookId: selectedBook.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to import storyboard');
+      }
+
+      const result = await response.json();
+      console.log('[Storyboard Import] Result:', result);
+      console.log('[Storyboard Import] Debug Info:', result.debug);
+
+      // Log detailed debug info
+      if (result.debug) {
+        console.log('=== DEBUG INFO ===');
+        console.log(`EPUB text positions found: ${result.debug.epubTextPositionsCount}`);
+        console.log(`IDML text frames found: ${result.debug.idmlTextFramesCount}`);
+        console.log(`Merged texts created: ${result.debug.mergedTextsCount}`);
+        
+        if (result.debug.epubTextPositionsSample) {
+          console.log('EPUB positions sample:', result.debug.epubTextPositionsSample);
+        }
+        if (result.debug.idmlTextFramesSample) {
+          console.log('IDML frames sample:', result.debug.idmlTextFramesSample);
+        }
+        if (result.debug.mergedTextsSample) {
+          console.log('Merged texts sample:', result.debug.mergedTextsSample);
+        }
+        console.log('==================');
+      }
+
+      // Update book with merged content
+      const updatedBook = {
+        ...selectedBook,
+        contentConfig: {
+          ...selectedBook.contentConfig,
+          pages: result.contentConfig.pages || [],
+          cssContent: result.contentConfig.cssContent || '',
+          texts: result.contentConfig.texts || [],
+          imageElements: result.contentConfig.imageElements || [],
+        }
+      };
+      
+      console.log('[Storyboard Import] Updated book texts:', updatedBook.contentConfig.texts?.length);
+      
+      // Save to database
+      await updateBook(updatedBook);
+      setDraftBook(updatedBook);
+
+      setShowIdmlImporter(false);
+      setEpubFile(null);
+      setIdmlFile(null);
+      
+      // Show warnings if any
+      if (result.fontWarnings && result.fontWarnings.length > 0) {
+        const errors = result.fontWarnings.filter((w: any) => w.severity === 'error');
+        const warnings = result.fontWarnings.filter((w: any) => w.severity === 'warning');
+        
+        if (errors.length > 0) {
+          toast.error(
+            `Polices manquantes (${errors.length}) : ${errors.map((w: any) => w.fontFamily).join(', ')}`,
+            { duration: 10000 }
+          );
+        }
+        if (warnings.length > 0) {
+          toast.warning(
+            `Avertissements polices (${warnings.length}) : ${warnings.map((w: any) => w.fontFamily).join(', ')}`,
+            { duration: 8000 }
+          );
+        }
+      }
+      
+      // Show success with detailed info
+      const successMsg = `Import terminé : ${result.stats.pages} pages, ${result.stats.texts} textes, ${result.stats.images} images`;
+      toast.success(successMsg);
+      
+      // Show debug warning if no texts were created
+      if (result.debug && result.stats.texts === 0) {
+        const debugMsg = `⚠️ DEBUG: EPUB zones=${result.debug.epubTextPositionsCount}, IDML frames=${result.debug.idmlTextFramesCount}, Merged=${result.debug.mergedTextsCount}`;
+        toast.warning(debugMsg, { duration: 10000 });
+        console.error('[Storyboard Import] No texts created! Check debug info above.');
+      }
+    } catch (error: any) {
+      console.error('Error importing storyboard:', error);
+      toast.error(`Échec de l'import : ${error.message}`);
+    } finally {
+      setIsImportingStoryboard(false);
+    }
+  };
+
+  // Helper function to convert File to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Function to test IDML parsing only
+  const handleTestIdml = async () => {
+    if (!idmlFile) {
+      toast.error('Veuillez sélectionner un fichier IDML');
+      return;
+    }
+
+    try {
+      toast.info('Test du parsing IDML...');
+      const idmlBase64 = await fileToBase64(idmlFile);
+      
+      const response = await fetch('/api/books/test-idml', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idml: idmlBase64, debug: false }),
+      });
+
+      const contentType = response.headers.get('content-type');
+      console.log('[Test IDML] Response status:', response.status);
+      console.log('[Test IDML] Content-Type:', contentType);
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[Test IDML] Error response:', text);
+        
+        // Try to parse as JSON first
+        try {
+          const error = JSON.parse(text);
+          throw new Error(error.error || 'Failed to parse IDML');
+        } catch {
+          // If not JSON, show the text/HTML error
+          throw new Error(`Server error (${response.status}): ${text.substring(0, 200)}`);
+        }
+      }
+
+      const result = await response.json();
+      console.log('[Test IDML] Result:', result);
+      
+      // Debug mode
+      if (result.debug) {
+        console.log('[Test IDML] Raw XML from', result.spreadFile || result.storyFile);
+        console.log('[Test IDML] Spread keys:', result.spreadKeys);
+        console.log('[Test IDML] Page keys:', result.pageKeys);
+        console.log('[Test IDML] TextFrame count:', result.textFrameCount);
+        console.log('[Test IDML] TextFrames:', result.textFrames);
+        
+        // Search for TextFrame in raw XML
+        const textFrameMatches = result.rawXml.match(/<TextFrame[^>]*>/g);
+        console.log('[Test IDML] TextFrame tags found in XML:', textFrameMatches ? textFrameMatches.length : 0);
+        if (textFrameMatches) {
+          textFrameMatches.forEach((match: string, idx: number) => {
+            console.log(`[Test IDML] TextFrame ${idx}:`, match);
+          });
+        }
+        
+        toast.info('Structure Spread IDML affichée dans la console', { duration: 5000 });
+        return;
+      }
+      
+      toast.success(
+        `IDML parsé : ${result.stats.textFrames} textes trouvés, ${result.stats.characterStyles} styles de caractère, ${result.stats.paragraphStyles} styles de paragraphe`,
+        { duration: 8000 }
+      );
+      
+      // Log text frames for debugging
+      if (result.textFrames && result.textFrames.length > 0) {
+        console.log('[Test IDML] Text frames:', result.textFrames);
+        result.textFrames.forEach((tf: any, i: number) => {
+          console.log(`[Test IDML] Text ${i + 1}: "${tf.content.substring(0, 100)}..."`);
+        });
+      } else {
+        toast.warning('Aucun texte trouvé dans l\'IDML. Vérifiez les logs de la console.');
+      }
+    } catch (error: any) {
+      console.error('Error testing IDML:', error);
+      toast.error(`Erreur de parsing IDML : ${error.message}`);
     }
   };
 
@@ -5643,6 +5858,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               >
                                   <CloudDownload size={18} />
                               </button>
+                              <button 
+                                  onClick={() => setShowIdmlImporter(true)}
+                                  className="p-2 bg-purple-100 hover:bg-purple-200 rounded text-purple-700 shrink-0" 
+                                  title="Importer EPUB + IDML (InDesign)"
+                              >
+                                  <FileCode size={18} />
+                              </button>
                               <button
                                   onClick={() => {
                                       if (confirm('Voulez-vous réinitialiser le storyboard ?\nCela supprimera le template EPUB généré (pages, textes, images).\nLe wizard sera conservé.\nCette action est irréversible.')) {
@@ -6037,6 +6259,144 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
                     <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
                       Les EPUBs sont extraits et les images sont stockées dans le bucket public.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* EPUB + IDML Importer Modal */}
+              {showIdmlImporter && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+                    <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50">
+                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <FileCode size={20} className="text-purple-600" />
+                        Importer Storyboard (EPUB + IDML)
+                      </h3>
+                      <button 
+                        onClick={() => {
+                          setShowIdmlImporter(false);
+                          setEpubFile(null);
+                          setIdmlFile(null);
+                        }}
+                        className="p-1 hover:bg-white rounded-lg transition-colors"
+                      >
+                        <X size={18} className="text-slate-500" />
+                      </button>
+                    </div>
+                    <div className="p-4 space-y-4">
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm text-purple-800">
+                        <p className="font-medium mb-1">Import combiné :</p>
+                        <ul className="text-xs text-purple-700 space-y-1 ml-4 list-disc">
+                          <li><strong>EPUB</strong> : Images et positions des zones de texte</li>
+                          <li><strong>IDML</strong> : Textes complets avec mise en forme InDesign</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {/* EPUB File Upload */}
+                        <div>
+                          <label className="text-sm font-medium text-slate-700 block mb-2">
+                            1. Fichier EPUB (Fixed Layout)
+                          </label>
+                          <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                            <input
+                              type="file"
+                              accept=".epub"
+                              onChange={(e) => setEpubFile(e.target.files?.[0] || null)}
+                              className="hidden"
+                              id="epub-file-input"
+                            />
+                            <label 
+                              htmlFor="epub-file-input"
+                              className="cursor-pointer flex flex-col items-center gap-2"
+                            >
+                              {epubFile ? (
+                                <div className="flex items-center gap-2 text-green-600">
+                                  <FileCode size={20} />
+                                  <span className="text-sm font-medium">{epubFile.name}</span>
+                                  <span className="text-xs text-slate-500">
+                                    ({(epubFile.size / 1024 / 1024).toFixed(2)} MB)
+                                  </span>
+                                </div>
+                              ) : (
+                                <>
+                                  <Upload size={24} className="text-slate-400" />
+                                  <span className="text-sm text-slate-600">Cliquez pour sélectionner un fichier .epub</span>
+                                  <span className="text-xs text-slate-400">Export Fixed Layout depuis InDesign</span>
+                                </>
+                              )}
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* IDML File Upload */}
+                        <div>
+                          <label className="text-sm font-medium text-slate-700 block mb-2">
+                            2. Fichier IDML (InDesign Markup)
+                          </label>
+                          <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                            <input
+                              type="file"
+                              accept=".idml"
+                              onChange={(e) => setIdmlFile(e.target.files?.[0] || null)}
+                              className="hidden"
+                              id="idml-file-input"
+                            />
+                            <label 
+                              htmlFor="idml-file-input"
+                              className="cursor-pointer flex flex-col items-center gap-2"
+                            >
+                              {idmlFile ? (
+                                <div className="flex items-center gap-2 text-green-600">
+                                  <FileCode size={20} />
+                                  <span className="text-sm font-medium">{idmlFile.name}</span>
+                                  <span className="text-xs text-slate-500">
+                                    ({(idmlFile.size / 1024 / 1024).toFixed(2)} MB)
+                                  </span>
+                                </div>
+                              ) : (
+                                <>
+                                  <Upload size={24} className="text-slate-400" />
+                                  <span className="text-sm text-slate-600">Cliquez pour sélectionner un fichier .idml</span>
+                                  <span className="text-xs text-slate-400">Fichier → Enregistrer sous → IDML dans InDesign</span>
+                                </>
+                              )}
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleTestIdml}
+                          disabled={!idmlFile}
+                          className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300"
+                        >
+                          <Search size={18} />
+                          Tester IDML
+                        </button>
+                        <button
+                          onClick={handleImportStoryboard}
+                          disabled={!epubFile || !idmlFile || isImportingStoryboard}
+                          className="flex-[2] py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isImportingStoryboard ? (
+                            <>
+                              <Loader2 size={18} className="animate-spin" />
+                              Import en cours...
+                            </>
+                          ) : (
+                            <>
+                              <FileCode size={18} />
+                              Importer le storyboard
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
+                      L'EPUB fournit les images et positions, l'IDML fournit les textes avec leur mise en forme complète.
                     </div>
                   </div>
                 </div>

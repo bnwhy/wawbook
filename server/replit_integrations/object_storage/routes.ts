@@ -5,6 +5,7 @@ import JSZip from "jszip";
 import * as fs from "fs";
 import * as path from "path";
 import * as cheerio from "cheerio";
+import { parseIdmlBuffer } from "./idmlParser";
 
 /**
  * Clean CSS syntax errors that can prevent fonts from loading
@@ -262,6 +263,235 @@ function detectFontIssues(css: string, fontMap: Record<string, string>): FontWar
 }
 
 /**
+ * Merge EPUB text positions with IDML text content and styles
+ * 
+ * Automatic mapping strategy:
+ * 1. Sort EPUB containers by page, then by Y position (top to bottom)
+ * 2. Sort IDML text frames by page, then by Y position (top to bottom)
+ * 3. Match in order: 1st EPUB container = 1st IDML frame, etc.
+ * 
+ * This matches the natural reading order of the document.
+ */
+function mergeEpubWithIdml(
+  epubTextPositions: Array<{
+    containerId: string;
+    pageIndex: number;
+    position: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      rotation: number;
+      scaleX: number;
+      scaleY: number;
+      layer: number;
+    };
+  }>,
+  idmlData: {
+    characterStyles: Record<string, any>;
+    paragraphStyles: Record<string, any>;
+    textFrames: Array<{
+      id: string;
+      name: string;
+      content: string;
+      variables: string[];
+      conditions?: Array<{ name: string; visible: boolean }>;
+      appliedCharacterStyle?: string;
+      appliedParagraphStyle?: string;
+      position?: { x: number; y: number; width: number; height: number };
+      pageIndex: number;
+    }>;
+  },
+  bookId: string
+): any[] {
+  const mergedTexts: any[] = [];
+  
+  console.log(`[merge] ==================== MERGE EPUB + IDML ====================`);
+  console.log(`[merge] EPUB positions: ${epubTextPositions.length}, IDML text frames: ${idmlData.textFrames.length}`);
+  
+  // Sort EPUB positions by page, then by Y position (top to bottom)
+  const sortedEpubPositions = [...epubTextPositions].sort((a, b) => {
+    if (a.pageIndex !== b.pageIndex) {
+      return a.pageIndex - b.pageIndex;
+    }
+    return a.position.y - b.position.y;
+  });
+  
+  // Sort IDML frames by page, then by Y position (if available)
+  // This ensures matching by position rather than arbitrary Story file order
+  const sortedIdmlFrames = [...idmlData.textFrames].sort((a, b) => {
+    // If both have valid pageIndex (not 0), sort by page first
+    if (a.pageIndex > 0 && b.pageIndex > 0 && a.pageIndex !== b.pageIndex) {
+      return a.pageIndex - b.pageIndex;
+    }
+    // Then sort by Y position if available
+    if (a.position && b.position) {
+      return a.position.y - b.position.y;
+    }
+    // Otherwise keep original order
+    return 0;
+  });
+  
+  console.log('\n[merge] EPUB containers (sorted by page, then Y):');
+  sortedEpubPositions.forEach((pos, idx) => {
+    console.log(`  [${idx}] Page ${pos.pageIndex}, Container: ${pos.containerId}, Y: ${pos.position.y.toFixed(1)}`);
+  });
+  
+  console.log('\n[merge] IDML text frames (sorted by position):');
+  sortedIdmlFrames.forEach((frame, idx) => {
+    const posInfo = frame.position ? `Y: ${frame.position.y.toFixed(1)}` : 'Y: N/A';
+    console.log(`  [${idx}] Story ID: ${frame.id}, Page: ${frame.pageIndex}, ${posInfo}`);
+    console.log(`       Content: "${frame.content.substring(0, 60)}..."`);
+  });
+  
+  console.log('\n[merge] Starting matching with content-based fallback...\n');
+  
+  // Try to match by content similarity first
+  const usedIdmlIndices = new Set<number>();
+  
+  for (const epubPos of sortedEpubPositions) {
+    let bestMatch: { frame: any; score: number; index: number } | null = null;
+    
+    // Try to find best match by comparing expected content patterns
+    sortedIdmlFrames.forEach((idmlFrame, idx) => {
+      if (usedIdmlIndices.has(idx)) return;
+      
+      let score = 0;
+      
+      // Match by page if IDML has valid pageIndex
+      if (idmlFrame.pageIndex > 0 && idmlFrame.pageIndex === epubPos.pageIndex) {
+        score += 100;
+      }
+      
+      // Match by position if IDML has position
+      if (idmlFrame.position && idmlFrame.position.y) {
+        const yDiff = Math.abs(idmlFrame.position.y - epubPos.position.y);
+        if (yDiff < 50) score += 50;
+        else if (yDiff < 100) score += 25;
+      }
+      
+      // Content-based heuristics
+      // If EPUB position is at top (y < 100), prefer shorter titles
+      if (epubPos.position.y < 100 && idmlFrame.content.length < 50) {
+        score += 10;
+      }
+      // If EPUB position is at bottom (y > 400), prefer longer text
+      if (epubPos.position.y > 400 && idmlFrame.content.length > 50) {
+        score += 10;
+      }
+      
+      if (!bestMatch || score > bestMatch.score) {
+        bestMatch = { frame: idmlFrame, score, index: idx };
+      }
+    });
+    
+    if (bestMatch) {
+      usedIdmlIndices.add(bestMatch.index);
+      console.log(`✓ [merge] MATCHED: ${epubPos.containerId} (page ${epubPos.pageIndex}, y=${epubPos.position.y.toFixed(1)}) → Story ${bestMatch.frame.id} (score: ${bestMatch.score})`);
+      console.log(`  Content: "${bestMatch.frame.content.substring(0, 60)}..."`);
+      
+      const mergedText = createMergedText(epubPos, bestMatch.frame, idmlData, bookId);
+      mergedTexts.push(mergedText);
+    } else {
+      console.warn(`✗ [merge] No match found for ${epubPos.containerId}`);
+    }
+  }
+  
+  console.log(`\n[merge] ================== MERGE COMPLETE ==================`);
+  console.log(`[merge] Successfully matched: ${mergedTexts.length}/${epubTextPositions.length}`);
+  
+  if (sortedEpubPositions.length > sortedIdmlFrames.length) {
+    const unmapped = sortedEpubPositions.length - sortedIdmlFrames.length;
+    console.warn(`\n[merge] ⚠️  ${unmapped} EPUB containers have no matching IDML frame (more containers than text frames)`);
+  } else if (sortedIdmlFrames.length > sortedEpubPositions.length) {
+    const unused = sortedIdmlFrames.length - sortedEpubPositions.length;
+    console.warn(`\n[merge] ⚠️  ${unused} IDML text frames were not used (more text frames than containers)`);
+  }
+  
+  console.log(`[merge] ====================================================\n`);
+  
+  return mergedTexts;
+}
+
+/**
+ * Helper function to create a merged text element
+ */
+function createMergedText(
+  epubPos: any,
+  idmlFrame: any,
+  idmlData: any,
+  bookId: string
+): any {
+  // Get applied styles
+  const charStyleId = idmlFrame.appliedCharacterStyle;
+  const paraStyleId = idmlFrame.appliedParagraphStyle;
+      
+      const charStyle = charStyleId && idmlData.characterStyles[charStyleId] 
+        ? idmlData.characterStyles[charStyleId] 
+        : {};
+      const paraStyle = paraStyleId && idmlData.paragraphStyles[paraStyleId]
+        ? idmlData.paragraphStyles[paraStyleId]
+        : {};
+      
+      // Detect if text is variable
+      const isVariable = idmlFrame.variables.length > 0;
+      
+      // Process content: replace {var} with {{var}} for template engine
+      let processedContent = idmlFrame.content;
+      if (isVariable) {
+        processedContent = idmlFrame.content.replace(/\{([^}]+)\}/g, '{{$1}}');
+      }
+      
+      // Build complete style object
+      const completeStyle: Record<string, any> = {
+        // Character styles
+        fontFamily: charStyle.fontFamily || 'serif',
+        fontSize: charStyle.fontSize ? `${charStyle.fontSize}pt` : '12pt',
+        fontWeight: charStyle.fontWeight || 'normal',
+        fontStyle: charStyle.fontStyle || 'normal',
+        color: charStyle.color || '#000000',
+        letterSpacing: charStyle.letterSpacing ? `${charStyle.letterSpacing}em` : 'normal',
+        textDecoration: charStyle.textDecoration || 'none',
+        textTransform: charStyle.textTransform || 'none',
+        
+        // Paragraph styles
+        textAlign: paraStyle.textAlign || 'left',
+        lineHeight: paraStyle.lineHeight || '1.2',
+        whiteSpace: paraStyle.whiteSpace || 'normal',
+        
+        // Overflow for text zone
+        overflow: 'hidden'
+      };
+      
+      // Add spacing if defined
+      if (paraStyle.marginTop) completeStyle.marginTop = `${paraStyle.marginTop}pt`;
+      if (paraStyle.marginBottom) completeStyle.marginBottom = `${paraStyle.marginBottom}pt`;
+      if (paraStyle.textIndent) completeStyle.textIndent = `${paraStyle.textIndent}pt`;
+      if (charStyle.baselineShift) completeStyle.baselineShift = `${charStyle.baselineShift}pt`;
+      
+  // Create merged text element
+  return {
+    id: `text-${bookId}-${epubPos.pageIndex}-${epubPos.containerId}`,
+    type: isVariable ? 'variable' : 'fixed',
+    label: epubPos.containerId,
+    content: processedContent,
+    originalContent: idmlFrame.content,
+    variables: idmlFrame.variables,
+    conditions: idmlFrame.conditions,
+    style: completeStyle,
+    position: {
+      ...epubPos.position,
+      pageIndex: epubPos.pageIndex,
+      zoneId: 'body'
+    },
+    cssSelector: `#${epubPos.containerId}`,
+    combinationKey: 'default',
+    idmlFrameId: idmlFrame.id,
+    idmlFrameName: idmlFrame.name
+  };
+}
+
+/**
  * Shared EPUB extraction logic - extracts an EPUB buffer to local server storage
  */
 async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
@@ -430,7 +660,7 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
   ).sort();
   
   const pagesDimensions: Array<{ width: number; height: number; pageIndex: number }> = [];
-  const extractedTexts: Array<any> = [];
+  const textPositions: Array<any> = []; // Only positions, no content/styles (come from IDML)
   const extractedImages: Array<any> = [];
 
   for (let i = 0; i < contentHtmlFiles.length; i++) {
@@ -460,142 +690,139 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     });
     
     // Parse text elements from HTML using cheerio
-    // Detect InDesign text frames (Bloc-de-texte-standard) and extract complete text blocks
+    // Extract text zone positions ONLY (content and styles come from IDML)
     const $ = cheerio.load(pageHtml);
     
-    // Find all text frame divs (InDesign exports them with class "Bloc-de-texte-standard")
-    $('div.Bloc-de-texte-standard').each((index, element) => {
-      const $element = $(element);
-      const containerId = $element.attr('id') || `textblock-${index}`;
+    // Debug: log all div elements on first page to identify text containers
+    if (i === 0) {
+      console.log('\n[epub-extract] ========== EPUB STRUCTURE DEBUG ==========');
+      const allDivs = $('div');
+      console.log(`[epub-extract] Total <div> elements found: ${allDivs.length}`);
       
-      // Get the full text content of the block (all nested text combined)
-      const textContent = $element.text().replace(/\s+/g, ' ').trim();
-      
-      if (textContent) {
-        // Check for variables in the format {variable_name}
-        const isVariable = /\{[^}]+\}/.test(textContent);
+      allDivs.each((idx, el) => {
+        const $el = $(el);
+        const id = $el.attr('id') || '(no id)';
+        const className = $el.attr('class') || '(no class)';
+        const text = $el.text().trim().substring(0, 50);
         
-        // Process content: replace {var} with {{var}} for template engine
-        let processedContent = textContent;
-        if (isVariable) {
-          processedContent = textContent.replace(/\{([^}]+)\}/g, '{{$1}}');
+        if (idx < 10 && text) { // First 10 divs with text
+          console.log(`[epub-extract]   Div #${idx}: id="${id}", class="${className}"`);
+          console.log(`[epub-extract]          text: "${text}..."`);
         }
-        
-        // Extract CSS position from the container element
-        // Look for transform, width, height in CSS (via #id selector in allCss)
-        // Handle CSS where multiple IDs share rules OR individual ID rules
-        const idPattern = new RegExp(`#${containerId}[^{]*\\{([^}]+)\\}`, 'i');
-        const cssMatch = allCss.match(idPattern);
-        let cssProps: Record<string, string> = {};
-        
-        console.log(`[epub-extract] Looking for CSS of #${containerId}, found:`, !!cssMatch);
-        
-        if (cssMatch) {
-          const cssBlock = cssMatch[1];
-          // Parse CSS properties
-          const propRegex = /([a-z-]+)\s*:\s*([^;]+)/gi;
-          let propMatch;
-          while ((propMatch = propRegex.exec(cssBlock)) !== null) {
-            cssProps[propMatch[1].toLowerCase().trim()] = propMatch[2].trim();
-          }
-        }
-        
-        // Extract transform values (translate X, Y)
-        let translateX = 0, translateY = 0, rotation = 0, scaleX = 1, scaleY = 1;
-        const transformVal = cssProps['transform'] || cssProps['-webkit-transform'] || '';
-        const translateMatch = transformVal.match(/translate\(([^,]+),\s*([^)]+)\)/);
-        if (translateMatch) {
-          translateX = parseFloat(translateMatch[1]) || 0;
-          translateY = parseFloat(translateMatch[2]) || 0;
-        }
-        const rotateMatch = transformVal.match(/rotate\(([^)]+)\)/);
-        if (rotateMatch) {
-          rotation = parseFloat(rotateMatch[1]) || 0;
-        }
-        const scaleMatch = transformVal.match(/scale\(([^,]+),\s*([^)]+)\)/);
-        if (scaleMatch) {
-          scaleX = parseFloat(scaleMatch[1]) || 1;
-          scaleY = parseFloat(scaleMatch[2]) || 1;
-        }
-        
-        // Get width/height
-        const blockWidth = parseFloat(cssProps['width']) || 100;
-        const blockHeight = parseFloat(cssProps['height']) || 30;
-        
-        console.log(`[epub-extract] Block ${containerId}: x=${translateX}, y=${translateY}, w=${blockWidth}, h=${blockHeight}`);
-        
-        // Check for inline scale transform in child divs (InDesign often uses this)
-        let inlineScale = 1;
-        const $innerDiv = $element.find('div[style*="scale"]').first();
-        if ($innerDiv.length) {
-          const innerStyle = $innerDiv.attr('style') || '';
-          const inlineScaleMatch = innerStyle.match(/scale\(([^,)]+)(?:,\s*([^)]+))?\)/);
-          if (inlineScaleMatch) {
-            inlineScale = parseFloat(inlineScaleMatch[2] || inlineScaleMatch[1]) || 1;
-          }
-        }
-        
-        // Extract text style from first span with CharOverride class
-        const $firstSpan = $element.find('span[class*="CharOverride"]').first();
-        let fontFamily = 'serif';
-        let fontSize = '16px';
-        let rawFontSize = 16;
-        let color = '#000000';
-        
-        if ($firstSpan.length) {
-          // Get class name to find style in CSS
-          const spanClass = $firstSpan.attr('class') || '';
-          const charOverrideMatch = spanClass.match(/CharOverride-\d+/);
-          if (charOverrideMatch) {
-            const charPattern = new RegExp(`span\\.${charOverrideMatch[0]}\\s*\\{([^}]+)\\}`, 'i');
-            const charCssMatch = allCss.match(charPattern);
-            if (charCssMatch) {
-              const charCss = charCssMatch[1];
-              const fontFamilyMatch = charCss.match(/font-family\s*:\s*([^;]+)/i);
-              if (fontFamilyMatch) fontFamily = fontFamilyMatch[1].trim();
-              const fontSizeMatch = charCss.match(/font-size\s*:\s*([^;]+)/i);
-              if (fontSizeMatch) {
-                rawFontSize = parseFloat(fontSizeMatch[1]) || 16;
-                // Apply inline scale to get effective font size
-                const effectiveFontSize = Math.round(rawFontSize * inlineScale);
-                fontSize = `${effectiveFontSize}px`;
-              }
-              const colorMatch = charCss.match(/color\s*:\s*([^;]+)/i);
-              if (colorMatch) color = colorMatch[1].trim();
-            }
-          }
-        }
-        
-        console.log(`[epub-extract] Text ${containerId}: rawFontSize=${rawFontSize}, inlineScale=${inlineScale}, effectiveFontSize=${fontSize}`);
-        
-        extractedTexts.push({
-          id: `text-${bookId}-${i + 1}-${containerId}`,
-          type: isVariable ? 'variable' : 'fixed',
-          label: containerId,
-          content: processedContent,
-          originalContent: textContent,
-          style: {
-            color,
-            fontSize,
-            textAlign: 'left',
-            fontFamily,
-          },
-          position: {
-            x: translateX,
-            y: translateY,
-            width: blockWidth,
-            height: blockHeight,
-            scaleX,
-            scaleY,
-            layer: 50,
-            pageIndex: i + 1,
-            rotation,
-          },
-          cssSelector: `#${containerId}`,
-          combinationKey: 'default',
-        });
+      });
+      console.log('[epub-extract] ==========================================\n');
+    }
+    
+    // Try multiple selectors to find text containers
+    const textSelectors = [
+      'div.Bloc-de-texte-standard',  // InDesign French export
+      'div[id^="_idContainer"]',      // InDesign generic containers
+      'div.text-frame',                // Common class name
+      'div.textframe',                 // Another variant
+      'div[class*="text"]',            // Any div with "text" in class
+      'body > div[id]',                // Direct children with IDs
+    ];
+    
+    let $textContainers = $();
+    let usedSelector = '';
+    
+    for (const selector of textSelectors) {
+      $textContainers = $(selector);
+      if ($textContainers.length > 0) {
+        usedSelector = selector;
+        console.log(`[epub-extract] Found ${$textContainers.length} text containers with selector: ${selector}`);
+        break;
       }
+    }
+    
+    if ($textContainers.length === 0) {
+      console.warn(`[epub-extract] ⚠️  No text containers found in page ${i + 1}`);
+    }
+    
+    // Find all text frame divs
+    $textContainers.each((index, element) => {
+      const $element = $(element);
+      const containerId = $element.attr('id') || `textblock-${i}-${index}`;
+      
+      // Skip containers that have images (they're not text containers)
+      const hasImage = $element.find('img').length > 0;
+      if (hasImage) {
+        console.log(`[epub-extract] Skipping ${containerId} - contains image, not text`);
+        return; // continue to next element
+      }
+      
+      // Skip containers with no text content
+      const textContent = $element.text().trim();
+      if (!textContent) {
+        console.log(`[epub-extract] Skipping ${containerId} - no text content`);
+        return; // continue to next element
+      }
+      
+      // Log all attributes to find IDML reference
+      if (i === 0 && index === 0) {
+        console.log('[epub-extract] First text container attributes:', $element[0]?.attribs);
+      }
+      
+      // Extract CSS position from the container element
+      const idPattern = new RegExp(`#${containerId}[^{]*\\{([^}]+)\\}`, 'i');
+      const cssMatch = allCss.match(idPattern);
+      let cssProps: Record<string, string> = {};
+      
+      if (cssMatch) {
+        const cssBlock = cssMatch[1];
+        const propRegex = /([a-z-]+)\s*:\s*([^;]+)/gi;
+        let propMatch;
+        while ((propMatch = propRegex.exec(cssBlock)) !== null) {
+          cssProps[propMatch[1].toLowerCase().trim()] = propMatch[2].trim();
+        }
+      }
+      
+      // Extract transform values (translate X, Y, rotation, scale)
+      let translateX = 0, translateY = 0, rotation = 0, scaleX = 1, scaleY = 1;
+      const transformVal = cssProps['transform'] || cssProps['-webkit-transform'] || '';
+      
+      const translateMatch = transformVal.match(/translate\(([^,]+),\s*([^)]+)\)/);
+      if (translateMatch) {
+        translateX = parseFloat(translateMatch[1]) || 0;
+        translateY = parseFloat(translateMatch[2]) || 0;
+      }
+      
+      const rotateMatch = transformVal.match(/rotate\(([^)]+)\)/);
+      if (rotateMatch) {
+        rotation = parseFloat(rotateMatch[1]) || 0;
+      }
+      
+      const scaleMatch = transformVal.match(/scale\(([^,]+),\s*([^)]+)\)/);
+      if (scaleMatch) {
+        scaleX = parseFloat(scaleMatch[1]) || 1;
+        scaleY = parseFloat(scaleMatch[2]) || 1;
+      }
+      
+      // Get width/height
+      const blockWidth = parseFloat(cssProps['width']) || 100;
+      const blockHeight = parseFloat(cssProps['height']) || 30;
+      
+      console.log(`[epub-extract] ✓ Text zone ${containerId}: x=${translateX}, y=${translateY}, w=${blockWidth}, h=${blockHeight}, text="${textContent.substring(0, 30)}..."`);
+      
+      // Store ONLY position data (no content, no styles)
+      // Content and styles will come from IDML
+      textPositions.push({
+        containerId,
+        pageIndex: i + 1,
+        position: {
+          x: translateX,
+          y: translateY,
+          width: blockWidth,
+          height: blockHeight,
+          rotation,
+          scaleX,
+          scaleY,
+          layer: 50
+        }
+      });
     });
+    
+    console.log(`[epub-extract] Page ${i + 1}: Found ${textPositions.filter(tp => tp.pageIndex === i + 1).length} text zones`);
     
     // Parse image elements from HTML - find images inside positioned containers
     // InDesign exports images inside div containers with CSS positioning
@@ -711,7 +938,12 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     });
   }
 
-  console.log(`[epub-extract] Complete: ${Object.keys(imageMap).length} images, ${Object.keys(fontMap).length} fonts, ${extractedTexts.length} texts, ${extractedImages.length} image elements`);
+  console.log(`\n[epub-extract] =============== EXTRACTION COMPLETE ===============`);
+  console.log(`[epub-extract] Images: ${Object.keys(imageMap).length} files`);
+  console.log(`[epub-extract] Fonts: ${Object.keys(fontMap).length} files`);
+  console.log(`[epub-extract] Text positions: ${textPositions.length} zones`);
+  console.log(`[epub-extract] Image elements: ${extractedImages.length} elements`);
+  console.log(`[epub-extract] ===================================================\n`);
 
   return {
     success: true,
@@ -721,7 +953,7 @@ async function extractEpubFromBuffer(epubBuffer: Buffer, bookId: string) {
     fonts: fontMap,
     cssContent: allCss,
     pages: pagesDimensions,
-    texts: extractedTexts,
+    textPositions, // Only positions, content/styles come from IDML
     imageElements: extractedImages,
     fontWarnings,
     generatedWizardTabs,
@@ -1277,7 +1509,7 @@ export function registerObjectStorageRoutes(app: Express): void {
           for (const tab of wizardConfig.tabs) {
             if (tab.type === 'character') {
               // For each character tab, map its ID as a possible hero value
-              const firstVariant = tab.variants?.find(v => v.type === 'options' && v.options && v.options.length > 0);
+              const firstVariant = tab.variants?.find((v: any) => v.type === 'options' && v.options && v.options.length > 0);
               if (firstVariant && firstVariant.options) {
                 const firstOption = firstVariant.options[0];
                 // Map tab.id → this tab (for hero:tabId)
@@ -1314,7 +1546,7 @@ export function registerObjectStorageRoutes(app: Express): void {
           }
           
           // For each hero value, check if there's a tab with matching ID
-          for (const heroValue of heroValuesFromImages) {
+          for (const heroValue of Array.from(heroValuesFromImages)) {
             // Normalize hero value for comparison
             const normalizedHeroValue = heroValue.toLowerCase().trim();
             
@@ -1326,7 +1558,7 @@ export function registerObjectStorageRoutes(app: Express): void {
             
             // Find tab with matching ID (normalized comparison)
             const matchingTab = wizardConfig.tabs.find(
-              tab => tab.type === 'character' && tab.id.toLowerCase().trim() === normalizedHeroValue
+              (tab: any) => tab.type === 'character' && tab.id.toLowerCase().trim() === normalizedHeroValue
             );
             
             if (matchingTab && matchingTab.variants) {
@@ -1338,7 +1570,7 @@ export function registerObjectStorageRoutes(app: Express): void {
               for (const variant of matchingTab.variants) {
                 if (variant.type === 'options' && variant.options) {
                   // Look for an option with ID matching heroValue
-                  const matchingOption = variant.options.find(opt => opt.id === heroValue);
+                  const matchingOption = variant.options.find((opt: any) => opt.id === heroValue);
                   if (matchingOption) {
                     wizardLookup['hero'][heroValue] = {
                       tabId: matchingTab.id,
@@ -1414,9 +1646,9 @@ export function registerObjectStorageRoutes(app: Express): void {
                   for (const variant of tab.variants) {
                     if (variant.type === 'options' && variant.options) {
                       // Check if this variant has options that match hero values
-                      const matchingOptions = variant.options.filter(opt => 
+                      const matchingOptions = variant.options.filter((opt: any) => 
                         heroValues.includes(opt.id) || 
-                        heroValues.some(hv => opt.label.toLowerCase().includes(hv.toLowerCase()))
+                        heroValues.some((hv: string) => opt.label.toLowerCase().includes(hv.toLowerCase()))
                       );
                       
                       if (matchingOptions.length > 0) {
@@ -1450,7 +1682,7 @@ export function registerObjectStorageRoutes(app: Express): void {
                         for (const heroValue of heroValues) {
                           if (!wizardLookup['hero'][heroValue]) {
                             // Try exact ID match
-                            const exactMatch = variant.options.find(opt => opt.id === heroValue);
+                            const exactMatch = variant.options.find((opt: any) => opt.id === heroValue);
                             if (exactMatch) {
                               wizardLookup['hero'][heroValue] = {
                                 tabId: tab.id,
@@ -1465,7 +1697,7 @@ export function registerObjectStorageRoutes(app: Express): void {
                                 wizardLookup['hero'][heroValue] = wizardLookup['hero'][mappedValue];
                               } else {
                                 // Try label match (case-insensitive)
-                                const labelMatch = variant.options.find(opt => 
+                                const labelMatch = variant.options.find((opt: any) => 
                                   opt.label.toLowerCase().includes(heroValue.toLowerCase()) ||
                                   heroValue.toLowerCase().includes(opt.label.toLowerCase())
                                 );
@@ -1640,7 +1872,7 @@ export function registerObjectStorageRoutes(app: Express): void {
           
           if (Object.keys(unmappedSummary).length > 0) {
             console.warn(`[epub-extract] Unmapped characteristics found:`, unmappedSummary);
-            result.unmappedCharacteristics = unmappedSummary;
+            // Note: unmappedCharacteristics is for debugging only, not returned in result
           }
           
           console.log(`[epub-extract] Matched ${matchedCount}/${result.imageElements.length} images to wizard`);
@@ -1661,6 +1893,227 @@ export function registerObjectStorageRoutes(app: Express): void {
     } catch (error) {
       console.error("[epub-extract] Error:", error);
       res.status(500).json({ error: "Failed to extract EPUB from bucket. Try direct file upload instead." });
+    }
+  });
+
+  /**
+   * Test IDML parsing only (diagnostic endpoint)
+   */
+  app.post("/api/books/test-idml", async (req, res) => {
+    try {
+      const { idml, debug } = req.body;
+      
+      if (!idml) {
+        return res.status(400).json({ error: "Missing idml field (base64)" });
+      }
+      
+      console.log('[test-idml] Parsing IDML...');
+      const idmlBuffer = Buffer.from(idml, 'base64');
+      
+      // Debug mode: return raw XML from first Spread to see TextFrame structure
+      if (debug) {
+        const zip = await JSZip.loadAsync(idmlBuffer);
+        const spreadFiles = Object.keys(zip.files).filter(f => f.match(/^Spreads\/Spread_.*\.xml$/i));
+        
+        if (spreadFiles.length > 0) {
+          const firstSpread = spreadFiles[0];
+          const spreadFile = zip.file(firstSpread);
+          if (spreadFile) {
+            const spreadXml = await spreadFile.async('string');
+            
+            // Also parse it to show the structure
+            const { XMLParser } = await import('fast-xml-parser');
+            const parser = new XMLParser({
+              ignoreAttributes: false,
+              attributeNamePrefix: '@_',
+              textNodeName: '#text',
+              parseAttributeValue: false,
+              trimValues: true,
+              removeNSPrefix: true,
+            });
+            const parsed = parser.parse(spreadXml);
+            
+            // Extract TextFrames specifically
+            const spread = parsed?.Spread?.Spread;
+            const page = spread?.Page;
+            const textFrames = page?.TextFrame;
+            
+            return res.json({
+              success: true,
+              debug: true,
+              spreadFile: firstSpread,
+              rawXml: spreadXml, // Full XML
+              parsed: parsed,
+              parsedKeys: Object.keys(parsed),
+              spreadKeys: spread ? Object.keys(spread) : [],
+              pageKeys: page ? Object.keys(page) : [],
+              textFrames: textFrames,
+              textFrameCount: textFrames ? (Array.isArray(textFrames) ? textFrames.length : 1) : 0
+            });
+          }
+        }
+        
+        return res.json({ error: "No spread files found" });
+      }
+      
+      const idmlData = await parseIdmlBuffer(idmlBuffer);
+      
+      res.json({
+        success: true,
+        stats: {
+          textFrames: idmlData.textFrames.length,
+          characterStyles: Object.keys(idmlData.characterStyles).length,
+          paragraphStyles: Object.keys(idmlData.paragraphStyles).length,
+          colors: Object.keys(idmlData.colors).length,
+          pages: Object.keys(idmlData.pageDimensions).length
+        },
+        textFrames: idmlData.textFrames,
+        characterStyles: idmlData.characterStyles,
+        paragraphStyles: idmlData.paragraphStyles
+      });
+    } catch (error: any) {
+      console.error('[test-idml] Error:', error);
+      res.status(500).json({ 
+        error: "Failed to parse IDML: " + error.message,
+        stack: error.stack
+      });
+    }
+  });
+
+  /**
+   * Import storyboard from EPUB (positions/images) + IDML (texts/styles)
+   * 
+   * Request body (JSON):
+   * {
+   *   "epub": "base64_encoded_epub_file",
+   *   "idml": "base64_encoded_idml_file",
+   *   "bookId": "unique_book_id"
+   * }
+   * 
+   * Response:
+   * {
+   *   "success": true,
+   *   "bookId": "...",
+   *   "contentConfig": { pages, texts, images, imageElements }
+   * }
+   */
+  app.post("/api/books/import-storyboard", async (req, res) => {
+    try {
+      const { epub, idml, bookId } = req.body;
+
+      if (!epub || !idml || !bookId) {
+        return res.status(400).json({ 
+          error: "Missing required fields: epub (base64), idml (base64), bookId" 
+        });
+      }
+
+      console.log(`[import-storyboard] ========================================`);
+      console.log(`[import-storyboard] Starting import for book ${bookId}`);
+      console.log(`[import-storyboard] EPUB size: ${Buffer.from(epub, 'base64').length} bytes`);
+      console.log(`[import-storyboard] IDML size: ${Buffer.from(idml, 'base64').length} bytes`);
+      console.log(`[import-storyboard] ========================================`);
+
+      // 1. Extract EPUB (images + text positions)
+      console.log(`[import-storyboard] Step 1: Extracting EPUB...`);
+      const epubBuffer = Buffer.from(epub, 'base64');
+      const epubResult = await extractEpubFromBuffer(epubBuffer, bookId);
+
+      if (!epubResult.success) {
+        console.error(`[import-storyboard] EPUB extraction failed`);
+        return res.status(500).json({ error: "Failed to extract EPUB" });
+      }
+
+      console.log(`[import-storyboard] ✓ EPUB extracted successfully`);
+      console.log(`[import-storyboard]   - Text positions: ${epubResult.textPositions.length}`);
+      console.log(`[import-storyboard]   - Images: ${epubResult.imageElements.length}`);
+      console.log(`[import-storyboard]   - Pages: ${epubResult.pages.length}`);
+
+      // 2. Parse IDML (texts + styles)
+      console.log(`[import-storyboard] Step 2: Parsing IDML...`);
+      const idmlBuffer = Buffer.from(idml, 'base64');
+      const idmlData = await parseIdmlBuffer(idmlBuffer);
+
+      console.log(`[import-storyboard] ✓ IDML parsed successfully`);
+      console.log(`[import-storyboard]   - Text frames: ${idmlData.textFrames.length}`);
+      console.log(`[import-storyboard]   - Character styles: ${Object.keys(idmlData.characterStyles).length}`);
+      console.log(`[import-storyboard]   - Paragraph styles: ${Object.keys(idmlData.paragraphStyles).length}`);
+      
+      if (epubResult.textPositions.length === 0) {
+        console.error(`[import-storyboard] ⚠️ WARNING: No text positions found in EPUB!`);
+      }
+      
+      if (idmlData.textFrames.length === 0) {
+        console.error(`[import-storyboard] ⚠️ WARNING: No text frames found in IDML!`);
+      }
+
+      // 3. Merge EPUB positions with IDML texts/styles
+      console.log(`[import-storyboard] Step 3: Merging EPUB + IDML...`);
+      const mergedTexts = mergeEpubWithIdml(
+        epubResult.textPositions,
+        idmlData,
+        bookId
+      );
+
+      console.log(`[import-storyboard] ✓ Merge completed: ${mergedTexts.length} texts created`);
+      
+      if (mergedTexts.length === 0 && epubResult.textPositions.length > 0 && idmlData.textFrames.length > 0) {
+        console.error(`[import-storyboard] ⚠️ ERROR: Merge produced 0 texts but inputs were non-empty!`);
+        console.error(`[import-storyboard]   This should not happen. Check merge logic.`);
+      }
+
+      // 4. Build complete ContentConfiguration
+      const contentConfig = {
+        pages: epubResult.pages,
+        texts: mergedTexts,
+        images: [], // Legacy format, not used with imageElements
+        imageElements: epubResult.imageElements,
+        cssContent: epubResult.cssContent,
+        pageImages: [] // Legacy format
+      };
+
+      // Add debug info to response
+      const debugInfo = {
+        epubTextPositionsCount: epubResult.textPositions.length,
+        idmlTextFramesCount: idmlData.textFrames.length,
+        mergedTextsCount: mergedTexts.length,
+        epubTextPositionsSample: epubResult.textPositions.slice(0, 3).map(tp => ({
+          containerId: tp.containerId,
+          pageIndex: tp.pageIndex,
+          y: tp.position.y
+        })),
+        idmlTextFramesSample: idmlData.textFrames.slice(0, 3).map(tf => ({
+          id: tf.id,
+          pageIndex: tf.pageIndex,
+          contentPreview: tf.content.substring(0, 50)
+        })),
+        mergedTextsSample: mergedTexts.slice(0, 3).map(mt => ({
+          id: mt.id,
+          type: mt.type,
+          contentPreview: mt.content.substring(0, 50),
+          pageIndex: mt.position?.pageIndex
+        }))
+      };
+
+      res.json({
+        success: true,
+        bookId,
+        contentConfig,
+        wizardConfig: epubResult.generatedWizardTabs,
+        fontWarnings: epubResult.fontWarnings,
+        stats: {
+          pages: epubResult.pages.length,
+          texts: mergedTexts.length,
+          images: epubResult.imageElements.length,
+          fonts: Object.keys(epubResult.fonts).length
+        },
+        debug: debugInfo
+      });
+
+    } catch (error: any) {
+      console.error("[import-storyboard] Error:", error);
+      res.status(500).json({ 
+        error: "Failed to import storyboard: " + error.message 
+      });
     }
   });
 }

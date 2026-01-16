@@ -449,7 +449,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         console.log(`EPUB text positions found: ${result.debug.epubTextPositionsCount}`);
         console.log(`IDML text frames found: ${result.debug.idmlTextFramesCount}`);
         console.log(`Merged texts created: ${result.debug.mergedTextsCount}`);
-        
+
         if (result.debug.epubTextPositionsSample) {
           console.log('EPUB positions sample:', result.debug.epubTextPositionsSample);
         }
@@ -458,6 +458,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
         if (result.debug.mergedTextsSample) {
           console.log('Merged texts sample:', result.debug.mergedTextsSample);
+          
+          // Show styles for each merged text
+          console.log('\n=== STYLES APPLIQUÉS ===');
+          result.debug.mergedTextsSample.forEach((text: any, idx: number) => {
+            console.log(`\n[${idx}] "${text.content?.substring(0, 30)}..."`);
+            console.log(`  - appliedParagraphStyle: ${text.appliedParagraphStyle || 'NONE'}`);
+            console.log(`  - appliedCharacterStyle: ${text.appliedCharacterStyle || 'NONE'}`);
+            console.log(`  - textAlign: ${text.style?.textAlign || 'DEFAULT'}`);
+            console.log(`  - fontSize: ${text.style?.fontSize || 'DEFAULT'}`);
+            console.log(`  - fontWeight: ${text.style?.fontWeight || 'DEFAULT'}`);
+            console.log(`  - Full style:`, text.style);
+          });
+          console.log('\n=== STYLES DISPONIBLES ===');
+          console.log('Available paragraph styles:', result.debug.availableParagraphStyles);
+          console.log('Paragraph styles details:', result.debug.paragraphStylesDetails);
+          console.log('========================');
         }
         console.log('==================');
       }

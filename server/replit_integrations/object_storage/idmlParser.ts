@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
+import { convertColorToHex } from './utils/colorConverter';
 
 /**
  * IDML Parser - Extrait les textes et styles depuis un fichier IDML InDesign
@@ -35,6 +36,7 @@ interface TextFrameData {
   conditions?: Array<{ name: string; visible: boolean }>;
   appliedCharacterStyle?: string;
   appliedParagraphStyle?: string;
+  localParaProperties?: any; // Local paragraph properties (overrides)
   // Position from IDML Spreads (if available)
   position?: {
     x: number;
@@ -91,11 +93,17 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
   try {
     const stylesFile = zip.file('Resources/Styles.xml');
     if (stylesFile) {
+      console.log('[idml-parser] Styles.xml found, extracting styles...');
       const stylesXml = await stylesFile.async('string');
       const stylesData = parser.parse(stylesXml);
-      
+
       result.characterStyles = extractCharacterStyles(stylesData, result.colors);
       result.paragraphStyles = extractParagraphStyles(stylesData);
+      
+      console.log(`[idml-parser] Extracted ${Object.keys(result.characterStyles).length} character styles`);
+      console.log(`[idml-parser] Extracted ${Object.keys(result.paragraphStyles).length} paragraph styles`);
+    } else {
+      console.warn('[idml-parser] ⚠️ Styles.xml NOT FOUND in IDML!');
     }
   } catch (e) {
     console.warn('[idml-parser] Could not parse Styles.xml:', e);
@@ -215,32 +223,7 @@ function extractColors(swatchesData: any): Record<string, string> {
   return colors;
 }
 
-/**
- * Convert IDML color value to hex
- */
-function convertColorToHex(space: string, colorValue: string): string {
-  if (!colorValue) return '#000000';
-  
-  const values = colorValue.split(' ').map(v => parseFloat(v));
-  
-  if (space === 'RGB') {
-    const r = Math.round(values[0] || 0);
-    const g = Math.round(values[1] || 0);
-    const b = Math.round(values[2] || 0);
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  } else if (space === 'CMYK') {
-    const c = values[0] / 100;
-    const m = values[1] / 100;
-    const y = values[2] / 100;
-    const k = values[3] / 100;
-    const r = Math.round(255 * (1 - c) * (1 - k));
-    const g = Math.round(255 * (1 - m) * (1 - k));
-    const b = Math.round(255 * (1 - y) * (1 - k));
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-  }
-  
-  return '#000000';
-}
+// Fonction déplacée vers utils/colorConverter.ts
 
 /**
  * Extract Character Styles from Styles.xml
@@ -338,10 +321,15 @@ export function extractCharacterStyles(
  */
 export function extractParagraphStyles(stylesData: any): Record<string, ParagraphStyleProperties> {
   const paragraphStyles: Record<string, ParagraphStyleProperties> = {};
-  
+
   try {
+    console.log('[extractParagraphStyles] stylesData keys:', Object.keys(stylesData || {}));
     const rootParaStyles = stylesData?.RootParagraphStyleGroup?.ParagraphStyle;
-    if (!rootParaStyles) return paragraphStyles;
+    console.log('[extractParagraphStyles] rootParaStyles found:', !!rootParaStyles);
+    if (!rootParaStyles) {
+      console.warn('[extractParagraphStyles] ⚠️ No RootParagraphStyleGroup/ParagraphStyle found!');
+      return paragraphStyles;
+    }
     
     const paraStylesArray = Array.isArray(rootParaStyles) ? rootParaStyles : [rootParaStyles];
     
@@ -423,10 +411,11 @@ function extractTextFromParagraphRanges(
   paraRanges: any,
   frameId: string,
   frameName: string
-): { content: string; appliedCharStyle: string; appliedParaStyle: string } {
+): { content: string; appliedCharStyle: string; appliedParaStyle: string; localParaProperties?: any } {
   let fullContent = '';
   let appliedCharStyle = '';
   let appliedParaStyle = '';
+  let localParaProperties: any = null;
   
   if (!paraRanges) {
     return { content: '', appliedCharStyle: '', appliedParaStyle: '' };
@@ -436,6 +425,12 @@ function extractTextFromParagraphRanges(
   
   for (const paraRange of paraArray) {
     appliedParaStyle = paraRange['@_AppliedParagraphStyle'] || appliedParaStyle;
+    
+    // Extract local paragraph properties (overrides)
+    if (paraRange?.Properties) {
+      localParaProperties = paraRange.Properties;
+      console.log(`[extractTextFromParagraphRanges] Found local properties for ${frameId}:`, localParaProperties);
+    }
     
     // Extract character ranges
     const charRanges = paraRange?.CharacterStyleRange;
@@ -465,7 +460,8 @@ function extractTextFromParagraphRanges(
   return {
     content: fullContent.trim(),
     appliedCharStyle,
-    appliedParaStyle
+    appliedParaStyle,
+    localParaProperties
   };
 }
 
@@ -533,7 +529,8 @@ export function extractTextFrames(
           content: extracted.content,
           variables,
           appliedCharacterStyle: extracted.appliedCharStyle,
-          appliedParagraphStyle: extracted.appliedParaStyle
+          appliedParagraphStyle: extracted.appliedParaStyle,
+          localParaProperties: extracted.localParaProperties
         });
         
         console.log(`[idml-parser] Extracted text from TextFrame ${frameId}: "${extracted.content.substring(0, 50)}..."`);
@@ -567,7 +564,8 @@ export function extractTextFrames(
           content: extracted.content,
           variables,
           appliedCharacterStyle: extracted.appliedCharStyle,
-          appliedParagraphStyle: extracted.appliedParaStyle
+          appliedParagraphStyle: extracted.appliedParaStyle,
+          localParaProperties: extracted.localParaProperties
         });
         
         console.log(`[idml-parser] Extracted text from Story directly: "${extracted.content.substring(0, 50)}..."`);

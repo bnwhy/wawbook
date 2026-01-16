@@ -20,6 +20,7 @@ interface CharacterStyleProperties {
 
 interface ParagraphStyleProperties {
   textAlign: string;
+  textAlignLast?: string;
   lineHeight: string;
   whiteSpace: string;
   marginTop: number;
@@ -343,6 +344,7 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       
       // Text align (justification)
       let textAlign = 'left';
+      let textAlignLast = undefined;
       const justification = props['@_Justification'];
       switch (justification) {
         case 'LeftAlign':
@@ -354,9 +356,28 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
         case 'RightAlign':
           textAlign = 'right';
           break;
+        case 'LeftJustified':
+          textAlign = 'justify';
+          textAlignLast = 'left';
+          break;
+        case 'RightJustified':
+          textAlign = 'justify';
+          textAlignLast = 'right';
+          break;
+        case 'CenterJustified':
+          textAlign = 'justify';
+          textAlignLast = 'center';
+          break;
         case 'FullyJustified':
         case 'Justify':
           textAlign = 'justify';
+          textAlignLast = 'justify';
+          break;
+        case 'ToBindingSide':
+          textAlign = 'left';
+          break;
+        case 'AwayFromBindingSide':
+          textAlign = 'right';
           break;
       }
       
@@ -385,6 +406,7 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       
       paragraphStyles[self] = {
         textAlign,
+        textAlignLast,
         lineHeight,
         whiteSpace,
         marginTop,
@@ -427,9 +449,23 @@ function extractTextFromParagraphRanges(
     appliedParaStyle = paraRange['@_AppliedParagraphStyle'] || appliedParaStyle;
     
     // Extract local paragraph properties (overrides)
+    // Justification can be either in Properties OR as direct attribute
+    if (!localParaProperties) {
+      localParaProperties = {};
+    }
+    
     if (paraRange?.Properties) {
-      localParaProperties = paraRange.Properties;
-      console.log(`[extractTextFromParagraphRanges] Found local properties for ${frameId}:`, localParaProperties);
+      Object.assign(localParaProperties, paraRange.Properties);
+    }
+    
+    // Check for direct Justification attribute (common in IDML)
+    if (paraRange['@_Justification']) {
+      localParaProperties['@_Justification'] = paraRange['@_Justification'];
+      console.log(`[extractTextFromParagraphRanges] Found Justification attribute for ${frameId}: ${paraRange['@_Justification']}`);
+    }
+    
+    if (Object.keys(localParaProperties).length > 0) {
+      console.log(`[extractTextFromParagraphRanges] Local properties for ${frameId}:`, localParaProperties);
     }
     
     // Extract character ranges

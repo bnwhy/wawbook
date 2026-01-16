@@ -18,7 +18,6 @@ import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
 
-import { generateCoverPDF, generateInteriorPDF } from '../utils/pdfGenerator';
 
 const slugify = (text: string) => {
   return text
@@ -2977,32 +2976,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          </div>
                                          <button 
                                             onClick={() => {
-                                               toast.promise(
-                                                  new Promise(async (resolve, reject) => {
-                                                     try {
-                                                        const blob = await generateCoverPDF(order, books);
-                                                        const url = URL.createObjectURL(blob);
-                                                        const a = document.createElement('a');
-                                                        a.href = url;
-                                                        a.download = `cover-${order.id}.pdf`;
-                                                        document.body.appendChild(a);
-                                                        a.click();
-                                                        document.body.removeChild(a);
-                                                        URL.revokeObjectURL(url);
-                                                        resolve(true);
-                                                     } catch (e) {
-                                                        reject(e);
-                                                     }
-                                                  }),
-                                                  {
-                                                     loading: 'Génération du PDF de couverture...',
-                                                     success: `Couverture pour la commande #${order.id} téléchargée !`,
-                                                     error: 'Erreur lors du téléchargement'
-                                                  }
-                                               );
+                                               toast.info('PDF imprimeur : Cette fonctionnalité sera implémentée via InDesign', {
+                                                  description: 'Les PDF de production seront générés directement depuis InDesign avec les données de commande.'
+                                               });
                                             }}
-                                            className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors" 
-                                            title="Télécharger la couverture"
+                                            className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-lg transition-colors" 
+                                            title="PDF imprimeur (à venir)"
                                          >
                                             <Download size={18} />
                                          </button>
@@ -3020,32 +2999,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          </div>
                                          <button 
                                             onClick={() => {
-                                               toast.promise(
-                                                  new Promise(async (resolve, reject) => {
-                                                     try {
-                                                        const blob = await generateInteriorPDF(order, books);
-                                                        const url = URL.createObjectURL(blob);
-                                                        const a = document.createElement('a');
-                                                        a.href = url;
-                                                        a.download = `interior-${order.id}.pdf`;
-                                                        document.body.appendChild(a);
-                                                        a.click();
-                                                        document.body.removeChild(a);
-                                                        URL.revokeObjectURL(url);
-                                                        resolve(true);
-                                                     } catch (e) {
-                                                        reject(e);
-                                                     }
-                                                  }),
-                                                  {
-                                                     loading: 'Génération du PDF intérieur (Haute Qualité)...',
-                                                     success: `Intérieur pour la commande #${order.id} téléchargé !`,
-                                                     error: 'Erreur lors du téléchargement'
-                                                  }
-                                               );
+                                               toast.info('PDF imprimeur : Cette fonctionnalité sera implémentée via InDesign', {
+                                                  description: 'Les PDF de production seront générés directement depuis InDesign avec les données de commande.'
+                                               });
                                             }}
-                                            className="text-indigo-600 hover:text-indigo-800 p-2 hover:bg-indigo-50 rounded-lg transition-colors" 
-                                            title="Télécharger l'intérieur"
+                                            className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-lg transition-colors" 
+                                            title="PDF imprimeur (à venir)"
                                          >
                                             <Download size={18} />
                                          </button>
@@ -5970,8 +5929,101 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     }`}
                                                                     onClick={() => setSelectedEpubPageIndex(page.pageIndex)}
                                                                 >
-                                                                    <div className="aspect-[3/4] bg-slate-50 relative overflow-hidden rounded-t-md">
-                                                                        {thumbnailUrl ? (
+                                                                    <div className="aspect-[3/4] bg-white relative overflow-hidden rounded-t-md">
+                                                                        {/* Composite preview with all elements */}
+                                                                        {pageImagesFromElements.length > 0 || pageTextsForThumb.length > 0 ? (
+                                                                            <>
+                                                                                {/* Render all images with their positions */}
+                                                                                {pageImagesFromElements
+                                                                                    .filter((img: any) => {
+                                                                                        // Only show images with position and URL
+                                                                                        if (!img.position || !img.url) return false;
+                                                                                        
+                                                                                        // In admin view, prioritize showing 'default', 'all', or images without combinationKey
+                                                                                        const key = img.combinationKey;
+                                                                                        const isDefaultOrAll = !key || key === 'default' || key === 'all';
+                                                                                        
+                                                                                        // Show static images and default combinations
+                                                                                        if (img.type === 'static' || isDefaultOrAll) return true;
+                                                                                        
+                                                                                        // For personalized images, only show if no default exists at same position
+                                                                                        const hasDefaultAtSamePos = pageImagesFromElements.some((other: any) => 
+                                                                                            other.id !== img.id &&
+                                                                                            Math.abs((other.position?.x || 0) - (img.position?.x || 0)) < 1 &&
+                                                                                            Math.abs((other.position?.y || 0) - (img.position?.y || 0)) < 1 &&
+                                                                                            (other.type === 'static' || !other.combinationKey || other.combinationKey === 'default' || other.combinationKey === 'all')
+                                                                                        );
+                                                                                        
+                                                                                        return !hasDefaultAtSamePos;
+                                                                                    })
+                                                                                    .sort((a: any, b: any) => (a.position?.zIndex || 0) - (b.position?.zIndex || 0))
+                                                                                    .map((img: any, imgIdx: number) => (
+                                                                                        <div
+                                                                                            key={`thumb-img-${img.id || imgIdx}`}
+                                                                                            className="absolute overflow-hidden"
+                                                                                            style={{
+                                                                                                left: `${img.position?.x || 0}%`,
+                                                                                                top: `${img.position?.y || 0}%`,
+                                                                                                width: `${img.position?.width || 100}%`,
+                                                                                                height: img.position?.height ? `${img.position.height}%` : 'auto',
+                                                                                                maxWidth: '100%',
+                                                                                                maxHeight: '100%',
+                                                                                                transform: img.position?.rotation ? `rotate(${img.position.rotation}deg)` : undefined,
+                                                                                                zIndex: img.position?.zIndex || 0,
+                                                                                            }}
+                                                                                        >
+                                                                                            <img
+                                                                                                src={img.url}
+                                                                                                alt={img.label || 'Image'}
+                                                                                                className="w-full h-full object-contain"
+                                                                                                style={{ maxWidth: '100%', maxHeight: '100%' }}
+                                                                                                onError={(e) => {
+                                                                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                                                                }}
+                                                                                            />
+                                                                                        </div>
+                                                                                    ))}
+                                                                                
+                                                                                {/* Render all text zones with borders */}
+                                                                                {pageTextsForThumb.map((text: any, textIdx: number) => {
+                                                                                    const fontSize = text.style?.fontSize ? 
+                                                                                        (parseFloat(text.style.fontSize) * 0.15) + (text.style.fontSize.includes('px') ? 'px' : text.style.fontSize.includes('pt') ? 'pt' : 'px') 
+                                                                                        : '0.4rem';
+                                                                                    
+                                                                                    return (
+                                                                                        <div
+                                                                                            key={`thumb-text-${text.id || textIdx}`}
+                                                                                            className="absolute overflow-hidden pointer-events-none"
+                                                                                            style={{
+                                                                                                left: `${text.position?.x || 0}%`,
+                                                                                                top: `${text.position?.y || 0}%`,
+                                                                                                width: `${text.position?.width || 30}%`,
+                                                                                                height: text.position?.height ? `${text.position.height}%` : 'auto',
+                                                                                                border: '1px dashed rgba(59, 130, 246, 0.5)',
+                                                                                                backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                                                                                                transform: text.position?.rotation ? `rotate(${text.position.rotation}deg)` : undefined,
+                                                                                                zIndex: (text.position?.zIndex || 0) + 100,
+                                                                                            }}
+                                                                                        >
+                                                                                            <div
+                                                                                                className="w-full h-full p-0.5 leading-tight"
+                                                                                                style={{
+                                                                                                    fontSize: fontSize,
+                                                                                                    color: text.style?.color || '#1e293b',
+                                                                                                    textAlign: (text.style?.textAlign || 'left') as any,
+                                                                                                    fontFamily: text.style?.fontFamily,
+                                                                                                    fontWeight: text.style?.fontWeight,
+                                                                                                    whiteSpace: 'pre-wrap',
+                                                                                                    wordBreak: 'break-word',
+                                                                                                }}
+                                                                                            >
+                                                                                                {text.content?.substring(0, 100) || ''}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                            </>
+                                                                        ) : thumbnailUrl ? (
                                                                             <img 
                                                                                 src={thumbnailUrl} 
                                                                                 alt={`Page ${page.pageIndex}`}
@@ -5982,6 +6034,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                 <FileCode size={24} className="text-slate-300" />
                                                                             </div>
                                                                         )}
+                                                                        
+                                                                        {/* Page number badge */}
                                                                         <div className={`absolute top-1 left-1 w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold ${
                                                                             isSelected ? 'bg-brand-coral text-white' : 'bg-white/90 text-slate-600 shadow-sm'
                                                                         }`}>
@@ -6058,6 +6112,33 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                     <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium flex items-center gap-1" title="Couleur">
                                                                                         <span className="w-2 h-2 rounded-full border border-slate-300" style={{ backgroundColor: text.style.color }}></span>
                                                                                         {text.style.color}
+                                                                                    </span>
+                                                                                )}
+                                                                                {text.style?.textAlign && (
+                                                                                    <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium" title={`Alignement du texte${text.style.idmlJustification ? ` (IDML: ${text.style.idmlJustification})` : ''}`}>
+                                                                                        {(() => {
+                                                                                            // Utiliser la valeur IDML originale si disponible pour un affichage précis
+                                                                                            if (text.style.idmlJustification) {
+                                                                                                switch (text.style.idmlJustification) {
+                                                                                                    case 'LeftAlign': return 'Gauche';
+                                                                                                    case 'CenterAlign': return 'Centré';
+                                                                                                    case 'RightAlign': return 'Droite';
+                                                                                                    case 'LeftJustified': return 'Justifié à gauche';
+                                                                                                    case 'RightJustified': return 'Justifié à droite';
+                                                                                                    case 'CenterJustified': return 'Justifié centré';
+                                                                                                    case 'FullyJustified': return 'Justifié complet';
+                                                                                                    case 'ToBindingSide': return 'Vers reliure';
+                                                                                                    case 'AwayFromBindingSide': return 'Opposé reliure';
+                                                                                                    default: return text.style.idmlJustification;
+                                                                                                }
+                                                                                            }
+                                                                                            // Fallback sur textAlign
+                                                                                            if (text.style.textAlign === 'left') return 'Gauche';
+                                                                                            if (text.style.textAlign === 'center') return 'Centré';
+                                                                                            if (text.style.textAlign === 'right') return 'Droite';
+                                                                                            if (text.style.textAlign === 'justify') return 'Justifié';
+                                                                                            return text.style.textAlign;
+                                                                                        })()}
                                                                                     </span>
                                                                                 )}
                                                                             </div>

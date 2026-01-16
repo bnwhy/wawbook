@@ -177,6 +177,67 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
 };
 
 /**
+ * Mappe les valeurs d'alignement IDML/CSS vers Canvas textAlign.
+ * Canvas ne supporte que: 'left', 'center', 'right', 'start', 'end'
+ * 
+ * @param textAlign - Valeur CSS textAlign (peut être 'justify')
+ * @param textAlignLast - Alignement de la dernière ligne (pour les textes justifiés)
+ * @param idmlJustification - Valeur IDML originale (ex: 'RightJustified')
+ * @returns Valeur compatible avec Canvas textAlign
+ */
+function mapTextAlignToCanvas(
+  textAlign: string | undefined,
+  textAlignLast: string | undefined,
+  idmlJustification: string | undefined
+): CanvasTextAlign {
+  console.log('[mapTextAlignToCanvas] Input:', { textAlign, textAlignLast, idmlJustification });
+  
+  // Si on a la valeur IDML originale, l'utiliser pour un mapping précis
+  if (idmlJustification) {
+    let result: CanvasTextAlign;
+    switch (idmlJustification) {
+      case 'LeftAlign':
+      case 'LeftJustified':
+        result = 'left';
+        break;
+      case 'CenterAlign':
+      case 'CenterJustified':
+        result = 'center';
+        break;
+      case 'RightAlign':
+      case 'RightJustified':
+        result = 'right';
+        break;
+      case 'FullyJustified':
+        result = 'left'; // Canvas ne supporte pas justify, approximation
+        break;
+      case 'ToBindingSide':
+        result = 'left';
+        break;
+      case 'AwayFromBindingSide':
+        result = 'right';
+        break;
+      default:
+        result = 'left';
+    }
+    console.log('[mapTextAlignToCanvas] Mapped from IDML:', result);
+    return result;
+  }
+  
+  // Fallback sur textAlign CSS
+  if (textAlign === 'justify') {
+    // Pour justify, utiliser textAlignLast comme guide (alignement de la dernière ligne)
+    const result = (textAlignLast as CanvasTextAlign) || 'left';
+    console.log('[mapTextAlignToCanvas] Mapped from justify/textAlignLast:', result);
+    return result;
+  }
+  
+  const result = (textAlign as CanvasTextAlign) || 'left';
+  console.log('[mapTextAlignToCanvas] Mapped from textAlign:', result);
+  return result;
+}
+
+/**
  * Simulates backend generation of book pages as JPGs.
  * Returns a map of pageIndex -> Data URL (base64 encoded JPG).
  */
@@ -351,6 +412,14 @@ export const generateBookPages = async (
       for (const layer of textLayers) {
           const text = resolveText(layer.content);
           
+          console.log(`[generateBookPages] Rendering text layer:`, {
+            content: text.substring(0, 50),
+            textAlign: layer.style?.textAlign,
+            textAlignLast: layer.style?.textAlignLast,
+            idmlJustification: layer.style?.idmlJustification,
+            allStyles: layer.style
+          });
+          
           ctx.save();
           const x = (layer.position.x || 0) / 100 * width;
           const y = (layer.position.y || 0) / 100 * height;
@@ -367,12 +436,18 @@ export const generateBookPages = async (
           const fontSize = parseFloat((layer.style?.fontSize as string) || '16') * 4; // Scale for canvas
           const fontFamily = (layer.style?.fontFamily as string) || 'serif';
           const color = (layer.style?.color as string) || '#000000';
-          const textAlign = (layer.style?.textAlign as string) || 'left';
+          const canvasAlign = mapTextAlignToCanvas(
+            layer.style?.textAlign as string,
+            layer.style?.textAlignLast as string,
+            layer.style?.idmlJustification as string
+          );
           
           ctx.font = `${layer.style?.fontWeight || 'normal'} ${fontSize}px ${fontFamily}`;
           ctx.fillStyle = color;
-          ctx.textAlign = textAlign as CanvasTextAlign;
+          ctx.textAlign = canvasAlign;
           ctx.textBaseline = 'top';
+          
+          console.log(`[Render] Text "${text.substring(0, 30)}..." - Canvas align: ${canvasAlign}`);
           
           // Simple wrapping
           // Split into words and draw lines
@@ -401,7 +476,13 @@ export const generateBookPages = async (
           const lineHeight = fontSize * 1.2;
           
           lines.forEach((l, idx) => {
-              ctx.fillText(l, 0, idx * lineHeight);
+              let xPos = 0;
+              if (canvasAlign === 'center') {
+                  xPos = w / 2;
+              } else if (canvasAlign === 'right') {
+                  xPos = w;
+              }
+              ctx.fillText(l, xPos, idx * lineHeight);
           });
           
           ctx.restore();

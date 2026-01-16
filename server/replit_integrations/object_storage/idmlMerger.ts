@@ -223,6 +223,11 @@ function extractLocalParagraphStyle(props: any): any {
   
   const justification = props['@_Justification'];
   if (justification) {
+    console.log(`[extractLocalParagraphStyle] Processing Justification: ${justification}`);
+    
+    // Gardons la valeur IDML originale pour l'affichage
+    localStyle.idmlJustification = justification;
+    
     switch (justification) {
       case 'LeftAlign':
         localStyle.textAlign = 'left';
@@ -233,11 +238,33 @@ function extractLocalParagraphStyle(props: any): any {
       case 'RightAlign':
         localStyle.textAlign = 'right';
         break;
+      case 'LeftJustified':
+        localStyle.textAlign = 'justify';
+        localStyle.textAlignLast = 'left';
+        break;
+      case 'RightJustified':
+        localStyle.textAlign = 'justify';
+        localStyle.textAlignLast = 'right';
+        break;
+      case 'CenterJustified':
+        localStyle.textAlign = 'justify';
+        localStyle.textAlignLast = 'center';
+        break;
       case 'FullyJustified':
       case 'Justify':
         localStyle.textAlign = 'justify';
+        localStyle.textAlignLast = 'justify';
         break;
+      case 'ToBindingSide':
+        localStyle.textAlign = 'left';
+        break;
+      case 'AwayFromBindingSide':
+        localStyle.textAlign = 'right';
+        break;
+      default:
+        console.warn(`[extractLocalParagraphStyle] Unknown Justification value: ${justification}`);
     }
+    console.log(`[extractLocalParagraphStyle] Mapped to textAlign: ${localStyle.textAlign}, textAlignLast: ${localStyle.textAlignLast}`);
   }
   
   return localStyle;
@@ -268,8 +295,16 @@ function buildCompleteStyle(
     whiteSpace: paraStyle.whiteSpace || 'normal',
 
     // Overflow pour la zone de texte
-    overflow: 'hidden'
+    overflow: 'hidden',
+    
+    // Valeur IDML originale pour l'affichage
+    idmlJustification: localParaStyle.idmlJustification || undefined
   };
+  
+  // Ajouter textAlignLast si défini
+  if (localParaStyle.textAlignLast || paraStyle.textAlignLast) {
+    completeStyle.textAlignLast = localParaStyle.textAlignLast || paraStyle.textAlignLast;
+  }
   
   // Ajoute l'espacement si défini
   if (paraStyle.marginTop) completeStyle.marginTop = `${paraStyle.marginTop}pt`;

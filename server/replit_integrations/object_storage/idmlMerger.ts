@@ -5,10 +5,10 @@
 /**
  * Fusionne les positions de texte EPUB avec le contenu et les styles IDML
  * 
- * Stratégie de mapping automatique :
- * 1. Trie les conteneurs EPUB par page, puis par position Y (haut en bas)
- * 2. Trie les frames de texte IDML par page, puis par position Y (haut en bas)
- * 3. Match dans l'ordre : 1er conteneur EPUB = 1er frame IDML, etc.
+ * Stratégie de mapping déterministe :
+ * 1. Groupe les conteneurs EPUB par page, trie par containerId numérique (_idContainer000, 001, etc.)
+ * 2. Groupe les frames IDML par page, trie par layoutOrder (ordre dans le Spread)
+ * 3. Match par index : EPUB[0] -> IDML[0], EPUB[1] -> IDML[1], etc. sur chaque page
  */
 export function mergeEpubWithIdml(
   epubTextPositions: Array<{
@@ -39,6 +39,8 @@ export function mergeEpubWithIdml(
       localParaProperties?: any;
       position?: { x: number; y: number; width: number; height: number };
       pageIndex: number;
+      layoutOrder?: number;
+      parentStory?: string;
     }>;
   },
   bookId: string
@@ -48,58 +50,86 @@ export function mergeEpubWithIdml(
   console.log(`[merge] ==================== MERGE EPUB + IDML ====================`);
   console.log(`[merge] EPUB positions: ${epubTextPositions.length}, IDML frames: ${idmlData.textFrames.length}`);
   
-  // Trie les positions EPUB par page, puis par Y
-  const sortedEpubPositions = [...epubTextPositions].sort((a, b) => {
-    if (a.pageIndex !== b.pageIndex) return a.pageIndex - b.pageIndex;
-    return a.position.y - b.position.y;
-  });
-  
-  // Trie les frames IDML par page, puis par Y
-  const sortedIdmlFrames = [...idmlData.textFrames].sort((a, b) => {
-    if (a.pageIndex > 0 && b.pageIndex > 0 && a.pageIndex !== b.pageIndex) {
-      return a.pageIndex - b.pageIndex;
+  // Group EPUB positions by page
+  const epubByPage: Record<number, typeof epubTextPositions> = {};
+  for (const pos of epubTextPositions) {
+    if (!epubByPage[pos.pageIndex]) {
+      epubByPage[pos.pageIndex] = [];
     }
-    if (a.position && b.position) {
-      return a.position.y - b.position.y;
-    }
-    return 0;
-  });
+    epubByPage[pos.pageIndex].push(pos);
+  }
   
-  console.log('\n[merge] EPUB containers (sorted):');
-  sortedEpubPositions.forEach((pos, idx) => {
-    console.log(`  [${idx}] Page ${pos.pageIndex}, Container: ${pos.containerId}, Y: ${pos.position.y.toFixed(1)}`);
-  });
-  
-  console.log('\n[merge] IDML text frames (sorted):');
-  sortedIdmlFrames.forEach((frame, idx) => {
-    const posInfo = frame.position ? `Y: ${frame.position.y.toFixed(1)}` : 'Y: N/A';
-    console.log(`  [${idx}] Story: ${frame.id}, Page: ${frame.pageIndex}, ${posInfo}`);
-    console.log(`       Content: "${frame.content.substring(0, 60)}..."`);
-  });
-  
-  const usedIdmlIndices = new Set<number>();
-  
-  for (const epubPos of sortedEpubPositions) {
-    let bestMatch: { frame: any; score: number; index: number } | null = null;
-    
-    sortedIdmlFrames.forEach((idmlFrame, idx) => {
-      if (usedIdmlIndices.has(idx)) return;
-      
-      const score = calculateMatchScore(epubPos, idmlFrame);
-      
-      if (!bestMatch || score > bestMatch.score) {
-        bestMatch = { frame: idmlFrame, score, index: idx };
-      }
+  // Sort each page's EPUB containers by containerId (extract numeric part from _idContainerXXX)
+  for (const pageIndex in epubByPage) {
+    epubByPage[pageIndex].sort((a, b) => {
+      const aNum = extractContainerNumber(a.containerId);
+      const bNum = extractContainerNumber(b.containerId);
+      return aNum - bNum;
     });
+  }
+  
+  // Group IDML frames by page
+  const idmlByPage: Record<number, typeof idmlData.textFrames> = {};
+  for (const frame of idmlData.textFrames) {
+    if (!idmlByPage[frame.pageIndex]) {
+      idmlByPage[frame.pageIndex] = [];
+    }
+    idmlByPage[frame.pageIndex].push(frame);
+  }
+  
+  // Sort each page's IDML frames by layoutOrder (or fallback to order of appearance)
+  for (const pageIndex in idmlByPage) {
+    idmlByPage[pageIndex].sort((a, b) => {
+      if (a.layoutOrder !== undefined && b.layoutOrder !== undefined) {
+        return a.layoutOrder - b.layoutOrder;
+      }
+      return 0; // Keep original order if layoutOrder not available
+    });
+  }
+  
+  console.log('\n[merge] EPUB containers by page:');
+  for (const pageIndex in epubByPage) {
+    console.log(`  Page ${pageIndex}:`);
+    epubByPage[pageIndex].forEach((pos, idx) => {
+      console.log(`    [${idx}] ${pos.containerId}`);
+    });
+  }
+  
+  console.log('\n[merge] IDML text frames by page:');
+  for (const pageIndex in idmlByPage) {
+    console.log(`  Page ${pageIndex}:`);
+    idmlByPage[pageIndex].forEach((frame, idx) => {
+      const orderInfo = frame.layoutOrder !== undefined ? `order ${frame.layoutOrder}` : 'no order';
+      console.log(`    [${idx}] ${frame.id} (${orderInfo}): "${frame.content.substring(0, 50)}..."`);
+    });
+  }
+  
+  // Match by index on each page
+  const allPageIndexes = new Set([...Object.keys(epubByPage), ...Object.keys(idmlByPage)].map(Number));
+  
+  for (const pageIndex of Array.from(allPageIndexes).sort((a, b) => a - b)) {
+    const epubPositions = epubByPage[pageIndex] || [];
+    const idmlFrames = idmlByPage[pageIndex] || [];
     
-    if (bestMatch) {
-      usedIdmlIndices.add(bestMatch.index);
-      console.log(`✓ [merge] MATCHED: ${epubPos.containerId} (page ${epubPos.pageIndex}, y=${epubPos.position.y.toFixed(1)}) → Story ${bestMatch.frame.id} (score: ${bestMatch.score})`);
+    console.log(`\n[merge] Matching page ${pageIndex}: ${epubPositions.length} EPUB containers, ${idmlFrames.length} IDML frames`);
+    
+    const matchCount = Math.min(epubPositions.length, idmlFrames.length);
+    
+    for (let i = 0; i < matchCount; i++) {
+      const epubPos = epubPositions[i];
+      const idmlFrame = idmlFrames[i];
       
-      const mergedText = createMergedText(epubPos, bestMatch.frame, idmlData, bookId);
+      console.log(`✓ [merge] MATCHED [${i}]: ${epubPos.containerId} → ${idmlFrame.id} (Story: ${idmlFrame.parentStory || 'N/A'})`);
+      
+      const mergedText = createMergedText(epubPos, idmlFrame, idmlData, bookId);
       mergedTexts.push(mergedText);
-    } else {
-      console.warn(`✗ [merge] No match found for ${epubPos.containerId}`);
+    }
+    
+    // Warn about unmatched items
+    if (epubPositions.length > idmlFrames.length) {
+      console.warn(`⚠ [merge] Page ${pageIndex}: ${epubPositions.length - idmlFrames.length} EPUB containers have no IDML match`);
+    } else if (idmlFrames.length > epubPositions.length) {
+      console.warn(`⚠ [merge] Page ${pageIndex}: ${idmlFrames.length - epubPositions.length} IDML frames have no EPUB match`);
     }
   }
   
@@ -110,48 +140,11 @@ export function mergeEpubWithIdml(
 }
 
 /**
- * Calcule un score de correspondance entre une position EPUB et un frame IDML
+ * Extract numeric part from containerId (e.g., "_idContainer005" -> 5)
  */
-function calculateMatchScore(
-  epubPos: any,
-  idmlFrame: any
-): number {
-  let score = 0;
-  const content = idmlFrame.content.toLowerCase().trim();
-  
-  // Règle 1 : Position haute (y < 100) devrait obtenir du contenu ressemblant à un titre
-  if (epubPos.position.y < 100) {
-    if (content.includes('titre') || content.includes('title')) {
-      score += 100;
-    }
-    if (idmlFrame.content.length > 10 && idmlFrame.content.length < 30) {
-      score += 50;
-    }
-  }
-  
-  // Règle 2 : Position basse (y > 400) devrait obtenir du contenu restant
-  if (epubPos.position.y > 400) {
-    if (!content.includes('titre') && !content.includes('title')) {
-      score += 50;
-    }
-    if (idmlFrame.content.length < 10) {
-      score += 30;
-    }
-  }
-  
-  // Règle 3 : Page 2 devrait obtenir du contenu mentionnant "page"
-  if (epubPos.pageIndex === 2 && content.includes('page')) {
-    score += 100;
-  }
-  
-  // Règle 4 : Match par position IDML si disponible
-  if (idmlFrame.position && idmlFrame.position.y) {
-    const yDiff = Math.abs(idmlFrame.position.y - epubPos.position.y);
-    if (yDiff < 50) score += 200;
-    else if (yDiff < 100) score += 100;
-  }
-  
-  return score;
+function extractContainerNumber(containerId: string): number {
+  const match = containerId.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
 }
 
 /**

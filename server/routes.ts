@@ -420,13 +420,27 @@ export async function registerRoutes(
               content = content.replace(/\{nom_enfant\}/g, config.childName);
             }
             
+            // Apply text transform
+            const textTransform = style.textTransform || 'none';
+            if (textTransform === 'uppercase') {
+              content = content.toUpperCase();
+            } else if (textTransform === 'lowercase') {
+              content = content.toLowerCase();
+            }
+            
             const textColor = style.color || '#000000';
             const textFontSize = style.fontSize || '16px';
             const textFontFamily = style.fontFamily || 'sans-serif';
+            const fontWeight = style.fontWeight || 'normal';
+            const fontStyle = style.fontStyle || 'normal';
+            const letterSpacing = style.letterSpacing || 'normal';
+            const textDecoration = style.textDecoration || 'none';
+            const lineHeight = style.lineHeight || '1.2';
+            const textAlign = style.textAlign || 'left';
             
-            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize}`);
+            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize} align=${textAlign} weight=${fontWeight} style=${fontStyle}`);
             
-            return `<div style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;overflow:hidden;font-family:${textFontFamily};font-size:${textFontSize};color:${textColor} !important;text-align:${style.textAlign || 'left'};transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});line-height:1.2;white-space:nowrap;">${content}</div>`;
+            return `<div style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;overflow:hidden;font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor} !important;text-align:${textAlign};letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});line-height:${lineHeight};white-space:pre-wrap;">${content}</div>`;
           }).join('\n');
           
           let html = `<!DOCTYPE html>

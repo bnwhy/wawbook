@@ -45,6 +45,8 @@ interface TextFrameData {
     width: number;
     height: number;
   };
+  layoutOrder?: number; // Order in spread (for deterministic matching)
+  parentStory?: string; // Reference to the Story ID
 }
 
 interface IdmlData {
@@ -110,26 +112,22 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
     console.warn('[idml-parser] Could not parse Styles.xml:', e);
   }
   
-  // 3. Extract text frames from Stories
+  // 3. Extract all story contents into a map (storyId -> story data)
   console.log('[idml-parser] Looking for Story files...');
   const allFiles = Object.keys(zip.files);
   console.log(`[idml-parser] Total files in IDML: ${allFiles.length}`);
   
-  // List all XML files for debugging
-  const xmlFiles = allFiles.filter(f => f.toLowerCase().endsWith('.xml'));
-  console.log(`[idml-parser] XML files found:`, xmlFiles);
-  
   const storyFiles = allFiles.filter(f => f.match(/^Stories\/Story_.*\.xml$/i));
   console.log(`[idml-parser] Story files found: ${storyFiles.length}`, storyFiles);
   
-  if (storyFiles.length === 0) {
-    console.warn('[idml-parser] No Story files found! Checking for alternative locations...');
-    // Try alternative patterns
-    const altStoryFiles = allFiles.filter(f => 
-      f.toLowerCase().includes('story') && f.toLowerCase().endsWith('.xml')
-    );
-    console.log(`[idml-parser] Alternative story files:`, altStoryFiles);
-  }
+  // Map: storyId -> story content + styles
+  const storiesMap: Record<string, {
+    content: string;
+    variables: string[];
+    appliedCharacterStyle?: string;
+    appliedParagraphStyle?: string;
+    localParaProperties?: any;
+  }> = {};
   
   for (const storyPath of storyFiles) {
     try {
@@ -137,19 +135,29 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
       const storyFile = zip.file(storyPath);
       if (storyFile) {
         const storyXml = await storyFile.async('string');
-        console.log(`[idml-parser] Story XML length: ${storyXml.length} characters`);
         const storyData = parser.parse(storyXml);
         
-        const textFrames = extractTextFrames(storyData, result.characterStyles, result.paragraphStyles);
-        console.log(`[idml-parser] Extracted ${textFrames.length} text frames from ${storyPath}`);
-        result.textFrames.push(...textFrames);
+        // Extract story content (similar to extractTextFrames but store in map)
+        const storyInfo = extractStoryContent(storyData);
+        if (storyInfo && storyInfo.storyId && storyInfo.content) {
+          storiesMap[storyInfo.storyId] = {
+            content: storyInfo.content,
+            variables: storyInfo.variables,
+            appliedCharacterStyle: storyInfo.appliedCharStyle,
+            appliedParagraphStyle: storyInfo.appliedParaStyle,
+            localParaProperties: storyInfo.localParaProperties
+          };
+          console.log(`[idml-parser] Stored story ${storyInfo.storyId}: "${storyInfo.content.substring(0, 50)}..."`);
+        }
       }
     } catch (e) {
       console.error(`[idml-parser] Error parsing ${storyPath}:`, e);
     }
   }
   
-  // 4. Extract page dimensions and text frame positions from Spreads
+  console.log(`[idml-parser] Extracted ${Object.keys(storiesMap).length} stories into map`);
+  
+  // 4. Extract TextFrames from Spreads and link to story contents
   try {
     const spreadFiles = Object.keys(zip.files).filter(f => f.match(/^Spreads\/Spread_.*\.xml$/i));
     
@@ -159,21 +167,14 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
         const spreadXml = await spreadFile.async('string');
         const spreadData = parser.parse(spreadXml);
         
-        const pageDims = extractPageDimensions(spreadData);
+        const { dimensions: pageDims, pagesInfo } = extractPageDimensionsAndPositions(spreadData);
         Object.assign(result.pageDimensions, pageDims);
         
-        // Extract text frame positions from spreads
-        const textFramePositions = extractTextFramePositions(spreadData);
+        // Extract text frames from spreads (now creating TextFrameData entries)
+        const textFramesFromSpread = extractTextFramesFromSpread(spreadData, pagesInfo, storiesMap);
         
-        // Match positions with text frames by ParentStory reference
-        for (const tfPos of textFramePositions) {
-          const matchingFrame = result.textFrames.find(tf => tf.id === tfPos.parentStory);
-          if (matchingFrame) {
-            matchingFrame.position = tfPos.position;
-            matchingFrame.pageIndex = tfPos.pageIndex;
-            console.log(`[idml-parser] Matched position for story ${tfPos.parentStory}: (${tfPos.position.x}, ${tfPos.position.y})`);
-          }
-        }
+        console.log(`[idml-parser] Extracted ${textFramesFromSpread.length} text frames from ${spreadPath}`);
+        result.textFrames.push(...textFramesFromSpread);
       }
     }
   } catch (e) {
@@ -427,6 +428,59 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
 }
 
 /**
+ * Extract story content from a Story XML (for the stories map)
+ */
+function extractStoryContent(storyData: any): {
+  storyId: string;
+  content: string;
+  variables: string[];
+  appliedCharStyle: string;
+  appliedParaStyle: string;
+  localParaProperties?: any;
+} | null {
+  try {
+    const outerStory = storyData?.Story;
+    if (!outerStory) return null;
+    
+    const story = outerStory?.Story;
+    if (!story) return null;
+    
+    const storyId = story['@_Self'];
+    if (!storyId) return null;
+    
+    // Extract text using the same logic as extractTextFromParagraphRanges
+    const extracted = extractTextFromParagraphRanges(
+      story.ParagraphStyleRange,
+      storyId,
+      storyId
+    );
+    
+    if (!extracted.content) return null;
+    
+    // Detect variables
+    const variables: string[] = [];
+    const varMatches = extracted.content.match(/\{([^}]+)\}/g);
+    if (varMatches) {
+      varMatches.forEach(m => {
+        variables.push(m.replace(/[{}]/g, ''));
+      });
+    }
+    
+    return {
+      storyId,
+      content: extracted.content,
+      variables,
+      appliedCharStyle: extracted.appliedCharStyle,
+      appliedParaStyle: extracted.appliedParaStyle,
+      localParaProperties: extracted.localParaProperties
+    };
+  } catch (e) {
+    console.error('[extractStoryContent] Error:', e);
+    return null;
+  }
+}
+
+/**
  * Extract text content from ParagraphStyleRange structure
  */
 function extractTextFromParagraphRanges(
@@ -620,22 +674,30 @@ export function extractTextFrames(
 }
 
 /**
- * Extract page dimensions from Spreads
+ * Extract page dimensions and positions from Spreads
  */
-function extractPageDimensions(spreadData: any): Record<number, { width: number; height: number }> {
+function extractPageDimensionsAndPositions(spreadData: any): {
+  dimensions: Record<number, { width: number; height: number }>;
+  pagesInfo: Array<{pageIndex: number, transformX: number, width: number}>;
+} {
   const dimensions: Record<number, { width: number; height: number }> = {};
+  const pagesInfo: Array<{pageIndex: number, transformX: number, width: number}> = [];
   
   try {
-    const spread = spreadData?.Spread;
-    if (!spread) return dimensions;
+    // Support both structures: spreadData.Spread and spreadData.Spread.Spread
+    let spread = spreadData?.Spread?.Spread || spreadData?.Spread;
+    if (!spread) return { dimensions, pagesInfo };
     
     const pages = spread?.Page;
-    if (!pages) return dimensions;
+    if (!pages) return { dimensions, pagesInfo };
     
     const pageArray = Array.isArray(pages) ? pages : [pages];
     
     for (const page of pageArray) {
       const geometricBounds = page['@_GeometricBounds'];
+      const itemTransform = page['@_ItemTransform'];
+      const pageName = page['@_Name']; // Page name (e.g. "1", "2")
+      
       if (geometricBounds) {
         // Format: "top left bottom right"
         const bounds = geometricBounds.split(' ').map((v: string) => parseFloat(v));
@@ -643,9 +705,26 @@ function extractPageDimensions(spreadData: any): Record<number, { width: number;
           const width = bounds[3] - bounds[1];
           const height = bounds[2] - bounds[0];
           
-          // Page index (1-based)
-          const pageIndex = parseInt(page['@_PageIndex']) || 1;
+          // Use @_Name as page index, fallback to 1
+          const pageIndex = pageName ? parseInt(pageName) : 1;
           dimensions[pageIndex] = { width, height };
+          
+          // Extract transform X position
+          let transformX = 0;
+          if (itemTransform) {
+            const transform = itemTransform.split(' ').map((v: string) => parseFloat(v));
+            if (transform.length === 6) {
+              transformX = transform[4];
+            }
+          }
+          
+          pagesInfo.push({
+            pageIndex,
+            transformX,
+            width
+          });
+          
+          console.log(`[idml-parser] Page ${pageIndex}: ${width.toFixed(1)}x${height.toFixed(1)} at x=${transformX.toFixed(1)}`);
         }
       }
     }
@@ -653,61 +732,229 @@ function extractPageDimensions(spreadData: any): Record<number, { width: number;
     console.warn('[idml-parser] Error extracting page dimensions:', e);
   }
   
-  return dimensions;
+  return { dimensions, pagesInfo };
+}
+
+/**
+ * Extract TextFrames from a Spread and create TextFrameData entries linked to story contents
+ */
+function extractTextFramesFromSpread(
+  spreadData: any,
+  spreadPagesInfo: Array<{pageIndex: number, transformX: number, width: number}>,
+  storiesMap: Record<string, {
+    content: string;
+    variables: string[];
+    appliedCharacterStyle?: string;
+    appliedParagraphStyle?: string;
+    localParaProperties?: any;
+  }>
+): TextFrameData[] {
+  const textFrames: TextFrameData[] = [];
+  
+  try {
+    let spread = spreadData?.Spread?.Spread || spreadData?.Spread;
+    if (!spread) return textFrames;
+    
+    const textFrameElements = spread?.TextFrame;
+    if (!textFrameElements) return textFrames;
+    
+    const textFrameArray = Array.isArray(textFrameElements) ? textFrameElements : [textFrameElements];
+    
+    for (let layoutOrder = 0; layoutOrder < textFrameArray.length; layoutOrder++) {
+      const tf = textFrameArray[layoutOrder];
+      
+      const textFrameId = tf['@_Self'];
+      const parentStory = tf['@_ParentStory'];
+      const itemTransform = tf['@_ItemTransform'];
+      
+      if (!textFrameId || !parentStory) continue;
+      
+      // Get story content from the stories map
+      const storyData = storiesMap[parentStory];
+      if (!storyData || !storyData.content) {
+        console.warn(`[extractTextFramesFromSpread] No story content found for TextFrame ${textFrameId} (ParentStory: ${parentStory})`);
+        continue;
+      }
+      
+      // Extract position
+      let x = 0, y = 0, width = 100, height = 30;
+      
+      if (itemTransform) {
+        const transform = itemTransform.split(' ').map((v: string) => parseFloat(v));
+        if (transform.length === 6) {
+          x = transform[4];
+          y = transform[5];
+        }
+      }
+      
+      // Extract dimensions from PathGeometry
+      const pathGeometry = tf?.Properties?.PathGeometry?.GeometryPathType?.PathPointArray?.PathPointType;
+      if (pathGeometry && Array.isArray(pathGeometry) && pathGeometry.length >= 2) {
+        const points = pathGeometry.map((pt: any) => {
+          const anchor = pt['@_Anchor'];
+          if (anchor) {
+            const coords = anchor.split(' ').map((v: string) => parseFloat(v));
+            return { x: coords[0], y: coords[1] };
+          }
+          return null;
+        }).filter((p: any) => p !== null);
+        
+        if (points.length >= 2) {
+          const xCoords = points.map((p: any) => p.x);
+          const yCoords = points.map((p: any) => p.y);
+          width = Math.max(...xCoords) - Math.min(...xCoords);
+          height = Math.max(...yCoords) - Math.min(...yCoords);
+        }
+      }
+      
+      // Determine pageIndex based on X position
+      const sortedPages = [...spreadPagesInfo].sort((a, b) => a.transformX - b.transformX);
+      let pageIndex = sortedPages[0]?.pageIndex || 1;
+      
+      for (let i = 0; i < sortedPages.length; i++) {
+        const page = sortedPages[i];
+        const nextPage = sortedPages[i + 1];
+        
+        const pageLeft = page.transformX;
+        
+        if (nextPage) {
+          if (x >= pageLeft && x < nextPage.transformX) {
+            pageIndex = page.pageIndex;
+            break;
+          }
+        } else {
+          if (x >= pageLeft) {
+            pageIndex = page.pageIndex;
+            break;
+          }
+        }
+      }
+      
+      // Create TextFrameData entry
+      textFrames.push({
+        id: textFrameId,
+        name: textFrameId,
+        pageIndex,
+        content: storyData.content,
+        variables: storyData.variables,
+        appliedCharacterStyle: storyData.appliedCharacterStyle,
+        appliedParagraphStyle: storyData.appliedParagraphStyle,
+        localParaProperties: storyData.localParaProperties,
+        position: { x, y, width, height },
+        layoutOrder,
+        parentStory
+      });
+      
+      console.log(`[extractTextFramesFromSpread] TextFrame ${textFrameId} (order ${layoutOrder}): page ${pageIndex}, content="${storyData.content.substring(0, 40)}..."`);
+    }
+  } catch (e) {
+    console.error('[extractTextFramesFromSpread] Error:', e);
+  }
+  
+  return textFrames;
 }
 
 /**
  * Extract text frame positions from Spreads
  */
-function extractTextFramePositions(spreadData: any): Array<{
+function extractTextFramePositions(spreadData: any, spreadPagesInfo: Array<{pageIndex: number, transformX: number, width: number}>): Array<{
   parentStory: string;
+  textFrameId?: string;
   pageIndex: number;
   position: { x: number; y: number; width: number; height: number };
 }> {
   const positions: Array<any> = [];
   
   try {
-    const spread = spreadData?.Spread;
+    // Support both structures: spreadData.Spread and spreadData.Spread.Spread
+    let spread = spreadData?.Spread?.Spread || spreadData?.Spread;
     if (!spread) return positions;
     
-    const pages = spread?.Page;
-    if (!pages) return positions;
+    // TextFrames are at spread level, not page level
+    const textFrames = spread?.TextFrame;
+    if (!textFrames) return positions;
     
-    const pageArray = Array.isArray(pages) ? pages : [pages];
+    const textFrameArray = Array.isArray(textFrames) ? textFrames : [textFrames];
     
-    for (const page of pageArray) {
-      const pageIndex = parseInt(page['@_PageIndex']) || 1;
+    for (const tf of textFrameArray) {
+      const parentStory = tf['@_ParentStory'];
+      const textFrameId = tf['@_Self'];
+      const itemTransform = tf['@_ItemTransform'];
       
-      // Find TextFrames on this page
-      const textFrames = page?.TextFrame;
-      if (!textFrames) continue;
-      
-      const textFrameArray = Array.isArray(textFrames) ? textFrames : [textFrames];
-      
-      for (const tf of textFrameArray) {
-        const parentStory = tf['@_ParentStory'];
-        const geometricBounds = tf['@_GeometricBounds'];
-        
-        if (parentStory && geometricBounds) {
-          // Format: "top left bottom right"
-          const bounds = geometricBounds.split(' ').map((v: string) => parseFloat(v));
-          if (bounds.length === 4) {
-            const top = bounds[0];
-            const left = bounds[1];
-            const bottom = bounds[2];
-            const right = bounds[3];
-            
-            positions.push({
-              parentStory,
-              pageIndex,
-              position: {
-                x: left,
-                y: top,
-                width: right - left,
-                height: bottom - top
+      if ((parentStory || textFrameId) && itemTransform) {
+        // ItemTransform format: "a b c d tx ty" (matrix transformation)
+        // For simple translation: "1 0 0 1 x y"
+        const transform = itemTransform.split(' ').map((v: string) => parseFloat(v));
+        if (transform.length === 6) {
+          const x = transform[4];
+          const y = transform[5];
+          
+          // Extract dimensions from PathGeometry
+          let width = 100;
+          let height = 30;
+          
+          const pathGeometry = tf?.Properties?.PathGeometry?.GeometryPathType?.PathPointArray?.PathPointType;
+          if (pathGeometry && Array.isArray(pathGeometry) && pathGeometry.length >= 2) {
+            // Calculate bounding box from path points
+            const points = pathGeometry.map((pt: any) => {
+              const anchor = pt['@_Anchor'];
+              if (anchor) {
+                const coords = anchor.split(' ').map((v: string) => parseFloat(v));
+                return { x: coords[0], y: coords[1] };
               }
-            });
+              return null;
+            }).filter((p: any) => p !== null);
+            
+            if (points.length >= 2) {
+              const xCoords = points.map((p: any) => p.x);
+              const yCoords = points.map((p: any) => p.y);
+              width = Math.max(...xCoords) - Math.min(...xCoords);
+              height = Math.max(...yCoords) - Math.min(...yCoords);
+            }
           }
+          
+          // Determine pageIndex based on X position
+          // Pages in a spread are positioned side by side
+          // Sort pages by transformX to get left-to-right order
+          const sortedPages = [...spreadPagesInfo].sort((a, b) => a.transformX - b.transformX);
+          
+          let pageIndex = sortedPages[0]?.pageIndex || 1;
+          
+          // Find which page contains this TextFrame based on X position
+          for (let i = 0; i < sortedPages.length; i++) {
+            const page = sortedPages[i];
+            const nextPage = sortedPages[i + 1];
+            
+            const pageLeft = page.transformX;
+            const pageRight = page.transformX + page.width;
+            
+            // Check if TextFrame X is within this page's bounds
+            if (nextPage) {
+              // Not the last page: check if X is before the next page
+              if (x >= pageLeft && x < nextPage.transformX) {
+                pageIndex = page.pageIndex;
+                break;
+              }
+            } else {
+              // Last page: check if X is within or after this page's left edge
+              if (x >= pageLeft) {
+                pageIndex = page.pageIndex;
+                break;
+              }
+            }
+          }
+          
+          positions.push({
+            parentStory,
+            textFrameId,
+            pageIndex,
+            position: {
+              x,
+              y,
+              width,
+              height
+            }
+          });
         }
       }
     }

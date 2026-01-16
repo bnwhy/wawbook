@@ -364,7 +364,8 @@ async function processHtmlPage(
     
     const hasCharacteristics = Object.keys(imgCharacteristics.characteristics).length > 0;
     const imageType = hasCharacteristics ? 'personalized' : 'static';
-    const effectivePageIndex = imgCharacteristics.pageIndex || (pageIndex + 1);
+    // Use actual page position in EPUB structure, ignore pageIndex from filename
+    const effectivePageIndex = pageIndex + 1;
     
     extractedImages.push({
       id: `img-${bookId}-${effectivePageIndex}-${Math.random().toString(36).substr(2, 8)}`,

@@ -417,6 +417,10 @@ export const generateBookPages = async (
             textAlign: layer.style?.textAlign,
             textAlignLast: layer.style?.textAlignLast,
             idmlJustification: layer.style?.idmlJustification,
+            fontSize: layer.style?.fontSize,
+            fontWeight: layer.style?.fontWeight,
+            fontStyle: layer.style?.fontStyle,
+            letterSpacing: layer.style?.letterSpacing,
             allStyles: layer.style
           });
           
@@ -435,27 +439,38 @@ export const generateBookPages = async (
           // Style mapping
           const fontSize = parseFloat((layer.style?.fontSize as string) || '16') * 4; // Scale for canvas
           const fontFamily = (layer.style?.fontFamily as string) || 'serif';
+          const fontWeight = (layer.style?.fontWeight as string) || 'normal';
+          const fontStyle = (layer.style?.fontStyle as string) || 'normal';
           const color = (layer.style?.color as string) || '#000000';
+          const textTransform = (layer.style?.textTransform as string) || 'none';
+          const textDecoration = (layer.style?.textDecoration as string) || 'none';
+          const letterSpacingStr = (layer.style?.letterSpacing as string) || '0em';
+          const letterSpacing = parseFloat(letterSpacingStr) * fontSize;
+          
           const canvasAlign = mapTextAlignToCanvas(
             layer.style?.textAlign as string,
             layer.style?.textAlignLast as string,
             layer.style?.idmlJustification as string
           );
           
-          ctx.font = `${layer.style?.fontWeight || 'normal'} ${fontSize}px ${fontFamily}`;
+          ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
           ctx.fillStyle = color;
           ctx.textAlign = canvasAlign;
           ctx.textBaseline = 'top';
           
-          console.log(`[Render] Text "${text.substring(0, 30)}..." - Canvas align: ${canvasAlign}`);
+          console.log(`[Render] Text "${text.substring(0, 30)}..." - Canvas align: ${canvasAlign}, xPos for right: ${w}, letterSpacing: ${letterSpacing}`);
+          
+          // Apply text transform
+          let transformedText = text;
+          if (textTransform === 'uppercase') {
+            transformedText = text.toUpperCase();
+          } else if (textTransform === 'lowercase') {
+            transformedText = text.toLowerCase();
+          }
           
           // Simple wrapping
-          // Split into words and draw lines
-          const words = text.split(/[\s\n]+/); // split on whitespace or newlines
-          // Actually we should respect newlines in text
-          
           const lines = [];
-          const paragraphs = text.split('\n');
+          const paragraphs = transformedText.split('\n');
           
           for (const para of paragraphs) {
               const paraWords = para.split(' ');
@@ -463,7 +478,8 @@ export const generateBookPages = async (
               for (let n = 0; n < paraWords.length; n++) {
                   const testLine = line + paraWords[n] + ' ';
                   const metrics = ctx.measureText(testLine);
-                  if (metrics.width > w && n > 0) {
+                  const testWidth = metrics.width + (testLine.length - 1) * letterSpacing;
+                  if (testWidth > w && n > 0) {
                       lines.push(line);
                       line = paraWords[n] + ' ';
                   } else {
@@ -473,7 +489,8 @@ export const generateBookPages = async (
               lines.push(line);
           }
           
-          const lineHeight = fontSize * 1.2;
+          const lineHeightMultiplier = parseFloat((layer.style?.lineHeight as string) || '1.2');
+          const lineHeight = fontSize * lineHeightMultiplier;
           
           lines.forEach((l, idx) => {
               let xPos = 0;
@@ -482,7 +499,61 @@ export const generateBookPages = async (
               } else if (canvasAlign === 'right') {
                   xPos = w;
               }
-              ctx.fillText(l, xPos, idx * lineHeight);
+              
+              const yPos = idx * lineHeight;
+              
+              // Draw text with letter spacing if needed
+              if (letterSpacing !== 0) {
+                // Draw character by character with spacing
+                let currentX = xPos;
+                if (canvasAlign === 'center' || canvasAlign === 'right') {
+                  const totalWidth = Array.from(l).reduce((sum, char) => sum + ctx.measureText(char).width, 0) + (l.length - 1) * letterSpacing;
+                  if (canvasAlign === 'center') {
+                    currentX = xPos - totalWidth / 2;
+                  } else {
+                    currentX = xPos - totalWidth;
+                  }
+                }
+                
+                ctx.textAlign = 'left';
+                for (const char of l) {
+                  ctx.fillText(char, currentX, yPos);
+                  currentX += ctx.measureText(char).width + letterSpacing;
+                }
+                ctx.textAlign = canvasAlign;
+              } else {
+                ctx.fillText(l, xPos, yPos);
+              }
+              
+              // Draw text decoration (underline, line-through)
+              if (textDecoration !== 'none' && l.trim().length > 0) {
+                const metrics = ctx.measureText(l);
+                const textWidth = metrics.width + (l.length - 1) * letterSpacing;
+                let decorationX = xPos;
+                
+                if (canvasAlign === 'center') {
+                  decorationX = xPos - textWidth / 2;
+                } else if (canvasAlign === 'right') {
+                  decorationX = xPos - textWidth;
+                }
+                
+                ctx.strokeStyle = color;
+                ctx.lineWidth = Math.max(1, fontSize / 16);
+                
+                if (textDecoration === 'underline') {
+                  const underlineY = yPos + fontSize * 1.1;
+                  ctx.beginPath();
+                  ctx.moveTo(decorationX, underlineY);
+                  ctx.lineTo(decorationX + textWidth, underlineY);
+                  ctx.stroke();
+                } else if (textDecoration === 'line-through') {
+                  const strikeY = yPos + fontSize * 0.5;
+                  ctx.beginPath();
+                  ctx.moveTo(decorationX, strikeY);
+                  ctx.lineTo(decorationX + textWidth, strikeY);
+                  ctx.stroke();
+                }
+              }
           });
           
           ctx.restore();

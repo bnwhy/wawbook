@@ -5919,6 +5919,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             const pageTextsForThumb = selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex) || [];
                                                             const imagesCount = pageImagesFromElements.length;
                                                             
+                                                            // Use real page aspect ratio to avoid letterboxing mismatch
+                                                            const pageWidth = page?.width || 210;
+                                                            const pageHeight = page?.height || 297;
+                                                            const pageAspectRatio = pageWidth / pageHeight;
+                                                            
                                                             return (
                                                                 <div 
                                                                     key={`thumb-${page.pageIndex}`}
@@ -5929,106 +5934,111 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                     }`}
                                                                     onClick={() => setSelectedEpubPageIndex(page.pageIndex)}
                                                                 >
-                                                                    <div className="aspect-[3/4] bg-white relative overflow-hidden rounded-t-md">
-                                                                        {/* Composite preview with all elements */}
-                                                                        {pageImagesFromElements.length > 0 || pageTextsForThumb.length > 0 ? (
+                                                                    <div className="bg-white relative overflow-hidden rounded-t-md" style={{ aspectRatio: pageAspectRatio }}>
+                                                                        {/* Use pre-rendered EPUB image with text overlays */}
+                                                                        {pageImageEntry?.imageUrl ? (
                                                                             <>
-                                                                                {/* Render all images with their positions */}
-                                                                                {pageImagesFromElements
-                                                                                    .filter((img: any) => {
-                                                                                        // Only show images with position and URL
-                                                                                        if (!img.position || !img.url) return false;
-                                                                                        
-                                                                                        // In admin view, prioritize showing 'default', 'all', or images without combinationKey
-                                                                                        const key = img.combinationKey;
-                                                                                        const isDefaultOrAll = !key || key === 'default' || key === 'all';
-                                                                                        
-                                                                                        // Show static images and default combinations
-                                                                                        if (img.type === 'static' || isDefaultOrAll) return true;
-                                                                                        
-                                                                                        // For personalized images, only show if no default exists at same position
-                                                                                        const hasDefaultAtSamePos = pageImagesFromElements.some((other: any) => 
-                                                                                            other.id !== img.id &&
-                                                                                            Math.abs((other.position?.x || 0) - (img.position?.x || 0)) < 1 &&
-                                                                                            Math.abs((other.position?.y || 0) - (img.position?.y || 0)) < 1 &&
-                                                                                            (other.type === 'static' || !other.combinationKey || other.combinationKey === 'default' || other.combinationKey === 'all')
-                                                                                        );
-                                                                                        
-                                                                                        return !hasDefaultAtSamePos;
-                                                                                    })
-                                                                                    .sort((a: any, b: any) => (a.position?.zIndex || 0) - (b.position?.zIndex || 0))
-                                                                                    .map((img: any, imgIdx: number) => (
-                                                                                        <div
-                                                                                            key={`thumb-img-${img.id || imgIdx}`}
-                                                                                            className="absolute overflow-hidden"
-                                                                                            style={{
-                                                                                                left: `${img.position?.x || 0}%`,
-                                                                                                top: `${img.position?.y || 0}%`,
-                                                                                                width: `${img.position?.width || 100}%`,
-                                                                                                height: img.position?.height ? `${img.position.height}%` : 'auto',
-                                                                                                maxWidth: '100%',
-                                                                                                maxHeight: '100%',
-                                                                                                transform: img.position?.rotation ? `rotate(${img.position.rotation}deg)` : undefined,
-                                                                                                zIndex: img.position?.zIndex || 0,
-                                                                                            }}
-                                                                                        >
-                                                                                            <img
-                                                                                                src={img.url}
-                                                                                                alt={img.label || 'Image'}
-                                                                                                className="w-full h-full object-contain"
-                                                                                                style={{ maxWidth: '100%', maxHeight: '100%' }}
-                                                                                                onError={(e) => {
-                                                                                                    (e.target as HTMLImageElement).style.display = 'none';
-                                                                                                }}
-                                                                                            />
-                                                                                        </div>
-                                                                                    ))}
-                                                                                
-                                                                                {/* Render all text zones with borders */}
-                                                                                {pageTextsForThumb.map((text: any, textIdx: number) => {
-                                                                                    const fontSize = text.style?.fontSize ? 
-                                                                                        (parseFloat(text.style.fontSize) * 0.15) + (text.style.fontSize.includes('px') ? 'px' : text.style.fontSize.includes('pt') ? 'pt' : 'px') 
-                                                                                        : '0.4rem';
-                                                                                    
-                                                                                    return (
+                                                                                <img 
+                                                                                    src={pageImageEntry.imageUrl} 
+                                                                                    alt={`Page ${page.pageIndex}`}
+                                                                                    className="w-full h-full object-contain"
+                                                                                    loading="lazy"
+                                                                                    decoding="async"
+                                                                                />
+                                                                                {/* Text zones overlays */}
+                                                                                {pageTextsForThumb.map((text: any, textIdx: number) => (
                                                                                         <div
                                                                                             key={`thumb-text-${text.id || textIdx}`}
-                                                                                            className="absolute overflow-hidden pointer-events-none"
+                                                                                            className="absolute pointer-events-none overflow-hidden"
                                                                                             style={{
                                                                                                 left: `${text.position?.x || 0}%`,
                                                                                                 top: `${text.position?.y || 0}%`,
                                                                                                 width: `${text.position?.width || 30}%`,
                                                                                                 height: text.position?.height ? `${text.position.height}%` : 'auto',
+                                                                                                border: '2px solid rgba(255, 0, 0, 0.8)',
+                                                                                                backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                                                                                                transform: text.position?.rotation ? `rotate(${text.position.rotation}deg)` : undefined,
+                                                                                                zIndex: 1000,
+                                                                                            }}
+                                                                                            title={`${text.label || text.id || ''} — ${text.content?.substring(0, 30)} - x:${text.position?.x} y:${text.position?.y}`}
+                                                                                        >
+                                                                                            <span className="absolute top-0 left-0 text-[9px] leading-none font-mono bg-white/90 text-slate-700 px-1 py-0.5 border border-slate-200 rounded-sm">
+                                                                                                {text.label || text.id?.split('-').pop() || `text-${textIdx}`}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                            </>
+                                                                        ) : (pageImagesFromElements.length > 0 || pageTextsForThumb.length > 0) ? (
+                                                                            <>
+                                                                                {/* Render all images with their positions */}
+                                                                                {(() => {
+                                                                                    const filteredImages = pageImagesFromElements.filter((img: any) => img.position && img.url);
+                                                                                    // Calculate scale factor from PAGE dimensions, not first image
+                                                                                    // Positions from EPUB are in pixels, convert to % relative to page size
+                                                                                    const pageWidth = page?.width || 210;
+                                                                                    const scaleFactor = pageWidth > 100 ? 100 / pageWidth : 1;
+                                                                                    
+                                                                                    return filteredImages
+                                                                                        .sort((a: any, b: any) => (a.position?.zIndex || 0) - (b.position?.zIndex || 0))
+                                                                                        .map((img: any, imgIdx: number) => {
+                                                                                            const style = {
+                                                                                                left: `${(img.position?.x || 0) * scaleFactor}%`,
+                                                                                                top: `${(img.position?.y || 0) * scaleFactor}%`,
+                                                                                                width: `${(img.position?.width || 100) * scaleFactor}%`,
+                                                                                                height: img.position?.height ? `${img.position.height * scaleFactor}%` : 'auto',
+                                                                                                transform: img.position?.rotation ? `rotate(${img.position.rotation}deg)` : undefined,
+                                                                                                zIndex: img.position?.zIndex || 0,
+                                                                                            }
+                                                                                            return (
+                                                                                                <div
+                                                                                                    key={`thumb-img-${img.id || imgIdx}`}
+                                                                                                    className="absolute"
+                                                                                                    style={style}
+                                                                                                >
+                                                                                                    <img
+                                                                                                        src={img.url}
+                                                                                                        alt={img.label || 'Image'}
+                                                                                                        className="w-full h-full object-contain"
+                                                                                                        loading="lazy"
+                                                                                                        decoding="async"
+                                                                                                        onError={(e) => {
+                                                                                                            (e.target as HTMLImageElement).style.display = 'none';
+                                                                                                        }}
+                                                                                                    />
+                                                                                                </div>
+                                                                                            );
+                                                                                        });
+                                                                                })()}
+                                                                                
+                                                                                {/* Render all text zones with borders - WITH scaleFactor in fallback */}
+                                                                                {(() => {
+                                                                                    // Calculate scale factor from PAGE dimensions, not first image
+                                                                                    const pageWidth = page?.width || 210;
+                                                                                    const scaleFactor = pageWidth > 100 ? 100 / pageWidth : 1;
+                                                                                    
+                                                                                    return pageTextsForThumb.map((text: any, textIdx: number) => (
+                                                                                        <div
+                                                                                            key={`thumb-text-${text.id || textIdx}`}
+                                                                                            className="absolute pointer-events-none overflow-hidden"
+                                                                                            style={{
+                                                                                                left: `${(text.position?.x || 0) * scaleFactor}%`,
+                                                                                                top: `${(text.position?.y || 0) * scaleFactor}%`,
+                                                                                                width: `${(text.position?.width || 30) * scaleFactor}%`,
+                                                                                                height: text.position?.height ? `${text.position.height * scaleFactor}%` : 'auto',
                                                                                                 border: '1px dashed rgba(59, 130, 246, 0.5)',
                                                                                                 backgroundColor: 'rgba(59, 130, 246, 0.05)',
                                                                                                 transform: text.position?.rotation ? `rotate(${text.position.rotation}deg)` : undefined,
-                                                                                                zIndex: (text.position?.zIndex || 0) + 100,
+                                                                                                zIndex: 1000,
                                                                                             }}
+                                                                                            title={`${text.label || text.id || ''} — ${text.content?.substring(0, 50)}`}
                                                                                         >
-                                                                                            <div
-                                                                                                className="w-full h-full p-0.5 leading-tight"
-                                                                                                style={{
-                                                                                                    fontSize: fontSize,
-                                                                                                    color: text.style?.color || '#1e293b',
-                                                                                                    textAlign: (text.style?.textAlign || 'left') as any,
-                                                                                                    fontFamily: text.style?.fontFamily,
-                                                                                                    fontWeight: text.style?.fontWeight,
-                                                                                                    whiteSpace: 'pre-wrap',
-                                                                                                    wordBreak: 'break-word',
-                                                                                                }}
-                                                                                            >
-                                                                                                {text.content?.substring(0, 100) || ''}
-                                                                                            </div>
+                                                                                            <span className="absolute top-0 left-0 text-[9px] leading-none font-mono bg-white/90 text-slate-700 px-1 py-0.5 border border-slate-200 rounded-sm">
+                                                                                                {text.label || text.id?.split('-').pop() || `text-${textIdx}`}
+                                                                                            </span>
                                                                                         </div>
-                                                                                    );
-                                                                                })}
+                                                                                    ));
+                                                                                })()}
                                                                             </>
-                                                                        ) : thumbnailUrl ? (
-                                                                            <img 
-                                                                                src={thumbnailUrl} 
-                                                                                alt={`Page ${page.pageIndex}`}
-                                                                                className="w-full h-full object-contain"
-                                                                            />
                                                                         ) : (
                                                                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
                                                                                 <FileCode size={24} className="text-slate-300" />

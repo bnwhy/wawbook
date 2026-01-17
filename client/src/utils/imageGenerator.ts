@@ -568,8 +568,8 @@ export const generateBookPages = async (
             if (canvasAlign === 'center') {
               xPos = w / 2;
             } else if (canvasAlign === 'right') {
-              // Pour l'alignement à droite, l'indent réduit la position de droite
-              xPos = w - indent;
+              // Pour l'alignement à droite, textIndent affecte uniquement le wrapping (maxWidth), pas l'ancre
+              xPos = w;
             } else { // left or start
               xPos = indent;
             }

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { margin: 0; padding: 20px; background: #f0f0f0; }
+    .test-container {
+      background: white;
+      margin: 20px 0;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test d'alignement de texte</h1>
+  
+  <div class="test-container">
+    <h2>Test 1: Alignement simple</h2>
+    <div style="position:absolute;left:100px;top:100px;width:200px;height:100px;border:2px solid red;text-align:right;">
+      Texte 3
+    </div>
+  </div>
+  
+  <div class="test-container" style="height:150px;position:relative;">
+    <h2>Test 2: Avec padding (comme dans notre code)</h2>
+    <div style="position:absolute;left:100px;top:50px;width:200px;height:100px;border:2px solid blue;box-sizing:border-box;overflow:hidden;font-family:serif;font-size:14px;text-align:right;padding-left:0;padding-right:0;">
+      Texte 3
+    </div>
+  </div>
+  
+  <div class="test-container" style="height:150px;position:relative;">
+    <h2>Test 3: Avec tous les styles de notre code</h2>
+    <div style="position:absolute;left:100px;top:50px;width:200px;height:100px;border:2px solid green;box-sizing:border-box;overflow:hidden;font-family:serif;font-size:14px;font-weight:normal;font-style:normal;color:#000000;text-align:right;letter-spacing:normal;text-decoration:none;text-transform:none;text-indent:0;padding-top:0;padding-bottom:0;line-height:1.2;margin:0;padding-left:0;padding-right:0;">
+      Texte 3
+    </div>
+  </div>
+</body>
+</html>

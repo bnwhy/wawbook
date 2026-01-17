@@ -170,8 +170,8 @@ function createMergedText(
   console.log(`[createMergedText]   CharStyleId: ${charStyleId || 'NONE'}`);
   console.log(`[createMergedText]   ParaStyleId: ${paraStyleId || 'NONE'}`);
 
-  const charStyle = charStyleId && idmlData.characterStyles[charStyleId]
-    ? idmlData.characterStyles[charStyleId]
+  let charStyle = charStyleId && idmlData.characterStyles[charStyleId]
+    ? { ...idmlData.characterStyles[charStyleId] }
     : {};
   
   if (charStyleId && !idmlData.characterStyles[charStyleId]) {
@@ -189,10 +189,30 @@ function createMergedText(
   
   console.log(`[createMergedText]   Found CharStyle:`, charStyle);
   console.log(`[createMergedText]   CharStyle fontFamily: ${charStyle.fontFamily || 'UNDEFINED'}`);
+  console.log(`[createMergedText]   ParaStyle fontFamily: ${paraStyle.fontFamily || 'UNDEFINED'}`);
+  console.log(`[createMergedText]   Has inline properties: ${!!idmlFrame.inlineCharProperties}`);
   
-  // If no CharacterStyle or no font in CharacterStyle, use ParagraphStyle font properties
+  // Priority 1: Use inline character properties (most specific)
+  if (idmlFrame.inlineCharProperties) {
+    const inline = idmlFrame.inlineCharProperties;
+    if (inline.fontFamily) {
+      console.log(`[createMergedText]   ✓ Using inline font: ${inline.fontFamily}`);
+      charStyle.fontFamily = inline.fontFamily;
+    }
+    if (inline.fontSize) {
+      charStyle.fontSize = inline.fontSize;
+    }
+    if (inline.fontWeight) {
+      charStyle.fontWeight = inline.fontWeight;
+    }
+    if (inline.fontStyle) {
+      charStyle.fontStyle = inline.fontStyle;
+    }
+  }
+  
+  // Priority 2: If no CharacterStyle or no font in CharacterStyle, use ParagraphStyle font properties
   if (!charStyle.fontFamily && paraStyle.fontFamily) {
-    console.log(`[createMergedText]   Using font from ParagraphStyle: ${paraStyle.fontFamily}`);
+    console.log(`[createMergedText]   ✓ Using font from ParagraphStyle: ${paraStyle.fontFamily}`);
     charStyle.fontFamily = paraStyle.fontFamily;
     if (paraStyle.fontSize && !charStyle.fontSize) {
       charStyle.fontSize = paraStyle.fontSize;

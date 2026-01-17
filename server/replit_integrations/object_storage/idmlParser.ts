@@ -43,6 +43,7 @@ interface TextFrameData {
   appliedCharacterStyle?: string;
   appliedParagraphStyle?: string;
   localParaProperties?: any; // Local paragraph properties (overrides)
+  inlineCharProperties?: any; // Inline character properties (font, size, etc.)
   // Position from IDML Spreads (if available)
   position?: {
     x: number;
@@ -155,6 +156,7 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
     appliedCharacterStyle?: string;
     appliedParagraphStyle?: string;
     localParaProperties?: any;
+    inlineCharProperties?: any;
   }> = {};
   
   for (const storyPath of storyFiles) {
@@ -173,7 +175,8 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
             variables: storyInfo.variables,
             appliedCharacterStyle: storyInfo.appliedCharStyle,
             appliedParagraphStyle: storyInfo.appliedParaStyle,
-            localParaProperties: storyInfo.localParaProperties
+            localParaProperties: storyInfo.localParaProperties,
+            inlineCharProperties: storyInfo.inlineCharProperties
           };
           console.log(`[idml-parser] Stored story ${storyInfo.storyId}: "${storyInfo.content.substring(0, 50)}..."`);
         }
@@ -276,6 +279,21 @@ export function extractCharacterStyles(
     
     const charStylesArray = Array.isArray(rootCharStyles) ? rootCharStyles : [rootCharStyles];
     
+    // First pass: Create a temporary map with raw data
+    const rawStylesMap = new Map<string, any>();
+    
+    for (const charStyle of charStylesArray) {
+      const self = charStyle['@_Self'];
+      if (self) {
+        rawStylesMap.set(self, charStyle);
+        const name = charStyle['@_Name'];
+        if (name && name !== '[None]') {
+          rawStylesMap.set(name, charStyle);
+        }
+      }
+    }
+    
+    // Second pass: Process each style with inheritance resolution
     for (const charStyle of charStylesArray) {
       const self = charStyle['@_Self'];
       const name = charStyle['@_Name'];
@@ -286,15 +304,34 @@ export function extractCharacterStyles(
       
       // Extract font properties - check both direct attributes and Properties
       // InDesign can put them in either location
-      const fontFamily = charStyle['@_AppliedFont'] || props['@_AppliedFont'] || props['@_FontFamily'] || '';
-      const fontSize = parseFloat(charStyle['@_PointSize'] || props['@_PointSize']) || 12;
+      let fontFamily = charStyle['@_AppliedFont'] || props['@_AppliedFont'] || props['@_FontFamily'] || '';
+      let fontSize = parseFloat(charStyle['@_PointSize'] || props['@_PointSize']) || 12;
+      let fontStyleName = (charStyle['@_FontStyle'] || props['@_FontStyle'] || '').toLowerCase();
       
+      // If no font defined, check BasedOn (inheritance)
       if (!fontFamily) {
-        console.warn(`[extractCharacterStyles] ⚠️ Style ${self} (${name}) has NO font family defined in InDesign`);
+        const basedOn = charStyle['@_BasedOn'];
+        if (basedOn && rawStylesMap.has(basedOn)) {
+          const parentStyle = rawStylesMap.get(basedOn);
+          const parentProps = parentStyle?.Properties || {};
+          fontFamily = parentStyle['@_AppliedFont'] || parentProps['@_AppliedFont'] || parentProps['@_FontFamily'] || '';
+          if (fontFamily) {
+            console.log(`[extractCharacterStyles] Style ${self} inherits font from ${basedOn}: ${fontFamily}`);
+          }
+          if (!fontSize || fontSize === 12) {
+            fontSize = parseFloat(parentStyle['@_PointSize'] || parentProps['@_PointSize']) || fontSize;
+          }
+          if (!fontStyleName) {
+            fontStyleName = (parentStyle['@_FontStyle'] || parentProps['@_FontStyle'] || '').toLowerCase();
+          }
+        }
       }
       
-      // Font style and weight from font style name - check both locations
-      const fontStyleName = (charStyle['@_FontStyle'] || props['@_FontStyle'] || '').toLowerCase();
+      if (!fontFamily) {
+        console.warn(`[extractCharacterStyles] ⚠️ Style ${self} (${name}) has NO font family (even after BasedOn resolution)`);
+      }
+      
+      // Font style and weight from font style name
       let fontWeight = 'normal';
       let fontStyle = 'normal';
       
@@ -375,6 +412,21 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
     
     const paraStylesArray = Array.isArray(rootParaStyles) ? rootParaStyles : [rootParaStyles];
     
+    // First pass: Create a temporary map with raw data
+    const rawParaStylesMap = new Map<string, any>();
+    
+    for (const paraStyle of paraStylesArray) {
+      const self = paraStyle['@_Self'];
+      if (self) {
+        rawParaStylesMap.set(self, paraStyle);
+        const name = paraStyle['@_Name'];
+        if (name && name !== '[None]') {
+          rawParaStylesMap.set(name, paraStyle);
+        }
+      }
+    }
+    
+    // Second pass: Process each style with inheritance resolution
     for (const paraStyle of paraStylesArray) {
       const self = paraStyle['@_Self'];
       const name = paraStyle['@_Name'];
@@ -446,9 +498,29 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       const textIndent = parseFloat(props['@_FirstLineIndent']) || 0;
       
       // Font properties (ParagraphStyle can have font properties when no CharacterStyle is used)
-      const fontFamily = paraStyle['@_AppliedFont'] || props['@_AppliedFont'] || undefined;
-      const fontSize = parseFloat(paraStyle['@_PointSize'] || props['@_PointSize']) || undefined;
-      const fontStyleName = (paraStyle['@_FontStyle'] || props['@_FontStyle'] || '').toLowerCase();
+      let fontFamily = paraStyle['@_AppliedFont'] || props['@_AppliedFont'] || undefined;
+      let fontSize = parseFloat(paraStyle['@_PointSize'] || props['@_PointSize']) || undefined;
+      let fontStyleName = (paraStyle['@_FontStyle'] || props['@_FontStyle'] || '').toLowerCase();
+      
+      // If no font defined, check BasedOn (inheritance)
+      if (!fontFamily) {
+        const basedOn = paraStyle['@_BasedOn'];
+        if (basedOn && rawParaStylesMap.has(basedOn)) {
+          const parentStyle = rawParaStylesMap.get(basedOn);
+          const parentProps = parentStyle?.Properties || {};
+          fontFamily = parentStyle['@_AppliedFont'] || parentProps['@_AppliedFont'] || undefined;
+          if (fontFamily) {
+            console.log(`[extractParagraphStyles] Style ${self} inherits font from ${basedOn}: ${fontFamily}`);
+          }
+          if (!fontSize) {
+            fontSize = parseFloat(parentStyle['@_PointSize'] || parentProps['@_PointSize']) || undefined;
+          }
+          if (!fontStyleName) {
+            fontStyleName = (parentStyle['@_FontStyle'] || parentProps['@_FontStyle'] || '').toLowerCase();
+          }
+        }
+      }
+      
       let fontWeight: string | undefined = undefined;
       let fontStyle: string | undefined = undefined;
       
@@ -463,6 +535,8 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       
       if (fontFamily) {
         console.log(`[extractParagraphStyles] Style ${self} (${name}) has font: ${fontFamily}`);
+      } else {
+        console.warn(`[extractParagraphStyles] ⚠️ Style ${self} (${name}) has NO font (even after BasedOn resolution)`);
       }
       
       paragraphStyles[self] = {
@@ -501,6 +575,7 @@ function extractStoryContent(storyData: any): {
   appliedCharStyle: string;
   appliedParaStyle: string;
   localParaProperties?: any;
+  inlineCharProperties?: any;
 } | null {
   try {
     const outerStory = storyData?.Story;
@@ -536,7 +611,8 @@ function extractStoryContent(storyData: any): {
       variables,
       appliedCharStyle: extracted.appliedCharStyle,
       appliedParaStyle: extracted.appliedParaStyle,
-      localParaProperties: extracted.localParaProperties
+      localParaProperties: extracted.localParaProperties,
+      inlineCharProperties: extracted.inlineCharProperties
     };
   } catch (e) {
     console.error('[extractStoryContent] Error:', e);
@@ -551,11 +627,18 @@ function extractTextFromParagraphRanges(
   paraRanges: any,
   frameId: string,
   frameName: string
-): { content: string; appliedCharStyle: string; appliedParaStyle: string; localParaProperties?: any } {
+): { 
+  content: string; 
+  appliedCharStyle: string; 
+  appliedParaStyle: string; 
+  localParaProperties?: any;
+  inlineCharProperties?: any;
+} {
   let fullContent = '';
   let appliedCharStyle = '';
   let appliedParaStyle = '';
   let localParaProperties: any = null;
+  let inlineCharProperties: any = null;
   
   if (!paraRanges) {
     return { content: '', appliedCharStyle: '', appliedParaStyle: '' };
@@ -594,6 +677,34 @@ function extractTextFromParagraphRanges(
       for (const charRange of charArray) {
         appliedCharStyle = charRange['@_AppliedCharacterStyle'] || appliedCharStyle;
         
+        // Extract inline character properties (direct on CharacterStyleRange)
+        if (!inlineCharProperties) {
+          inlineCharProperties = {};
+        }
+        
+        // Check for inline font properties
+        const props = charRange?.Properties || {};
+        const inlineFont = charRange['@_AppliedFont'] || props['@_AppliedFont'];
+        const inlineSize = charRange['@_PointSize'] || props['@_PointSize'];
+        const inlineFontStyle = charRange['@_FontStyle'] || props['@_FontStyle'];
+        
+        if (inlineFont && !inlineCharProperties.fontFamily) {
+          inlineCharProperties.fontFamily = inlineFont;
+          console.log(`[extractTextFromParagraphRanges] Found inline font for ${frameId}: ${inlineFont}`);
+        }
+        if (inlineSize && !inlineCharProperties.fontSize) {
+          inlineCharProperties.fontSize = parseFloat(inlineSize);
+        }
+        if (inlineFontStyle) {
+          const styleName = inlineFontStyle.toLowerCase();
+          if (styleName.includes('bold') || styleName.includes('black')) {
+            inlineCharProperties.fontWeight = 'bold';
+          }
+          if (styleName.includes('italic') || styleName.includes('oblique')) {
+            inlineCharProperties.fontStyle = 'italic';
+          }
+        }
+        
         // Get text content - try multiple properties
         const content = charRange?.Content || charRange?.['#text'] || '';
         if (content) {
@@ -615,7 +726,8 @@ function extractTextFromParagraphRanges(
     content: fullContent.trim(),
     appliedCharStyle,
     appliedParaStyle,
-    localParaProperties
+    localParaProperties,
+    inlineCharProperties
   };
 }
 
@@ -684,7 +796,8 @@ export function extractTextFrames(
           variables,
           appliedCharacterStyle: extracted.appliedCharStyle,
           appliedParagraphStyle: extracted.appliedParaStyle,
-          localParaProperties: extracted.localParaProperties
+          localParaProperties: extracted.localParaProperties,
+          inlineCharProperties: extracted.inlineCharProperties
         });
         
         console.log(`[idml-parser] Extracted text from TextFrame ${frameId}: "${extracted.content.substring(0, 50)}..."`);
@@ -719,7 +832,8 @@ export function extractTextFrames(
           variables,
           appliedCharacterStyle: extracted.appliedCharStyle,
           appliedParagraphStyle: extracted.appliedParaStyle,
-          localParaProperties: extracted.localParaProperties
+          localParaProperties: extracted.localParaProperties,
+          inlineCharProperties: extracted.inlineCharProperties
         });
         
         console.log(`[idml-parser] Extracted text from Story directly: "${extracted.content.substring(0, 50)}..."`);
@@ -811,6 +925,7 @@ function extractTextFramesFromSpread(
     appliedCharacterStyle?: string;
     appliedParagraphStyle?: string;
     localParaProperties?: any;
+    inlineCharProperties?: any;
   }>
 ): TextFrameData[] {
   const textFrames: TextFrameData[] = [];
@@ -904,6 +1019,7 @@ function extractTextFramesFromSpread(
         appliedCharacterStyle: storyData.appliedCharacterStyle,
         appliedParagraphStyle: storyData.appliedParagraphStyle,
         localParaProperties: storyData.localParaProperties,
+        inlineCharProperties: storyData.inlineCharProperties,
         position: { x, y, width, height },
         layoutOrder,
         parentStory

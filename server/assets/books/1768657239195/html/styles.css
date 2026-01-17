@@ -31,6 +31,13 @@ span.CharOverride-2 {
 	font-style:normal;
 	font-weight:normal;
 }
+span.CharOverride-3 {
+	color:#000000;
+	font-family:"Minion Pro", serif;
+	font-size:500px;
+	font-style:normal;
+	font-weight:normal;
+}
 #_idContainer000 {
 	-webkit-transform:translate(0.000px,0.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
 	-webkit-transform-origin:0% 0%;
@@ -97,14 +104,14 @@ span.CharOverride-2 {
 	transform-origin:0% 0%;
 	width:1258.58px;
 }
-#_idContainer007, #_idContainer013 {
-	-webkit-transform:translate(194.645px,33.659px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+#_idContainer007 {
+	-webkit-transform:translate(194.645px,29.729px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
 	-webkit-transform-origin:0% 0%;
-	height:105.29px;
+	height:109.22px;
 	left:0px;
 	position:absolute;
 	top:0px;
-	transform:translate(194.645px,33.659px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	transform:translate(194.645px,29.729px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
 	transform-origin:0% 0%;
 	width:326.93px;
 }
@@ -151,6 +158,17 @@ span.CharOverride-2 {
 	transform:translate(-629.292px,0.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
 	transform-origin:0% 0%;
 	width:1258.58px;
+}
+#_idContainer013 {
+	-webkit-transform:translate(194.645px,34.969px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	-webkit-transform-origin:0% 0%;
+	height:103.98px;
+	left:0px;
+	position:absolute;
+	top:0px;
+	transform:translate(194.645px,34.969px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	transform-origin:0% 0%;
+	width:326.93px;
 }
 #_idContainer017 {
 	-webkit-transform:translate(266.362px,488.998px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);

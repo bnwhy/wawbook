@@ -8,6 +8,7 @@ import { mergeEpubWithIdml } from "./idmlMerger";
 import { cleanCssSyntax, detectFontIssues } from "./utils/cssHelpers";
 import { parseImageFilename } from "./utils/filenameParser";
 import { buildWizardConfigFromCharacteristics } from "./wizardConfigBuilder";
+import { parseFontFileName } from "./utils/fontNameParser";
 import { 
   getContentTypeFromExt, 
   getFontContentType, 
@@ -1062,7 +1063,7 @@ export function registerObjectStorageRoutes(app: Express): void {
    */
   app.post("/api/books/import-storyboard", async (req, res) => {
     try {
-      const { epub, idml, bookId } = req.body;
+      const { epub, idml, bookId, fonts } = req.body;
 
       if (!epub || !idml || !bookId) {
         return res.status(400).json({ 
@@ -1074,6 +1075,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       console.log(`[import-storyboard] Starting import for book ${bookId}`);
       console.log(`[import-storyboard] EPUB size: ${Buffer.from(epub, 'base64').length} bytes`);
       console.log(`[import-storyboard] IDML size: ${Buffer.from(idml, 'base64').length} bytes`);
+      console.log(`[import-storyboard] Custom fonts: ${fonts && Array.isArray(fonts) ? fonts.length : 0} file(s)`);
       console.log(`[import-storyboard] ========================================`);
 
       // 1. Extract EPUB (images + text positions)
@@ -1090,6 +1092,46 @@ export function registerObjectStorageRoutes(app: Express): void {
       console.log(`[import-storyboard]   - Text positions: ${epubResult.textPositions.length}`);
       console.log(`[import-storyboard]   - Images: ${epubResult.imageElements.length}`);
       console.log(`[import-storyboard]   - Pages: ${epubResult.pages.length}`);
+
+      // 1.5. Upload custom fonts if provided
+      const uploadedFonts: Record<string, string> = {};
+      if (fonts && Array.isArray(fonts) && fonts.length > 0) {
+        console.log(`[import-storyboard] Uploading ${fonts.length} custom fonts...`);
+        
+        const publicPaths = objectStorageService.getPublicObjectSearchPaths();
+        if (publicPaths.length > 0) {
+          const publicPath = publicPaths[0];
+          const { bucketName, objectName: basePath } = parseObjectPathSimple(publicPath);
+          const bucket = objectStorageClient.bucket(bucketName);
+          
+          for (const font of fonts) {
+            try {
+              const fontBuffer = Buffer.from(font.data, 'base64');
+              const ext = font.name.split('.').pop()?.toLowerCase() || 'ttf';
+              const fontId = randomUUID().substring(0, 8);
+              const storageName = `${bookId}_${fontId}_${font.name}`;
+              const objectName = basePath ? `${basePath}/fonts/${storageName}` : `fonts/${storageName}`;
+              
+              const file = bucket.file(objectName);
+              const contentType = getFontContentType(ext);
+              
+              await file.save(fontBuffer, {
+                contentType,
+                metadata: { cacheControl: 'public, max-age=31536000' },
+              });
+              
+              const objectPath = `/objects/${bucketName}/${objectName}`;
+              uploadedFonts[font.name] = objectPath;
+              
+              console.log(`[import-storyboard] ✓ Font uploaded: ${font.name}`);
+            } catch (fontError) {
+              console.error(`[import-storyboard] ⚠️ Failed to upload font ${font.name}:`, fontError);
+            }
+          }
+          
+          console.log(`[import-storyboard] ✓ Uploaded ${Object.keys(uploadedFonts).length}/${fonts.length} fonts`);
+        }
+      }
 
       // 2. Parse IDML (texts + styles)
       console.log(`[import-storyboard] Step 2: Parsing IDML...`);
@@ -1124,13 +1166,46 @@ export function registerObjectStorageRoutes(app: Express): void {
         console.error(`[import-storyboard]   This should not happen. Check merge logic.`);
       }
 
-      // 4. Build complete ContentConfiguration
+      // 4. Inject uploaded fonts into CSS
+      let finalCssContent = epubResult.cssContent || '';
+      if (Object.keys(uploadedFonts).length > 0) {
+        console.log(`[import-storyboard] Injecting ${Object.keys(uploadedFonts).length} custom fonts into CSS...`);
+        
+        const fontFaceDeclarations: string[] = [];
+        for (const [fontName, fontUrl] of Object.entries(uploadedFonts)) {
+          const parsed = parseFontFileName(fontName);
+          
+          const ext = fontName.split('.').pop()?.toLowerCase() || 'ttf';
+          const formatMap: Record<string, string> = {
+            'ttf': 'truetype',
+            'otf': 'opentype',
+            'woff': 'woff',
+            'woff2': 'woff2',
+            'eot': 'embedded-opentype'
+          };
+          const format = formatMap[ext] || 'truetype';
+          
+          const fontFaceRule = `
+@font-face {
+  font-family: "${parsed.fontFamily}";
+  src: url('${fontUrl}') format('${format}');
+  font-weight: ${parsed.fontWeight};
+  font-style: ${parsed.fontStyle};
+}`;
+          fontFaceDeclarations.push(fontFaceRule);
+        }
+        
+        finalCssContent = fontFaceDeclarations.join('\n') + '\n' + finalCssContent;
+        console.log(`[import-storyboard] ✓ Injected ${fontFaceDeclarations.length} @font-face declarations`);
+      }
+
+      // 5. Build complete ContentConfiguration
       const contentConfig = {
         pages: epubResult.pages,
         texts: mergedTexts,
         images: [], // Legacy format, not used with imageElements
         imageElements: epubResult.imageElements,
-        cssContent: epubResult.cssContent,
+        cssContent: finalCssContent,
         pageImages: [] // Legacy format
       };
 
@@ -1170,11 +1245,13 @@ export function registerObjectStorageRoutes(app: Express): void {
         contentConfig,
         wizardConfig: epubResult.generatedWizardTabs,
         fontWarnings: epubResult.fontWarnings,
+        uploadedFonts,
         stats: {
           pages: epubResult.pages.length,
           texts: mergedTexts.length,
           images: epubResult.imageElements.length,
-          fonts: Object.keys(epubResult.fonts).length
+          fonts: Object.keys(epubResult.fonts).length,
+          uploadedCustomFonts: Object.keys(uploadedFonts).length
         },
         debug: debugInfo
       });

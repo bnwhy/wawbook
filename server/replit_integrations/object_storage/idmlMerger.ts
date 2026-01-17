@@ -49,6 +49,13 @@ export function mergeEpubWithIdml(
   
   console.log(`[merge] ==================== MERGE EPUB + IDML ====================`);
   console.log(`[merge] EPUB positions: ${epubTextPositions.length}, IDML frames: ${idmlData.textFrames.length}`);
+  console.log(`[merge] Character styles: ${Object.keys(idmlData.characterStyles).length}`);
+  console.log(`[merge] Paragraph styles: ${Object.keys(idmlData.paragraphStyles).length}`);
+  console.log(`[merge] Character styles IDs:`, Object.keys(idmlData.characterStyles).slice(0, 5));
+  console.log(`[merge] Character styles details:`, Object.keys(idmlData.characterStyles).map(id => ({
+    id,
+    name: idmlData.characterStyles[id]?.fontFamily || 'NO FONT'
+  })));
   
   // Group EPUB positions by page
   const epubByPage: Record<number, typeof epubTextPositions> = {};
@@ -159,13 +166,44 @@ function createMergedText(
   const charStyleId = idmlFrame.appliedCharacterStyle;
   const paraStyleId = idmlFrame.appliedParagraphStyle;
 
+  console.log(`[createMergedText] Text: "${idmlFrame.content.substring(0, 30)}"`);
+  console.log(`[createMergedText]   CharStyleId: ${charStyleId || 'NONE'}`);
+  console.log(`[createMergedText]   ParaStyleId: ${paraStyleId || 'NONE'}`);
+
   const charStyle = charStyleId && idmlData.characterStyles[charStyleId]
     ? idmlData.characterStyles[charStyleId]
     : {};
   
+  if (charStyleId && !idmlData.characterStyles[charStyleId]) {
+    console.warn(`[createMergedText] ⚠️ CharacterStyle "${charStyleId}" NOT FOUND in styles dictionary`);
+    console.warn(`[createMergedText]   Available styles: ${Object.keys(idmlData.characterStyles).join(', ')}`);
+  }
+  
   const paraStyle = paraStyleId && idmlData.paragraphStyles[paraStyleId]
     ? idmlData.paragraphStyles[paraStyleId]
     : {};
+  
+  if (paraStyleId && !idmlData.paragraphStyles[paraStyleId]) {
+    console.warn(`[createMergedText] ⚠️ ParagraphStyle "${paraStyleId}" NOT FOUND in styles dictionary`);
+  }
+  
+  console.log(`[createMergedText]   Found CharStyle:`, charStyle);
+  console.log(`[createMergedText]   CharStyle fontFamily: ${charStyle.fontFamily || 'UNDEFINED'}`);
+  
+  // If no CharacterStyle or no font in CharacterStyle, use ParagraphStyle font properties
+  if (!charStyle.fontFamily && paraStyle.fontFamily) {
+    console.log(`[createMergedText]   Using font from ParagraphStyle: ${paraStyle.fontFamily}`);
+    charStyle.fontFamily = paraStyle.fontFamily;
+    if (paraStyle.fontSize && !charStyle.fontSize) {
+      charStyle.fontSize = paraStyle.fontSize;
+    }
+    if (paraStyle.fontWeight) {
+      charStyle.fontWeight = paraStyle.fontWeight;
+    }
+    if (paraStyle.fontStyle) {
+      charStyle.fontStyle = paraStyle.fontStyle;
+    }
+  }
   
   // Extrait les propriétés de paragraphe locales (surcharges)
   let localParaStyle: any = {};
@@ -273,7 +311,7 @@ function buildCompleteStyle(
 ): Record<string, any> {
   const completeStyle: Record<string, any> = {
     // Styles de caractère
-    fontFamily: charStyle.fontFamily || 'serif',
+    fontFamily: charStyle.fontFamily || undefined,
     fontSize: charStyle.fontSize ? `${charStyle.fontSize}pt` : '12pt',
     fontWeight: charStyle.fontWeight || 'normal',
     fontStyle: charStyle.fontStyle || 'normal',

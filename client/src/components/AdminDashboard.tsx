@@ -218,6 +218,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isImportingStoryboard, setIsImportingStoryboard] = useState(false);
   const [epubFile, setEpubFile] = useState<File | null>(null);
   const [idmlFile, setIdmlFile] = useState<File | null>(null);
+  const [fontFiles, setFontFiles] = useState<File[]>([]);
 
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -423,12 +424,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const epubBase64 = await fileToBase64(epubFile);
       const idmlBase64 = await fileToBase64(idmlFile);
       
+      // Convert font files to base64 if any
+      const fontsData: Array<{ name: string; data: string }> = [];
+      if (fontFiles.length > 0) {
+        for (const fontFile of fontFiles) {
+          const fontBase64 = await fileToBase64(fontFile);
+          fontsData.push({
+            name: fontFile.name,
+            data: fontBase64,
+          });
+        }
+      }
+      
       const response = await fetch('/api/books/import-storyboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           epub: epubBase64,
           idml: idmlBase64,
+          fonts: fontsData,
           bookId: selectedBook.id,
         }),
       });
@@ -467,6 +481,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             console.log(`  - textAlign: ${text.style?.textAlign || 'DEFAULT'}`);
             console.log(`  - fontSize: ${text.style?.fontSize || 'DEFAULT'}`);
             console.log(`  - fontWeight: ${text.style?.fontWeight || 'DEFAULT'}`);
+            console.log(`  - fontFamily: ${text.style?.fontFamily || 'UNDEFINED ⚠️'}`);
             console.log(`  - Full style:`, text.style);
           });
           console.log('\n=== STYLES DISPONIBLES ===');
@@ -498,6 +513,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setShowIdmlImporter(false);
       setEpubFile(null);
       setIdmlFile(null);
+      setFontFiles([]);
+      
+      // Show custom fonts upload status
+      if (result.uploadedFonts && Object.keys(result.uploadedFonts).length > 0) {
+        toast.success(`${Object.keys(result.uploadedFonts).length} police(s) uploadée(s)`);
+      }
       
       // Show warnings if any
       if (result.fontWarnings && result.fontWarnings.length > 0) {
@@ -6108,9 +6129,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                 "{text.content?.length > 80 ? text.content.substring(0, 80) + '...' : text.content || '(vide)'}"
                                                                             </div>
                                                                             <div className="flex flex-wrap gap-2 mb-3">
-                                                                                {text.style?.fontFamily && (
+                                                                                {text.style?.fontFamily ? (
                                                                                     <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-medium" title="Police">
                                                                                         {text.style.fontFamily.split(',')[0].replace(/["']/g, '')}
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium" title="Police non définie dans l'IDML">
+                                                                                        ⚠️ Police non définie
                                                                                     </span>
                                                                                 )}
                                                                                 {text.style?.fontSize && (
@@ -6385,6 +6410,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           setShowIdmlImporter(false);
                           setEpubFile(null);
                           setIdmlFile(null);
+                          setFontFiles([]);
                         }}
                         className="p-1 hover:bg-white rounded-lg transition-colors"
                       >
@@ -6467,6 +6493,52 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   <Upload size={24} className="text-slate-400" />
                                   <span className="text-sm text-slate-600">Cliquez pour sélectionner un fichier .idml</span>
                                   <span className="text-xs text-slate-400">Fichier → Enregistrer sous → IDML dans InDesign</span>
+                                </>
+                              )}
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Font Files Upload */}
+                        <div>
+                          <label className="text-sm font-medium text-slate-700 block mb-2">
+                            3. Polices (optionnel)
+                          </label>
+                          <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                            <input
+                              type="file"
+                              accept=".ttf,.otf,.woff,.woff2"
+                              multiple
+                              onChange={(e) => setFontFiles(Array.from(e.target.files || []))}
+                              className="hidden"
+                              id="font-files-input"
+                            />
+                            <label 
+                              htmlFor="font-files-input"
+                              className="cursor-pointer flex flex-col items-center gap-2"
+                            >
+                              {fontFiles.length > 0 ? (
+                                <div className="w-full space-y-1">
+                                  <div className="flex items-center gap-2 text-green-600 mb-2">
+                                    <FileCode size={20} />
+                                    <span className="text-sm font-medium">{fontFiles.length} fichier(s)</span>
+                                  </div>
+                                  <div className="max-h-32 overflow-y-auto space-y-1">
+                                    {fontFiles.map((file, idx) => (
+                                      <div key={idx} className="text-xs text-slate-600 flex items-center justify-between bg-slate-50 px-2 py-1 rounded">
+                                        <span className="truncate">{file.name}</span>
+                                        <span className="text-slate-400 ml-2">
+                                          {(file.size / 1024).toFixed(0)} KB
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <Upload size={24} className="text-slate-400" />
+                                  <span className="text-sm text-slate-600">Polices du package InDesign</span>
+                                  <span className="text-xs text-slate-400">.ttf, .otf, .woff, .woff2</span>
                                 </>
                               )}
                             </label>

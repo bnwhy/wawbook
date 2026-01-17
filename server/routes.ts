@@ -437,6 +437,7 @@ export async function registerRoutes(
             const textDecoration = style.textDecoration || 'none';
             const lineHeight = style.lineHeight || '1.2';
             const textAlign = style.textAlign || 'left';
+            const textAlignLast = style.textAlignLast || undefined;
             const textIndent = style.textIndent || '0';
             const marginTop = style.marginTop || '0';
             const marginBottom = style.marginBottom || '0';
@@ -445,16 +446,19 @@ export async function registerRoutes(
             // Trim all whitespace to ensure clean alignment
             content = content.trim();
             
-            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize} align=${textAlign} weight=${fontWeight} style=${fontStyle} indent=${textIndent}`);
+            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize} align=${textAlign} alignLast=${textAlignLast} weight=${fontWeight} style=${fontStyle} indent=${textIndent}`);
             console.log(`[render-pages] Text position: x=${pos.x} y=${pos.y} width=${pos.width} height=${pos.height}`);
             console.log(`[render-pages] Text style object:`, JSON.stringify(style).substring(0, 200));
             
             // Escape HTML and convert line breaks
             const escapedContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
             
+            // Build the text-align-last CSS if defined
+            const textAlignLastCss = textAlignLast ? `text-align-last:${textAlignLast};` : '';
+            
             // Use a single div with proper text styling
             // Remove display:inline-block which can cause alignment issues
-            const containerStyle = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;box-sizing:border-box;overflow:hidden;font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};text-align:${textAlign};letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};text-indent:${textIndent};padding-top:${marginTop};padding-bottom:${marginBottom};line-height:${lineHeight};margin:0;padding-left:0;padding-right:0;transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});transform-origin:0 0;`;
+            const containerStyle = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;box-sizing:border-box;overflow:hidden;font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};text-align:${textAlign};${textAlignLastCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};text-indent:${textIndent};padding-top:${marginTop};padding-bottom:${marginBottom};line-height:${lineHeight};margin:0;padding-left:0;padding-right:0;transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});transform-origin:0 0;`;
             
             return `<div style="${containerStyle}">${escapedContent}</div>`;
           }).join('\n');

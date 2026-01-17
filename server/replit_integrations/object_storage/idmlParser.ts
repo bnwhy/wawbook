@@ -26,6 +26,11 @@ interface ParagraphStyleProperties {
   marginTop: number;
   marginBottom: number;
   textIndent: number;
+  // Font properties (when no CharacterStyle is applied)
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string;
+  fontStyle?: string;
 }
 
 interface TextFrameData {
@@ -99,6 +104,29 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
       console.log('[idml-parser] Styles.xml found, extracting styles...');
       const stylesXml = await stylesFile.async('string');
       const stylesData = parser.parse(stylesXml);
+      
+      // DEBUG: Log the actual structure to understand the XML
+      console.log('[idml-parser] Styles.xml structure:');
+      console.log('[idml-parser]   Root keys:', Object.keys(stylesData));
+      
+      // Try different possible paths
+      const possibleRoots = [
+        stylesData,
+        stylesData?.idPkg_Styles,
+        stylesData?.Styles
+      ];
+      
+      for (const root of possibleRoots) {
+        if (root) {
+          console.log('[idml-parser]   Checking root with keys:', Object.keys(root));
+          if (root.RootCharacterStyleGroup) {
+            console.log('[idml-parser]   ✓ Found RootCharacterStyleGroup in this root');
+          }
+          if (root.RootParagraphStyleGroup) {
+            console.log('[idml-parser]   ✓ Found RootParagraphStyleGroup in this root');
+          }
+        }
+      }
 
       result.characterStyles = extractCharacterStyles(stylesData, result.colors);
       result.paragraphStyles = extractParagraphStyles(stylesData);
@@ -237,8 +265,14 @@ export function extractCharacterStyles(
   const characterStyles: Record<string, CharacterStyleProperties> = {};
   
   try {
-    const rootCharStyles = stylesData?.RootCharacterStyleGroup?.CharacterStyle;
-    if (!rootCharStyles) return characterStyles;
+    // Try different possible root paths (XML parser transforms idPkg:Styles -> idPkg_Styles)
+    const stylesRoot = stylesData?.idPkg_Styles || stylesData?.Styles || stylesData;
+    
+    const rootCharStyles = stylesRoot?.RootCharacterStyleGroup?.CharacterStyle;
+    if (!rootCharStyles) {
+      console.warn('[extractCharacterStyles] No CharacterStyle found. Checked paths: stylesData.RootCharacterStyleGroup, stylesData.idPkg_Styles.RootCharacterStyleGroup, stylesData.Styles.RootCharacterStyleGroup');
+      return characterStyles;
+    }
     
     const charStylesArray = Array.isArray(rootCharStyles) ? rootCharStyles : [rootCharStyles];
     
@@ -250,12 +284,17 @@ export function extractCharacterStyles(
       
       const props = charStyle?.Properties || {};
       
-      // Extract font properties
-      const fontFamily = props['@_AppliedFont'] || props['@_FontFamily'] || 'serif';
-      const fontSize = parseFloat(props['@_PointSize']) || 12;
+      // Extract font properties - check both direct attributes and Properties
+      // InDesign can put them in either location
+      const fontFamily = charStyle['@_AppliedFont'] || props['@_AppliedFont'] || props['@_FontFamily'] || '';
+      const fontSize = parseFloat(charStyle['@_PointSize'] || props['@_PointSize']) || 12;
       
-      // Font style and weight from font style name
-      const fontStyleName = (props['@_FontStyle'] || '').toLowerCase();
+      if (!fontFamily) {
+        console.warn(`[extractCharacterStyles] ⚠️ Style ${self} (${name}) has NO font family defined in InDesign`);
+      }
+      
+      // Font style and weight from font style name - check both locations
+      const fontStyleName = (charStyle['@_FontStyle'] || props['@_FontStyle'] || '').toLowerCase();
       let fontWeight = 'normal';
       let fontStyle = 'normal';
       
@@ -266,28 +305,28 @@ export function extractCharacterStyles(
         fontStyle = 'italic';
       }
       
-      // Color
-      const fillColorRef = props['@_FillColor'];
+      // Color - check both locations
+      const fillColorRef = charStyle['@_FillColor'] || props['@_FillColor'];
       const color = fillColorRef && colors[fillColorRef] ? colors[fillColorRef] : '#000000';
       
-      // Letter spacing (tracking in 1/1000 em)
-      const tracking = parseFloat(props['@_Tracking']) || 0;
+      // Letter spacing (tracking in 1/1000 em) - check both locations
+      const tracking = parseFloat(charStyle['@_Tracking'] || props['@_Tracking']) || 0;
       const letterSpacing = tracking / 1000;
       
-      // Baseline shift
-      const baselineShift = parseFloat(props['@_BaselineShift']) || 0;
+      // Baseline shift - check both locations
+      const baselineShift = parseFloat(charStyle['@_BaselineShift'] || props['@_BaselineShift']) || 0;
       
-      // Text decoration
+      // Text decoration - check both locations
       let textDecoration = 'none';
-      if (props['@_Underline'] === 'true') {
+      if (charStyle['@_Underline'] === 'true' || props['@_Underline'] === 'true') {
         textDecoration = 'underline';
-      } else if (props['@_StrikeThru'] === 'true') {
+      } else if (charStyle['@_StrikeThru'] === 'true' || props['@_StrikeThru'] === 'true') {
         textDecoration = 'line-through';
       }
       
-      // Text transform
+      // Text transform - check both locations
       let textTransform = 'none';
-      const capitalization = props['@_Capitalization'];
+      const capitalization = charStyle['@_Capitalization'] || props['@_Capitalization'];
       if (capitalization === 'AllCaps') {
         textTransform = 'uppercase';
       } else if (capitalization === 'SmallCaps') {
@@ -325,11 +364,12 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
   const paragraphStyles: Record<string, ParagraphStyleProperties> = {};
 
   try {
-    console.log('[extractParagraphStyles] stylesData keys:', Object.keys(stylesData || {}));
-    const rootParaStyles = stylesData?.RootParagraphStyleGroup?.ParagraphStyle;
-    console.log('[extractParagraphStyles] rootParaStyles found:', !!rootParaStyles);
+    // Try different possible root paths (XML parser transforms idPkg:Styles -> idPkg_Styles)
+    const stylesRoot = stylesData?.idPkg_Styles || stylesData?.Styles || stylesData;
+    
+    const rootParaStyles = stylesRoot?.RootParagraphStyleGroup?.ParagraphStyle;
     if (!rootParaStyles) {
-      console.warn('[extractParagraphStyles] ⚠️ No RootParagraphStyleGroup/ParagraphStyle found!');
+      console.warn('[extractParagraphStyles] No ParagraphStyle found. Checked paths: stylesData.RootParagraphStyleGroup, stylesData.idPkg_Styles.RootParagraphStyleGroup, stylesData.Styles.RootParagraphStyleGroup');
       return paragraphStyles;
     }
     
@@ -405,6 +445,26 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       const marginBottom = parseFloat(props['@_SpaceAfter']) || 0;
       const textIndent = parseFloat(props['@_FirstLineIndent']) || 0;
       
+      // Font properties (ParagraphStyle can have font properties when no CharacterStyle is used)
+      const fontFamily = paraStyle['@_AppliedFont'] || props['@_AppliedFont'] || undefined;
+      const fontSize = parseFloat(paraStyle['@_PointSize'] || props['@_PointSize']) || undefined;
+      const fontStyleName = (paraStyle['@_FontStyle'] || props['@_FontStyle'] || '').toLowerCase();
+      let fontWeight: string | undefined = undefined;
+      let fontStyle: string | undefined = undefined;
+      
+      if (fontStyleName) {
+        if (fontStyleName.includes('bold') || fontStyleName.includes('black')) {
+          fontWeight = 'bold';
+        }
+        if (fontStyleName.includes('italic') || fontStyleName.includes('oblique')) {
+          fontStyle = 'italic';
+        }
+      }
+      
+      if (fontFamily) {
+        console.log(`[extractParagraphStyles] Style ${self} (${name}) has font: ${fontFamily}`);
+      }
+      
       paragraphStyles[self] = {
         textAlign,
         textAlignLast,
@@ -412,7 +472,11 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
         whiteSpace,
         marginTop,
         marginBottom,
-        textIndent
+        textIndent,
+        fontFamily,
+        fontSize,
+        fontWeight,
+        fontStyle
       };
       
       // Also store by name

@@ -410,17 +410,13 @@ export const generateBookPages = async (
       ) || [];
       
       for (const layer of textLayers) {
-          const text = resolveText(layer.content);
+          let text = resolveText(layer.content);
           
           console.log(`[generateBookPages] Rendering text layer:`, {
             content: text.substring(0, 50),
             textAlign: layer.style?.textAlign,
             textAlignLast: layer.style?.textAlignLast,
             idmlJustification: layer.style?.idmlJustification,
-            fontSize: layer.style?.fontSize,
-            fontWeight: layer.style?.fontWeight,
-            fontStyle: layer.style?.fontStyle,
-            letterSpacing: layer.style?.letterSpacing,
             allStyles: layer.style
           });
           
@@ -428,132 +424,219 @@ export const generateBookPages = async (
           const x = (layer.position.x || 0) / 100 * width;
           const y = (layer.position.y || 0) / 100 * height;
           const w = (layer.position.width || 30) / 100 * width;
+          const h = (layer.position.height || 30) / 100 * height;
           
-          ctx.translate(x, y); // Text usually top-left origin for flow, but rotation needs center?
-          // Let's stick to top-left for text unless we calculate center
+          ctx.translate(x, y);
           if (layer.position.rotation) {
-             // Rotate around top-left
              ctx.rotate(layer.position.rotation * Math.PI / 180);
           }
           
-          // Style mapping
-          const fontSize = parseFloat((layer.style?.fontSize as string) || '16') * 4; // Scale for canvas
+          // Extract style properties
+          const fontSize = parseFloat((layer.style?.fontSize as string) || '16') * 4;
           const fontFamily = (layer.style?.fontFamily as string) || 'serif';
           const fontWeight = (layer.style?.fontWeight as string) || 'normal';
-          const fontStyle = (layer.style?.fontStyle as string) || 'normal';
+          const fontStyle = (layer.style?.fontStyle as string) || 'normal'; // italic/oblique
           const color = (layer.style?.color as string) || '#000000';
           const textTransform = (layer.style?.textTransform as string) || 'none';
-          const textDecoration = (layer.style?.textDecoration as string) || 'none';
-          const letterSpacingStr = (layer.style?.letterSpacing as string) || '0em';
-          const letterSpacing = parseFloat(letterSpacingStr) * fontSize;
-          
           const canvasAlign = mapTextAlignToCanvas(
             layer.style?.textAlign as string,
             layer.style?.textAlignLast as string,
             layer.style?.idmlJustification as string
           );
           
+          // Parse lineHeight from style (ex: "1.2" or "14.4pt")
+          let lineHeightMultiplier = 1.2; // default
+          if (layer.style?.lineHeight) {
+            const lh = layer.style.lineHeight as string;
+            if (lh.endsWith('pt')) {
+              // Absolute lineHeight in points
+              const lhPt = parseFloat(lh);
+              const fontSizePt = parseFloat((layer.style?.fontSize as string) || '12');
+              if (!isNaN(lhPt) && !isNaN(fontSizePt) && fontSizePt > 0) {
+                lineHeightMultiplier = lhPt / fontSizePt;
+              }
+            } else {
+              // Relative lineHeight (unitless)
+              const lhValue = parseFloat(lh);
+              if (!isNaN(lhValue) && lhValue > 0) {
+                lineHeightMultiplier = lhValue;
+              }
+            }
+          }
+          const lineHeight = fontSize * lineHeightMultiplier;
+          
+          // Parse textIndent (ex: "12pt" or "0")
+          let textIndent = 0;
+          if (layer.style?.textIndent) {
+            const ti = layer.style.textIndent as string;
+            if (ti.endsWith('pt')) {
+              textIndent = parseFloat(ti) * 4; // Scale for canvas
+            } else {
+              textIndent = parseFloat(ti) * 4;
+            }
+          }
+          
+          // Parse letterSpacing (ex: "0.05em" or "normal")
+          let letterSpacing = 0;
+          if (layer.style?.letterSpacing && layer.style.letterSpacing !== 'normal') {
+            const ls = layer.style.letterSpacing as string;
+            if (ls.endsWith('em')) {
+              letterSpacing = parseFloat(ls) * fontSize;
+            } else if (ls.endsWith('px')) {
+              letterSpacing = parseFloat(ls);
+            }
+          }
+          
+          // Apply text transform
+          if (textTransform === 'uppercase') {
+            text = text.toUpperCase();
+          } else if (textTransform === 'lowercase') {
+            text = text.toLowerCase();
+          }
+          
+          // Configure canvas context
           ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
           ctx.fillStyle = color;
           ctx.textAlign = canvasAlign;
           ctx.textBaseline = 'top';
           
-          console.log(`[Render] Text "${text.substring(0, 30)}..." - Canvas align: ${canvasAlign}, xPos for right: ${w}, letterSpacing: ${letterSpacing}`);
-          
-          // Apply text transform
-          let transformedText = text;
-          if (textTransform === 'uppercase') {
-            transformedText = text.toUpperCase();
-          } else if (textTransform === 'lowercase') {
-            transformedText = text.toLowerCase();
+          // Apply baseline shift if present (approximation via translate)
+          let baselineShift = 0;
+          if (layer.style?.baselineShift) {
+            const bs = layer.style.baselineShift as string;
+            if (bs.endsWith('pt')) {
+              baselineShift = -parseFloat(bs) * 4; // Negative because Canvas Y increases downward
+            }
           }
           
-          // Simple wrapping
-          const lines = [];
-          const paragraphs = transformedText.split('\n');
+          console.log(`[Render] Text "${text.substring(0, 30)}..." - align: ${canvasAlign}, lineHeight: ${lineHeightMultiplier.toFixed(2)}, letterSpacing: ${letterSpacing.toFixed(2)}px, textIndent: ${textIndent.toFixed(2)}px`);
           
-          for (const para of paragraphs) {
+          // Word wrapping with paragraph support
+          const lines: Array<{text: string, isFirstLine: boolean}> = [];
+          const paragraphs = text.split('\n');
+          
+          for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+              const para = paragraphs[pIdx];
               const paraWords = para.split(' ');
               let line = '';
+              let isFirstLineOfPara = true;
+              
               for (let n = 0; n < paraWords.length; n++) {
                   const testLine = line + paraWords[n] + ' ';
+                  // Measure with letter spacing approximation
                   const metrics = ctx.measureText(testLine);
-                  const testWidth = metrics.width + (testLine.length - 1) * letterSpacing;
-                  if (testWidth > w && n > 0) {
-                      lines.push(line);
+                  const effectiveWidth = metrics.width + (letterSpacing * testLine.length);
+                  const maxWidth = isFirstLineOfPara ? w - textIndent : w;
+                  
+                  if (effectiveWidth > maxWidth && n > 0) {
+                      lines.push({ text: line, isFirstLine: isFirstLineOfPara });
                       line = paraWords[n] + ' ';
+                      isFirstLineOfPara = false;
                   } else {
                       line = testLine;
                   }
               }
-              lines.push(line);
+              lines.push({ text: line, isFirstLine: isFirstLineOfPara });
           }
           
-          const lineHeightMultiplier = parseFloat((layer.style?.lineHeight as string) || '1.2');
-          const lineHeight = fontSize * lineHeightMultiplier;
+          // Calculate margin top offset
+          let marginTopOffset = 0;
+          if (layer.style?.marginTop) {
+            const mt = layer.style.marginTop as string;
+            if (mt.endsWith('pt')) {
+              marginTopOffset = parseFloat(mt) * 4;
+            }
+          }
           
-          lines.forEach((l, idx) => {
-              let xPos = 0;
+          // Draw lines with proper positioning and decorations
+          lines.forEach((lineObj, idx) => {
+            let lineText = lineObj.text;
+            if (!lineText.trim()) return; // Skip empty lines
+            
+            // Trim trailing spaces for proper alignment (especially for right/center)
+            // But keep leading spaces for left alignment
+            if (canvasAlign === 'right' || canvasAlign === 'center') {
+              lineText = lineText.trimEnd();
+            }
+            
+            let xPos = 0;
+            const yPos = idx * lineHeight + marginTopOffset + baselineShift;
+            
+            // Apply text indent to first line
+            const indent = lineObj.isFirstLine ? textIndent : 0;
+            
+            if (canvasAlign === 'center') {
+              xPos = w / 2;
+            } else if (canvasAlign === 'right') {
+              // Pour l'alignement à droite, l'indent réduit la position de droite
+              xPos = w - indent;
+            } else { // left or start
+              xPos = indent;
+            }
+            
+            // Draw text with letter spacing
+            if (letterSpacing !== 0) {
+              // Manual letter spacing - need to draw character by character
+              const savedAlign = ctx.textAlign;
+              ctx.textAlign = 'left'; // Force left alignment for character-by-character drawing
+              
+              let currentX = xPos;
+              const totalWidth = ctx.measureText(lineText).width + (letterSpacing * lineText.length);
+              
               if (canvasAlign === 'center') {
-                  xPos = w / 2;
+                currentX = xPos - totalWidth / 2;
               } else if (canvasAlign === 'right') {
-                  xPos = w;
+                currentX = xPos - totalWidth;
+                console.log(`[Render RIGHT] lineText="${lineText}", totalWidth=${totalWidth.toFixed(2)}, xPos=${xPos.toFixed(2)}, currentX=${currentX.toFixed(2)}, w=${w.toFixed(2)}`);
               }
               
-              const yPos = idx * lineHeight;
-              
-              // Draw text with letter spacing if needed
-              if (letterSpacing !== 0) {
-                // Draw character by character with spacing
-                let currentX = xPos;
-                if (canvasAlign === 'center' || canvasAlign === 'right') {
-                  const totalWidth = Array.from(l).reduce((sum, char) => sum + ctx.measureText(char).width, 0) + (l.length - 1) * letterSpacing;
-                  if (canvasAlign === 'center') {
-                    currentX = xPos - totalWidth / 2;
-                  } else {
-                    currentX = xPos - totalWidth;
-                  }
-                }
-                
-                ctx.textAlign = 'left';
-                for (const char of l) {
-                  ctx.fillText(char, currentX, yPos);
-                  currentX += ctx.measureText(char).width + letterSpacing;
-                }
-                ctx.textAlign = canvasAlign;
-              } else {
-                ctx.fillText(l, xPos, yPos);
+              for (const char of lineText) {
+                ctx.fillText(char, currentX, yPos);
+                currentX += ctx.measureText(char).width + letterSpacing;
               }
               
-              // Draw text decoration (underline, line-through)
-              if (textDecoration !== 'none' && l.trim().length > 0) {
-                const metrics = ctx.measureText(l);
-                const textWidth = metrics.width + (l.length - 1) * letterSpacing;
-                let decorationX = xPos;
-                
-                if (canvasAlign === 'center') {
-                  decorationX = xPos - textWidth / 2;
-                } else if (canvasAlign === 'right') {
-                  decorationX = xPos - textWidth;
-                }
-                
-                ctx.strokeStyle = color;
-                ctx.lineWidth = Math.max(1, fontSize / 16);
-                
-                if (textDecoration === 'underline') {
-                  const underlineY = yPos + fontSize * 1.1;
-                  ctx.beginPath();
-                  ctx.moveTo(decorationX, underlineY);
-                  ctx.lineTo(decorationX + textWidth, underlineY);
-                  ctx.stroke();
-                } else if (textDecoration === 'line-through') {
-                  const strikeY = yPos + fontSize * 0.5;
-                  ctx.beginPath();
-                  ctx.moveTo(decorationX, strikeY);
-                  ctx.lineTo(decorationX + textWidth, strikeY);
-                  ctx.stroke();
-                }
+              ctx.textAlign = savedAlign; // Restore original alignment
+            } else {
+              if (canvasAlign === 'right') {
+                console.log(`[Render RIGHT no-spacing] lineText="${lineText}", xPos=${xPos.toFixed(2)}, w=${w.toFixed(2)}, textWidth=${ctx.measureText(lineText).width.toFixed(2)}`);
               }
+              ctx.fillText(lineText, xPos, yPos);
+            }
+            
+            // Text decoration (underline, line-through)
+            if (layer.style?.textDecoration && layer.style.textDecoration !== 'none') {
+              const decoration = layer.style.textDecoration as string;
+              const metrics = ctx.measureText(lineText);
+              const textWidth = metrics.width + (letterSpacing * lineText.length);
+              
+              let decorationY = yPos;
+              let decorationX = xPos;
+              
+              if (canvasAlign === 'center') {
+                decorationX = xPos - textWidth / 2;
+              } else if (canvasAlign === 'right') {
+                decorationX = xPos - textWidth;
+              }
+              
+              ctx.strokeStyle = color;
+              ctx.lineWidth = Math.max(1, fontSize * 0.05);
+              
+              if (decoration.includes('underline')) {
+                decorationY = yPos + fontSize * 0.85;
+                ctx.beginPath();
+                ctx.moveTo(decorationX, decorationY);
+                ctx.lineTo(decorationX + textWidth, decorationY);
+                ctx.stroke();
+              }
+              
+              if (decoration.includes('line-through')) {
+                decorationY = yPos + fontSize * 0.45;
+                ctx.beginPath();
+                ctx.moveTo(decorationX, decorationY);
+                ctx.lineTo(decorationX + textWidth, decorationY);
+                ctx.stroke();
+              }
+            }
           });
           
           ctx.restore();

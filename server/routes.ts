@@ -437,10 +437,26 @@ export async function registerRoutes(
             const textDecoration = style.textDecoration || 'none';
             const lineHeight = style.lineHeight || '1.2';
             const textAlign = style.textAlign || 'left';
+            const textIndent = style.textIndent || '0';
+            const marginTop = style.marginTop || '0';
+            const marginBottom = style.marginBottom || '0';
             
-            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize} align=${textAlign} weight=${fontWeight} style=${fontStyle}`);
+            // For proper text-align, we need to clean the content properly
+            // Trim all whitespace to ensure clean alignment
+            content = content.trim();
             
-            return `<div style="position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;overflow:hidden;font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor} !important;text-align:${textAlign};letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});line-height:${lineHeight};white-space:pre-wrap;">${content}</div>`;
+            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize} align=${textAlign} weight=${fontWeight} style=${fontStyle} indent=${textIndent}`);
+            console.log(`[render-pages] Text position: x=${pos.x} y=${pos.y} width=${pos.width} height=${pos.height}`);
+            console.log(`[render-pages] Text style object:`, JSON.stringify(style).substring(0, 200));
+            
+            // Escape HTML and convert line breaks
+            const escapedContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+            
+            // Use a single div with proper text styling
+            // Remove display:inline-block which can cause alignment issues
+            const containerStyle = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;box-sizing:border-box;overflow:hidden;font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};text-align:${textAlign};letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};text-indent:${textIndent};padding-top:${marginTop};padding-bottom:${marginBottom};line-height:${lineHeight};margin:0;padding-left:0;padding-right:0;transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});transform-origin:0 0;`;
+            
+            return `<div style="${containerStyle}">${escapedContent}</div>`;
           }).join('\n');
           
           let html = `<!DOCTYPE html>
@@ -479,11 +495,26 @@ ${textsHtml}
                 const keyHash = combinationKey !== 'default'
                   ? crypto.createHash('md5').update(combinationKey).digest('hex').substring(0, 16)
                   : 'default';
-                const objectPath = `public/previews/${book.id}/${keyHash}/page-${pageData.pageIndex}.jpg`;
+                // Add timestamp to force cache invalidation
+                const timestamp = Date.now();
+                const objectPath = `public/previews/${book.id}/${keyHash}/page-${pageData.pageIndex}-${timestamp}.jpg`;
           
           const bucket = objectStorageClient.bucket(bucketName);
-          const file = bucket.file(objectPath);
           
+          // Delete all old versions of this page (files matching pattern page-{pageIndex}-*.jpg)
+          try {
+            const [files] = await bucket.getFiles({
+              prefix: `public/previews/${book.id}/${keyHash}/page-${pageData.pageIndex}-`
+            });
+            for (const oldFile of files) {
+              await oldFile.delete();
+              console.log(`[render-pages] Deleted old version: ${oldFile.name}`);
+            }
+          } catch (deleteError) {
+            console.warn(`[render-pages] Could not delete old versions:`, deleteError);
+          }
+          
+          const file = bucket.file(objectPath);
           await file.save(screenshot, {
             contentType: 'image/jpeg',
             metadata: { cacheControl: 'public, max-age=31536000' }, // 1 year cache for production

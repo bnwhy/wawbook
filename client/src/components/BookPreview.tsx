@@ -772,14 +772,34 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   return (
       <div className={`flex flex-col font-sans bg-stone-100 ${isModal ? 'h-full' : 'min-h-screen'}`}>
+          <style>{`
+            @keyframes float {
+              0%, 100% { transform: translateY(0px); }
+              50% { transform: translateY(-20px); }
+            }
+          `}</style>
           {/* NAVBAR */}
           {!isModal && <Navigation onStart={onStart} />}
           {/* BOOK PREVIEW AREA */}
-          <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : isMobile ? 'py-6 mt-16' : 'py-2 mt-2 min-h-[800px]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")` }}>
+          <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : isMobile ? 'py-6 mt-16' : 'py-2 mt-2 min-h-[800px]'}`} style={{ 
+            backgroundColor: '#E0F2FE',
+            backgroundImage: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)'
+          }}>
               
+              {/* Floating Clouds Decoration */}
+              <div className="absolute top-32 left-10 text-white opacity-60 pointer-events-none" style={{ animation: 'float 6s ease-in-out infinite' }}>
+                <Cloud size={100} fill="currentColor" />
+              </div>
+              <div className="absolute top-52 right-20 text-white opacity-40 pointer-events-none" style={{ animation: 'float 6s ease-in-out 3s infinite' }}>
+                <Cloud size={80} fill="currentColor" />
+              </div>
+              <div className="absolute bottom-20 left-1/4 text-white opacity-50 pointer-events-none" style={{ animation: 'float 6s ease-in-out infinite' }}>
+                <Cloud size={120} fill="currentColor" />
+              </div>
+
               {/* MOBILE SINGLE PAGE VIEW */}
               {isMobile ? (
-                <div className="w-full flex flex-col items-center overflow-hidden">
+                <div className="w-full flex flex-col items-center overflow-hidden relative z-10">
                   {/* Mobile Book Container with swipe */}
                   <div 
                     ref={bookContainerRef}

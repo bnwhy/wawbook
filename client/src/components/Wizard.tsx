@@ -350,7 +350,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
   const bgPattern = `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")`;
 
   return (
-    <div className="min-h-screen flex flex-col font-sans relative overflow-x-hidden" style={{ 
+    <div className="min-h-screen flex flex-col font-sans relative" style={{ 
       backgroundColor: '#E0F2FE',
       backgroundImage: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)'
     }}>
@@ -374,8 +374,21 @@ const Wizard: React.FC<WizardProps> = (props) => {
       {/* NAVIGATION */}
       <Navigation onStart={() => {}} />
 
+      {/* MOBILE AVATAR - STICKY (positioned outside overflow container) */}
+      <div className="lg:hidden flex justify-center py-4 backdrop-blur-sm border-b border-white/50 transition-all duration-300 w-full sticky top-[60px] z-30" style={{
+        background: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)'
+      }}>
+         <div className="w-[300px] h-[300px] rounded-full bg-white/70 backdrop-blur-md border border-cloud-blue overflow-hidden shadow-lg">
+            {renderCharacterAvatar(
+              activeTab?.type === 'character' 
+                ? activeTabId 
+                : (wizardConfig.tabs.find(t => t.type === 'character')?.id || 'child')
+            )}
+         </div>
+      </div>
+
       {/* WIZARD CONTENT */}
-      <div className="flex-1 flex flex-col items-center w-full relative">
+      <div className="flex-1 flex flex-col items-center w-full relative overflow-x-hidden">
         
         {/* Floating Clouds Decoration - Exactly like Hero */}
         <div className="absolute top-32 left-10 text-white opacity-60 animate-float pointer-events-none">
@@ -387,22 +400,11 @@ const Wizard: React.FC<WizardProps> = (props) => {
         <div className="absolute bottom-20 left-1/4 text-white opacity-50 animate-float pointer-events-none">
           <Cloud size={120} fill="currentColor" />
         </div>
-        
-        {/* MOBILE AVATAR - STICKY (full width) */}
-        <div className="lg:hidden flex justify-center py-4 bg-white/80 backdrop-blur-sm border-b border-white/50 transition-all duration-300 w-full sticky top-[60px] z-30">
-           <div className="w-[300px] h-[300px] rounded-full bg-white/70 backdrop-blur-md border-2 border-white/50 overflow-hidden shadow-lg">
-              {renderCharacterAvatar(
-                activeTab?.type === 'character' 
-                  ? activeTabId 
-                  : (wizardConfig.tabs.find(t => t.type === 'character')?.id || 'child')
-              )}
-           </div>
-        </div>
 
-        <div ref={wizardContainerRef} className="relative z-10 bg-transparent w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start justify-center p-4 pt-20 md:p-8 md:pt-24 mb-12">
+        <div ref={wizardContainerRef} className="relative z-10 bg-transparent w-full max-w-6xl flex flex-col lg:flex-row gap-14 items-start justify-center p-4 pt-20 md:p-8 md:pt-24 mb-12">
           
           {/* --- LEFT COLUMN: CONFIGURATION --- */}
-          <div className="w-full lg:w-[450px] overflow-hidden flex flex-col relative shadow-lg">
+          <div className="w-full lg:w-[563px] overflow-hidden flex flex-col relative shadow-lg">
              
              {/* TABS */}
              <div className="flex shrink-0 lg:sticky lg:top-0 bg-transparent z-10 border-b border-cloud-blue">
@@ -596,17 +598,31 @@ const Wizard: React.FC<WizardProps> = (props) => {
           </div>
 
           {/* --- RIGHT COLUMN: PREVIEW --- */}
-          <div className="hidden lg:flex flex-col gap-6 flex-1 h-[700px] sticky top-24 relative items-center justify-center p-8">
+          <div className="hidden lg:flex flex-col gap-6 flex-1 h-[700px] sticky top-0 relative items-center justify-start px-8 pb-8 pt-[53px]">
              
              {/* Avatar Visualization (Above Book) */}
-             <div className="flex flex-col items-center animate-drop-in z-20">
-                <div className="w-96 h-96 rounded-full bg-white/70 backdrop-blur-md border-2 border-white/50 overflow-hidden relative shadow-lg">
+             <div className="flex flex-col items-center animate-drop-in z-20 -ml-24">
+                <div className="w-96 h-96 rounded-full bg-white/70 backdrop-blur-md border border-cloud-blue overflow-hidden relative shadow-lg">
                    {renderCharacterAvatar(
                      activeTab?.type === 'character' 
                        ? activeTabId 
                        : (wizardConfig.tabs.find(t => t.type === 'character')?.id || 'child')
                    )}
                 </div>
+                
+                {/* Book Info */}
+                {book && (
+                  <div className="mt-6 text-center max-w-md">
+                    <h2 className="text-3xl font-bold text-cloud-dark mb-2">{book.name}</h2>
+                    <p className="text-lg text-gray-600 mb-4">{book.description}</p>
+                    <div className="flex items-center justify-center gap-3">
+                      {book.oldPrice && (
+                        <span className="text-xl text-gray-400 line-through">{book.oldPrice}€</span>
+                      )}
+                      <span className="text-3xl font-bold text-cloud-blue">{book.price}€</span>
+                    </div>
+                  </div>
+                )}
              </div>
           </div>
 

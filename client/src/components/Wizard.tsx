@@ -83,7 +83,7 @@ const AvatarImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
           <div className="text-center text-gray-400">
-            <p className="text-sm">Image non disponible</p>
+            <p className="text-xl">Image non disponible</p>
           </div>
         </div>
       )}
@@ -150,6 +150,9 @@ const Wizard: React.FC<WizardProps> = (props) => {
   const [selections, setSelections] = useState<Record<string, Record<string, any>>>({});
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  
+  // Ref for wizard container
+  const wizardContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -189,7 +192,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
     return (
       <div className="h-screen flex items-center justify-center bg-stone-50">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Livre introuvable</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Livre introuvable</h2>
           <button onClick={onCancel} className="text-brand-coral hover:underline">
             {props.isEditing ? "Retour au panier" : "Retour à l'accueil"}
           </button>
@@ -347,45 +350,79 @@ const Wizard: React.FC<WizardProps> = (props) => {
   const bgPattern = `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")`;
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col font-sans relative">
+    <div className="min-h-screen flex flex-col font-sans relative overflow-x-hidden" style={{ 
+      backgroundColor: '#E0F2FE',
+      backgroundImage: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)'
+    }}>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+          animation: float 6s ease-in-out 3s infinite;
+        }
+      `}</style>
 
       {/* NAVIGATION */}
       <Navigation onStart={() => {}} />
 
       {/* WIZARD CONTENT */}
-      <div className="flex-1 flex flex-col items-center w-full" style={{ backgroundImage: bgPattern }}>
+      <div className="flex-1 flex flex-col items-center w-full relative">
         
-        <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start justify-center p-4 pt-20 md:p-8 md:pt-24 mb-12">
+        {/* Floating Clouds Decoration - Exactly like Hero */}
+        <div className="absolute top-32 left-10 text-white opacity-60 animate-float pointer-events-none">
+          <Cloud size={100} fill="currentColor" />
+        </div>
+        <div className="absolute top-52 right-20 text-white opacity-40 animate-float-delayed pointer-events-none">
+          <Cloud size={80} fill="currentColor" />
+        </div>
+        <div className="absolute bottom-20 left-1/4 text-white opacity-50 animate-float pointer-events-none">
+          <Cloud size={120} fill="currentColor" />
+        </div>
+        
+        {/* MOBILE AVATAR - STICKY (full width) */}
+        <div className="lg:hidden flex justify-center py-4 bg-white/80 backdrop-blur-sm border-b border-white/50 transition-all duration-300 w-full sticky top-[60px] z-30">
+           <div className="w-[300px] h-[300px] rounded-full bg-white/70 backdrop-blur-md border-2 border-white/50 overflow-hidden shadow-lg">
+              {renderCharacterAvatar(
+                activeTab?.type === 'character' 
+                  ? activeTabId 
+                  : (wizardConfig.tabs.find(t => t.type === 'character')?.id || 'child')
+              )}
+           </div>
+        </div>
+
+        <div ref={wizardContainerRef} className="relative z-10 bg-transparent w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-start justify-center p-4 pt-20 md:p-8 md:pt-24 mb-12">
           
           {/* --- LEFT COLUMN: CONFIGURATION --- */}
-          <div className="w-full lg:w-[450px] bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden flex flex-col relative">
+          <div className="w-full lg:w-[450px] overflow-hidden flex flex-col relative shadow-lg">
              
-             <div className="p-4 border-b border-gray-100 shrink-0 sticky top-0 bg-white z-10">
-                <div className="text-xs font-bold text-brand-coral uppercase tracking-wider mb-1">
-                   Personnalisation du livre
-                </div>
-                <h2 className="text-xl font-display font-black text-cloud-dark leading-tight">
-                   {book.name}
-                </h2>
-             </div>
-
              {/* TABS */}
-             <div className="flex border-b border-gray-200 overflow-x-auto shrink-0 sticky top-[73px] bg-white z-10">
+             <div className="flex shrink-0 lg:sticky lg:top-0 bg-transparent z-10 border-b border-cloud-blue">
                 {wizardConfig.tabs.map(tab => (
                   <button 
                      key={tab.id}
                      onClick={() => setActiveTabId(tab.id)}
-                     className={`flex-1 py-3 px-4 font-bold text-sm tracking-wider transition-colors relative whitespace-nowrap ${activeTabId === tab.id ? 'bg-white text-cloud-dark' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                     className={`flex-1 px-6 py-3 font-bold text-xl tracking-wide transition-all whitespace-nowrap relative ${
+                       activeTabId === tab.id 
+                         ? 'bg-white text-cloud-dark border border-b-0 border-cloud-blue rounded-t-lg -mb-px z-10' 
+                         : 'bg-[#F2F2F2] text-gray-400 hover:text-gray-600 rounded-t-lg'
+                     }`}
                   >
-                     <span className={activeTabId === tab.id ? "border-b-2 border-cloud-dark pb-3 block w-full" : "pb-3 block w-full"}>
-                       {tab.label}
-                     </span>
+                     {tab.label}
                   </button>
                 ))}
              </div>
 
              {/* FORM CONTENT */}
-             <div className="p-4 space-y-4 flex-1">
+             <div className="p-6 space-y-4 flex-1 border border-t-0 border-cloud-blue rounded-b-lg bg-white">
                 {activeTab && activeTab.variants.map((variant, index) => {
                   const currentValue = selections[activeTabId]?.[variant.id];
                   const isLast = index === activeTab.variants.length - 1;
@@ -408,14 +445,14 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   if (variant.type === 'text') {
                     return withDivider(
                       <div className="space-y-1">
-                         <label className="font-bold text-gray-600 text-sm">
+                         <label className="font-bold text-gray-600 text-xl">
                             {variant.label} *
                          </label>
                          <input 
                            type="text" 
                            value={currentValue || ''}
                            onChange={(e) => handleSelectionChange(activeTabId, variant.id, e.target.value)}
-                           className={`w-full border rounded-md px-4 py-2 text-cloud-dark focus:ring-0 outline-none transition-colors placeholder:text-gray-300 text-sm font-medium ${errors[variant.id] ? 'bg-red-50 border-red-500 ring-1 ring-red-500' : 'bg-[#FFFBEB] border-gray-200 focus:border-cloud-dark'}`}
+                           className={`w-full border rounded-md px-4 py-2 text-cloud-dark focus:ring-0 outline-none transition-colors placeholder:text-gray-300 text-xl font-medium ${errors[variant.id] ? 'bg-red-50 border-red-500 ring-1 ring-red-500' : 'bg-[#FFFBEB] border-gray-200 focus:border-cloud-dark'}`}
                            placeholder={`Entrez ${variant.label.toLowerCase()}...`}
                            maxLength={variant.maxLength}
                          />
@@ -434,7 +471,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     const isChecked = !!currentValue;
                     return withDivider(
                         <div className="flex items-center justify-between gap-4">
-                             <label htmlFor={`checkbox-${variant.id}`} className="font-bold text-gray-600 text-sm cursor-pointer select-none">
+                             <label htmlFor={`checkbox-${variant.id}`} className="font-bold text-gray-600 text-xl cursor-pointer select-none">
                                 {variant.label}
                             </label>
                             <div 
@@ -464,7 +501,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   if (isColorPicker) {
                     return withDivider(
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                         <label className="font-bold text-gray-600 text-sm w-24 shrink-0">{variant.label}</label>
+                         <label className="font-bold text-gray-600 text-xl w-24 shrink-0">{variant.label}</label>
                          <div className="flex gap-2 flex-wrap flex-1">
                             {variant.options?.map((opt) => (
                               <button
@@ -483,7 +520,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   if (hasThumbnails) {
                      return withDivider(
                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                          <label className="font-bold text-gray-600 text-sm w-24 shrink-0">{variant.label}</label>
+                          <label className="font-bold text-gray-600 text-xl w-24 shrink-0">{variant.label}</label>
                           <div className="flex gap-2 flex-wrap flex-1">
                              {(variant.options || []).map((opt) => {
                                // Prefer resource (uploaded image) over legacy thumbnail
@@ -503,11 +540,11 @@ const Wizard: React.FC<WizardProps> = (props) => {
                                     {imageUrl ? (
                                        <img src={imageUrl} alt={opt.label} className="w-full h-full object-cover" />
                                     ) : (
-                                       <span className="text-sm font-bold text-gray-400">{opt.label[0]}</span>
+                                       <span className="text-xl font-bold text-gray-400">{opt.label[0]}</span>
                                     )}
                                   </div>
                                   {variant.showLabel && (
-                                    <span className="text-sm font-medium text-gray-700 pr-2">{opt.label}</span>
+                                    <span className="text-xl font-medium text-gray-700 pr-2">{opt.label}</span>
                                   )}
                                </button>
                              )})}
@@ -519,13 +556,13 @@ const Wizard: React.FC<WizardProps> = (props) => {
                   // Default Button Grid/List
                   return withDivider(
                     <div className="space-y-2">
-                       <label className="font-bold text-gray-600 text-sm">{variant.label}</label>
+                       <label className="font-bold text-gray-600 text-xl">{variant.label}</label>
                        <div className={`grid ${isGrid ? 'grid-cols-4' : 'grid-cols-2'} gap-2`}>
                           {variant.options?.map((opt) => (
                             <button
                               key={opt.id}
                               onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
-                              className={`px-3 py-2 rounded-md border text-sm font-medium transition-all ${currentValue === opt.id ? 'bg-[#E8F5F2] border-[#8DD0C3] text-cloud-dark' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                              className={`px-3 py-2 rounded-md border text-xl font-medium transition-all ${currentValue === opt.id ? 'bg-[#E8F5F2] border-[#8DD0C3] text-cloud-dark' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
                             >
                                {opt.label}
                             </button>
@@ -541,7 +578,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                 {props.isEditing && (
                 <button 
                   onClick={onCancel}
-                  className="text-gray-400 hover:text-gray-600 font-bold text-sm px-4 py-2 mr-auto hover:bg-gray-100 rounded-lg transition-colors"
+                  className="text-gray-400 hover:text-gray-600 font-bold text-xl px-4 py-2 mr-auto hover:bg-gray-100 rounded-lg transition-colors"
                 >
                     Retour au panier
                 </button>
@@ -563,73 +600,12 @@ const Wizard: React.FC<WizardProps> = (props) => {
              
              {/* Avatar Visualization (Above Book) */}
              <div className="flex flex-col items-center animate-drop-in z-20">
-                <div className="w-64 h-64 rounded-full bg-white border-[8px] border-white shadow-xl overflow-hidden relative">
+                <div className="w-96 h-96 rounded-full bg-white/70 backdrop-blur-md border-2 border-white/50 overflow-hidden relative shadow-lg">
                    {renderCharacterAvatar(
                      activeTab?.type === 'character' 
                        ? activeTabId 
                        : (wizardConfig.tabs.find(t => t.type === 'character')?.id || 'child')
                    )}
-                </div>
-             </div>
-
-             {/* Book Cover Simulation - Hardcover Effect */}
-             <div className="relative w-[55%] aspect-[3/4] transform rotate-2 group" style={{ perspective: '1000px' }}>
-                {/* Book container */}
-                <div 
-                  className="relative w-full h-full transition-transform duration-500"
-                  style={{ transformStyle: 'preserve-3d', transform: 'rotateY(-5deg)' }}
-                >
-                  {/* Page edges (right side) */}
-                  <div 
-                    className="absolute right-0 top-2 bottom-2 w-3"
-                    style={{ transform: 'translateX(3px)' }}
-                  >
-                    {[...Array(10)].map((_, i) => (
-                      <div 
-                        key={i}
-                        className="absolute top-0 bottom-0 bg-gray-100 border-r border-gray-200"
-                        style={{ 
-                          right: `${i * 1}px`,
-                          width: '1px',
-                          opacity: 1 - (i * 0.08)
-                        }}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Page edges (bottom) */}
-                  <div 
-                    className="absolute left-2 right-2 bottom-0 h-2 bg-gradient-to-b from-gray-100 to-gray-300 rounded-b-sm"
-                    style={{ transform: 'translateY(3px)' }}
-                  />
-                  
-                  {/* Main cover with hardcover crease */}
-                  <div className="absolute inset-0 rounded-sm overflow-hidden shadow-2xl bg-white">
-                    {book.coverImage && <img src={book.coverImage} alt="Cover" className="w-full h-full object-cover" />}
-                    
-                    {/* Hardcover binding crease/groove - the characteristic indent of hardcover books */}
-                    <div 
-                      className="absolute left-[2%] top-0 bottom-0 w-[14px] pointer-events-none"
-                      style={{
-                        background: 'linear-gradient(to right, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.08) 30%, rgba(255,255,255,0.1) 50%, rgba(0,0,0,0.05) 70%, transparent 100%)',
-                        boxShadow: '-1px 0 2px rgba(0,0,0,0.08), 1px 0 2px rgba(0,0,0,0.05)'
-                      }}
-                    />
-                    
-                    {/* Cover shine effect */}
-                    <div 
-                      className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-transparent pointer-events-none"
-                    />
-                    
-                    {/* Subtle edge shadow on left */}
-                    <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
-                  </div>
-                  
-                  {/* Drop shadow */}
-                  <div 
-                    className="absolute -bottom-6 left-2 right-2 h-10 bg-black/25 blur-xl rounded-full"
-                    style={{ transform: 'scaleY(0.25)' }}
-                  />
                 </div>
              </div>
           </div>

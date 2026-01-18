@@ -56,7 +56,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
 
   return (
     <>
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-2' : 'bg-transparent py-4'}`}>
+    <nav 
+      className={`fixed w-full z-50 transition-all duration-300 bg-white py-2 ${scrolled ? 'lg:bg-white/90 lg:backdrop-blur-md' : 'lg:bg-transparent lg:py-4'}`}
+    >
       {/* Desktop Navigation */}
       <div className="hidden lg:flex max-w-7xl mx-auto px-6 justify-between items-center">
         

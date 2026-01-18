@@ -301,29 +301,87 @@ export function extractCharacterStyles(
       if (!self) continue;
       
       const props = charStyle?.Properties || {};
+
+      // Extract font properties from known IDML locations.
+      // In practice, InDesign can store font info on:
+      // - the style element itself (@_AppliedFont, @_PointSize, @_FontStyle)
+      // - Properties (@_AppliedFont / AppliedFont element)
+      // - Properties.CharacterStyleProperties (attributes)
+      const embeddedCharProps = Array.isArray(props?.CharacterStyleProperties)
+        ? props.CharacterStyleProperties[0]
+        : props?.CharacterStyleProperties;
+
+      const fontCandidates = [charStyle, props, embeddedCharProps].filter(Boolean);
+
+      let fontFamily: string = '';
+      let fontStyleName: string = '';
+      let fontSize: number = 12;
+
+      for (const c of fontCandidates) {
+        if (!fontFamily) {
+          const appliedFont =
+            c['@_AppliedFont'] ||
+            c['@_FontFamily'] ||
+            (typeof c.AppliedFont === 'string' ? c.AppliedFont : c.AppliedFont?.['#text']);
+          if (appliedFont) fontFamily = appliedFont;
+        }
+        if (!fontStyleName) {
+          const fs = c['@_FontStyle'];
+          if (fs) fontStyleName = String(fs).toLowerCase();
+        }
+        if (fontSize === 12) {
+          const ps = c['@_PointSize'];
+          const parsed = ps !== undefined ? parseFloat(ps) : NaN;
+          if (!Number.isNaN(parsed)) fontSize = parsed;
+        }
+      }
       
-      // Extract font properties - check both direct attributes and Properties
-      // InDesign can put them in either location
-      let fontFamily = charStyle['@_AppliedFont'] || props['@_AppliedFont'] || props['@_FontFamily'] || '';
-      let fontSize = parseFloat(charStyle['@_PointSize'] || props['@_PointSize']) || 12;
-      let fontStyleName = (charStyle['@_FontStyle'] || props['@_FontStyle'] || '').toLowerCase();
-      
-      // If no font defined, check BasedOn (inheritance)
+      // If no font defined, check BasedOn (inheritance) - recursively
       if (!fontFamily) {
-        const basedOn = charStyle['@_BasedOn'];
-        if (basedOn && rawStylesMap.has(basedOn)) {
-          const parentStyle = rawStylesMap.get(basedOn);
+        let currentBasedOn = charStyle['@_BasedOn'];
+        let depth = 0;
+        const maxDepth = 10;
+        
+        while (!fontFamily && currentBasedOn && depth < maxDepth) {
+          depth++;
+          
+          // Normalize BasedOn key - try multiple formats
+          // BasedOn might be "CharacterStyle/$ID/..." but Self is "$ID/..."
+          let parentStyle = rawStylesMap.get(currentBasedOn);
+          if (!parentStyle && currentBasedOn.startsWith('CharacterStyle/')) {
+            const normalizedKey = currentBasedOn.replace('CharacterStyle/', '');
+            parentStyle = rawStylesMap.get(normalizedKey);
+          }
+          if (!parentStyle) {
+            break;
+          }
+          
           const parentProps = parentStyle?.Properties || {};
-          fontFamily = parentStyle['@_AppliedFont'] || parentProps['@_AppliedFont'] || parentProps['@_FontFamily'] || '';
-          if (fontFamily) {
-            console.log(`[extractCharacterStyles] Style ${self} inherits font from ${basedOn}: ${fontFamily}`);
+          const parentEmbeddedCharProps = Array.isArray(parentProps?.CharacterStyleProperties)
+            ? parentProps.CharacterStyleProperties[0]
+            : parentProps?.CharacterStyleProperties;
+          const parentCandidates = [parentStyle, parentProps, parentEmbeddedCharProps].filter(Boolean);
+          
+          for (const c of parentCandidates) {
+            if (!fontFamily) {
+              const appliedFont =
+                c['@_AppliedFont'] ||
+                c['@_FontFamily'] ||
+                (typeof c.AppliedFont === 'string' ? c.AppliedFont : c.AppliedFont?.['#text']);
+              if (appliedFont) fontFamily = appliedFont;
+            }
+            if (!fontStyleName) {
+              const fs = c['@_FontStyle'];
+              if (fs) fontStyleName = String(fs).toLowerCase();
+            }
+            if (fontSize === 12) {
+              const ps = c['@_PointSize'];
+              const parsed = ps !== undefined ? parseFloat(ps) : NaN;
+              if (!Number.isNaN(parsed)) fontSize = parsed;
+            }
           }
-          if (!fontSize || fontSize === 12) {
-            fontSize = parseFloat(parentStyle['@_PointSize'] || parentProps['@_PointSize']) || fontSize;
-          }
-          if (!fontStyleName) {
-            fontStyleName = (parentStyle['@_FontStyle'] || parentProps['@_FontStyle'] || '').toLowerCase();
-          }
+          
+          currentBasedOn = parentStyle['@_BasedOn'];
         }
       }
       
@@ -498,26 +556,83 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       const textIndent = parseFloat(props['@_FirstLineIndent']) || 0;
       
       // Font properties (ParagraphStyle can have font properties when no CharacterStyle is used)
-      let fontFamily = paraStyle['@_AppliedFont'] || props['@_AppliedFont'] || undefined;
-      let fontSize = parseFloat(paraStyle['@_PointSize'] || props['@_PointSize']) || undefined;
-      let fontStyleName = (paraStyle['@_FontStyle'] || props['@_FontStyle'] || '').toLowerCase();
+      // In many IDMLs, paragraph style font info is stored under Properties.CharacterStyleProperties.
+      const embeddedCharProps = Array.isArray(props?.CharacterStyleProperties)
+        ? props.CharacterStyleProperties[0]
+        : props?.CharacterStyleProperties;
+
+      const fontCandidates = [paraStyle, props, embeddedCharProps].filter(Boolean);
+
+      let fontFamily: string | undefined = undefined;
+      let fontSize: number | undefined = undefined;
+      let fontStyleName: string = '';
+
+      for (const c of fontCandidates) {
+        if (!fontFamily) {
+          const appliedFont =
+            c['@_AppliedFont'] ||
+            c['@_FontFamily'] ||
+            (typeof c.AppliedFont === 'string' ? c.AppliedFont : c.AppliedFont?.['#text']);
+          if (appliedFont) fontFamily = appliedFont;
+        }
+        if (!fontStyleName) {
+          const fs = c['@_FontStyle'];
+          if (fs) fontStyleName = String(fs).toLowerCase();
+        }
+        if (fontSize === undefined) {
+          const ps = c['@_PointSize'];
+          const parsed = ps !== undefined ? parseFloat(ps) : NaN;
+          if (!Number.isNaN(parsed)) fontSize = parsed;
+        }
+      }
       
-      // If no font defined, check BasedOn (inheritance)
+      // If no font defined, check BasedOn (inheritance) - recursively
       if (!fontFamily) {
-        const basedOn = paraStyle['@_BasedOn'];
-        if (basedOn && rawParaStylesMap.has(basedOn)) {
-          const parentStyle = rawParaStylesMap.get(basedOn);
+        let currentBasedOn = paraStyle['@_BasedOn'];
+        let depth = 0;
+        const maxDepth = 10; // Prevent infinite loops
+        
+        while (!fontFamily && currentBasedOn && depth < maxDepth) {
+          depth++;
+          
+          // Normalize BasedOn key - try multiple formats
+          // BasedOn might be "ParagraphStyle/$ID/NormalParagraphStyle" but Self is "$ID/NormalParagraphStyle"
+          let parentStyle = rawParaStylesMap.get(currentBasedOn);
+          if (!parentStyle && currentBasedOn.startsWith('ParagraphStyle/')) {
+            const normalizedKey = currentBasedOn.replace('ParagraphStyle/', '');
+            parentStyle = rawParaStylesMap.get(normalizedKey);
+          }
+          if (!parentStyle) {
+            break;
+          }
+          
           const parentProps = parentStyle?.Properties || {};
-          fontFamily = parentStyle['@_AppliedFont'] || parentProps['@_AppliedFont'] || undefined;
-          if (fontFamily) {
-            console.log(`[extractParagraphStyles] Style ${self} inherits font from ${basedOn}: ${fontFamily}`);
+          const parentEmbeddedCharProps = Array.isArray(parentProps?.CharacterStyleProperties)
+            ? parentProps.CharacterStyleProperties[0]
+            : parentProps?.CharacterStyleProperties;
+          const parentCandidates = [parentStyle, parentProps, parentEmbeddedCharProps].filter(Boolean);
+          
+          for (const c of parentCandidates) {
+            if (!fontFamily) {
+              const appliedFont =
+                c['@_AppliedFont'] ||
+                c['@_FontFamily'] ||
+                (typeof c.AppliedFont === 'string' ? c.AppliedFont : c.AppliedFont?.['#text']);
+              if (appliedFont) fontFamily = appliedFont;
+            }
+            if (!fontStyleName) {
+              const fs = c['@_FontStyle'];
+              if (fs) fontStyleName = String(fs).toLowerCase();
+            }
+            if (fontSize === undefined) {
+              const ps = c['@_PointSize'];
+              const parsed = ps !== undefined ? parseFloat(ps) : NaN;
+              if (!Number.isNaN(parsed)) fontSize = parsed;
+            }
           }
-          if (!fontSize) {
-            fontSize = parseFloat(parentStyle['@_PointSize'] || parentProps['@_PointSize']) || undefined;
-          }
-          if (!fontStyleName) {
-            fontStyleName = (parentStyle['@_FontStyle'] || parentProps['@_FontStyle'] || '').toLowerCase();
-          }
+          
+          // Move to next parent
+          currentBasedOn = parentStyle['@_BasedOn'];
         }
       }
       
@@ -533,9 +648,7 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
         }
       }
       
-      if (fontFamily) {
-        console.log(`[extractParagraphStyles] Style ${self} (${name}) has font: ${fontFamily}`);
-      } else {
+      if (!fontFamily) {
         console.warn(`[extractParagraphStyles] ⚠️ Style ${self} (${name}) has NO font (even after BasedOn resolution)`);
       }
       
@@ -682,15 +795,33 @@ function extractTextFromParagraphRanges(
           inlineCharProperties = {};
         }
         
-        // Check for inline font properties
+        // Check for inline font properties - ALL possible locations
         const props = charRange?.Properties || {};
-        const inlineFont = charRange['@_AppliedFont'] || props['@_AppliedFont'];
+        
+        // AppliedFont can be attribute OR element
+        let inlineFont: string | undefined = undefined;
+        if (charRange['@_AppliedFont']) {
+          inlineFont = charRange['@_AppliedFont'];
+        } else {
+          const embedded = Array.isArray(props?.CharacterStyleProperties)
+            ? props.CharacterStyleProperties[0]
+            : props?.CharacterStyleProperties;
+          const candidates = [props, embedded].filter(Boolean);
+          for (const c of candidates) {
+            if (inlineFont) break;
+            inlineFont =
+              c['@_AppliedFont'] ||
+              c['@_FontFamily'] ||
+              (typeof c.AppliedFont === 'string' ? c.AppliedFont : c.AppliedFont?.['#text']);
+          }
+        }
+        
         const inlineSize = charRange['@_PointSize'] || props['@_PointSize'];
         const inlineFontStyle = charRange['@_FontStyle'] || props['@_FontStyle'];
         
         if (inlineFont && !inlineCharProperties.fontFamily) {
           inlineCharProperties.fontFamily = inlineFont;
-          console.log(`[extractTextFromParagraphRanges] Found inline font for ${frameId}: ${inlineFont}`);
+          console.log(`[extractTextFromParagraphRanges] ✓ Found inline font for ${frameId}: ${inlineFont}`);
         }
         if (inlineSize && !inlineCharProperties.fontSize) {
           inlineCharProperties.fontSize = parseFloat(inlineSize);

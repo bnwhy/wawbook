@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Wand2, Cloud, Check, ChevronRight, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Wand2, Cloud, Check, ChevronRight, ArrowRight, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { BookConfig, Gender, Theme, HairStyle, Outfit, Activity } from '../types';
 import { WizardVariant, WizardOption } from '../types/admin';
@@ -19,38 +19,121 @@ interface WizardProps {
   isEditing?: boolean;
 }
 
-// --- WATERCOLOR SVG COMPONENTS ---
-// Reusable defs for filter and gradients
-const WatercolorDefs = ({ skinHex, hairHex }: { skinHex: string, hairHex: string }) => (
-  <defs>
-    <filter id="watercolor">
-      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" result="noise" />
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" result="displaced" />
-      <feGaussianBlur in="displaced" stdDeviation="0.5" result="blurred" />
-      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" in="blurred" result="goo" />
-      <feComposite operator="in" in="SourceGraphic" in2="goo" result="composite" />
-      <feBlend mode="multiply" in="composite" in2="SourceGraphic" />
-    </filter>
-    <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor={skinHex} stopOpacity="1" />
-        <stop offset="100%" stopColor={skinHex} stopOpacity="0.9" />
-    </linearGradient>
-    <linearGradient id="hairGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor={hairHex} stopOpacity="0.9" />
-        <stop offset="100%" stopColor={hairHex} stopOpacity="1" />
-    </linearGradient>
-  </defs>
-);
+// Avatar Image with loading animation
+const AvatarImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-// --- THUMBNAIL HELPERS (Simplified/Generic) ---
-const GenericThumbnail = ({ type, id, color }: { type: string, id: string, color?: string }) => {
-  // Placeholder for generic shapes if no specific SVG exists
-  if (color) {
-    return <div className="w-full h-full rounded-full" style={{ backgroundColor: color }} />;
-  }
+  // Reset loading state when src changes
+  useEffect(() => {
+    setIsLoading(true);
+    setError(false);
+    setImageLoaded(false);
+  }, [src]);
+
+  useEffect(() => {
+    if (imageLoaded && !error) {
+      // Show animation for 600ms
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [imageLoaded, error]);
+
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-full text-[10px] text-gray-400">
-      {id.slice(0, 3)}
+    <div className="relative w-full h-full">
+      {/* Loading animation - Pencil drawing */}
+      {isLoading && !error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 z-10">
+          <div className="relative">
+            {/* Animated pencil */}
+            <div className="animate-bounce">
+              <Pencil 
+                size={48} 
+                className="text-cloud-dark"
+                style={{
+                  filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.2))',
+                  animation: 'draw 2s ease-in-out infinite'
+                }}
+              />
+            </div>
+            {/* Drawing line animation */}
+            <svg className="absolute -bottom-8 left-1/2 -translate-x-1/2" width="100" height="20">
+              <path
+                d="M 10,10 Q 50,5 90,10"
+                stroke="#4A5568"
+                strokeWidth="3"
+                fill="none"
+                strokeLinecap="round"
+                className="animate-pulse"
+                style={{
+                  strokeDasharray: '100',
+                  strokeDashoffset: '100',
+                  animation: 'drawLine 2s ease-in-out infinite'
+                }}
+              />
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+          <div className="text-center text-gray-400">
+            <p className="text-sm">Image non disponible</p>
+          </div>
+        </div>
+      )}
+
+      {/* Actual image */}
+      <img 
+        src={src} 
+        alt={alt}
+        onLoad={() => setImageLoaded(true)}
+        onError={() => {
+          setIsLoading(false);
+          setError(true);
+        }}
+        className={`w-full h-full object-cover transition-all duration-500 ease-out ${
+          isLoading ? 'opacity-0' : 'opacity-100'
+        }`}
+      />
+
+      {/* Watermark overlay (subtle) */}
+      {!isLoading && !error && (
+        <div className="absolute bottom-2 right-2 opacity-30 hover:opacity-60 transition-opacity">
+          <Pencil size={16} className="text-gray-600" />
+        </div>
+      )}
+
+      <style>{`
+        @keyframes draw {
+          0%, 100% {
+            transform: rotate(-5deg) translateY(0);
+          }
+          50% {
+            transform: rotate(5deg) translateY(-5px);
+          }
+        }
+        
+        @keyframes drawLine {
+          0% {
+            stroke-dashoffset: 100;
+            opacity: 0;
+          }
+          50% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+          }
+          100% {
+            stroke-dashoffset: -100;
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
@@ -88,9 +171,10 @@ const Wizard: React.FC<WizardProps> = (props) => {
           if (props.initialSelections && props.initialSelections[tab.id] && props.initialSelections[tab.id][variant.id] !== undefined) {
              initialSelectionsState[tab.id][variant.id] = props.initialSelections[tab.id][variant.id];
           } else {
-             // Default to first option if available, or empty string
-             if (variant.type === 'options' && variant.options && variant.options.length > 0) {
-               initialSelectionsState[tab.id][variant.id] = variant.options[0].id;
+             // Select random option if available, or empty string
+             if ((variant.type === 'options' || variant.type === 'color') && variant.options && variant.options.length > 0) {
+               const randomIndex = Math.floor(Math.random() * variant.options.length);
+               initialSelectionsState[tab.id][variant.id] = variant.options[randomIndex].id;
              } else {
                initialSelectionsState[tab.id][variant.id] = '';
              }
@@ -157,148 +241,18 @@ const Wizard: React.FC<WizardProps> = (props) => {
             .map(v => currentSelections[v.id])
             .filter(id => id && id !== '') // Filter out empty strings/undefined
         
-        const combinationKey = selectedOptionIds.join('_');
-        const customAvatarUrl = wizardConfig.avatarMappings[combinationKey];
+        // Try scoped key first (tabId:optionIds), then fallback to legacy key (optionIds only)
+        const legacyKey = selectedOptionIds.join('_');
+        const scopedKey = `${tabId}:${legacyKey}`;
+        const customAvatarUrl = wizardConfig.avatarMappings[scopedKey] ?? wizardConfig.avatarMappings[legacyKey];
         
         if (customAvatarUrl) {
-           return <img src={customAvatarUrl} alt="Avatar" className="w-full h-full object-cover transition-all duration-500 ease-out" />;
+           return <AvatarImage src={customAvatarUrl} alt="Avatar" />;
         }
      }
 
-     const skinColor = getSelectedResource(tabId, 'skinTone') || '#FFE0BD';
-     const hairColor = getSelectedResource(tabId, 'hairColor') || '#302e34';
-     const gender = currentSelections['gender'] || 'boy';
-     const hairStyle = currentSelections['hairStyle'] || (gender === 'girl' ? 'Long' : 'Court');
-     const glasses = currentSelections['glasses'] || 'None';
-     const beard = currentSelections['beard'] || 'None';
-     
-     // Helper for hair back (behind head)
-     const renderHairBack = () => {
-        if (['Long', 'Carré', 'Bouclé', 'Nattes', 'QueueCheval'].includes(hairStyle)) {
-             return <path d="M25,50 Q20,95 50,95 Q80,95 75,50" fill={hairColor} />;
-        }
-        return null;
-     };
-
-     // Helper for hair front (on top of head)
-     const renderHairFront = () => {
-        switch(hairStyle) {
-            case 'Chauve': 
-                return <path d="M22,50 Q22,40 25,35 M78,50 Q78,40 75,35" stroke={hairColor} strokeWidth="1" fill="none" opacity="0.5" />;
-            case 'Hérissé':
-                return <path d="M28,45 L35,25 L45,40 L50,20 L55,40 L65,25 L72,45" fill={hairColor} />;
-            case 'Chignon':
-                return (
-                    <g>
-                        <circle cx="50" cy="20" r="12" fill={hairColor} />
-                        <path d="M28,50 Q50,25 72,50" fill={hairColor} />
-                    </g>
-                );
-            case 'Nattes':
-                return (
-                    <g>
-                        <path d="M28,50 Q50,25 72,50" fill={hairColor} />
-                        <rect x="15" y="50" width="10" height="30" rx="5" fill={hairColor} />
-                        <rect x="75" y="50" width="10" height="30" rx="5" fill={hairColor} />
-                    </g>
-                );
-            case 'Bouclé':
-                 return (
-                    <g>
-                        <circle cx="30" cy="40" r="8" fill={hairColor} />
-                        <circle cx="40" cy="30" r="8" fill={hairColor} />
-                        <circle cx="50" cy="28" r="8" fill={hairColor} />
-                        <circle cx="60" cy="30" r="8" fill={hairColor} />
-                        <circle cx="70" cy="40" r="8" fill={hairColor} />
-                    </g>
-                 );
-            case 'QueueCheval':
-                return (
-                    <g>
-                       <circle cx="70" cy="30" r="10" fill={hairColor} />
-                       <path d="M28,50 Q50,25 72,50" fill={hairColor} />
-                    </g>
-                );
-            case 'Carré':
-            case 'Long':
-            case 'Court':
-            default:
-                return <path d="M28,50 Q50,20 72,50 Q72,55 72,50 Q50,30 28,50" fill={hairColor} />;
-        }
-     };
-
-     const renderGlasses = () => {
-         if (glasses === 'Round') {
-             return (
-                 <g stroke="#333" strokeWidth="1.5" fill="white" fillOpacity="0.2">
-                     <circle cx="40" cy="52" r="7" />
-                     <circle cx="60" cy="52" r="7" />
-                     <line x1="47" y1="52" x2="53" y2="52" />
-                 </g>
-             );
-         }
-         if (glasses === 'Square') {
-             return (
-                 <g stroke="#333" strokeWidth="1.5" fill="white" fillOpacity="0.2">
-                     <rect x="32" y="46" width="14" height="12" rx="2" />
-                     <rect x="54" y="46" width="14" height="12" rx="2" />
-                     <line x1="46" y1="52" x2="54" y2="52" />
-                 </g>
-             );
-         }
-         return null;
-     };
-
-     const renderBeard = () => {
-         if (beard === 'Moustache') {
-             return <path d="M38,62 Q50,58 62,62" stroke={hairColor} strokeWidth="3" strokeLinecap="round" fill="none" />;
-         }
-         if (beard === 'Bouc') {
-             return <path d="M48,68 Q50,75 52,68 L50,68 Z" stroke={hairColor} strokeWidth="4" fill={hairColor} />;
-         }
-         if (beard === 'Barbe') {
-             return <path d="M30,55 Q50,90 70,55" fill={hairColor} opacity="0.9" />;
-         }
-         return null;
-     };
-
-     // Simple avatar SVG composition
-     return (
-        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg transition-all duration-500 ease-out">
-           {/* Body/Outfit */}
-           <path d="M20,100 Q50,70 80,100" fill={hairColor} opacity="0.5" />
-           <path d="M30,100 L30,80 Q50,70 70,80 L70,100" fill="#60A5FA" /> {/* Generic Outfit Color */}
-           
-           {/* Neck */}
-           <rect x="45" y="65" width="10" height="15" fill={skinColor} />
-           
-           {/* Hair Back */}
-           {renderHairBack()}
-
-           {/* Head */}
-           <circle cx="50" cy="50" r="22" fill={skinColor} />
-           
-           {/* Eyes */}
-           <circle cx="43" cy="52" r="2" fill="#333" />
-           <circle cx="57" cy="52" r="2" fill="#333" />
-           
-           {/* Smile */}
-           <path d="M45,62 Q50,65 55,62" fill="none" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
-           
-           {/* Blush */}
-           <circle cx="40" cy="58" r="3" fill="#FFAAAA" opacity="0.4" />
-           <circle cx="60" cy="58" r="3" fill="#FFAAAA" opacity="0.4" />
-
-           {/* Beard */}
-           {renderBeard()}
-
-           {/* Hair Front */}
-           {renderHairFront()}
-           
-           {/* Glasses */}
-           {renderGlasses()}
-        </svg>
-     );
+     // Fallback: empty if no avatar configured in admin
+     return null;
   };
 
   const handleComplete = () => {
@@ -390,43 +344,10 @@ const Wizard: React.FC<WizardProps> = (props) => {
   };
 
   // Helper to get current colors for SVG defs (just taking first available for now as example)
-  // In a real app, we'd map specific tab/variant IDs to these props
-  const getCurrentColors = () => {
-    const currentTabSelections = selections[activeTabId] || {};
-    // Try to find skin/hair colors in current tab
-    const skinToneId = currentTabSelections['skinTone'];
-    const hairColorId = currentTabSelections['hairColor'];
-    
-    // Find hex values from options resources
-    let skinHex = '#FFE0BD';
-    let hairHex = '#302e34';
-
-    if (activeTab) {
-       const skinVariant = activeTab.variants.find(v => v.id === 'skinTone');
-       const hairVariant = activeTab.variants.find(v => v.id === 'hairColor');
-       
-       if (skinVariant && skinToneId && skinVariant.options) {
-         const opt = skinVariant.options.find(o => o.id === skinToneId);
-         if (opt?.resource) skinHex = opt.resource;
-       }
-       if (hairVariant && hairColorId && hairVariant.options) {
-         const opt = hairVariant.options.find(o => o.id === hairColorId);
-         if (opt?.resource) hairHex = opt.resource;
-       }
-    }
-    return { skinHex, hairHex };
-  };
-
-  const { skinHex, hairHex } = getCurrentColors();
   const bgPattern = `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")`;
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col font-sans relative">
-      
-      {/* GLOBAL DEFS for Watercolor Style */}
-      <svg width="0" height="0" className="absolute">
-         <WatercolorDefs skinHex={skinHex} hairHex={hairHex} />
-      </svg>
 
       {/* NAVIGATION */}
       <Navigation onStart={() => {}} />
@@ -567,18 +488,26 @@ const Wizard: React.FC<WizardProps> = (props) => {
                              {(variant.options || []).map((opt) => {
                                // Prefer resource (uploaded image) over legacy thumbnail
                                const imageUrl = opt.resource && !opt.resource.startsWith('#') ? opt.resource : opt.thumbnail;
+                               if (imageUrl && !imageUrl.startsWith('#')) {
+                                 console.log('[Wizard] Displaying image:', { optionId: opt.id, imageUrl });
+                               }
                                
                                return (
                                <button
                                  key={opt.id}
                                  onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
-                                 className={`w-14 h-14 rounded-full transition-all border border-gray-200 overflow-hidden flex items-center justify-center bg-white ${currentValue === opt.id ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] scale-110 ring-offset-2' : 'hover:scale-105'}`}
+                                 className={`${variant.showLabel ? 'flex items-center gap-2 px-2 py-2' : 'w-14 h-14'} rounded-full transition-all border border-gray-200 overflow-hidden ${variant.showLabel ? 'bg-white' : 'flex items-center justify-center bg-white'} ${currentValue === opt.id ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] scale-110 ring-offset-2' : 'hover:scale-105'}`}
                                  title={opt.label}
                                >
-                                  {imageUrl ? (
-                                     <img src={imageUrl} alt={opt.label} className="w-full h-full object-cover" />
-                                  ) : (
-                                     <span className="text-sm font-bold text-gray-400">{opt.label[0]}</span>
+                                  <div className={`${variant.showLabel ? 'w-10 h-10' : 'w-full h-full'} rounded-full overflow-hidden flex items-center justify-center flex-shrink-0`}>
+                                    {imageUrl ? (
+                                       <img src={imageUrl} alt={opt.label} className="w-full h-full object-cover" />
+                                    ) : (
+                                       <span className="text-sm font-bold text-gray-400">{opt.label[0]}</span>
+                                    )}
+                                  </div>
+                                  {variant.showLabel && (
+                                    <span className="text-sm font-medium text-gray-700 pr-2">{opt.label}</span>
                                   )}
                                </button>
                              )})}

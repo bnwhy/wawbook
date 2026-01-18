@@ -111,6 +111,12 @@ export async function uploadFileToStorage(file: File, prefix?: string): Promise<
     
     const filename = prefix ? `${prefix}_${file.name}` : file.name;
     
+    console.log('[uploadFileToStorage] Uploading file:', {
+      filename,
+      size: file.size,
+      type: file.type
+    });
+    
     const uploadResponse = await fetch('/api/uploads/base64', {
       method: 'POST',
       headers: {
@@ -124,10 +130,13 @@ export async function uploadFileToStorage(file: File, prefix?: string): Promise<
     });
     
     if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      console.error('[uploadFileToStorage] Upload failed:', errorText);
       throw new Error('Upload failed');
     }
     
     const result = await uploadResponse.json();
+    console.log('[uploadFileToStorage] Upload successful, objectPath:', result.objectPath);
     return result.objectPath;
   } catch (error) {
     console.error('Error uploading file:', error);

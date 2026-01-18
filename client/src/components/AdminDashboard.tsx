@@ -220,6 +220,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [idmlFile, setIdmlFile] = useState<File | null>(null);
   const [fontFiles, setFontFiles] = useState<File[]>([]);
 
+  // Avatar EPUB import state
+  const [showAvatarEpubSelector, setShowAvatarEpubSelector] = useState(false);
+  const [isImportingAvatarEpub, setIsImportingAvatarEpub] = useState(false);
+  const [avatarEpubFile, setAvatarEpubFile] = useState<File | null>(null);
+
   // Shipping Zone State
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
 
@@ -401,6 +406,225 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       toast.error('Erreur lors de l\'extraction de l\'EPUB');
     } finally {
       setIsExtractingEpub(false);
+    }
+  };
+
+  // Function to import avatar template EPUB
+  const handleImportAvatarEpub = async (epubPath: string) => {
+    if (!selectedBook) {
+      toast.error('Veuillez sélectionner un livre');
+      return;
+    }
+
+    if (!selectedBook.wizardConfig?.tabs || selectedBook.wizardConfig.tabs.length === 0) {
+      toast.error('Le livre n\'a pas de configuration wizard. Veuillez d\'abord configurer les personnages.');
+      return;
+    }
+
+    const targetTabId = selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id;
+    if (!targetTabId) {
+      toast.error('Aucun personnage sélectionné');
+      return;
+    }
+
+    setIsImportingAvatarEpub(true);
+    try {
+      toast.info('Import du template d\'avatars en cours...');
+      
+      console.log('[Avatar Template] Starting import for book:', selectedBook.id, 'tab:', targetTabId, 'path:', epubPath);
+      
+      const response = await fetch('/api/epubs/extract-avatar-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          epubPath,
+          bookId: selectedBook.id,
+          tabId: targetTabId,
+        }),
+      });
+
+      console.log('[Avatar Template] Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('[Avatar Template] Error response:', errorData);
+        throw new Error(errorData.error || 'Failed to import avatar template');
+      }
+
+      const result = await response.json();
+      console.log('[Avatar Template] Result:', result);
+
+      // Merge avatar mappings with existing ones
+      const newAvatarMappings = {
+        ...(selectedBook.wizardConfig.avatarMappings || {}),
+        ...result.avatarMappings
+      };
+
+      // Update book
+      const updatedBook = {
+        ...selectedBook,
+        wizardConfig: {
+          ...selectedBook.wizardConfig,
+          avatarMappings: newAvatarMappings
+        }
+      };
+
+      await updateBook(updatedBook);
+      setDraftBook(updatedBook);
+      setShowAvatarEpubSelector(false);
+
+      const successMsg = result.stats.generatedCombinations !== undefined
+        ? `Template d'avatars importé : ${result.stats.generatedCombinations} avatars générés depuis ${result.stats.totalLayers} layers (${result.stats.outputFormat}, ${result.stats.avgFileSize} moy.)`
+        : `Template d'avatars importé : ${result.stats.mappedImages}/${result.stats.totalImages} images mappées`;
+      
+      toast.success(successMsg);
+      
+      // Show layer details if available
+      if (result.stats.layersByType) {
+        const layerDetails = Object.entries(result.stats.layersByType)
+          .map(([type, count]) => `${type}: ${count}`)
+          .join(', ');
+        console.log(`[Avatar Template] Layers détaillés: ${layerDetails}`);
+      }
+    } catch (error: any) {
+      console.error('[Avatar Template] Error:', error);
+      toast.error(`Erreur lors de l'import du template d'avatars: ${error.message || 'Erreur inconnue'}`);
+    } finally {
+      setIsImportingAvatarEpub(false);
+    }
+  };
+
+  // Function to import avatar template from local file
+  const handleImportAvatarEpubFromFile = async () => {
+    if (!selectedBook) {
+      toast.error('Veuillez sélectionner un livre');
+      return;
+    }
+
+    if (!avatarEpubFile) {
+      toast.error('Veuillez sélectionner un fichier EPUB');
+      return;
+    }
+
+    if (!selectedBook.wizardConfig?.tabs || selectedBook.wizardConfig.tabs.length === 0) {
+      toast.error('Le livre n\'a pas de configuration wizard. Veuillez d\'abord configurer les personnages.');
+      return;
+    }
+
+    const targetTabId = selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id;
+    if (!targetTabId) {
+      toast.error('Aucun personnage sélectionné');
+      return;
+    }
+
+    setIsImportingAvatarEpub(true);
+    try {
+      toast.info('Import du template d\'avatars en cours...');
+      
+      console.log('[Avatar Template File] Starting import for book:', selectedBook.id, 'tab:', targetTabId);
+      
+      // Convert file to base64
+      const base64 = await fileToBase64(avatarEpubFile);
+      console.log('[Avatar Template File] File converted to base64, length:', base64.length);
+      
+      const response = await fetch('/api/epubs/extract-avatar-template-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          epub: base64,
+          bookId: selectedBook.id,
+          tabId: targetTabId,
+        }),
+      });
+
+      console.log('[Avatar Template File] Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('[Avatar Template File] Error response:', errorData);
+        throw new Error(errorData.error || 'Failed to import avatar template');
+      }
+
+      const result = await response.json();
+      console.log('[Avatar Template File] Result:', result);
+      console.log('[Avatar Template File] Imported avatarMappings:', result.avatarMappings);
+      console.log('[Avatar Template File] Imported avatarMappings keys:', Object.keys(result.avatarMappings || {}));
+      console.log('[Avatar Template File] Stats:', result.stats);
+      
+      // Show characteristics coverage to help debug why images were skipped
+      if (result.stats.characteristicsCoverage) {
+        console.log('[Avatar Template File] Characteristics found in images:');
+        for (const [charKey, values] of Object.entries(result.stats.characteristicsCoverage)) {
+          console.log(`  - ${charKey}: ${(values as string[]).join(', ')}`);
+        }
+      }
+      
+      // Get expected variants from tab
+      const currentTab = selectedBook.wizardConfig.tabs.find(t => t.id === targetTabId);
+      if (currentTab) {
+        const expectedVariants = currentTab.variants.filter((v: any) => v.type === 'options').map((v: any) => v.id);
+        console.log('[Avatar Template File] Expected variants from tab:', expectedVariants);
+        
+        // Check for mismatches
+        const foundCharKeys = Object.keys(result.stats.characteristicsCoverage || {});
+        const missing = expectedVariants.filter(v => !foundCharKeys.includes(v));
+        const extra = foundCharKeys.filter(k => !expectedVariants.includes(k));
+        
+        if (missing.length > 0) {
+          console.error('[Avatar Template File] PROBLEM: Images are missing these variants:', missing);
+        }
+        if (extra.length > 0) {
+          console.warn('[Avatar Template File] Images contain extra characteristics not in tab:', extra);
+        }
+      }
+
+      // Merge avatar mappings with existing ones
+      const newAvatarMappings = {
+        ...(selectedBook.wizardConfig.avatarMappings || {}),
+        ...result.avatarMappings
+      };
+
+      // Update book
+      const updatedBook = {
+        ...selectedBook,
+        wizardConfig: {
+          ...selectedBook.wizardConfig,
+          avatarMappings: newAvatarMappings
+        }
+      };
+
+      await updateBook(updatedBook);
+      setDraftBook(updatedBook);
+      setShowAvatarEpubSelector(false);
+      setAvatarEpubFile(null);
+
+      const successMsg = result.stats.generatedCombinations !== undefined
+        ? `Template d'avatars importé : ${result.stats.generatedCombinations} avatars générés depuis ${result.stats.totalLayers} layers (${result.stats.outputFormat}, ${result.stats.avgFileSize} moy.)`
+        : `Template d'avatars importé : ${result.stats.mappedImages}/${result.stats.totalImages} images mappées`;
+      
+      toast.success(successMsg);
+      
+      // Show layer details if available
+      if (result.stats.layersByType) {
+        const layerDetails = Object.entries(result.stats.layersByType)
+          .map(([type, count]) => `${type}: ${count}`)
+          .join(', ');
+        console.log(`[Avatar Template File] Layers détaillés: ${layerDetails}`);
+      }
+      
+      // Log avatar mappings for debugging
+      console.log('[Avatar Template File] New avatarMappings after merge:', newAvatarMappings);
+      console.log('[Avatar Template File] Total mappings in book:', Object.keys(newAvatarMappings).length);
+      
+      if (Object.keys(result.avatarMappings || {}).length === 0) {
+        console.warn('[Avatar Template File] WARNING: No avatar mappings were generated!');
+        console.warn('[Avatar Template File] Check server logs for details');
+      }
+    } catch (error: any) {
+      console.error('[Avatar Template File] Error:', error);
+      toast.error(`Erreur lors de l'import du template d'avatars: ${error.message || 'Erreur inconnue'}`);
+    } finally {
+      setIsImportingAvatarEpub(false);
     }
   };
 
@@ -633,6 +857,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         `IDML parsé : ${result.stats.textFrames} textes trouvés, ${result.stats.characterStyles} styles de caractère, ${result.stats.paragraphStyles} styles de paragraphe`,
         { duration: 8000 }
       );
+
+      // Fonts detection summary (names exactly as detected from IDML parsing)
+      const detectedFonts: string[] = result?.fonts?.detected || [];
+      if (detectedFonts.length > 0) {
+        const preview = detectedFonts.slice(0, 6).join(', ');
+        const suffix = detectedFonts.length > 6 ? ` (+${detectedFonts.length - 6})` : '';
+        toast.success(`Polices détectées (${detectedFonts.length}) : ${preview}${suffix}`, { duration: 10000 });
+        console.log('[Test IDML] Polices détectées:', detectedFonts);
+        console.log('[Test IDML] Polices par source:', result?.fonts?.bySource);
+        console.log('[Test IDML] Résolution par texte (sample):', result?.fonts?.resolutionSample);
+      } else {
+        toast.warning("Aucune police n'a été détectée dans l'IDML (styles/inline).", { duration: 8000 });
+      }
       
       // Log text frames for debugging
       if (result.textFrames && result.textFrames.length > 0) {
@@ -923,11 +1160,44 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [avatarFilters, setAvatarFilters] = useState<Record<string, string[]>>({});
   
   // Helper function to generate avatar combinations
-  const generateAvatarCombinations = (tab: any): Array<{ parts: Array<{ variantId: string; id: string }>, key: string }> => {
+  const generateAvatarCombinations = (tab: any): Array<{ parts: Array<{ variantId: string; id: string; label: string }>, key: string }> => {
     if (!tab || !tab.variants) return [];
-    // This is a placeholder - implement based on your needs
-    // Return empty array with proper type
-    return [];
+    
+    // Filter option variants only
+    const optionVariants = tab.variants.filter((v: any) => v.type === 'options' || !v.type);
+    
+    // Filter variants that have options
+    const variantsWithOptions = optionVariants.filter((v: any) => v.options && v.options.length > 0);
+    
+    if (variantsWithOptions.length === 0) return [];
+    
+    // Generate cartesian product of all options
+    const generateCombinations = (variants: any[], currentIndex: number, currentParts: any[]): any[] => {
+      if (currentIndex >= variants.length) {
+        // Build combination object
+        const optionIds = currentParts.map(p => p.id);
+        const key = optionIds.join('_');
+        return [{ parts: currentParts, key }];
+      }
+      
+      const variant = variants[currentIndex];
+      const results: any[] = [];
+      
+      for (const option of variant.options) {
+        const part = {
+          variantId: variant.id,
+          id: option.id,
+          label: `${variant.id}:${option.id}`
+        };
+        const newParts = [...currentParts, part];
+        const combos = generateCombinations(variants, currentIndex + 1, newParts);
+        results.push(...combos);
+      }
+      
+      return results;
+    };
+    
+    return generateCombinations(variantsWithOptions, 0, []);
   };
   const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
@@ -977,7 +1247,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return options;
   }, [selectedBook]);
 
-  // Compute available image variant options (variants with type 'options' or 'checkbox')
+  // Compute available image variant options (variants with type 'options', 'color' or 'checkbox')
   const imageVariantOptions = useMemo(() => {
     const options: { value: string; label: string; variant?: any; tabLabel?: string; variantOptions?: { id: string; label: string }[] }[] = [];
 
@@ -985,7 +1255,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         selectedBook.wizardConfig.tabs.forEach(tab => {
             if (tab.variants) {
                 tab.variants.forEach(variant => {
-                    if (variant.type === 'options' && variant.options && variant.options.length > 0) {
+                    if ((variant.type === 'options' || variant.type === 'color') && variant.options && variant.options.length > 0) {
                         options.push({
                             value: variant.id,
                             label: `${variant.title || variant.label}`,
@@ -5339,7 +5609,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      value={variant.type || 'options'}
                                                      onChange={(e) => {
                                                         const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                        newTabs[idx].variants[vIdx].type = e.target.value as 'options' | 'text' | 'checkbox';
+                                                        newTabs[idx].variants[vIdx].type = e.target.value as 'options' | 'text' | 'checkbox' | 'color';
                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                      }}
                                                      className="w-full text-xs border-gray-200 rounded-md py-1.5 pl-3 pr-8 bg-white text-slate-600 font-medium focus:ring-indigo-500 focus:border-indigo-500"
@@ -5347,7 +5617,27 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      <option value="options">Choix (Options)</option>
                                                      <option value="text">Texte (Libre)</option>
                                                      <option value="checkbox">Case à cocher</option>
+                                                     <option value="color">Choix (Couleurs)</option>
                                                   </select>
+                                                  
+                                                  {variant.type === 'options' && expandedVariantIds.has(`${tab.id}.${variant.id}`) && (
+                                                     <div className="flex items-center gap-2 mt-2">
+                                                        <input 
+                                                           type="checkbox" 
+                                                           id={`show-label-${variant.id}`}
+                                                           checked={variant.showLabel || false}
+                                                           onChange={(e) => {
+                                                              const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                              newTabs[idx].variants[vIdx].showLabel = e.target.checked;
+                                                              handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                           }}
+                                                           className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                        />
+                                                        <label htmlFor={`show-label-${variant.id}`} className="text-[10px] text-gray-600 cursor-pointer">
+                                                           Afficher le texte dans le Wizard
+                                                        </label>
+                                                     </div>
+                                                  )}
                                                   
                                                   {variant.type === 'text' && expandedVariantIds.has(`${tab.id}.${variant.id}`) && (
                                                      <div className="flex flex-col gap-2 mt-2">
@@ -5406,7 +5696,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             </div>
 
                                             {/* Options Area (Nested) - Collapsible */}
-                                            {expandedVariantIds.has(`${tab.id}.${variant.id}`) && (variant.type === 'options' || !variant.type) && (
+                                            {expandedVariantIds.has(`${tab.id}.${variant.id}`) && (variant.type === 'options' || variant.type === 'color' || !variant.type) && (
                                                <div className="px-4 pb-4">
                                                   <div className="bg-gray-50/50 rounded-lg border border-gray-100 p-4 relative">
                                                   {/* Vertical Connector Line */}
@@ -5421,7 +5711,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            if (!newTabs[idx].variants[vIdx].options) newTabs[idx].variants[vIdx].options = [];
                                                            newTabs[idx].variants[vIdx].options.push({
                                                               id: `opt_${Date.now()}`,
-                                                              label: 'Nouvelle Option'
+                                                              label: 'Nouvelle Option',
+                                                              ...(variant.type === 'color' && { resource: '#000000' })
                                                            });
                                                            handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                         }}
@@ -5435,35 +5726,78 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      {(variant.options || []).map((option, oIdx) => (
                                                         <div key={oIdx} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center gap-4 group/option">
                                                            
-                                                           {/* Uploads */}
-                                                           <div className="flex gap-3">
-                                                              <div className="text-center group/upload cursor-pointer relative">
-                                                                 <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors mb-1 overflow-hidden ${option.resource ? 'border-blue-200 bg-blue-50 text-blue-500' : 'border-gray-200 bg-gray-50 group-hover/upload:border-blue-500 group-hover/upload:text-blue-500 text-gray-300'}`}>
-                                                                    {option.resource ? (
-                                                                       <img src={option.resource} alt="Res" className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                       <Box size={16} />
-                                                                    )}
-                                                                 </div>
-                                                                 <div className={`text-[9px] font-bold ${option.resource ? 'text-blue-600' : 'text-gray-400 group-hover/upload:text-blue-500'}`}>Ressource</div>
-
-                                                                 {/* Hidden File Input for Mock Upload */}
-                                                                 <input 
-                                                                    type="file" 
-                                                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                                                    onChange={(e) => {
-                                                                       const file = e.target.files?.[0];
-                                                                       if (file) {
-                                                                          // Mock upload - create object URL
-                                                                          const url = URL.createObjectURL(file);
+                                                           {/* Color Picker or Uploads */}
+                                                           {variant.type === 'color' ? (
+                                                              <div className="flex items-center gap-2">
+                                                                 <div className="text-center">
+                                                                    <input 
+                                                                       type="color" 
+                                                                       value={option.resource || '#000000'}
+                                                                       onChange={(e) => {
                                                                           const newTabs = [...selectedBook.wizardConfig.tabs];
-                                                                          newTabs[idx].variants[vIdx].options![oIdx].resource = url;
+                                                                          newTabs[idx].variants[vIdx].options![oIdx].resource = e.target.value;
                                                                           handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                                       }}
+                                                                       className="w-10 h-10 rounded-full cursor-pointer border border-gray-200"
+                                                                       style={{ padding: '2px' }}
+                                                                    />
+                                                                    <div className="text-[9px] font-bold text-gray-400 mt-1">Couleur</div>
+                                                                 </div>
+                                                                 <input 
+                                                                    type="text" 
+                                                                    value={option.resource || '#000000'}
+                                                                    onChange={(e) => {
+                                                                       let value = e.target.value;
+                                                                       // Ensure it starts with #
+                                                                       if (value && !value.startsWith('#')) {
+                                                                          value = '#' + value;
                                                                        }
+                                                                       const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                       newTabs[idx].variants[vIdx].options![oIdx].resource = value;
+                                                                       handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                                     }}
+                                                                    className="w-20 px-2 py-1 text-xs font-mono border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                                                                    placeholder="#000000"
+                                                                    maxLength={7}
                                                                  />
                                                               </div>
-                                                           </div>
+                                                           ) : (
+                                                              <div className="flex gap-3">
+                                                                 <div className="text-center group/upload cursor-pointer relative">
+                                                                    <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-colors mb-1 overflow-hidden ${option.resource ? 'border-blue-200 bg-blue-50 text-blue-500' : 'border-gray-200 bg-gray-50 group-hover/upload:border-blue-500 group-hover/upload:text-blue-500 text-gray-300'}`}>
+                                                                       {option.resource ? (
+                                                                          <img src={option.resource} alt="Res" className="w-full h-full object-cover" />
+                                                                       ) : (
+                                                                          <Box size={16} />
+                                                                       )}
+                                                                    </div>
+                                                                    <div className={`text-[9px] font-bold ${option.resource ? 'text-blue-600' : 'text-gray-400 group-hover/upload:text-blue-500'}`}>Ressource</div>
+
+                                                                    {/* Hidden File Input for Upload */}
+                                                                    <input 
+                                                                       type="file" 
+                                                                       className="absolute inset-0 opacity-0 cursor-pointer"
+                                                                       onChange={async (e) => {
+                                                                          const file = e.target.files?.[0];
+                                                                          if (file) {
+                                                                             try {
+                                                                                toast.loading('Upload de la ressource...', { id: 'resource-upload' });
+                                                                                const objectPath = await uploadFileToStorage(file, `variant_${variant.id}_${option.id}`);
+                                                                                const newTabs = [...selectedBook.wizardConfig.tabs];
+                                                                                newTabs[idx].variants[vIdx].options![oIdx].resource = objectPath;
+                                                                                handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
+                                                                                toast.success('Ressource uploadée!', { id: 'resource-upload' });
+                                                                             } catch (error: any) {
+                                                                                console.error('Resource upload error:', error);
+                                                                                const errorMsg = error?.message || String(error);
+                                                                                toast.error(`Erreur: ${errorMsg}`, { id: 'resource-upload', duration: 5000 });
+                                                                             }
+                                                                          }
+                                                                       }}
+                                                                    />
+                                                                 </div>
+                                                              </div>
+                                                           )}
 
                                                            <div className="w-px h-8 bg-gray-100"></div>
                                                            
@@ -5709,7 +6043,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   </Popover>
                                                </div>
                                             );})}
-                                        <div className="ml-auto">
+                                        <div className="ml-auto flex items-center gap-2">
+                                            <button 
+                                                onClick={() => {
+                                                    setShowAvatarEpubSelector(true);
+                                                    loadBucketEpubs();
+                                                }}
+                                                className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1"
+                                            >
+                                                <CloudDownload size={14} />
+                                                Importer template Avatar
+                                            </button>
                                             <button 
                                                 onClick={() => setAvatarFilters({})}
                                                 className="text-xs text-slate-500 hover:text-red-500 underline"
@@ -5732,7 +6076,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 ) : (
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                                         {combinations.map((combo, comboIdx) => {
-                                           const existingAvatar = selectedBook.wizardConfig.avatarMappings?.[combo.key];
+                                           // Try scoped key first (tabId:key), then fallback to legacy key
+                                           const scopedKey = `${targetTab.id}:${combo.key}`;
+                                           const existingAvatar = selectedBook.wizardConfig.avatarMappings?.[scopedKey] ?? selectedBook.wizardConfig.avatarMappings?.[combo.key];
+                                           
+                                           // Debug log for first combo
+                                           if (comboIdx === 0) {
+                                             console.log('[Avatar Display] First combo:', {
+                                               comboKey: combo.key,
+                                               scopedKey,
+                                               tabId: targetTab.id,
+                                               existingAvatar,
+                                               allMappings: selectedBook.wizardConfig.avatarMappings
+                                             });
+                                           }
                                            
                                            return (
                                               <div key={`${combo.key}_${comboIdx}`} className="bg-slate-50 rounded-xl border border-gray-200 overflow-hidden group hover:shadow-md transition-all">
@@ -5752,19 +6109,29 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                              <input 
                                                                 type="file" 
                                                                 className="hidden" 
-                                                                onChange={(e) => {
+                                                                onChange={async (e) => {
                                                                    const file = e.target.files?.[0];
                                                                    if (file) {
-                                                                      const url = URL.createObjectURL(file);
-                                                                      const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
-                                                                      newMappings[combo.key] = url;
-                                                                      handleSaveBook({
-                                                                         ...selectedBook,
-                                                                         wizardConfig: {
-                                                                            ...selectedBook.wizardConfig,
-                                                                            avatarMappings: newMappings
-                                                                         }
-                                                                      });
+                                                                      try {
+                                                                         toast.loading('Upload de l\'avatar...', { id: 'avatar-upload' });
+                                                                         const objectPath = await uploadFileToStorage(file, `avatar_${targetTab.id}_${combo.key}`);
+                                                                         const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
+                                                                         // Use scoped key for new uploads
+                                                                         const scopedKey = `${targetTab.id}:${combo.key}`;
+                                                                         newMappings[scopedKey] = objectPath;
+                                                                         handleSaveBook({
+                                                                            ...selectedBook,
+                                                                            wizardConfig: {
+                                                                               ...selectedBook.wizardConfig,
+                                                                               avatarMappings: newMappings
+                                                                            }
+                                                                         });
+                                                                         toast.success('Avatar uploadé!', { id: 'avatar-upload' });
+                                                                      } catch (error: any) {
+                                                                         console.error('Avatar upload error:', error);
+                                                                         const errorMsg = error?.message || String(error);
+                                                                         toast.error(`Erreur: ${errorMsg}`, { id: 'avatar-upload', duration: 5000 });
+                                                                      }
                                                                    }
                                                                 }}
                                                              />
@@ -5775,6 +6142,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   onClick={() => {
                                                                       if (confirm('Supprimer cette image ?')) {
                                                                           const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
+                                                                          // Delete both scoped and legacy keys
+                                                                          const scopedKey = `${targetTab.id}:${combo.key}`;
+                                                                          delete newMappings[scopedKey];
                                                                           delete newMappings[combo.key];
                                                                           handleSaveBook({
                                                                               ...selectedBook,
@@ -6391,6 +6761,167 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
                     <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
                       Les EPUBs sont extraits et les images sont stockées dans le bucket public.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Avatar EPUB Selector Modal */}
+              {showAvatarEpubSelector && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+                    <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50">
+                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <CloudDownload size={20} className="text-purple-600" />
+                        Importer un template d'avatars (EPUB)
+                      </h3>
+                      <button 
+                        onClick={() => {
+                          setShowAvatarEpubSelector(false);
+                          setAvatarEpubFile(null);
+                        }}
+                        className="p-1 hover:bg-white rounded-lg transition-colors"
+                      >
+                        <X size={18} className="text-slate-500" />
+                      </button>
+                    </div>
+                    <div className="p-4 space-y-4">
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm text-purple-800">
+                        <p className="font-medium mb-1">Instructions :</p>
+                        <p className="text-xs text-purple-700">
+                          Sélectionnez un EPUB contenant les avatars pour le personnage <strong>{selectedBook?.wizardConfig.tabs.find(t => t.id === (selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id))?.label}</strong>.
+                          Les images doivent suivre la convention de nommage : <code className="bg-purple-100 px-1 rounded">variant-valeur_variant-valeur.png</code>
+                        </p>
+                      </div>
+
+                      {/* File Upload Section */}
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 block mb-2">
+                          Sélectionner depuis votre machine
+                        </label>
+                        <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
+                          <input
+                            type="file"
+                            accept=".epub"
+                            onChange={(e) => setAvatarEpubFile(e.target.files?.[0] || null)}
+                            className="hidden"
+                            id="avatar-epub-file-input"
+                          />
+                          <label 
+                            htmlFor="avatar-epub-file-input"
+                            className="cursor-pointer flex flex-col items-center gap-2"
+                          >
+                            {avatarEpubFile ? (
+                              <div className="w-full">
+                                <div className="flex items-center gap-2 text-green-600 mb-3">
+                                  <FileCode size={20} />
+                                  <span className="text-sm font-medium">{avatarEpubFile.name}</span>
+                                  <span className="text-xs text-slate-500">
+                                    ({(avatarEpubFile.size / 1024 / 1024).toFixed(2)} MB)
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleImportAvatarEpubFromFile();
+                                  }}
+                                  disabled={isImportingAvatarEpub}
+                                  className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                  {isImportingAvatarEpub ? (
+                                    <>
+                                      <Loader2 size={16} className="animate-spin" />
+                                      Import en cours...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Upload size={16} />
+                                      Importer ce fichier
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <Upload size={24} className="text-slate-400" />
+                                <span className="text-sm text-slate-600">Cliquez pour sélectionner un fichier .epub</span>
+                                <span className="text-xs text-slate-400">Depuis votre ordinateur</span>
+                              </>
+                            )}
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-slate-200"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs">
+                          <span className="bg-white px-2 text-slate-500">ou</span>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-slate-700">
+                            EPUBs disponibles
+                          </label>
+                          <button
+                            onClick={loadBucketEpubs}
+                            className="text-xs text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                          >
+                            <RotateCcw size={12} />
+                            Rafraîchir
+                          </button>
+                        </div>
+                        
+                        {isLoadingEpubs ? (
+                          <div className="flex items-center justify-center py-8 text-slate-400">
+                            <Loader2 size={20} className="animate-spin mr-2" />
+                            Chargement...
+                          </div>
+                        ) : bucketEpubs.length === 0 ? (
+                          <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                            <FileCode size={32} className="mx-auto text-slate-300 mb-2" />
+                            <p className="text-sm text-slate-500">Aucun EPUB trouvé</p>
+                            <p className="text-xs text-slate-400 mt-1">Uploadez des fichiers .epub dans le dossier .private/</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {bucketEpubs.map((epub) => (
+                              <div 
+                                key={epub.path}
+                                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-purple-300 transition-colors"
+                              >
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <FileCode size={18} className="text-purple-600 shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-slate-700 truncate">{epub.name}</p>
+                                    {epub.size && (
+                                      <p className="text-xs text-slate-400">{(epub.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleImportAvatarEpub(epub.path)}
+                                  disabled={isImportingAvatarEpub}
+                                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1 shrink-0"
+                                >
+                                  {isImportingAvatarEpub ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                  ) : (
+                                    <CloudDownload size={14} />
+                                  )}
+                                  Importer
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
+                      Les avatars sont extraits et stockés dans le dossier avatars du livre.
                     </div>
                   </div>
                 </div>

@@ -148,7 +148,7 @@ export const getCombinationKey = (book: BookProduct, config: BookConfig): string
   book.wizardConfig.tabs.forEach((tab: any) => {
       if (tab.type === 'character' && config.characters?.[tab.id]) {
           tab.variants?.forEach((v: any) => {
-              if (v.type === 'options') {
+              if (v.type === 'options' || v.type === 'color') {
                   const selectedOptId = config.characters![tab.id][v.id];
                   if (selectedOptId) {
                       characteristicParts.push(`${v.id}:${selectedOptId}`);

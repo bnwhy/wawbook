@@ -63,47 +63,59 @@ export function registerObjectStorageRoutes(app: Express): void {
     try {
       const { data, contentType, filename } = req.body;
 
+      console.log('[upload-base64] Request received:', {
+        hasData: !!data,
+        dataLength: data?.length,
+        contentType,
+        filename
+      });
+
       if (!data) {
+        console.error('[upload-base64] Missing data field');
         return res.status(400).json({ error: "Missing required field: data" });
       }
 
-      // Get the bucket from PUBLIC_OBJECT_SEARCH_PATHS (first path)
-      const publicPaths = objectStorageService.getPublicObjectSearchPaths();
-      if (!publicPaths.length) {
-        return res.status(500).json({ error: "No public object storage path configured" });
-      }
-
-      const publicPath = publicPaths[0];
-      const { bucketName, objectName: basePath } = parseObjectPathSimple(publicPath);
+      // TEMPORARY: Use local file storage instead of GCS due to permission issues
+      const fs = await import('fs');
+      const path = await import('path');
       
       // Generate unique filename
       const fileId = randomUUID();
       const ext = getExtensionFromContentType(contentType || 'image/png');
       const finalFilename = filename ? `${filename}.${ext}` : `image_${fileId}.${ext}`;
-      const objectName = basePath ? `${basePath}/${finalFilename}` : finalFilename;
-
-      // Decode base64 and upload
+      
+      // Save to local assets directory
+      const uploadsDir = path.join(process.cwd(), 'server', 'assets', 'uploads');
+      await fs.promises.mkdir(uploadsDir, { recursive: true });
+      
+      const localPath = path.join(uploadsDir, finalFilename);
+      
+      console.log('[upload-base64] Decoding base64...');
       const buffer = Buffer.from(data, 'base64');
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
+      console.log('[upload-base64] Buffer size:', buffer.length, 'bytes');
+      
+      console.log('[upload-base64] Saving to local file:', localPath);
+      await fs.promises.writeFile(localPath, buffer);
 
-      await file.save(buffer, {
-        contentType: contentType || 'image/png',
-        metadata: {
-          cacheControl: 'public, max-age=31536000',
-        },
-      });
+      // Return the asset path that can be served
+      const assetPath = `/assets/uploads/${finalFilename}`;
 
-      // Return the object path that can be served (includes bucket name)
-      const objectPath = `/objects/${bucketName}/${objectName}`;
-
+      console.log('[upload-base64] ✓ Upload successful:', assetPath);
       res.json({
-        objectPath,
+        objectPath: assetPath,
         filename: finalFilename,
       });
-    } catch (error) {
-      console.error("Error uploading base64 image:", error);
-      res.status(500).json({ error: "Failed to upload image" });
+    } catch (error: any) {
+      console.error("[upload-base64] ❌ Error uploading base64 image:", error);
+      console.error("[upload-base64] Error details:", {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      res.status(500).json({ 
+        error: "Failed to upload image",
+        details: error.message 
+      });
     }
   });
 
@@ -961,6 +973,596 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
+   * Extract avatar template EPUB for a specific character tab
+   */
+  app.post("/api/epubs/extract-avatar-template", async (req, res) => {
+    try {
+      const { epubPath, bookId, tabId } = req.body;
+
+      if (!epubPath || !bookId || !tabId) {
+        return res.status(400).json({ error: "Missing required fields: epubPath, bookId, tabId" });
+      }
+
+      console.log(`[avatar-template] Extracting avatar EPUB for book ${bookId}, tab ${tabId}`);
+
+      // Parse the epub path to get bucket and object name
+      const pathWithoutPrefix = epubPath.replace(/^\/objects\//, '');
+      const parts = pathWithoutPrefix.split('/');
+      const bucketName = parts[0];
+      const objectName = parts.slice(1).join('/');
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const epubFile = bucket.file(objectName);
+      
+      const [exists] = await epubFile.exists();
+      if (!exists) {
+        return res.status(404).json({ error: "EPUB file not found" });
+      }
+
+      // Download EPUB to memory
+      const [epubBuffer] = await epubFile.download();
+      console.log(`[avatar-template] Downloaded EPUB (${epubBuffer.length} bytes)`);
+
+      // Extract images from EPUB
+      const JSZip = (await import('jszip')).default;
+      const zip = await JSZip.loadAsync(epubBuffer);
+      
+      // Create local directory for avatar images
+      const fs = await import('fs');
+      const path = await import('path');
+      const avatarDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'avatars', tabId, 'images');
+      await fs.promises.mkdir(avatarDir, { recursive: true });
+      
+      const imageCharacteristicsMap: Record<string, any> = {};
+      
+      // Store all extracted images with their characteristics
+      const extractedImages: Array<{ fileName: string; localPath: string; characteristics: Record<string, string> }> = [];
+      
+      // Extract only images
+      for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+        if (zipEntry.dir) continue;
+        
+        if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
+          const fileName = relativePath.split('/').pop() || relativePath;
+          const imageBuffer = await zipEntry.async('nodebuffer');
+          const localPath = path.join(avatarDir, fileName);
+          await fs.promises.writeFile(localPath, imageBuffer);
+          
+          // Parse filename for characteristics
+          const parsedFilename = parseImageFilename(fileName);
+          const characteristics = parsedFilename.characteristics;
+          
+          console.log(`[avatar-template] Extracted image: ${fileName}`, characteristics);
+          
+          // Security check: verify hero matches tabId
+          if (characteristics.hero) {
+            const heroValue = characteristics.hero.toLowerCase();
+            const tabIdLower = tabId.toLowerCase();
+            
+            if (heroValue !== tabIdLower) {
+              console.log(`[avatar-template] Image ${fileName} has hero="${characteristics.hero}" but tabId="${tabId}", skipping`);
+              continue;
+            }
+          }
+          
+          extractedImages.push({ fileName, localPath, characteristics });
+        }
+      }
+      
+      console.log(`[avatar-template] Extracted ${extractedImages.length} images total`);
+      
+      // Load the book to get the tab configuration
+      const { storage } = await import('../../storage');
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      const wizardConfig = book.wizardConfig as any;
+      if (!wizardConfig?.tabs) {
+        return res.status(400).json({ error: "Book has no wizard configuration" });
+      }
+      
+      const tab = wizardConfig.tabs.find((t: any) => t.id === tabId);
+      if (!tab) {
+        return res.status(404).json({ error: `Tab ${tabId} not found in wizard configuration` });
+      }
+      
+      // Get option variants for this tab
+      const optionVariants = tab.variants.filter((v: any) => v.type === 'options');
+      
+      console.log(`[avatar-template] Tab ${tabId} has ${optionVariants.length} option variants:`, 
+        optionVariants.map((v: any) => v.id));
+      
+      // Find images with all variants (complete avatars) first
+      const completeAvatars = extractedImages.filter(img => {
+        for (const variant of optionVariants) {
+          if (!img.characteristics[variant.id]) return false;
+        }
+        return true;
+      });
+      
+      // Generate avatar mappings
+      const avatarMappings: Record<string, string> = {};
+      let mappedCount = 0;
+      
+      if (completeAvatars.length > 0) {
+        // Use complete avatars directly (no composition needed)
+        console.log(`[avatar-template] Found ${completeAvatars.length} complete avatars`);
+        
+        for (const img of completeAvatars) {
+          const optionIds = optionVariants.map((v: any) => img.characteristics[v.id]);
+          const scopedKey = `${tabId}:${optionIds.join('_')}`;
+          const serverPath = `/assets/books/${bookId}/avatars/${tabId}/images/${img.fileName}`;
+          avatarMappings[scopedKey] = serverPath;
+          mappedCount++;
+          console.log(`[avatar-template] Mapped complete avatar ${img.fileName} -> ${scopedKey}`);
+        }
+      } else {
+        // No complete avatars, need to compose from partial layers
+        console.log(`[avatar-template] No complete avatars, composing from ${extractedImages.length} partial layers`);
+        
+        // Generate all possible complete combinations by matching partial layers
+        const variantValues: Record<string, Set<string>> = {};
+        for (const img of extractedImages) {
+          for (const variant of optionVariants) {
+            const value = img.characteristics[variant.id];
+            if (value) {
+              if (!variantValues[variant.id]) variantValues[variant.id] = new Set();
+              variantValues[variant.id].add(value);
+            }
+          }
+        }
+        
+        // Generate cartesian product
+        const generateCombos = (vIdx: number, current: Record<string, string>): Record<string, string>[] => {
+          if (vIdx >= optionVariants.length) return [current];
+          
+          const variant = optionVariants[vIdx];
+          const values = Array.from(variantValues[variant.id] || []);
+          if (values.length === 0) return [];
+          
+          const results: Record<string, string>[] = [];
+          for (const value of values) {
+            results.push(...generateCombos(vIdx + 1, { ...current, [variant.id]: value }));
+          }
+          return results;
+        };
+        
+        const allPossibleCombos = generateCombos(0, {});
+        console.log(`[avatar-template] Generated ${allPossibleCombos.length} possible combinations from available values`);
+        
+        // For each combo, find matching layers and compose
+        const sharp = (await import('sharp')).default;
+        const composedDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'avatars', tabId, 'composed');
+        await fs.promises.mkdir(composedDir, { recursive: true });
+        
+        for (const combo of allPossibleCombos) {
+          try {
+            // Find all layers that match this combination (subset match)
+            const matchingLayers: any[] = [];
+            
+            for (const img of extractedImages) {
+              let matches = true;
+              for (const [variantId, optionId] of Object.entries(combo)) {
+                const imgValue = img.characteristics[variantId];
+                if (imgValue && imgValue !== optionId) {
+                  matches = false;
+                  break;
+                }
+              }
+              
+              if (matches) {
+                // This layer is compatible with this combination
+                const coverage = Object.keys(img.characteristics).filter(k => k !== 'hero' && combo[k] === img.characteristics[k]);
+                matchingLayers.push({ ...img, coverage: coverage.length });
+              }
+            }
+            
+            if (matchingLayers.length === 0) {
+              console.log(`[avatar-template] No layers found for combination ${Object.values(combo).join('_')}, skipping`);
+              continue;
+            }
+            
+            // Sort by coverage (least complete first for proper layering - skin/base first, details on top)
+            matchingLayers.sort((a, b) => a.coverage - b.coverage);
+            
+            const optionIds = optionVariants.map((v: any) => combo[v.id]);
+            const scopedKey = `${tabId}:${optionIds.join('_')}`;
+            const safeKey = scopedKey.replace(/:/g, '-');
+            const outputFileName = `${safeKey}.png`;
+            const outputPath = path.join(composedDir, outputFileName);
+            
+            // Get dimensions from first layer
+            const sharp = (await import('sharp')).default;
+            const baseImage = sharp(matchingLayers[0].localPath);
+            const metadata = await baseImage.metadata();
+            const targetWidth = metadata.width || 800;
+            const targetHeight = metadata.height || 800;
+            
+            // Create a transparent canvas
+            const canvas = await sharp({
+              create: {
+                width: targetWidth,
+                height: targetHeight,
+                channels: 4,
+                background: { r: 0, g: 0, b: 0, alpha: 0 }
+              }
+            });
+            
+            // Prepare all layers for composition (resize to target dimensions)
+            const compositeInputs = [];
+            for (const layer of matchingLayers) {
+              const layerBuffer = await sharp(layer.localPath)
+                .resize(targetWidth, targetHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                .toBuffer();
+              
+              compositeInputs.push({
+                input: layerBuffer,
+                blend: 'over' as const
+              });
+            }
+            
+            // Compose all layers on the transparent canvas
+            await canvas
+              .composite(compositeInputs)
+              .png()
+              .toFile(outputPath);
+            
+            console.log(`[avatar-template] Composed ${scopedKey} from ${matchingLayers.length} layers (${matchingLayers.map(l => l.fileName).join(' + ')})`);
+            
+            const serverPath = `/assets/books/${bookId}/avatars/${tabId}/composed/${outputFileName}`;
+            avatarMappings[scopedKey] = serverPath;
+            mappedCount++;
+          } catch (composeError) {
+            console.error(`[avatar-template] Failed to compose:`, combo, composeError);
+          }
+        }
+      }
+      
+      console.log(`[avatar-template] Generation complete: ${mappedCount} avatars created from ${extractedImages.length} source images`);
+      
+      // Count characteristics coverage
+      const charCoverage: Record<string, Set<string>> = {};
+      for (const img of extractedImages) {
+        for (const [key, value] of Object.entries(img.characteristics)) {
+          if (key === 'hero') continue;
+          if (!charCoverage[key]) charCoverage[key] = new Set();
+          charCoverage[key].add(value);
+        }
+      }
+      
+      res.json({
+        avatarMappings,
+        stats: {
+          totalImages: extractedImages.length,
+          mappedImages: mappedCount,
+          skippedImages: skippedCount,
+          characteristicsCoverage: Object.fromEntries(
+            Object.entries(charCoverage).map(([k, v]) => [k, Array.from(v)])
+          ),
+          tabId,
+          variantCount: optionVariants.length
+        }
+      });
+    } catch (error: any) {
+      console.error("[avatar-template] Error:", error);
+      res.status(500).json({ 
+        error: "Failed to extract avatar template EPUB",
+        details: error.message || String(error)
+      });
+    }
+  });
+
+  /**
+   * Extract avatar template EPUB from uploaded file (base64)
+   */
+  app.post("/api/epubs/extract-avatar-template-file", async (req, res) => {
+    try {
+      const { epub, bookId, tabId } = req.body;
+
+      if (!epub || !bookId || !tabId) {
+        return res.status(400).json({ error: "Missing required fields: epub, bookId, tabId" });
+      }
+
+      console.log(`[avatar-template-file] Extracting avatar EPUB for book ${bookId}, tab ${tabId}`);
+
+      // Decode base64 EPUB
+      const epubBuffer = Buffer.from(epub, 'base64');
+      console.log(`[avatar-template-file] Decoded EPUB (${epubBuffer.length} bytes)`);
+
+      // Extract images from EPUB
+      const JSZip = (await import('jszip')).default;
+      const zip = await JSZip.loadAsync(epubBuffer);
+      
+      // Create local directory for avatar images
+      const fs = await import('fs');
+      const path = await import('path');
+      const avatarDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'avatars', tabId, 'images');
+      await fs.promises.mkdir(avatarDir, { recursive: true });
+      
+      // Store all extracted images with their characteristics
+      const extractedImages: Array<{ fileName: string; localPath: string; characteristics: Record<string, string> }> = [];
+      
+      // Extract only images
+      for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
+        if (zipEntry.dir) continue;
+        
+        if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
+          const fileName = relativePath.split('/').pop() || relativePath;
+          const imageBuffer = await zipEntry.async('nodebuffer');
+          const localPath = path.join(avatarDir, fileName);
+          await fs.promises.writeFile(localPath, imageBuffer);
+          
+          // Parse filename for characteristics
+          const parsedFilename = parseImageFilename(fileName);
+          const characteristics = parsedFilename.characteristics;
+          
+          console.log(`[avatar-template-file] Extracted image: ${fileName}`, characteristics);
+          
+          // Security check: verify hero matches tabId
+          if (characteristics.hero) {
+            const heroValue = characteristics.hero.toLowerCase();
+            const tabIdLower = tabId.toLowerCase();
+            
+            if (heroValue !== tabIdLower) {
+              console.log(`[avatar-template-file] Image ${fileName} has hero="${characteristics.hero}" but tabId="${tabId}", skipping`);
+              continue;
+            }
+          }
+          
+          extractedImages.push({ fileName, localPath, characteristics });
+        }
+      }
+      
+      console.log(`[avatar-template-file] Extracted ${extractedImages.length} images total`);
+      
+      // Load the book to get the tab configuration
+      const { storage } = await import('../../storage');
+      const book = await storage.getBook(bookId);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      const wizardConfig = book.wizardConfig as any;
+      if (!wizardConfig?.tabs) {
+        return res.status(400).json({ error: "Book has no wizard configuration" });
+      }
+      
+      const tab = wizardConfig.tabs.find((t: any) => t.id === tabId);
+      if (!tab) {
+        return res.status(404).json({ error: `Tab ${tabId} not found in wizard configuration` });
+      }
+      
+      // Get option variants for this tab
+      const optionVariants = tab.variants.filter((v: any) => v.type === 'options');
+      
+      console.log(`[avatar-template-file] Tab ${tabId} has ${optionVariants.length} option variants:`, 
+        optionVariants.map((v: any) => v.id));
+      
+      // Group images by their characteristic sets to enable composition
+      const imagesByCharSet: Record<string, Array<{ img: any; chars: string[] }>> = {};
+      
+      for (const img of extractedImages) {
+        const charKeys = Object.keys(img.characteristics).filter(k => k !== 'hero').sort();
+        const charSetKey = charKeys.join('_');
+        
+        if (!imagesByCharSet[charSetKey]) {
+          imagesByCharSet[charSetKey] = [];
+        }
+        imagesByCharSet[charSetKey].push({ img, chars: charKeys });
+      }
+      
+      console.log(`[avatar-template-file] Image groups by char sets:`, Object.keys(imagesByCharSet));
+      
+      // Find images with all variants (complete avatars) first
+      const completeAvatars = extractedImages.filter(img => {
+        for (const variant of optionVariants) {
+          if (!img.characteristics[variant.id]) return false;
+        }
+        return true;
+      });
+      
+      // Generate avatar mappings
+      const avatarMappings: Record<string, string> = {};
+      let mappedCount = 0;
+      
+      if (completeAvatars.length > 0) {
+        // Use complete avatars directly (no composition needed)
+        console.log(`[avatar-template-file] Found ${completeAvatars.length} complete avatars`);
+        
+        for (const img of completeAvatars) {
+          const optionIds = optionVariants.map((v: any) => img.characteristics[v.id]);
+          const scopedKey = `${tabId}:${optionIds.join('_')}`;
+          const serverPath = `/assets/books/${bookId}/avatars/${tabId}/images/${img.fileName}`;
+          avatarMappings[scopedKey] = serverPath;
+          mappedCount++;
+          console.log(`[avatar-template-file] Mapped complete avatar ${img.fileName} -> ${scopedKey}`);
+        }
+      } else {
+        // No complete avatars, need to compose from partial layers
+        console.log(`[avatar-template-file] No complete avatars, composing from ${extractedImages.length} partial layers`);
+        
+        // Build index of available layers for each variant-option combination
+        const layerIndex: Record<string, Array<{ img: any; missingVariants: string[] }>> = {};
+        
+        for (const img of extractedImages) {
+          // For each variant this image HAS a value for, index it
+          const hasVariants: string[] = [];
+          const missingVariants: string[] = [];
+          
+          for (const variant of optionVariants) {
+            if (img.characteristics[variant.id]) {
+              hasVariants.push(variant.id);
+            } else {
+              missingVariants.push(variant.id);
+            }
+          }
+          
+          // Create a key from the characteristics this image HAS
+          const partialKey = hasVariants.map(v => `${v}:${img.characteristics[v]}`).sort().join('_');
+          
+          if (!layerIndex[partialKey]) {
+            layerIndex[partialKey] = [];
+          }
+          layerIndex[partialKey].push({ img, missingVariants });
+        }
+        
+        console.log(`[avatar-template-file] Layer index created with ${Object.keys(layerIndex).length} partial combinations`);
+        
+        // Generate all possible complete combinations by matching partial layers
+        const variantValues: Record<string, Set<string>> = {};
+        for (const img of extractedImages) {
+          for (const variant of optionVariants) {
+            const value = img.characteristics[variant.id];
+            if (value) {
+              if (!variantValues[variant.id]) variantValues[variant.id] = new Set();
+              variantValues[variant.id].add(value);
+            }
+          }
+        }
+        
+        // Generate cartesian product
+        const generateCombos = (vIdx: number, current: Record<string, string>): Record<string, string>[] => {
+          if (vIdx >= optionVariants.length) return [current];
+          
+          const variant = optionVariants[vIdx];
+          const values = Array.from(variantValues[variant.id] || []);
+          if (values.length === 0) return [];
+          
+          const results: Record<string, string>[] = [];
+          for (const value of values) {
+            results.push(...generateCombos(vIdx + 1, { ...current, [variant.id]: value }));
+          }
+          return results;
+        };
+        
+        const allPossibleCombos = generateCombos(0, {});
+        console.log(`[avatar-template-file] Generated ${allPossibleCombos.length} possible combinations from available values`);
+        
+        // For each combo, find matching layers and compose
+        const sharp = (await import('sharp')).default;
+        const composedDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'avatars', tabId, 'composed');
+        await fs.promises.mkdir(composedDir, { recursive: true });
+        
+        for (const combo of allPossibleCombos) {
+          try {
+            // Find all layers that match this combination (subset match)
+            const matchingLayers: any[] = [];
+            
+            for (const img of extractedImages) {
+              let matches = true;
+              for (const [variantId, optionId] of Object.entries(combo)) {
+                const imgValue = img.characteristics[variantId];
+                if (imgValue && imgValue !== optionId) {
+                  matches = false;
+                  break;
+                }
+              }
+              
+              if (matches) {
+                // This layer is compatible with this combination
+                const coverage = Object.keys(img.characteristics).filter(k => k !== 'hero' && combo[k] === img.characteristics[k]);
+                matchingLayers.push({ ...img, coverage: coverage.length });
+              }
+            }
+            
+            if (matchingLayers.length === 0) {
+              console.log(`[avatar-template-file] No layers found for combination ${Object.values(combo).join('_')}, skipping`);
+              continue;
+            }
+            
+            // Sort by coverage (least complete first for proper layering - skin/base first, details on top)
+            matchingLayers.sort((a, b) => a.coverage - b.coverage);
+            
+            const optionIds = optionVariants.map((v: any) => combo[v.id]);
+            const scopedKey = `${tabId}:${optionIds.join('_')}`;
+            const safeKey = scopedKey.replace(/:/g, '-');
+            const outputFileName = `${safeKey}.png`;
+            const outputPath = path.join(composedDir, outputFileName);
+            
+            // Get dimensions from first layer
+            const sharp = (await import('sharp')).default;
+            const baseImage = sharp(matchingLayers[0].localPath);
+            const metadata = await baseImage.metadata();
+            const targetWidth = metadata.width || 800;
+            const targetHeight = metadata.height || 800;
+            
+            // Create a transparent canvas
+            const canvas = await sharp({
+              create: {
+                width: targetWidth,
+                height: targetHeight,
+                channels: 4,
+                background: { r: 0, g: 0, b: 0, alpha: 0 }
+              }
+            });
+            
+            // Prepare all layers for composition (resize to target dimensions)
+            const compositeInputs = [];
+            for (const layer of matchingLayers) {
+              const layerBuffer = await sharp(layer.localPath)
+                .resize(targetWidth, targetHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                .toBuffer();
+              
+              compositeInputs.push({
+                input: layerBuffer,
+                blend: 'over' as const
+              });
+            }
+            
+            // Compose all layers on the transparent canvas
+            await canvas
+              .composite(compositeInputs)
+              .png()
+              .toFile(outputPath);
+            
+            console.log(`[avatar-template-file] Composed ${scopedKey} from ${matchingLayers.length} layers (${matchingLayers.map(l => l.fileName).join(' + ')})`);
+            
+            const serverPath = `/assets/books/${bookId}/avatars/${tabId}/composed/${outputFileName}`;
+            avatarMappings[scopedKey] = serverPath;
+            mappedCount++;
+          } catch (composeError) {
+            console.error(`[avatar-template-file] Failed to compose:`, combo, composeError);
+          }
+        }
+      }
+      
+      console.log(`[avatar-template-file] Generation complete: ${mappedCount} avatars created from ${extractedImages.length} source images`);
+      
+      // Count characteristics coverage
+      const charCoverage: Record<string, Set<string>> = {};
+      for (const img of extractedImages) {
+        for (const [key, value] of Object.entries(img.characteristics)) {
+          if (key === 'hero') continue;
+          if (!charCoverage[key]) charCoverage[key] = new Set();
+          charCoverage[key].add(value);
+        }
+      }
+      
+      res.json({
+        avatarMappings,
+        stats: {
+          totalImages: extractedImages.length,
+          mappedImages: mappedCount,
+          skippedImages: extractedImages.length - mappedCount,
+          characteristicsCoverage: Object.fromEntries(
+            Object.entries(charCoverage).map(([k, v]) => [k, Array.from(v)])
+          ),
+          tabId,
+          variantCount: optionVariants.length
+        }
+      });
+    } catch (error: any) {
+      console.error("[avatar-template-file] Error:", error);
+      res.status(500).json({ 
+        error: "Failed to extract avatar template EPUB from file",
+        details: error.message || String(error)
+      });
+    }
+  });
+
+  /**
    * Test IDML parsing only (diagnostic endpoint)
    */
   app.post("/api/books/test-idml", async (req, res) => {
@@ -1021,6 +1623,95 @@ export function registerObjectStorageRoutes(app: Express): void {
       }
       
       const idmlData = await parseIdmlBuffer(idmlBuffer);
+
+      // Detect fonts (names exactly as present in IDML-derived structures)
+      const normalizeFont = (v: unknown): string | null => {
+        if (v === undefined || v === null) return null;
+        const s = String(v).trim();
+        return s ? s : null;
+      };
+
+      const resolveStyleId = (
+        map: Record<string, any>,
+        styleId: string | undefined,
+        prefix: "CharacterStyle/" | "ParagraphStyle/"
+      ): string | undefined => {
+        if (!styleId) return undefined;
+        if (map[styleId]) return styleId;
+        if (styleId.startsWith(prefix)) {
+          const noPrefix = styleId.replace(prefix, "");
+          if (map[noPrefix]) return noPrefix;
+        } else {
+          const withPrefix = `${prefix}${styleId}`;
+          if (map[withPrefix]) return withPrefix;
+        }
+        return undefined;
+      };
+
+      const fontsCharacterStyles = new Set<string>();
+      for (const style of Object.values(idmlData.characterStyles || {})) {
+        const f = normalizeFont((style as any)?.fontFamily);
+        if (f) fontsCharacterStyles.add(f);
+      }
+
+      const fontsParagraphStyles = new Set<string>();
+      for (const style of Object.values(idmlData.paragraphStyles || {})) {
+        const f = normalizeFont((style as any)?.fontFamily);
+        if (f) fontsParagraphStyles.add(f);
+      }
+
+      const fontsInline = new Set<string>();
+      const usedByTextFramesCounts: Record<string, number> = {};
+      const usedByTextFrames = new Set<string>();
+      const resolutionSample = (idmlData.textFrames || []).slice(0, 10).map((tf: any) => {
+        const inlineFont = normalizeFont(tf?.inlineCharProperties?.fontFamily);
+        if (inlineFont) fontsInline.add(inlineFont);
+
+        const resolvedCharId = resolveStyleId(idmlData.characterStyles || {}, tf?.appliedCharacterStyle, "CharacterStyle/");
+        const resolvedParaId = resolveStyleId(idmlData.paragraphStyles || {}, tf?.appliedParagraphStyle, "ParagraphStyle/");
+
+        const charFont = normalizeFont(resolvedCharId ? idmlData.characterStyles?.[resolvedCharId]?.fontFamily : undefined);
+        const paraFont = normalizeFont(resolvedParaId ? idmlData.paragraphStyles?.[resolvedParaId]?.fontFamily : undefined);
+
+        const resolvedFont = inlineFont || charFont || paraFont;
+        if (resolvedFont) {
+          usedByTextFrames.add(resolvedFont);
+          usedByTextFramesCounts[resolvedFont] = (usedByTextFramesCounts[resolvedFont] || 0) + 1;
+        }
+
+        return {
+          id: tf?.id,
+          contentPreview: (tf?.content || "").substring(0, 60),
+          appliedCharacterStyle: tf?.appliedCharacterStyle,
+          appliedParagraphStyle: tf?.appliedParagraphStyle,
+          inlineFontFamily: inlineFont || undefined,
+          resolvedCharStyleId: resolvedCharId,
+          resolvedParaStyleId: resolvedParaId,
+          resolvedFontFamily: resolvedFont || undefined
+        };
+      });
+
+      // Count all frames (not just sample) for usedByTextFramesCounts
+      for (const tf of idmlData.textFrames || []) {
+        const inlineFont = normalizeFont(tf?.inlineCharProperties?.fontFamily);
+        const resolvedCharId = resolveStyleId(idmlData.characterStyles || {}, tf?.appliedCharacterStyle, "CharacterStyle/");
+        const resolvedParaId = resolveStyleId(idmlData.paragraphStyles || {}, tf?.appliedParagraphStyle, "ParagraphStyle/");
+        const charFont = normalizeFont(resolvedCharId ? idmlData.characterStyles?.[resolvedCharId]?.fontFamily : undefined);
+        const paraFont = normalizeFont(resolvedParaId ? idmlData.paragraphStyles?.[resolvedParaId]?.fontFamily : undefined);
+        const resolvedFont = inlineFont || charFont || paraFont;
+        if (resolvedFont) {
+          usedByTextFrames.add(resolvedFont);
+          usedByTextFramesCounts[resolvedFont] = (usedByTextFramesCounts[resolvedFont] || 0) + 1;
+        }
+      }
+
+      const detectedFonts = Array.from(
+        new Set([
+          ...Array.from(fontsCharacterStyles),
+          ...Array.from(fontsParagraphStyles),
+          ...Array.from(fontsInline),
+        ])
+      ).sort((a, b) => a.localeCompare(b));
       
       res.json({
         success: true,
@@ -1033,7 +1724,18 @@ export function registerObjectStorageRoutes(app: Express): void {
         },
         textFrames: idmlData.textFrames,
         characterStyles: idmlData.characterStyles,
-        paragraphStyles: idmlData.paragraphStyles
+        paragraphStyles: idmlData.paragraphStyles,
+        fonts: {
+          detected: detectedFonts,
+          bySource: {
+            characterStyles: Array.from(fontsCharacterStyles).sort((a, b) => a.localeCompare(b)),
+            paragraphStyles: Array.from(fontsParagraphStyles).sort((a, b) => a.localeCompare(b)),
+            inline: Array.from(fontsInline).sort((a, b) => a.localeCompare(b)),
+          },
+          usedByTextFrames: Array.from(usedByTextFrames).sort((a, b) => a.localeCompare(b)),
+          usedByTextFramesCounts,
+          resolutionSample
+        }
       });
     } catch (error: any) {
       console.error('[test-idml] Error:', error);

@@ -65,10 +65,12 @@ const BookCover: React.FC<BookCoverProps> = ({ book, config, className }) => {
               });
               
               if (optionIds.length > 0) {
-                  const key = optionIds.join('_');
-                  // Look up in avatarMappings
-                  if (book?.wizardConfig?.avatarMappings?.[key]) {
-                      return book.wizardConfig.avatarMappings[key];
+                  // Try scoped key first (tabId:optionIds), then fallback to legacy key (optionIds only)
+                  const legacyKey = optionIds.join('_');
+                  const scopedKey = `${tabId}:${legacyKey}`;
+                  const avatarUrl = book?.wizardConfig?.avatarMappings?.[scopedKey] ?? book?.wizardConfig?.avatarMappings?.[legacyKey];
+                  if (avatarUrl) {
+                      return avatarUrl;
                   }
               }
           }

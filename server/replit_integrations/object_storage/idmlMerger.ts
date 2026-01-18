@@ -3,6 +3,31 @@
  */
 
 /**
+ * Résout un ID de style en gérant les préfixes "CharacterStyle/" et "ParagraphStyle/"
+ * Les TextFrames peuvent référencer les styles avec ou sans préfixe, alors que les dictionnaires
+ * sont indexés par @_Self (souvent sans préfixe).
+ */
+function resolveStyleId(
+  map: Record<string, any>,
+  styleId: string | undefined,
+  prefix: "CharacterStyle/" | "ParagraphStyle/"
+): string | undefined {
+  if (!styleId) return undefined;
+  // Essai direct
+  if (map[styleId]) return styleId;
+  // Essai en retirant le préfixe
+  if (styleId.startsWith(prefix)) {
+    const noPrefix = styleId.replace(prefix, "");
+    if (map[noPrefix]) return noPrefix;
+  } else {
+    // Essai en ajoutant le préfixe
+    const withPrefix = `${prefix}${styleId}`;
+    if (map[withPrefix]) return withPrefix;
+  }
+  return undefined;
+}
+
+/**
  * Fusionne les positions de texte EPUB avec le contenu et les styles IDML
  * 
  * Stratégie de mapping déterministe :
@@ -170,20 +195,27 @@ function createMergedText(
   console.log(`[createMergedText]   CharStyleId: ${charStyleId || 'NONE'}`);
   console.log(`[createMergedText]   ParaStyleId: ${paraStyleId || 'NONE'}`);
 
-  let charStyle = charStyleId && idmlData.characterStyles[charStyleId]
-    ? { ...idmlData.characterStyles[charStyleId] }
+  // Résoudre les IDs de style (avec/sans préfixe)
+  const resolvedCharId = resolveStyleId(idmlData.characterStyles || {}, charStyleId, "CharacterStyle/");
+  const resolvedParaId = resolveStyleId(idmlData.paragraphStyles || {}, paraStyleId, "ParagraphStyle/");
+
+  console.log(`[createMergedText]   Resolved CharStyleId: ${resolvedCharId || 'NONE'}`);
+  console.log(`[createMergedText]   Resolved ParaStyleId: ${resolvedParaId || 'NONE'}`);
+
+  let charStyle = resolvedCharId && idmlData.characterStyles[resolvedCharId]
+    ? { ...idmlData.characterStyles[resolvedCharId] }
     : {};
   
-  if (charStyleId && !idmlData.characterStyles[charStyleId]) {
+  if (charStyleId && !resolvedCharId) {
     console.warn(`[createMergedText] ⚠️ CharacterStyle "${charStyleId}" NOT FOUND in styles dictionary`);
     console.warn(`[createMergedText]   Available styles: ${Object.keys(idmlData.characterStyles).join(', ')}`);
   }
   
-  const paraStyle = paraStyleId && idmlData.paragraphStyles[paraStyleId]
-    ? idmlData.paragraphStyles[paraStyleId]
+  const paraStyle = resolvedParaId && idmlData.paragraphStyles[resolvedParaId]
+    ? idmlData.paragraphStyles[resolvedParaId]
     : {};
   
-  if (paraStyleId && !idmlData.paragraphStyles[paraStyleId]) {
+  if (paraStyleId && !resolvedParaId) {
     console.warn(`[createMergedText] ⚠️ ParagraphStyle "${paraStyleId}" NOT FOUND in styles dictionary`);
   }
   

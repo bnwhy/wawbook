@@ -62,13 +62,15 @@ export function mergeEpubWithIdml(
       appliedCharacterStyle?: string;
       appliedParagraphStyle?: string;
       localParaProperties?: any;
+      inlineCharProperties?: any;
       position?: { x: number; y: number; width: number; height: number };
       pageIndex: number;
       layoutOrder?: number;
       parentStory?: string;
     }>;
   },
-  bookId: string
+  bookId: string,
+  cssFontMapping?: Record<string, string>
 ): any[] {
   const mergedTexts: any[] = [];
   
@@ -153,7 +155,7 @@ export function mergeEpubWithIdml(
       
       console.log(`✓ [merge] MATCHED [${i}]: ${epubPos.containerId} → ${idmlFrame.id} (Story: ${idmlFrame.parentStory || 'N/A'})`);
       
-      const mergedText = createMergedText(epubPos, idmlFrame, idmlData, bookId);
+      const mergedText = createMergedText(epubPos, idmlFrame, idmlData, bookId, cssFontMapping);
       mergedTexts.push(mergedText);
     }
     
@@ -186,7 +188,8 @@ function createMergedText(
   epubPos: any,
   idmlFrame: any,
   idmlData: any,
-  bookId: string
+  bookId: string,
+  cssFontMapping?: Record<string, string>
 ): any {
   const charStyleId = idmlFrame.appliedCharacterStyle;
   const paraStyleId = idmlFrame.appliedParagraphStyle;
@@ -255,6 +258,36 @@ function createMergedText(
     if (paraStyle.fontStyle) {
       charStyle.fontStyle = paraStyle.fontStyle;
     }
+  }
+  
+  // Priority 3: Fallback on CSS class mapping from EPUB if still no fontFamily
+  if (!charStyle.fontFamily && cssFontMapping) {
+    // Try common EPUB CSS class patterns: CharOverride-1, CharOverride-2, etc.
+    // The containerId is like _idContainer005, and related text spans use CharOverride-X classes
+    // We look for classes that define fonts in the CSS
+    for (const [selector, fontFamily] of Object.entries(cssFontMapping)) {
+      // CharOverride classes are the most common for character styling
+      if (selector.includes('CharOverride') || selector.includes('char-override')) {
+        console.log(`[createMergedText]   ✓ Using font from CSS fallback (${selector}): ${fontFamily}`);
+        charStyle.fontFamily = fontFamily;
+        break;
+      }
+    }
+    
+    // If still no font, try span selectors
+    if (!charStyle.fontFamily) {
+      for (const [selector, fontFamily] of Object.entries(cssFontMapping)) {
+        if (selector.startsWith('span.') || selector.startsWith('.')) {
+          console.log(`[createMergedText]   ✓ Using font from CSS fallback (${selector}): ${fontFamily}`);
+          charStyle.fontFamily = fontFamily;
+          break;
+        }
+      }
+    }
+  }
+  
+  if (!charStyle.fontFamily) {
+    console.warn(`[createMergedText]   ⚠ No fontFamily found for text "${idmlFrame.content.substring(0, 30)}..." - will use browser default`);
   }
   
   // Extrait les propriétés de paragraphe locales (surcharges)

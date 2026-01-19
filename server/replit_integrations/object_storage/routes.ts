@@ -1563,7 +1563,137 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
-   * Test IDML parsing only (diagnostic endpoint)
+   * Check import files (IDML, EPUB, fonts) before actual import
+   */
+  app.post("/api/books/check-import", async (req, res) => {
+    try {
+      const { idml, epub, fonts } = req.body;
+      
+      const results: {
+        idml?: { valid: boolean; stats?: any; fonts?: string[]; error?: string };
+        epub?: { valid: boolean; pages?: number; error?: string };
+        fonts?: Array<{ name: string; valid: boolean; obfuscated: boolean; error?: string; details?: string }>;
+      } = {};
+      
+      // 1. Check IDML
+      if (idml) {
+        try {
+          console.log('[check-import] Checking IDML...');
+          const idmlBuffer = Buffer.from(idml, 'base64');
+          const idmlData = await parseIdmlBuffer(idmlBuffer);
+          
+          // Extract font names from IDML
+          const detectedFonts = new Set<string>();
+          for (const tf of idmlData.textFrames) {
+            if (tf.fontFamily) detectedFonts.add(tf.fontFamily);
+          }
+          for (const [, style] of Object.entries(idmlData.characterStyles)) {
+            if ((style as any).fontFamily) detectedFonts.add((style as any).fontFamily);
+          }
+          for (const [, style] of Object.entries(idmlData.paragraphStyles)) {
+            if ((style as any).fontFamily) detectedFonts.add((style as any).fontFamily);
+          }
+          
+          results.idml = {
+            valid: true,
+            stats: {
+              textFrames: idmlData.textFrames.length,
+              characterStyles: Object.keys(idmlData.characterStyles).length,
+              paragraphStyles: Object.keys(idmlData.paragraphStyles).length,
+            },
+            fonts: Array.from(detectedFonts),
+          };
+          console.log('[check-import] IDML valid, fonts:', Array.from(detectedFonts));
+        } catch (e: any) {
+          results.idml = { valid: false, error: e.message };
+          console.error('[check-import] IDML error:', e.message);
+        }
+      }
+      
+      // 2. Check EPUB
+      if (epub) {
+        try {
+          console.log('[check-import] Checking EPUB...');
+          const epubBuffer = Buffer.from(epub, 'base64');
+          const zip = await JSZip.loadAsync(epubBuffer);
+          const htmlFiles = Object.keys(zip.files).filter(f => /\.(xhtml|html)$/i.test(f));
+          results.epub = { valid: true, pages: htmlFiles.length };
+          console.log('[check-import] EPUB valid, pages:', htmlFiles.length);
+        } catch (e: any) {
+          results.epub = { valid: false, error: e.message };
+          console.error('[check-import] EPUB error:', e.message);
+        }
+      }
+      
+      // 3. Check fonts for obfuscation
+      if (fonts && Array.isArray(fonts) && fonts.length > 0) {
+        results.fonts = [];
+        console.log('[check-import] Checking', fonts.length, 'fonts...');
+        
+        for (const font of fonts) {
+          const fontResult: { name: string; valid: boolean; obfuscated: boolean; error?: string; details?: string } = {
+            name: font.name,
+            valid: false,
+            obfuscated: false,
+          };
+          
+          try {
+            const fontBuffer = Buffer.from(font.data, 'base64');
+            const ext = font.name.split('.').pop()?.toLowerCase() || 'ttf';
+            
+            // Check font magic bytes
+            // TTF: 00 01 00 00 or 'true' (74 72 75 65)
+            // OTF: OTTO (4F 54 54 4F)
+            // WOFF: wOFF (77 4F 46 46)
+            // WOFF2: wOF2 (77 4F 46 32)
+            const magic = fontBuffer.slice(0, 4);
+            const magicHex = magic.toString('hex').toUpperCase();
+            const magicStr = magic.toString('ascii');
+            
+            console.log(`[check-import] Font ${font.name}: magic=${magicHex} (${magicStr})`);
+            
+            const validMagics: Record<string, string[]> = {
+              ttf: ['00010000', '74727565'], // TTF signature or 'true'
+              otf: ['4F54544F'], // 'OTTO'
+              woff: ['774F4646'], // 'wOFF'
+              woff2: ['774F4632'], // 'wOF2'
+            };
+            
+            const expectedMagics = validMagics[ext] || validMagics.ttf;
+            const isValidMagic = expectedMagics.some(m => magicHex.startsWith(m));
+            
+            if (isValidMagic) {
+              fontResult.valid = true;
+              fontResult.obfuscated = false;
+              fontResult.details = `Format valide (${magicHex})`;
+            } else {
+              fontResult.valid = false;
+              fontResult.obfuscated = true;
+              fontResult.details = `Format invalide: ${magicHex} (${magicStr}). La police semble obfusquée par Adobe InDesign.`;
+              fontResult.error = 'Police obfusquée - utilisez le fichier TTF/OTF original';
+            }
+          } catch (e: any) {
+            fontResult.valid = false;
+            fontResult.error = e.message;
+          }
+          
+          results.fonts.push(fontResult);
+        }
+        
+        const validCount = results.fonts.filter(f => f.valid).length;
+        const obfuscatedCount = results.fonts.filter(f => f.obfuscated).length;
+        console.log(`[check-import] Fonts: ${validCount}/${fonts.length} valid, ${obfuscatedCount} obfuscated`);
+      }
+      
+      res.json({ success: true, results });
+    } catch (error: any) {
+      console.error('[check-import] Error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * Test IDML parsing only (diagnostic endpoint) - DEPRECATED, use check-import
    */
   app.post("/api/books/test-idml", async (req, res) => {
     try {
@@ -1858,7 +1988,8 @@ export function registerObjectStorageRoutes(app: Express): void {
       const mergedTexts = mergeEpubWithIdml(
         epubResult.textPositions,
         idmlData,
-        bookId
+        bookId,
+        epubResult.cssFontMapping
       );
 
       console.log(`[import-storyboard] ✓ Merge completed: ${mergedTexts.length} texts created`);

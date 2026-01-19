@@ -257,10 +257,29 @@ export async function registerRoutes(
       // Launch browser using system Chromium
       const browser = await chromium.launch({
         executablePath: chromiumPath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox', 
+          '--disable-dev-shm-usage',
+          '--disable-web-security',
+          '--allow-file-access-from-files',
+        ],
       });
 
       const renderedPages: Array<{ pageIndex: number; imageUrl: string }> = [];
+      
+      // SOLUTION 2: Use system-installed fonts for Chromium headless
+      // Note: Fonts must be pre-installed in ~/.fonts (e.g., Andika from SIL)
+      // We don't copy from book fonts as they may be corrupted
+      const systemFontsDir = path.join(process.env.HOME || '/home/runner', '.fonts');
+      try {
+        const installedFonts = await fs.promises.readdir(systemFontsDir);
+        const fontCount = installedFonts.filter(f => f.endsWith('.ttf') || f.endsWith('.otf')).length;
+        console.log(`[render-pages] System fonts available: ${fontCount} in ${systemFontsDir}`);
+      } catch (fontsErr) {
+        console.log(`[render-pages] Warning: No system fonts directory`);
+      }
       
       // Try to load CSS from local file (which has base64 embedded fonts) for accurate rendering
       let cssContent = contentConfig?.cssContent || '';
@@ -279,11 +298,51 @@ export async function registerRoutes(
       const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
       const publicBucketPath = publicSearchPaths[0] || '/replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2/public';
       
+      // Extract font names from @font-face declarations BEFORE removing them
+      const availableFonts: string[] = [];
+      const fontFaceRegex = /@font-face\s*\{[\s\S]*?font-family\s*:\s*["']?([^"';\n}]+)["']?/gi;
+      let fontMatch;
+      while ((fontMatch = fontFaceRegex.exec(cssContent)) !== null) {
+        const fontName = fontMatch[1]?.trim();
+        if (fontName && !availableFonts.includes(fontName)) {
+          availableFonts.push(fontName);
+        }
+      }
+      
+      // CRITICAL: Remove corrupted base64 @font-face declarations
+      // Since fonts are installed at system level, Chromium will use them by name
+      cssContent = cssContent.replace(/@font-face\s*\{[^}]*src\s*:\s*url\s*\(\s*["']?data:font\/[^}]+\}/gi, '');
+      
+      // Add simple @font-face declarations that reference system fonts
+      const systemFontFaces = availableFonts.map(fontName => 
+        `@font-face { font-family: '${fontName}'; src: local('${fontName}'); }`
+      ).join('\n');
+      cssContent = systemFontFaces + '\n' + cssContent;
+      
+      // Log CSS info for debugging
+      console.log(`[render-pages] CSS length: ${cssContent.length} chars, using system fonts`);
+      
+      if (availableFonts.length > 0) {
+        console.log(`[render-pages] System fonts configured: ${availableFonts.join(', ')}`);
+      } else {
+        console.warn(`[render-pages] ⚠ No fonts found in CSS!`);
+      }
+      
+      // Default font to use when no fontFamily is specified
+      const defaultFont = availableFonts[0] || 'sans-serif';
+      console.log(`[render-pages] Default font: "${defaultFont}"`);
+      
       console.log(`[render-pages] Rendering ${pages.length} pages for book ${book.id}`);
 
       for (const pageData of pages) {
         try {
           const browserPage = await browser.newPage();
+          
+          // Add console listeners to debug font loading errors
+          browserPage.on('console', msg => console.log('[browser-console]', msg.text()));
+          browserPage.on('pageerror', exception => console.log('[browser-pageerror]', exception));
+          browserPage.on('requestfailed', request => console.log('[browser-reqfailed]', request.url(), request.failure()?.errorText));
+          
           const pageWidth = pageData.width || 400;
           const pageHeight = pageData.height || 293;
           await browserPage.setViewportSize({ width: pageWidth, height: pageHeight });
@@ -430,7 +489,12 @@ export async function registerRoutes(
             
             const textColor = style.color || '#000000';
             const textFontSize = style.fontSize || '16px';
-            const textFontFamily = style.fontFamily || 'sans-serif';
+            // Ensure font family is properly quoted for CSS (handles fonts with spaces like "Minion Pro")
+            let rawFontFamily = style.fontFamily || defaultFont;
+            // Remove existing quotes if any
+            rawFontFamily = rawFontFamily.replace(/^["']|["']$/g, '');
+            // Add quotes if font name contains spaces
+            const textFontFamily = rawFontFamily.includes(' ') ? `"${rawFontFamily}"` : rawFontFamily;
             const fontWeight = style.fontWeight || 'normal';
             const fontStyle = style.fontStyle || 'normal';
             const letterSpacing = style.letterSpacing || 'normal';
@@ -446,9 +510,8 @@ export async function registerRoutes(
             // Trim all whitespace to ensure clean alignment
             content = content.trim();
             
-            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." color=${textColor} fontSize=${textFontSize} align=${textAlign} alignLast=${textAlignLast} weight=${fontWeight} style=${fontStyle} indent=${textIndent}`);
-            console.log(`[render-pages] Text position: x=${pos.x} y=${pos.y} width=${pos.width} height=${pos.height}`);
-            console.log(`[render-pages] Text style object:`, JSON.stringify(style).substring(0, 200));
+            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." fontFamily=${textFontFamily} fontSize=${textFontSize}`);
+            console.log(`[render-pages]   raw: "${style.fontFamily || 'UNDEFINED'}" -> resolved: ${textFontFamily}`);
             
             // Escape HTML and convert line breaks
             const escapedContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
@@ -475,15 +538,41 @@ ${textsHtml}
 </body>
 </html>`;
 
-          await browserPage.setContent(html, { waitUntil: 'networkidle' });
+          // Save HTML to temp file in public assets directory
+          const tempHtmlPath = path.join(process.cwd(), 'server', 'assets', 'books', book.id, `render_${pageData.pageIndex}.html`);
+          await fs.promises.writeFile(tempHtmlPath, html, 'utf-8');
+          console.log(`[render-pages] HTML saved to ${tempHtmlPath}`);
+
+          // Load via HTTP URL instead of setContent for proper font loading
+          const serverPort = process.env.PORT || 5001;
+          const htmlUrl = `http://localhost:${serverPort}/api/books/${book.id}/render-html/${pageData.pageIndex}`;
           
-          // Wait for all fonts to be loaded
+          try {
+            await browserPage.goto(htmlUrl, { waitUntil: 'networkidle', timeout: 10000 });
+          } catch (gotoErr) {
+            console.log(`[render-pages] goto failed, falling back to setContent`);
+            await browserPage.setContent(html, { waitUntil: 'networkidle' });
+          }
+          
+          // Wait for fonts to be ready
           await browserPage.evaluate(async () => {
             await document.fonts.ready;
           });
           
-          // Additional delay to ensure font rendering is complete
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Check font status
+          const fontsLoaded = await browserPage.evaluate(() => {
+            const allFonts = Array.from(document.fonts);
+            return {
+              total: allFonts.length,
+              loaded: allFonts.filter(f => f.status === 'loaded').map(f => f.family),
+              error: allFonts.filter(f => f.status === 'error').map(f => f.family),
+            };
+          });
+          
+          console.log(`[render-pages] Fonts status:`, JSON.stringify(fontsLoaded));
+          
+          // Wait for font rendering
+          await browserPage.waitForTimeout(300);
 
           // Take screenshot
           const screenshot = await browserPage.screenshot({ type: 'jpeg', quality: 85 });
@@ -542,6 +631,18 @@ ${textsHtml}
     } catch (error) {
       console.error("[render-pages] Error:", error);
       res.status(500).json({ error: "Failed to render pages" });
+    }
+  });
+
+  // Serve rendered HTML files for Playwright to access via HTTP
+  app.get("/api/books/:id/render-html/:pageIndex", async (req, res) => {
+    try {
+      const htmlPath = path.join(process.cwd(), 'server', 'assets', 'books', req.params.id, `render_${req.params.pageIndex}.html`);
+      const htmlContent = await fs.promises.readFile(htmlPath, 'utf-8');
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(htmlContent);
+    } catch (error) {
+      res.status(404).send('HTML file not found');
     }
   });
 

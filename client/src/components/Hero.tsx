@@ -143,7 +143,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
         {/* --- BANNER --- */}
         <Banner />
         {/* --- HERO SECTION --- */}
-        <header className="pt-16 pb-32 px-6 max-w-7xl mx-auto w-full relative">
+        <header className="pt-11 pb-[90px] px-6 max-w-7xl mx-auto w-full relative">
           {/* Floating Clouds Decoration */}
           <div className="absolute top-32 left-10 text-white opacity-60 animate-float pointer-events-none"><Cloud size={100} fill="currentColor" /></div>
           <div className="absolute top-52 right-20 text-white opacity-40 animate-float-delayed pointer-events-none"><Cloud size={80} fill="currentColor" /></div>

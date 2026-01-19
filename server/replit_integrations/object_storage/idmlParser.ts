@@ -798,21 +798,52 @@ function extractTextFromParagraphRanges(
         // Check for inline font properties - ALL possible locations
         const props = charRange?.Properties || {};
         
-        // AppliedFont can be attribute OR element
+        // AppliedFont can be attribute OR element - check ALL possible locations
         let inlineFont: string | undefined = undefined;
+        
+        // Source 1: Direct attribute on CharacterStyleRange
         if (charRange['@_AppliedFont']) {
           inlineFont = charRange['@_AppliedFont'];
-        } else {
+          console.log(`[extractTextFromParagraphRanges] Found font in @_AppliedFont: ${inlineFont}`);
+        }
+        
+        // Source 2: Properties.AppliedFont as element or string
+        if (!inlineFont && props.AppliedFont) {
+          if (typeof props.AppliedFont === 'string') {
+            inlineFont = props.AppliedFont;
+          } else if (props.AppliedFont?.['#text']) {
+            inlineFont = props.AppliedFont['#text'];
+          } else if (props.AppliedFont?.['@_type'] === 'string') {
+            inlineFont = props.AppliedFont['#text'] || props.AppliedFont['_'];
+          }
+          if (inlineFont) {
+            console.log(`[extractTextFromParagraphRanges] Found font in Properties.AppliedFont: ${inlineFont}`);
+          }
+        }
+        
+        // Source 3: Properties attributes
+        if (!inlineFont) {
+          inlineFont = props['@_AppliedFont'] || props['@_FontFamily'];
+          if (inlineFont) {
+            console.log(`[extractTextFromParagraphRanges] Found font in Properties attributes: ${inlineFont}`);
+          }
+        }
+        
+        // Source 4: CharacterStyleProperties (embedded)
+        if (!inlineFont) {
           const embedded = Array.isArray(props?.CharacterStyleProperties)
             ? props.CharacterStyleProperties[0]
             : props?.CharacterStyleProperties;
-          const candidates = [props, embedded].filter(Boolean);
-          for (const c of candidates) {
-            if (inlineFont) break;
-            inlineFont =
-              c['@_AppliedFont'] ||
-              c['@_FontFamily'] ||
-              (typeof c.AppliedFont === 'string' ? c.AppliedFont : c.AppliedFont?.['#text']);
+          if (embedded) {
+            inlineFont = embedded['@_AppliedFont'] || embedded['@_FontFamily'];
+            if (!inlineFont && embedded.AppliedFont) {
+              inlineFont = typeof embedded.AppliedFont === 'string' 
+                ? embedded.AppliedFont 
+                : embedded.AppliedFont?.['#text'];
+            }
+            if (inlineFont) {
+              console.log(`[extractTextFromParagraphRanges] Found font in CharacterStyleProperties: ${inlineFont}`);
+            }
           }
         }
         
@@ -821,7 +852,9 @@ function extractTextFromParagraphRanges(
         
         if (inlineFont && !inlineCharProperties.fontFamily) {
           inlineCharProperties.fontFamily = inlineFont;
-          console.log(`[extractTextFromParagraphRanges] ✓ Found inline font for ${frameId}: ${inlineFont}`);
+          console.log(`[extractTextFromParagraphRanges] ✓ Using inline font for ${frameId}: ${inlineFont}`);
+        } else if (!inlineFont) {
+          console.log(`[extractTextFromParagraphRanges] ⚠ No inline font found for ${frameId}, will rely on CharacterStyle`);
         }
         if (inlineSize && !inlineCharProperties.fontSize) {
           inlineCharProperties.fontSize = parseFloat(inlineSize);

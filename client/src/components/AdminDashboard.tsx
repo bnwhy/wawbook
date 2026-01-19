@@ -795,95 +795,100 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   };
 
-  // Function to test IDML parsing only
-  const handleTestIdml = async () => {
-    if (!idmlFile) {
-      toast.error('Veuillez sélectionner un fichier IDML');
+  // Function to check import files (IDML, EPUB, fonts)
+  const handleCheckImport = async () => {
+    if (!idmlFile && !epubFile && fontFiles.length === 0) {
+      toast.error('Veuillez sélectionner au moins un fichier à vérifier');
       return;
     }
 
     try {
-      toast.info('Test du parsing IDML...');
-      const idmlBase64 = await fileToBase64(idmlFile);
+      toast.info('Vérification des fichiers d\'import...');
       
-      const response = await fetch('/api/books/test-idml', {
+      // Prepare data
+      const payload: { idml?: string; epub?: string; fonts?: Array<{ name: string; data: string }> } = {};
+      
+      if (idmlFile) {
+        payload.idml = await fileToBase64(idmlFile);
+      }
+      if (epubFile) {
+        payload.epub = await fileToBase64(epubFile);
+      }
+      if (fontFiles.length > 0) {
+        payload.fonts = [];
+        for (const fontFile of fontFiles) {
+          const fontBase64 = await fileToBase64(fontFile);
+          payload.fonts.push({ name: fontFile.name, data: fontBase64 });
+        }
+      }
+      
+      const response = await fetch('/api/books/check-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idml: idmlBase64, debug: false }),
+        body: JSON.stringify(payload),
       });
-
-      const contentType = response.headers.get('content-type');
-      console.log('[Test IDML] Response status:', response.status);
-      console.log('[Test IDML] Content-Type:', contentType);
 
       if (!response.ok) {
         const text = await response.text();
-        console.error('[Test IDML] Error response:', text);
-        
-        // Try to parse as JSON first
-        try {
-          const error = JSON.parse(text);
-          throw new Error(error.error || 'Failed to parse IDML');
-        } catch {
-          // If not JSON, show the text/HTML error
-          throw new Error(`Server error (${response.status}): ${text.substring(0, 200)}`);
-        }
+        throw new Error(`Server error (${response.status}): ${text.substring(0, 200)}`);
       }
 
-      const result = await response.json();
-      console.log('[Test IDML] Result:', result);
+      const { results } = await response.json();
+      console.log('[Check Import] Results:', results);
       
-      // Debug mode
-      if (result.debug) {
-        console.log('[Test IDML] Raw XML from', result.spreadFile || result.storyFile);
-        console.log('[Test IDML] Spread keys:', result.spreadKeys);
-        console.log('[Test IDML] Page keys:', result.pageKeys);
-        console.log('[Test IDML] TextFrame count:', result.textFrameCount);
-        console.log('[Test IDML] TextFrames:', result.textFrames);
+      // Show IDML results
+      if (results.idml) {
+        if (results.idml.valid) {
+          toast.success(
+            `✓ IDML valide : ${results.idml.stats.textFrames} textes, ${results.idml.stats.characterStyles} styles caractère`,
+            { duration: 6000 }
+          );
+          if (results.idml.fonts && results.idml.fonts.length > 0) {
+            const fontsList = results.idml.fonts.slice(0, 5).join(', ');
+            const suffix = results.idml.fonts.length > 5 ? ` (+${results.idml.fonts.length - 5})` : '';
+            toast.info(`Polices IDML : ${fontsList}${suffix}`, { duration: 8000 });
+          }
+        } else {
+          toast.error(`✗ IDML invalide : ${results.idml.error}`);
+        }
+      }
+      
+      // Show EPUB results
+      if (results.epub) {
+        if (results.epub.valid) {
+          toast.success(`✓ EPUB valide : ${results.epub.pages} pages`, { duration: 5000 });
+        } else {
+          toast.error(`✗ EPUB invalide : ${results.epub.error}`);
+        }
+      }
+      
+      // Show fonts results with obfuscation warning
+      if (results.fonts && results.fonts.length > 0) {
+        const validFonts = results.fonts.filter((f: any) => f.valid);
+        const obfuscatedFonts = results.fonts.filter((f: any) => f.obfuscated);
         
-        // Search for TextFrame in raw XML
-        const textFrameMatches = result.rawXml.match(/<TextFrame[^>]*>/g);
-        console.log('[Test IDML] TextFrame tags found in XML:', textFrameMatches ? textFrameMatches.length : 0);
-        if (textFrameMatches) {
-          textFrameMatches.forEach((match: string, idx: number) => {
-            console.log(`[Test IDML] TextFrame ${idx}:`, match);
+        if (validFonts.length === results.fonts.length) {
+          toast.success(`✓ ${validFonts.length} police(s) valide(s)`, { duration: 5000 });
+        } else if (obfuscatedFonts.length > 0) {
+          toast.error(
+            `⚠️ ${obfuscatedFonts.length} police(s) OBFUSQUÉE(S) par InDesign ! Utilisez les fichiers TTF/OTF originaux.`,
+            { duration: 15000 }
+          );
+          obfuscatedFonts.forEach((f: any) => {
+            console.error(`[Check Import] Police obfusquée: ${f.name} - ${f.details}`);
           });
         }
         
-        toast.info('Structure Spread IDML affichée dans la console', { duration: 5000 });
-        return;
-      }
-      
-      toast.success(
-        `IDML parsé : ${result.stats.textFrames} textes trouvés, ${result.stats.characterStyles} styles de caractère, ${result.stats.paragraphStyles} styles de paragraphe`,
-        { duration: 8000 }
-      );
-
-      // Fonts detection summary (names exactly as detected from IDML parsing)
-      const detectedFonts: string[] = result?.fonts?.detected || [];
-      if (detectedFonts.length > 0) {
-        const preview = detectedFonts.slice(0, 6).join(', ');
-        const suffix = detectedFonts.length > 6 ? ` (+${detectedFonts.length - 6})` : '';
-        toast.success(`Polices détectées (${detectedFonts.length}) : ${preview}${suffix}`, { duration: 10000 });
-        console.log('[Test IDML] Polices détectées:', detectedFonts);
-        console.log('[Test IDML] Polices par source:', result?.fonts?.bySource);
-        console.log('[Test IDML] Résolution par texte (sample):', result?.fonts?.resolutionSample);
-      } else {
-        toast.warning("Aucune police n'a été détectée dans l'IDML (styles/inline).", { duration: 8000 });
-      }
-      
-      // Log text frames for debugging
-      if (result.textFrames && result.textFrames.length > 0) {
-        console.log('[Test IDML] Text frames:', result.textFrames);
-        result.textFrames.forEach((tf: any, i: number) => {
-          console.log(`[Test IDML] Text ${i + 1}: "${tf.content.substring(0, 100)}..."`);
+        // Log all font details
+        results.fonts.forEach((f: any) => {
+          const status = f.valid ? '✓' : (f.obfuscated ? '⚠️ OBFUSQUÉE' : '✗');
+          console.log(`[Check Import] Font ${f.name}: ${status} - ${f.details || f.error || ''}`);
         });
-      } else {
-        toast.warning('Aucun texte trouvé dans l\'IDML. Vérifiez les logs de la console.');
       }
+      
     } catch (error: any) {
-      console.error('Error testing IDML:', error);
-      toast.error(`Erreur de parsing IDML : ${error.message}`);
+      console.error('Error checking import:', error);
+      toast.error(`Erreur de vérification : ${error.message}`);
     }
   };
 
@@ -7080,12 +7085,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                       <div className="flex gap-2">
                         <button
-                          onClick={handleTestIdml}
-                          disabled={!idmlFile}
+                          onClick={handleCheckImport}
+                          disabled={!idmlFile && !epubFile && fontFiles.length === 0}
                           className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300"
                         >
                           <Search size={18} />
-                          Tester IDML
+                          Vérifier Import
                         </button>
                         <button
                           onClick={handleImportStoryboard}

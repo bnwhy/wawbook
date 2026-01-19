@@ -202,3 +202,17 @@
   z-index: -2;
   border-radius: 0 2px 2px 0;
 }
+
+/* Transitions rapides pour l'ombre au milieu des pages */
+.c-flipbook__page::before,
+.c-flipbook__page::after,
+.c-flipbook__page {
+  transition: box-shadow 0.15s ease-out, transform 0.3s ease-out !important;
+}
+
+/* Ombre au milieu des pages plus visible */
+.c-flipbook__page.is-calling::after,
+.c-flipbook__page.is-active::after {
+  box-shadow: inset -5px 0 15px rgba(0, 0, 0, 0.3) !important;
+  transition: box-shadow 0.15s ease-out !important;
+}

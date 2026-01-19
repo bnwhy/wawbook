@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
+import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
 
 
 const slugify = (text: string) => {
@@ -2188,7 +2189,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          <div className="text-sm font-medium text-slate-900 truncate">{book.name}</div>
                                          <div className="text-xs text-slate-500">{book.wizardConfig.tabs.length} options</div>
                                       </div>
-                                      <div className="text-xs font-bold text-slate-700">{book.price} €</div>
+                                      <div className="text-xs font-bold text-slate-700">{formatPrice(book.price)}</div>
                                    </div>
                                 ))}
                              </div>
@@ -2499,7 +2500,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-3 mb-1">
                                  <h3 className="font-bold text-lg text-slate-900 truncate">{book.name}</h3>
-                                 <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{Number(book.price).toFixed(2)} €</span>
+                                 <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{formatPrice(book.price)}</span>
                               </div>
                               <p className="text-sm text-slate-500 line-clamp-1 mb-2">{book.description}</p>
                               <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
@@ -3065,7 +3066,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         >
                                             <option value="">Sélectionner un livre...</option>
                                             {books.map(book => (
-                                                <option key={book.id} value={book.id}>{book.name} - {book.price}€</option>
+                                                <option key={book.id} value={book.id}>{book.name} - {formatPrice(book.price)}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -3188,7 +3189,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             <div className="flex-1">
                                                <div className="flex justify-between">
                                                   <h4 className="font-bold text-slate-900">{item.bookTitle}</h4>
-                                                  <span className="font-bold">{Number(item.price).toFixed(2)} €</span>
+                                                  <span className="font-bold">{formatPrice(item.price)}</span>
                                                </div>
                                                <p className="text-sm text-slate-500 mb-1">Quantité: {item.quantity}</p>
                                                <pre className="text-xs text-slate-600 bg-slate-50 p-2 rounded max-w-md overflow-x-auto whitespace-pre-wrap">
@@ -4779,7 +4780,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <div className="text-sm font-bold text-slate-900">{Number(method.price).toFixed(2)} €</div>
+                                                        <div className="text-sm font-bold text-slate-900">{formatPrice(method.price)}</div>
                                                     </div>
                                                 ))}
                                                 {zone.methods.length === 0 && (

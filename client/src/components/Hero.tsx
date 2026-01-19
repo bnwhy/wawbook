@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit, Settings, Gift } from 'lucide-react';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
+import Banner from './Banner';
 import { useBooks } from '../context/BooksContext';
+import { formatPrice } from '../utils/formatPrice';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity, bookTitle?: string) => void;
@@ -138,8 +140,10 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
      <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
         {/* --- NAVBAR --- */}
         <Navigation onStart={() => onStart()} />
+        {/* --- BANNER --- */}
+        <Banner />
         {/* --- HERO SECTION --- */}
-        <header className="pt-40 pb-32 px-6 max-w-7xl mx-auto w-full relative">
+        <header className="pt-16 pb-32 px-6 max-w-7xl mx-auto w-full relative">
           {/* Floating Clouds Decoration */}
           <div className="absolute top-32 left-10 text-white opacity-60 animate-float pointer-events-none"><Cloud size={100} fill="currentColor" /></div>
           <div className="absolute top-52 right-20 text-white opacity-40 animate-float-delayed pointer-events-none"><Cloud size={80} fill="currentColor" /></div>
@@ -150,7 +154,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                 <Star size={16} className="text-accent-sun" fill="currentColor" /> La magie de la lecture
              </div>
              
-             <h1 className="text-5xl md:text-8xl font-display font-black text-cloud-dark mb-8 leading-[0.9] text-balance tracking-tight drop-shadow-sm">
+             <h1 className="text-5xl md:text-8xl font-display font-black text-cloud-dark mb-8 leading-[0.9] text-balance tracking-tight drop-shadow-sm" style={{ fontSize: '50px' }}>
                Des livres <span className="text-cloud-blue relative inline-block">
                  personnalisés
                  <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun opacity-100" viewBox="0 0 100 10" preserveAspectRatio="none">
@@ -189,7 +193,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
             
             {/* FAMILY COLLECTION */}
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4">Notre collection pour la famille</h2>
+              <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>Notre collection pour la famille</h2>
               <p className="text-xl text-cloud-dark/60 font-medium">Des histoires pour célébrer ceux qu'on aime</p>
             </div>
 
@@ -231,8 +235,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                      
                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && `${Number(card.oldPrice).toFixed(2)} €`}</span>
-                            <span className="text-xl font-black text-accent-melon">{Number(card.price).toFixed(2)} €</span>
+                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && formatPrice(card.oldPrice)}</span>
+                            <span className="text-xl font-black text-accent-melon">{formatPrice(card.price)}</span>
                         </div>
                         <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                             <PenTool size={14} />
@@ -246,7 +250,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
             {/* THEMES */}
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4">Nos Univers Magiques</h2>
+              <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>Nos Univers Magiques</h2>
               <p className="text-xl text-cloud-dark/60 font-medium">Choisissez le monde préféré de votre enfant</p>
             </div>
 
@@ -288,8 +292,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                      
                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && `${Number(card.oldPrice).toFixed(2)} €`}</span>
-                            <span className="text-xl font-black text-accent-melon">{Number(card.price).toFixed(2)} €</span>
+                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && formatPrice(card.oldPrice)}</span>
+                            <span className="text-xl font-black text-accent-melon">{formatPrice(card.price)}</span>
                         </div>
                         <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                             <PenTool size={14} />
@@ -303,7 +307,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
             {/* ACTIVITIES */}
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-4">Ou choisissez par Passion</h2>
+              <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>Ou choisissez par Passion</h2>
               <p className="text-xl text-cloud-dark/60 font-medium">Une histoire qui commence avec ce qu'ils aiment</p>
             </div>
             
@@ -341,8 +345,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                        
                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                           <div className="flex flex-col">
-                              <span className="text-xs text-gray-400 font-bold line-through">{activity.oldPrice && `${Number(activity.oldPrice).toFixed(2)} €`}</span>
-                              <span className="text-xl font-black text-accent-melon">{Number(activity.price).toFixed(2)} €</span>
+                              <span className="text-xs text-gray-400 font-bold line-through">{activity.oldPrice && formatPrice(activity.oldPrice)}</span>
+                              <span className="text-xl font-black text-accent-melon">{formatPrice(activity.price)}</span>
                           </div>
                           <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                               <PenTool size={14} />
@@ -356,7 +360,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
             {/* OCCASIONS */}
             <div className="text-center mb-16 mt-24">
-              <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-4">Pour toutes les occasions</h2>
+              <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>Pour toutes les occasions</h2>
               <p className="text-xl text-cloud-dark/60 font-medium">Le cadeau idéal pour marquer les grands moments</p>
             </div>
             
@@ -398,8 +402,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                        
                        <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                           <div className="flex flex-col">
-                              <span className="text-xs text-gray-400 font-bold line-through">{occasion.oldPrice && `${Number(occasion.oldPrice).toFixed(2)} €`}</span>
-                              <span className="text-xl font-black text-accent-melon">{Number(occasion.price).toFixed(2)} €</span>
+                              <span className="text-xs text-gray-400 font-bold line-through">{occasion.oldPrice && formatPrice(occasion.oldPrice)}</span>
+                              <span className="text-xl font-black text-accent-melon">{formatPrice(occasion.price)}</span>
                           </div>
                           <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                               <PenTool size={14} />
@@ -424,7 +428,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
           <div className="max-w-7xl mx-auto relative z-10 pt-10">
              <div className="text-center mb-20">
-               <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4">C'est facile comme tout !</h2>
+               <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>C'est facile comme tout !</h2>
                <p className="text-xl text-cloud-dark/60 font-medium">Trois petites étapes et l'histoire commence.</p>
              </div>
 

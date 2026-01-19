@@ -1,6 +1,7 @@
-import { Facebook, Instagram, Twitter, Mail } from "lucide-react";
+import { Facebook, Instagram, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Link } from "wouter";
 
 export function Footer() {
   return (
@@ -61,13 +62,13 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-black text-lg mb-6 text-gray-800 uppercase tracking-wider">Besoin d'aide ?</h4>
-            <p className="text-gray-500 font-medium mb-4">
-              Nos lutins sont là pour vous répondre !
-            </p>
-            <a href="mailto:hello@wawabook.com" className="inline-block text-primary font-bold text-lg hover:underline decoration-wavy underline-offset-4">
-              hello@wawabook.com
-            </a>
+            <h4 className="font-black text-lg mb-6 text-gray-800 uppercase tracking-wider">Aide</h4>
+            <ul className="space-y-3 text-gray-500 font-medium text-lg">
+              <li><Link href="/help/FAQ" className="hover:text-primary transition-colors">FAQ</Link></li>
+              <li><Link href="/help/Contact" className="hover:text-primary transition-colors">Contact</Link></li>
+              <li><Link href="/help/Service client" className="hover:text-primary transition-colors">Service client</Link></li>
+              <li><Link href="/help/Mentions légales" className="hover:text-primary transition-colors">Mentions légales</Link></li>
+            </ul>
           </div>
         </div>
 

@@ -10,6 +10,7 @@ import BookPreview from '../components/BookPreview';
 import BookCover from '../components/BookCover';
 import { generateStoryText } from '../services/geminiService';
 import { Story } from '../types';
+import { formatPrice } from '../utils/formatPrice';
 
 import { useEcommerce } from '../context/EcommerceContext';
 
@@ -157,7 +158,7 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                         </div>
                         
                         <div className="font-black text-xl text-cloud-dark mt-2 md:mt-0">
-                            {(item.price * item.quantity).toFixed(2)}€
+                            {formatPrice(item.price * item.quantity)}
                         </div>
                     </div>
                     
@@ -206,28 +207,29 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                 <div className="space-y-4 mb-6">
                     <div className="flex justify-between text-stone-600 text-sm font-medium">
                         <span>Sous-total :</span>
-                        <span className="font-bold text-cloud-dark">{total.toFixed(2)}€</span>
+                        <span className="font-bold text-cloud-dark">{formatPrice(total)}</span>
                     </div>
                     <div className="flex justify-between text-stone-600 text-sm font-medium">
                         <span>Expédition :</span>
-                        <span className="font-bold text-cloud-dark">{defaultShippingRate.toFixed(2)}€</span>
+                        <span className="font-bold text-cloud-dark">{formatPrice(defaultShippingRate)}</span>
                     </div>
                     {discount > 0 && (
                         <div className="flex justify-between text-sm font-medium text-brand-coral">
                             <span>Réduction :</span>
-                            <span className="font-bold">-{discount.toFixed(2)}€</span>
+                            <span className="font-bold">-{formatPrice(discount)}</span>
                         </div>
                     )}
                     
                     <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center">
                         <span className="font-bold text-lg text-cloud-dark">Total :</span>
-                        <span className="font-black text-2xl text-cloud-dark">{(total + defaultShippingRate - discount).toFixed(2)}€</span>
+                        <span className="font-black text-2xl text-cloud-dark">{formatPrice(total + defaultShippingRate - discount)}</span>
                     </div>
                 </div>
                 
                 <button 
                     onClick={() => setLocation('/checkout')}
                     className="w-full bg-cloud-deep text-white font-bold text-lg py-3 px-4 rounded-lg shadow-md hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                    style={{ backgroundColor: 'rgba(12, 74, 110, 1)' }}
                 >
                     <Lock size={18} /> Passer la commande
                 </button>

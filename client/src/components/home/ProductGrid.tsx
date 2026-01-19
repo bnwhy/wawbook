@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { useBooks } from "../../context/BooksContext";
 import { BookOpen } from "lucide-react";
+import { formatPrice } from "../../utils/formatPrice";
 
 export function ProductGrid() {
   const { books } = useBooks();
@@ -70,7 +71,7 @@ export function ProductGrid() {
                     {book.description || "Une histoire personnalisée pour votre enfant"}
                   </p>
                   <div className="font-serif text-2xl text-primary">
-                    {book.price ? `${book.price.toFixed(2)} €` : "29,99 €"}
+                    {book.price ? formatPrice(book.price) : "€ 29,99"}
                   </div>
                 </CardContent>
                 <CardFooter className="p-6 pt-0 bg-white/50 backdrop-blur-sm">

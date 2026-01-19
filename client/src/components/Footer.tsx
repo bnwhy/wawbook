@@ -1,5 +1,6 @@
 import React from 'react';
-import { Cloud, Heart, Settings } from 'lucide-react';
+import { Cloud, Heart } from 'lucide-react';
+import { Link } from 'wouter';
 
 interface FooterProps {
   // No props needed
@@ -8,8 +9,8 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = () => {
   return (
     <footer className="bg-cloud-dark text-cloud-lightest py-20 px-6 mt-auto w-full z-10 relative">
-      <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
-        <div className="col-span-1 md:col-span-2">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="col-span-1 md:col-span-1">
           <div className="flex items-center gap-2 mb-6 text-white">
             <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">NuageBook</span>
           </div>
@@ -33,11 +34,20 @@ const Footer: React.FC<FooterProps> = () => {
         </div>
 
         <div>
+          <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Aide</h4>
+          <ul className="space-y-4 font-medium text-cloud-light/60">
+            <li><Link href="/help/FAQ" className="hover:text-white transition-colors block">FAQ</Link></li>
+            <li><Link href="/help/Contact" className="hover:text-white transition-colors block">Contact</Link></li>
+            <li><Link href="/help/Service client" className="hover:text-white transition-colors block">Service client</Link></li>
+            <li><Link href="/help/Mentions légales" className="hover:text-white transition-colors block">Mentions légales</Link></li>
+          </ul>
+        </div>
+
+        <div>
           <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Légal</h4>
           <ul className="space-y-4 font-medium text-cloud-light/60">
             <li className="hover:text-white cursor-pointer transition-colors">Confidentialité</li>
             <li className="hover:text-white cursor-pointer transition-colors">CGU</li>
-            <li className="hover:text-white cursor-pointer transition-colors">Mentions Légales</li>
           </ul>
         </div>
       </div>

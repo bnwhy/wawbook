@@ -94,7 +94,14 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
       <div ref={containerRef} className={`flex flex-col items-center z-50 ${className}`} key={pagesKey}>
         <div className="c-flipbook" style={{ width, height, position: 'relative', zIndex: 50 }}>
           {pages.map((pageUrl, index) => (
-            <div key={`page-${index}-${pageUrl.substring(0, 30)}`} className="c-flipbook__page">
+            <div 
+              key={`page-${index}-${pageUrl.substring(0, 30)}`} 
+              className="c-flipbook__page shadow-2xl rounded-none border border-gray-300"
+              style={{ 
+                borderRadius: 0,
+                filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.1))'
+              }}
+            >
             <img
               src={pageUrl}
               alt={`Page ${index + 1}`}
@@ -105,7 +112,7 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
           ))}
         </div>
 
-        <div className="flex items-center justify-center gap-8 mt-6">
+        <div className="flex items-center justify-center gap-8 mt-3">
           <button
             ref={prevButtonRef}
             className="w-12 h-12 bg-white text-stone-700 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-50 hover:scale-110 transition-all z-20 border border-gray-200"

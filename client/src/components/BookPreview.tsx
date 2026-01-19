@@ -9,6 +9,7 @@ import { generateBookPages, matchesImageConditions, getCombinationKey as getComb
 import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
 import Footer from './Footer';
+import { formatPrice } from '../utils/formatPrice';
 
 const hardcoverIcon = null;
 const softcoverIcon = null;
@@ -781,7 +782,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           {/* NAVBAR */}
           {!isModal && <Navigation onStart={onStart} />}
           {/* BOOK PREVIEW AREA */}
-          <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-4 h-full' : isMobile ? 'py-6 mt-16' : 'py-2 mt-2 min-h-[800px]'}`} style={{ 
+          <div className={`flex flex-col items-center justify-center px-4 relative overflow-hidden ${isModal ? 'py-2 h-full' : isMobile ? 'py-4 pt-20' : 'py-1 pt-20'}`} style={{ 
             backgroundColor: '#E0F2FE',
             backgroundImage: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)'
           }}>
@@ -885,7 +886,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 /* DESKTOP FLIPBOOK VIEW */
                 <>
               {/* Stage */}
-              <div className={`relative z-10 flex items-center justify-center w-full max-w-5xl animate-drop-in ${isModal ? 'h-[600px]' : 'h-[750px]'}`}>
+              <div className={`relative z-10 flex items-center justify-center w-full max-w-5xl animate-drop-in ${isModal ? '' : ''}`}>
                 {flipbookPages.length > 0 ? (
                   <FlipbookViewer
                     key={`flipbook-${flipbookPages.length}-${book?.id || 'default'}`}
@@ -985,7 +986,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                    <span className="font-bold text-cloud-dark text-sm">Couverture souple</span>
                                    <span className="text-[10px] text-transparent font-black uppercase tracking-wider mb-1 select-none">Standard</span>
                                    <p className="text-[11px] text-cloud-dark/60 leading-tight mb-2">Léger et flexible, idéal pour la lecture quotidienne.</p>
-                                   <span className="font-black text-cloud-dark">€34.99</span>
+                                   <span className="font-black text-cloud-dark">€ 34,99</span>
                                </div>
                                {selectedFormat === 'softcover' && (
                                    <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
@@ -1004,17 +1005,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-6">
                             <div className="flex justify-between items-center mb-2 text-sm">
                                 <span className="text-gray-500">Livre personnalisé</span>
-                                <span className="font-bold text-cloud-dark">{selectedFormat === 'hardcover' ? '€44.99' : '€34.99'}</span>
+                                <span className="font-bold text-cloud-dark">{selectedFormat === 'hardcover' ? '€ 44,99' : '€ 34,99'}</span>
                             </div>
                             <div className="flex justify-between items-center mb-4 text-sm">
                                 <span className="text-gray-500">Livraison</span>
-                                <span className="font-bold text-cloud-dark">9.99€</span>
+                                <span className="font-bold text-cloud-dark">€ 9,99</span>
                             </div>
                             <div className="h-px bg-gray-200 w-full mb-4"></div>
                             <div className="flex justify-between items-center text-lg">
                                 <span className="font-black text-cloud-dark">Total</span>
                                 <span className="font-black text-brand-coral">
-                                    {(selectedFormat === 'hardcover' ? 44.99 + 9.99 : 34.99 + 9.99).toFixed(2)}€
+                                    {formatPrice(selectedFormat === 'hardcover' ? 44.99 + 9.99 : 34.99 + 9.99)}
                                 </span>
                             </div>
                        </div>

@@ -7,6 +7,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { ShippingMethod } from '../types/ecommerce';
 import { ALL_COUNTRIES } from '../data/countries';
+import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
 
 const CheckoutPage = () => {
   const { items, total, clearCart } = useCart();
@@ -177,7 +178,7 @@ const CheckoutPage = () => {
             <div className="border-t border-stone-100 my-4"></div>
             <div className="flex justify-between">
                 <span className="font-bold text-stone-800">Total payé</span>
-                <span className="font-black text-brand-coral">{grandTotal.toFixed(2)}€</span>
+                <span className="font-black text-brand-coral">{formatPrice(grandTotal)}</span>
             </div>
           </div>
           <button 
@@ -333,7 +334,7 @@ const CheckoutPage = () => {
                                                             </div>
                                                         </div>
                                                         <span className="text-sm font-bold text-stone-800">
-                                                            {Number(method.price) === 0 ? 'Gratuit' : `${Number(method.price).toFixed(2)} €`}
+                                                            {formatPriceWithFree(method.price)}
                                                         </span>
                                                     </label>
                                                 ))}
@@ -411,7 +412,7 @@ const CheckoutPage = () => {
                                         <p className="text-xs text-stone-500">{item.format === 'hardcover' ? 'Rigide' : 'Souple'} x {item.quantity}</p>
                                     </div>
                                     <div className="font-bold text-stone-800 text-sm">
-                                        {(item.price * item.quantity).toFixed(2)}€
+                                        {formatPrice(item.price * item.quantity)}
                                     </div>
                                 </div>
                             ))}
@@ -420,17 +421,17 @@ const CheckoutPage = () => {
                         <div className="border-t border-stone-200 pt-4 space-y-2">
                              <div className="flex justify-between text-stone-600 text-sm">
                                 <span>Sous-total</span>
-                                <span className="font-bold">{total.toFixed(2)}€</span>
+                                <span className="font-bold">{formatPrice(total)}</span>
                             </div>
                             <div className="flex justify-between text-stone-600 text-sm">
                                 <span>Livraison</span>
                                 <span className={shippingCost === 0 ? "text-green-600 font-bold" : "font-bold text-stone-800"}>
-                                    {shippingCost === 0 ? "Gratuite" : `${shippingCost.toFixed(2)}€`}
+                                    {shippingCost === 0 ? "Gratuite" : formatPrice(shippingCost)}
                                 </span>
                             </div>
                             <div className="border-t border-stone-200 pt-4 mt-4 flex justify-between items-center">
                                 <span className="font-bold text-stone-800">Total</span>
-                                <span className="font-black text-2xl text-brand-coral">{grandTotal.toFixed(2)}€</span>
+                                <span className="font-black text-2xl text-brand-coral">{formatPrice(grandTotal)}</span>
                             </div>
                         </div>
                         
@@ -443,7 +444,7 @@ const CheckoutPage = () => {
                                 {isLoading ? (
                                     <>Redirection vers Stripe...</>
                                 ) : (
-                                    <>Payer {grandTotal.toFixed(2)}€</>
+                                    <>Payer {formatPrice(grandTotal)}</>
                                 )}
                             </button>
                         )}

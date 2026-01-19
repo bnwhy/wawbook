@@ -6,6 +6,7 @@ import { WizardVariant, WizardOption } from '../types/admin';
 import Navigation from './Navigation';
 import { useBooks } from '../context/BooksContext';
 import Footer from './Footer';
+import { formatPrice } from '../utils/formatPrice';
 
 const previewBackground = '';
 
@@ -378,7 +379,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
       <div className="lg:hidden flex justify-center py-4 backdrop-blur-sm border-b border-white/50 transition-all duration-300 w-full sticky top-[60px] z-30" style={{
         background: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)'
       }}>
-         <div className="w-[300px] h-[300px] rounded-full bg-white/70 backdrop-blur-md border border-cloud-blue overflow-hidden shadow-lg">
+         <div className="w-[225px] h-[225px] rounded-full bg-white/70 backdrop-blur-md border border-gray-300 overflow-hidden shadow-2xl">
             {renderCharacterAvatar(
               activeTab?.type === 'character' 
                 ? activeTabId 
@@ -388,34 +389,60 @@ const Wizard: React.FC<WizardProps> = (props) => {
       </div>
 
       {/* WIZARD CONTENT */}
-      <div className="flex-1 flex flex-col items-center w-full relative overflow-x-hidden">
+      <div className="flex-1 flex flex-col items-center w-full relative overflow-x-hidden" style={{
+        background: 'linear-gradient(180deg, rgba(224, 242, 254, 0.6) 0%, rgba(240, 249, 255, 0.8) 50%, rgba(255, 255, 255, 0.9) 100%)',
+        backdropFilter: 'blur(20px)'
+      }}>
         
-        {/* Floating Clouds Decoration - Exactly like Hero */}
-        <div className="absolute top-32 left-10 text-white opacity-60 animate-float pointer-events-none">
+        {/* Watercolor texture overlay */}
+        <div className="absolute inset-0 opacity-30 pointer-events-none" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='watercolor'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='5' seed='2'/%3E%3CfeColorMatrix type='hueRotate' values='200'/%3E%3CfeColorMatrix type='saturate' values='0.3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23watercolor)' opacity='0.5'/%3E%3C/svg%3E")`,
+          backgroundSize: '400px 400px',
+          mixBlendMode: 'overlay'
+        }} />
+        
+        {/* Soft watercolor blobs */}
+        <div className="absolute top-20 left-10 w-64 h-64 bg-blue-200 rounded-full opacity-20 blur-3xl animate-float pointer-events-none" />
+        <div className="absolute top-40 right-20 w-80 h-80 bg-sky-200 rounded-full opacity-15 blur-3xl animate-float-delayed pointer-events-none" />
+        <div className="absolute bottom-32 left-1/4 w-72 h-72 bg-cyan-200 rounded-full opacity-20 blur-3xl animate-float pointer-events-none" />
+        <div className="absolute top-1/3 right-1/4 w-56 h-56 bg-blue-100 rounded-full opacity-25 blur-3xl animate-float-delayed pointer-events-none" />
+        
+        {/* Floating Clouds - More blurred */}
+        <div className="absolute top-32 left-10 text-white opacity-30 blur-sm animate-float pointer-events-none">
           <Cloud size={100} fill="currentColor" />
         </div>
-        <div className="absolute top-52 right-20 text-white opacity-40 animate-float-delayed pointer-events-none">
+        <div className="absolute top-52 right-20 text-white opacity-20 blur-sm animate-float-delayed pointer-events-none">
           <Cloud size={80} fill="currentColor" />
         </div>
-        <div className="absolute bottom-20 left-1/4 text-white opacity-50 animate-float pointer-events-none">
+        <div className="absolute bottom-20 left-1/4 text-white opacity-25 blur-sm animate-float pointer-events-none">
           <Cloud size={120} fill="currentColor" />
         </div>
 
-        <div ref={wizardContainerRef} className="relative z-10 bg-transparent w-full max-w-6xl flex flex-col lg:flex-row gap-14 items-start justify-center p-4 pt-20 md:p-8 md:pt-24 mb-12">
+        <div ref={wizardContainerRef} className="relative z-10 bg-transparent w-full max-w-6xl flex flex-col lg:flex-row gap-56 items-start justify-center p-4 pt-20 md:p-8 md:pt-24 mb-12">
           
           {/* --- LEFT COLUMN: CONFIGURATION --- */}
-          <div className="w-full lg:w-[563px] overflow-hidden flex flex-col relative shadow-lg">
+          <div className="w-full lg:w-[563px] flex flex-col relative">
+             
+             {/* CONTAINER WITH TITLE */}
+             <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-4">
+               <h2 className="text-3xl font-bold text-cloud-dark" style={{ fontSize: '25px' }}>
+                 Personnaliser vos personnages
+               </h2>
+             </div>
+             
+             {/* WIZARD FORM */}
+             <div className="overflow-hidden flex flex-col relative shadow-2xl">
              
              {/* TABS */}
-             <div className="flex shrink-0 lg:sticky lg:top-0 bg-transparent z-10 border-b border-cloud-blue">
+             <div className="flex shrink-0 lg:sticky lg:top-0 bg-transparent z-10 border-b border-gray-300">
                 {wizardConfig.tabs.map(tab => (
                   <button 
                      key={tab.id}
                      onClick={() => setActiveTabId(tab.id)}
                      className={`flex-1 px-6 py-3 font-bold text-xl tracking-wide transition-all whitespace-nowrap relative ${
                        activeTabId === tab.id 
-                         ? 'bg-white text-cloud-dark border border-b-0 border-cloud-blue rounded-t-lg -mb-px z-10' 
-                         : 'bg-[#F2F2F2] text-gray-400 hover:text-gray-600 rounded-t-lg'
+                         ? 'bg-white text-cloud-dark border border-b-0 border-gray-300 rounded-t-lg -mb-px z-10' 
+                         : 'bg-[#F2F2F2] text-gray-400 hover:text-gray-600 rounded-t-lg border border-gray-300'
                      }`}
                   >
                      {tab.label}
@@ -424,7 +451,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* FORM CONTENT */}
-             <div className="p-6 space-y-4 flex-1 border border-t-0 border-cloud-blue rounded-b-lg bg-white">
+             <div className="p-6 space-y-4 flex-1 border border-t-0 border-gray-300 rounded-b-lg bg-white">
                 {activeTab && activeTab.variants.map((variant, index) => {
                   const currentValue = selections[activeTabId]?.[variant.id];
                   const isLast = index === activeTab.variants.length - 1;
@@ -434,10 +461,8 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     <div key={variant.id} className="space-y-3">
                        {content}
                        {!isLast && (
-                          <div className="flex items-center gap-4 py-1 opacity-50">
-                             <div className="h-px bg-gray-200 flex-1"></div>
-                             <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
-                             <div className="h-px bg-gray-200 flex-1"></div>
+                          <div className="py-2">
+                             <div className="h-0.5 bg-gray-300 w-full"></div>
                           </div>
                        )}
                     </div>
@@ -509,7 +534,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                               <button
                                 key={opt.id}
                                 onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
-                                className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${currentValue === opt.id ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] scale-110 ring-offset-2' : 'hover:scale-105'}`}
+                                className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${currentValue === opt.id ? 'border-cloud-blue ring-2 ring-cloud-blue/20 scale-110 ring-offset-2' : 'hover:scale-105'}`}
                                 style={{ backgroundColor: opt.resource }}
                                 title={opt.label}
                               />
@@ -535,7 +560,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                                <button
                                  key={opt.id}
                                  onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
-                                 className={`${variant.showLabel ? 'flex items-center gap-2 px-2 py-2' : 'w-14 h-14'} rounded-full transition-all border border-gray-200 overflow-hidden ${variant.showLabel ? 'bg-white' : 'flex items-center justify-center bg-white'} ${currentValue === opt.id ? 'border-[#8DD0C3] ring-2 ring-[#E8F5F2] scale-110 ring-offset-2' : 'hover:scale-105'}`}
+                                 className={`${variant.showLabel ? 'flex items-center gap-2 px-2 py-2' : 'w-14 h-14'} rounded-full transition-all border border-gray-200 overflow-hidden ${variant.showLabel ? 'bg-white' : 'flex items-center justify-center bg-white'} ${currentValue === opt.id ? 'border-cloud-blue ring-2 ring-cloud-blue/20 scale-110 ring-offset-2' : 'hover:scale-105'}`}
                                  title={opt.label}
                                >
                                   <div className={`${variant.showLabel ? 'w-10 h-10' : 'w-full h-full'} rounded-full overflow-hidden flex items-center justify-center flex-shrink-0`}>
@@ -564,7 +589,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
                             <button
                               key={opt.id}
                               onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
-                              className={`px-3 py-2 rounded-md border text-xl font-medium transition-all ${currentValue === opt.id ? 'bg-[#E8F5F2] border-[#8DD0C3] text-cloud-dark' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                              className={`px-3 py-2 rounded-md border text-xl font-medium transition-all ${currentValue === opt.id ? 'bg-cloud-blue/10 border-cloud-blue text-cloud-dark' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'}`}
                             >
                                {opt.label}
                             </button>
@@ -576,25 +601,17 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </div>
 
              {/* FOOTER ACTIONS */}
-             <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end items-center shrink-0">
-                {props.isEditing && (
-                <button 
-                  onClick={onCancel}
-                  className="text-gray-400 hover:text-gray-600 font-bold text-xl px-4 py-2 mr-auto hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    Retour au panier
-                </button>
-                )}
+             {props.isEditing && (
+             <button 
+               onClick={onCancel}
+               className="text-gray-400 hover:text-gray-600 font-bold text-xl px-4 py-2 mr-auto hover:bg-gray-100 rounded-lg transition-colors"
+             >
+                 Retour au panier
+             </button>
+             )}
 
-                <button 
-                  onClick={handleComplete}
-                  className="bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 px-6 py-3 rounded-full font-bold shadow-lg hover:brightness-105 transition-all flex items-center gap-2 hover:scale-105 hover:shadow-xl"
-                >
-                   <Wand2 size={20} />
-                   {props.isEditing ? "Mettre à jour" : "Créer le livre"}
-                </button>
              </div>
-
+             {/* END WIZARD FORM */}
           </div>
 
           {/* --- RIGHT COLUMN: PREVIEW --- */}
@@ -602,7 +619,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
              
              {/* Avatar Visualization (Above Book) */}
              <div className="flex flex-col items-center animate-drop-in z-20 -ml-24">
-                <div className="w-96 h-96 rounded-full bg-white/70 backdrop-blur-md border border-cloud-blue overflow-hidden relative shadow-lg">
+                <div className="w-72 h-72 rounded-full bg-white/70 backdrop-blur-md border border-gray-300 overflow-hidden relative shadow-2xl">
                    {renderCharacterAvatar(
                      activeTab?.type === 'character' 
                        ? activeTabId 
@@ -612,15 +629,23 @@ const Wizard: React.FC<WizardProps> = (props) => {
                 
                 {/* Book Info */}
                 {book && (
-                  <div className="mt-6 text-center max-w-md">
+                  <div className="mt-16 text-left max-w-md">
                     <h2 className="text-3xl font-bold text-cloud-dark mb-2">{book.name}</h2>
-                    <p className="text-lg text-gray-600 mb-4">{book.description}</p>
-                    <div className="flex items-center justify-center gap-3">
+                    <div className="flex items-center justify-start gap-3 mb-4">
                       {book.oldPrice && (
-                        <span className="text-xl text-gray-400 line-through">{book.oldPrice}€</span>
+                        <span className="text-lg text-gray-400 line-through whitespace-nowrap">{formatPrice(book.oldPrice)}</span>
                       )}
-                      <span className="text-3xl font-bold text-cloud-blue">{book.price}€</span>
+                      <span className="text-2xl font-black text-accent-melon whitespace-nowrap">{formatPrice(book.price)}</span>
                     </div>
+                    <p className="text-lg text-gray-600 mb-6">{book.description}</p>
+                    
+                    <button 
+                      onClick={handleComplete}
+                      className="bg-[#0c4a6e] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2 ml-auto"
+                    >
+                      <Wand2 size={32} />
+                      {props.isEditing ? "Mettre à jour" : "Créer le livre"}
+                    </button>
                   </div>
                 )}
              </div>

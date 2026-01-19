@@ -54,10 +54,17 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
     return `${base}/${encodeURIComponent(item)}`;
   };
 
+  const isHomePage = location === '/';
+  const isTransparent = isHomePage && !scrolled;
+
   return (
     <>
     <nav 
-      className={`fixed w-full z-50 transition-all duration-300 bg-white py-2 ${scrolled ? 'lg:bg-white/90 lg:backdrop-blur-md' : 'lg:bg-transparent lg:py-4'}`}
+      className={`fixed w-full z-50 transition-all duration-300 py-2 ${
+        isTransparent 
+          ? 'bg-transparent' 
+          : 'bg-white lg:bg-white/90 lg:backdrop-blur-md'
+      }`}
     >
       {/* Desktop Navigation */}
       <div className="hidden lg:flex max-w-7xl mx-auto px-6 justify-between items-center">
@@ -75,14 +82,14 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
 
         {/* Desktop Menu */}
         <div className="flex items-center gap-1">
-          {mainMenu.map((menu, idx) => (
+          {mainMenu.filter(menu => menu.id !== 'help').map((menu, idx) => (
             <div 
               key={idx}
               className="relative group"
               onMouseEnter={() => setHoveredIndex(idx)}
               onMouseLeave={() => setHoveredIndex(null)}
             >
-              <button className={`px-4 py-2 rounded-full font-bold text-cloud-dark/70 hover:text-cloud-blue hover:bg-cloud-light/50 transition-all flex items-center gap-1 text-sm ${hoveredIndex === idx ? 'text-cloud-blue bg-cloud-light/50' : ''}`}>
+              <button className={`px-4 py-2 rounded-full font-bold text-cloud-dark/70 hover:text-cloud-blue hover:bg-cloud-light/50 transition-all flex items-center gap-1 text-lg ${hoveredIndex === idx ? 'text-cloud-blue bg-cloud-light/50' : ''}`}>
                 {menu.label}
                 <ChevronDown size={14} className={`transition-transform duration-300 ${hoveredIndex === idx ? 'rotate-180' : ''}`} />
               </button>
@@ -198,7 +205,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
             </div>
 
             <div className="p-4 flex flex-col gap-2">
-               {mainMenu.map((menu, idx) => (
+               {mainMenu.filter(menu => menu.id !== 'help').map((menu, idx) => (
                  <div key={idx} className="border-b border-cloud-lightest last:border-0 pb-2 mb-2">
                    <button 
                      onClick={() => setExpandedMobileItem(expandedMobileItem === idx ? null : idx)}

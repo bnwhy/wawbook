@@ -5,6 +5,7 @@ import { useEcommerce } from '../context/EcommerceContext';
 import { CheckCircle, Loader2, ShoppingCart, User, Truck, CreditCard, Check } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { formatPrice } from '../utils/formatPrice';
 
 const CheckoutSuccessPage = () => {
   const [, setLocation] = useLocation();
@@ -161,7 +162,7 @@ const CheckoutSuccessPage = () => {
           <div className="border-t border-stone-100 my-4"></div>
           <div className="flex justify-between">
             <span className="font-bold text-stone-800">Total payé</span>
-            <span className="font-black text-brand-coral" data-testid="text-total">{orderData.grandTotal.toFixed(2)}€</span>
+            <span className="font-black text-brand-coral" data-testid="text-total">{formatPrice(orderData.grandTotal)}</span>
           </div>
         </div>
         <button 

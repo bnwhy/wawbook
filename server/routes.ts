@@ -310,14 +310,49 @@ export async function registerRoutes(
       }
       
       // CRITICAL: Remove corrupted base64 @font-face declarations
-      // Since fonts are installed at system level, Chromium will use them by name
       cssContent = cssContent.replace(/@font-face\s*\{[^}]*src\s*:\s*url\s*\(\s*["']?data:font\/[^}]+\}/gi, '');
       
-      // Add simple @font-face declarations that reference system fonts
-      const systemFontFaces = availableFonts.map(fontName => 
-        `@font-face { font-family: '${fontName}'; src: local('${fontName}'); }`
-      ).join('\n');
-      cssContent = systemFontFaces + '\n' + cssContent;
+      // Copy system fonts to book directory and reference them via file:// URLs
+      // This works better than local() in Chromium headless
+      const bookFontsDir = path.join(process.cwd(), 'server', 'assets', 'books', book.id, 'fonts');
+      await fs.promises.mkdir(bookFontsDir, { recursive: true });
+      
+      const systemFontFaces: string[] = [];
+      for (const fontName of availableFonts) {
+        try {
+          // Try to find the font file in system fonts directory
+          const fontFiles = await fs.promises.readdir(systemFontsDir);
+          
+          // Search for font file (case-insensitive, handle spaces)
+          const searchName = fontName.toLowerCase().replace(/\s+/g, '');
+          const fontFile = fontFiles.find(f => {
+            const fileName = f.toLowerCase().replace(/\s+/g, '').replace(/[-_]/g, '');
+            return fileName.includes(searchName) && (f.endsWith('.ttf') || f.endsWith('.otf'));
+          });
+          
+          if (fontFile) {
+            const srcPath = path.join(systemFontsDir, fontFile);
+            const destPath = path.join(bookFontsDir, fontFile);
+            
+            // Copy font to book directory
+            await fs.promises.copyFile(srcPath, destPath);
+            
+            // Create @font-face with file:// URL
+            const fontUrl = `file://${destPath}`;
+            const format = fontFile.endsWith('.otf') ? 'opentype' : 'truetype';
+            systemFontFaces.push(
+              `@font-face { font-family: '${fontName}'; src: url('${fontUrl}') format('${format}'); }`
+            );
+            console.log(`[render-pages] Font copied for rendering: ${fontName} -> ${fontFile}`);
+          } else {
+            console.warn(`[render-pages] Font file not found for: ${fontName}`);
+          }
+        } catch (err) {
+          console.error(`[render-pages] Error copying font ${fontName}:`, err);
+        }
+      }
+      
+      cssContent = systemFontFaces.join('\n') + '\n' + cssContent;
       
       // Log CSS info for debugging
       console.log(`[render-pages] CSS length: ${cssContent.length} chars, using system fonts`);

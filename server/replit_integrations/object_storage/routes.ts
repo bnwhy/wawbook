@@ -2,6 +2,8 @@ import type { Express, Request } from "express";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "./objectStorage";
 import { randomUUID } from "crypto";
 import JSZip from "jszip";
+import * as path from "path";
+import * as fs from "fs";
 import { parseIdmlBuffer } from "./idmlParser";
 import { extractEpubFromBuffer } from "./epubExtractor";
 import { mergeEpubWithIdml } from "./idmlMerger";
@@ -1925,21 +1927,51 @@ export function registerObjectStorageRoutes(app: Express): void {
       console.log(`[import-storyboard]   - Images: ${epubResult.imageElements.length}`);
       console.log(`[import-storyboard]   - Pages: ${epubResult.pages.length}`);
 
-      // 1.5. Upload custom fonts if provided
+      // 1.5. Upload custom fonts if provided AND install them for Playwright
       const uploadedFonts: Record<string, string> = {};
+      const systemFontsDir = path.join(process.env.HOME || '/home/runner', '.fonts');
+      
       if (fonts && Array.isArray(fonts) && fonts.length > 0) {
-        console.log(`[import-storyboard] Uploading ${fonts.length} custom fonts...`);
+        console.log(`[import-storyboard] Processing ${fonts.length} custom fonts...`);
+        
+        // Ensure system fonts directory exists
+        await fs.promises.mkdir(systemFontsDir, { recursive: true });
         
         const publicPaths = objectStorageService.getPublicObjectSearchPaths();
-        if (publicPaths.length > 0) {
-          const publicPath = publicPaths[0];
-          const { bucketName, objectName: basePath } = parseObjectPathSimple(publicPath);
-          const bucket = objectStorageClient.bucket(bucketName);
-          
-          for (const font of fonts) {
-            try {
-              const fontBuffer = Buffer.from(font.data, 'base64');
-              const ext = font.name.split('.').pop()?.toLowerCase() || 'ttf';
+        const hasPublicPath = publicPaths.length > 0;
+        
+        for (const font of fonts) {
+          try {
+            const fontBuffer = Buffer.from(font.data, 'base64');
+            const ext = font.name.split('.').pop()?.toLowerCase() || 'ttf';
+            
+            // Check if font is valid (not obfuscated)
+            const magic = fontBuffer.slice(0, 4).toString('hex').toUpperCase();
+            const validMagics: Record<string, string[]> = {
+              ttf: ['00010000', '74727565'],
+              otf: ['4F54544F'],
+              woff: ['774F4646'],
+              woff2: ['774F4632'],
+            };
+            const expectedMagics = validMagics[ext] || validMagics.ttf;
+            const isValidFont = expectedMagics.some(m => magic.startsWith(m));
+            
+            if (!isValidFont) {
+              console.warn(`[import-storyboard] ⚠️ Font ${font.name} appears obfuscated (magic: ${magic}), skipping system install`);
+              continue;
+            }
+            
+            // Install font to system fonts directory for Playwright
+            const systemFontPath = path.join(systemFontsDir, font.name);
+            await fs.promises.writeFile(systemFontPath, fontBuffer);
+            console.log(`[import-storyboard] ✓ Font installed to system: ${font.name}`);
+            
+            // Also upload to object storage if available
+            if (hasPublicPath) {
+              const publicPath = publicPaths[0];
+              const { bucketName, objectName: basePath } = parseObjectPathSimple(publicPath);
+              const bucket = objectStorageClient.bucket(bucketName);
+              
               const fontId = randomUUID().substring(0, 8);
               const storageName = `${bookId}_${fontId}_${font.name}`;
               const objectName = basePath ? `${basePath}/fonts/${storageName}` : `fonts/${storageName}`;
@@ -1954,15 +1986,24 @@ export function registerObjectStorageRoutes(app: Express): void {
               
               const objectPath = `/objects/${bucketName}/${objectName}`;
               uploadedFonts[font.name] = objectPath;
-              
-              console.log(`[import-storyboard] ✓ Font uploaded: ${font.name}`);
-            } catch (fontError) {
-              console.error(`[import-storyboard] ⚠️ Failed to upload font ${font.name}:`, fontError);
             }
+            
+            console.log(`[import-storyboard] ✓ Font processed: ${font.name}`);
+          } catch (fontError) {
+            console.error(`[import-storyboard] ⚠️ Failed to process font ${font.name}:`, fontError);
           }
-          
-          console.log(`[import-storyboard] ✓ Uploaded ${Object.keys(uploadedFonts).length}/${fonts.length} fonts`);
         }
+        
+        // Refresh font cache
+        try {
+          const { execSync } = await import('child_process');
+          execSync('fc-cache -f', { timeout: 5000 });
+          console.log(`[import-storyboard] ✓ Font cache refreshed`);
+        } catch (fcErr) {
+          console.log(`[import-storyboard] fc-cache not available`);
+        }
+        
+        console.log(`[import-storyboard] ✓ Processed ${Object.keys(uploadedFonts).length}/${fonts.length} fonts`);
       }
 
       // 2. Parse IDML (texts + styles)

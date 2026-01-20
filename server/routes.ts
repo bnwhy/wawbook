@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema } from "@shared/schema";
+import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema, type ImageElement, type TextElement, type BookConfiguration } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { registerObjectStorageRoutes, ObjectStorageService, objectStorageClient } from "./replit_integrations/object_storage";
 import { stripeService } from "./stripeService";
@@ -76,7 +76,7 @@ export async function registerRoutes(
       };
       console.log('[PATCH /api/books/:id] Received imageElements count:', body.contentConfig?.imageElements?.length);
       if (body.contentConfig?.imageElements?.length > 0) {
-        const firstWithConditions = body.contentConfig.imageElements.find((img: any) => img.conditions?.length > 0);
+        const firstWithConditions = body.contentConfig.imageElements.find((img) => img.conditions && img.conditions.length > 0);
         console.log('[PATCH /api/books/:id] First image with conditions:', JSON.stringify(firstWithConditions));
       }
       
@@ -185,7 +185,7 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Book not found" });
       }
 
-      const contentConfig = book.contentConfig as any;
+      const contentConfig = book.contentConfig;
       const pages = contentConfig?.pages;
       if (!pages || pages.length === 0) {
         return res.status(400).json({ error: "No pages to render" });
@@ -210,7 +210,7 @@ export async function registerRoutes(
       
       // Check if an image matches user selections (partial matching)
       // An image matches if ALL its characteristics are satisfied by user selections
-      const imageMatchesSelections = (img: any): boolean => {
+      const imageMatchesSelections = (img: ImageElement): boolean => {
         if (!img.combinationKey || img.combinationKey === 'default' || img.combinationKey === 'all') {
           return true; // Static images always match
         }
@@ -227,12 +227,12 @@ export async function registerRoutes(
       };
       
       // Check if an image's conditions are satisfied by user selections
-      const imageMatchesConditions = (img: any, userCharacters: Record<string, Record<string, any>>): boolean => {
+      const imageMatchesConditions = (img: ImageElement, userCharacters: Record<string, Record<string, string>>): boolean => {
         if (!img.conditions || img.conditions.length === 0) {
           return true;
         }
         
-        return img.conditions.every((cond: any) => {
+        return img.conditions.every((cond) => {
           for (const tabSelections of Object.values(userCharacters)) {
             if (tabSelections[cond.variantId] === cond.optionId) {
               return true;
@@ -426,14 +426,14 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           // Get images for this page, filtered by conditions, combinationKey, or characteristics
           // Priority: conditions > combinationKey > characteristics > default
           const pageImages = (contentConfig?.imageElements || []).filter(
-            (img: any) => {
+            (img) => {
               // Must be on the correct page
               if (img.position?.pageIndex !== pageData.pageIndex) return false;
               
               // If image has conditions, check them
               if (img.conditions && img.conditions.length > 0) {
                 // ALL conditions must match
-                const allMatch = img.conditions.every((cond: any) => {
+                const allMatch = img.conditions.every((cond) => {
                   // Find if user selected this variant with this value
                   for (const tabSelections of Object.values(characters)) {
                     if (tabSelections[cond.variantId] === cond.optionId) {
@@ -453,7 +453,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           
           // Group images by position to avoid duplicates
           // If multiple images have the same position, keep only the one that best matches user selections
-          const imagesByPosition = new Map<string, any[]>();
+          const imagesByPosition = new Map<string, ImageElement[]>();
           for (const img of pageImages) {
             const pos = img.position || {};
             // Create a position key (rounded to avoid floating point issues)
@@ -466,7 +466,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           }
           
           // For each position, keep only the best matching image
-          const finalImages: any[] = [];
+          const finalImages: ImageElement[] = [];
           for (const [posKey, imagesAtPosition] of imagesByPosition.entries()) {
             if (imagesAtPosition.length === 1) {
               // Only one image at this position, use it
@@ -487,7 +487,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                     score = 1000 + img.conditions.length; // Highest priority, more conditions = better match
                   } else {
                     // Partial match - count how many conditions match
-                    const matchingCount = img.conditions.filter((cond: any) => {
+                    const matchingCount = img.conditions.filter((cond) => {
                       for (const [tabId, tabSelections] of Object.entries(characters)) {
                         if (tabSelections[cond.variantId] === cond.optionId) {
                           return true;
@@ -527,12 +527,12 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           
           // Get text zones for this page
           const pageTexts = (contentConfig?.texts || []).filter(
-            (txt: any) => txt.position?.pageIndex === pageData.pageIndex
+            (txt) => txt.position?.pageIndex === pageData.pageIndex
           );
           
           // Build clean HTML with positioned zones instead of raw InDesign HTML
           // Images use pixel positions from EPUB CSS (same as texts)
-          let imagesHtml = finalImages.map((img: any) => {
+          let imagesHtml = finalImages.map((img) => {
             const pos = img.position || {};
             const imgUrl = img.url?.startsWith('/') ? `${baseUrl}${img.url}` : img.url;
             const scaleX = pos.scaleX || 1;
@@ -542,7 +542,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             return `<img src="${imgUrl}" style="position:absolute;left:${pos.x || 0}px;top:${pos.y || 0}px;width:${pos.width || pageWidth}px;height:${pos.height || pageHeight}px;object-fit:cover;transform:rotate(${rotation}deg) scale(${scaleX}, ${scaleY});transform-origin:0% 0%;" />`;
           }).join('\n');
           
-          let textsHtml = pageTexts.map((txt: any) => {
+          let textsHtml = pageTexts.map((txt) => {
             const pos = txt.position || {};
             const style = txt.style || {};
             let content = txt.content || '';
@@ -1138,7 +1138,7 @@ ${textsHtml}
         return res.status(400).json({ error: "Customer email is required" });
       }
 
-      const lineItems = items.map((item: any) => ({
+      const lineItems = items.map((item) => ({
         name: item.name || item.title || 'Livre personnalisé',
         description: item.description,
         amount: parseFloat(item.price) || 29.90,

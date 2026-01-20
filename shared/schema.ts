@@ -18,6 +18,115 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+// ===== CONFIGURATION TYPES =====
+// Types stricts pour wizardConfig et contentConfig
+
+export const wizardOptionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  imageUrl: z.string().optional(),
+  price: z.number().optional(),
+});
+
+export const wizardVariantSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  type: z.enum(['radio', 'checkbox', 'select']).optional(),
+  options: z.array(wizardOptionSchema),
+});
+
+export const wizardTabSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  icon: z.string().optional(),
+  variants: z.array(wizardVariantSchema),
+});
+
+export const wizardConfigSchema = z.object({
+  tabs: z.array(wizardTabSchema),
+});
+
+export const textStyleSchema = z.object({
+  fontFamily: z.string().optional(),
+  fontSize: z.string().optional(),
+  fontWeight: z.string().optional(),
+  fontStyle: z.string().optional(),
+  color: z.string().optional(),
+  letterSpacing: z.string().optional(),
+  textDecoration: z.string().optional(),
+  textTransform: z.string().optional(),
+  textAlign: z.string().optional(),
+  textAlignLast: z.string().optional(),
+  lineHeight: z.string().optional(),
+  textIndent: z.string().optional(),
+  marginTop: z.string().optional(),
+  marginBottom: z.string().optional(),
+});
+
+export const positionSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+  rotation: z.number().optional(),
+  scaleX: z.number().optional(),
+  scaleY: z.number().optional(),
+  layer: z.number().optional(),
+  pageIndex: z.number(),
+});
+
+export const conditionSchema = z.object({
+  variantId: z.string(),
+  optionId: z.string(),
+});
+
+export const imageElementSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  position: positionSchema.optional(),
+  combinationKey: z.string().optional(),
+  characteristics: z.record(z.string()).optional(),
+  conditions: z.array(conditionSchema).optional(),
+});
+
+export const textElementSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  position: positionSchema.optional(),
+  style: textStyleSchema.optional(),
+  fontFamily: z.string().optional(),
+});
+
+export const pageSchema = z.object({
+  pageIndex: z.number(),
+  width: z.number(),
+  height: z.number(),
+});
+
+export const contentConfigSchema = z.object({
+  pages: z.array(pageSchema).optional(),
+  imageElements: z.array(imageElementSchema).optional(),
+  texts: z.array(textElementSchema).optional(),
+  cssContent: z.string().optional(),
+  extractedFonts: z.array(z.object({
+    family: z.string(),
+    path: z.string(),
+  })).optional(),
+});
+
+export const bookConfigurationSchema = z.object({
+  childName: z.string().optional(),
+  theme: z.string().optional(),
+  selections: z.record(z.record(z.string())).optional(),
+});
+
+export type WizardConfig = z.infer<typeof wizardConfigSchema>;
+export type ContentConfig = z.infer<typeof contentConfigSchema>;
+export type BookConfiguration = z.infer<typeof bookConfigurationSchema>;
+export type Position = z.infer<typeof positionSchema>;
+export type ImageElement = z.infer<typeof imageElementSchema>;
+export type TextElement = z.infer<typeof textElementSchema>;
+
 // ===== BOOKS =====
 export const books = pgTable("books", {
   id: varchar("id").primaryKey(),
@@ -33,8 +142,8 @@ export const books = pgTable("books", {
   oldPrice: decimal("old_price", { precision: 10, scale: 2 }),
   isHidden: integer("is_hidden").default(0), // 0 = false, 1 = true
   features: jsonb("features"),
-  wizardConfig: jsonb("wizard_config").notNull(),
-  contentConfig: jsonb("content_config").notNull(),
+  wizardConfig: jsonb("wizard_config").notNull().$type<WizardConfig>(),
+  contentConfig: jsonb("content_config").notNull().$type<ContentConfig>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -89,7 +198,7 @@ export const orders = pgTable("orders", {
     bookTitle: string;
     quantity: number;
     price: number;
-    configuration: any;
+    configuration: BookConfiguration;
   }>>(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   shippingAddress: jsonb("shipping_address").notNull().$type<{

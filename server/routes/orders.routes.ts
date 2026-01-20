@@ -1,0 +1,149 @@
+import express from "express";
+import { storage, pool } from "../storage";
+import { insertOrderSchema } from "@shared/schema";
+import { fromZodError } from "zod-validation-error";
+import { NotFoundError, ValidationError } from "../utils/errors";
+import { logger } from "../utils/logger";
+import { stripeService } from "../stripeService";
+
+const router = express.Router();
+
+// GET /api/orders/next-id
+router.get("/next-id", async (req, res, next) => {
+  try {
+    const result = await pool.query("SELECT nextval('order_number_seq') as seq");
+    const seq = result.rows[0].seq;
+    const year = new Date().getFullYear().toString().slice(-2);
+    const orderId = `ORD-${year}-${String(seq).padStart(7, '0')}`;
+    res.json({ orderId });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/orders
+router.get("/", async (req, res, next) => {
+  try {
+    const orders = await storage.getAllOrders();
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/orders/:id
+router.get("/:id", async (req, res, next) => {
+  try {
+    const order = await storage.getOrder(req.params.id);
+    if (!order) {
+      throw new NotFoundError('Order', req.params.id);
+    }
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/customers/:customerId/orders
+router.get("/customer/:customerId", async (req, res, next) => {
+  try {
+    const orders = await storage.getOrdersByCustomer(req.params.customerId);
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/orders
+router.post("/", async (req, res, next) => {
+  try {
+    const body = {
+      ...req.body,
+      totalAmount: req.body.totalAmount !== undefined ? String(req.body.totalAmount) : undefined,
+    };
+    const validationResult = insertOrderSchema.safeParse(body);
+    if (!validationResult.success) {
+      throw new ValidationError(fromZodError(validationResult.error).message);
+    }
+    const order = await storage.createOrder(validationResult.data);
+    logger.info({ orderId: order.id }, 'Order created');
+    res.status(201).json(order);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/orders/:id
+router.patch("/:id", async (req, res, next) => {
+  try {
+    const body = {
+      ...req.body,
+      totalAmount: req.body.totalAmount !== undefined ? String(req.body.totalAmount) : undefined,
+    };
+    const order = await storage.updateOrder(req.params.id, body);
+    if (!order) {
+      throw new NotFoundError('Order', req.params.id);
+    }
+    logger.info({ orderId: order.id }, 'Order updated');
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/orders/:id
+router.delete("/:id", async (req, res, next) => {
+  try {
+    await storage.deleteOrder(req.params.id);
+    logger.info({ orderId: req.params.id }, 'Order deleted');
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/orders/:id/payment-status
+router.get("/:id/payment-status", async (req, res, next) => {
+  try {
+    const order = await storage.getOrder(req.params.id);
+    if (!order) {
+      throw new NotFoundError('Order', req.params.id);
+    }
+
+    // If we have a Stripe session ID, get fresh status from Stripe
+    if (order.stripeSessionId) {
+      try {
+        const paymentResult = await stripeService.getPaymentStatus(order.stripeSessionId);
+        
+        // Update if status changed
+        if (paymentResult.status !== order.paymentStatus) {
+          await storage.updateOrder(order.id, {
+            paymentStatus: paymentResult.status,
+            stripePaymentIntentId: paymentResult.paymentIntentId,
+          });
+        }
+        
+        res.json({
+          paymentStatus: paymentResult.status,
+          stripeSessionId: order.stripeSessionId,
+          stripePaymentIntentId: paymentResult.paymentIntentId,
+        });
+      } catch (stripeError) {
+        logger.warn({ err: stripeError, orderId: order.id }, 'Failed to get payment status from Stripe');
+        // If Stripe fails, return stored status
+        res.json({
+          paymentStatus: order.paymentStatus || 'pending',
+          stripeSessionId: order.stripeSessionId,
+        });
+      }
+    } else {
+      res.json({
+        paymentStatus: order.paymentStatus || 'pending',
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;

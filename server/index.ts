@@ -1,10 +1,15 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes/index";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync } from "./stripeClient";
 import { WebhookHandlers } from "./webhookHandlers";
+import { logger } from "./utils/logger";
+import { errorHandler, notFoundHandler } from "./middleware/error-handler";
+import { env } from "./config/env";
+import compression from "compression";
+import { apiLimiter } from "./middleware/rate-limit";
 
 const app = express();
 const httpServer = createServer(app);
@@ -16,21 +21,21 @@ declare module "http" {
 }
 
 async function initStripe() {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = env.DATABASE_URL;
   if (!databaseUrl) {
-    console.warn('DATABASE_URL not set, skipping Stripe initialization');
+    logger.warn('DATABASE_URL not set, skipping Stripe initialization');
     return;
   }
 
   try {
-    console.log('Initializing Stripe schema...');
+    logger.info('Initializing Stripe schema...');
     await runMigrations({ databaseUrl });
-    console.log('Stripe schema ready');
+    logger.info('Stripe schema ready');
 
     const stripeSync = await getStripeSync();
 
-    console.log('Setting up managed webhook...');
-    const replitDomain = process.env.REPLIT_DOMAINS?.split(',')[0];
+    logger.info('Setting up managed webhook...');
+    const replitDomain = env.REPLIT_DOMAINS?.split(',')[0];
     if (replitDomain) {
       const webhookBaseUrl = `https://${replitDomain}`;
       try {
@@ -38,31 +43,31 @@ async function initStripe() {
           `${webhookBaseUrl}/api/stripe/webhook`
         );
         if (result?.webhook?.url) {
-          console.log(`Webhook configured: ${result.webhook.url}`);
+          logger.info({ webhookUrl: result.webhook.url }, 'Webhook configured');
         } else {
-          console.log('Webhook setup completed (no URL returned)');
+          logger.info('Webhook setup completed (no URL returned)');
         }
       } catch (webhookError) {
-        console.warn('Could not set up managed webhook:', webhookError);
+        logger.warn({ err: webhookError }, 'Could not set up managed webhook');
       }
     } else {
-      console.log('No REPLIT_DOMAINS set, skipping webhook setup');
+      logger.info('No REPLIT_DOMAINS set, skipping webhook setup');
     }
 
     // syncBackfill peut prendre très longtemps ou tourner indéfiniment
     // On le rend optionnel via STRIPE_SYNC_BACKFILL pour éviter qu'il bloque le démarrage
     // Par défaut, on le désactive car les webhooks gèrent la synchronisation en temps réel
-    if (process.env.STRIPE_SYNC_BACKFILL === 'true') {
-      console.log('Starting Stripe backfill sync (this may take a while)...');
+    if (env.STRIPE_SYNC_BACKFILL === 'true') {
+      logger.info('Starting Stripe backfill sync (this may take a while)...');
       stripeSync.syncBackfill()
-        .then(() => console.log('Stripe data synced'))
-        .catch((err: any) => console.error('Error syncing Stripe data:', err));
+        .then(() => logger.info('Stripe data synced'))
+        .catch((err: unknown) => logger.error({ err }, 'Error syncing Stripe data'));
     } else {
-      console.log('Stripe backfill sync skipped (set STRIPE_SYNC_BACKFILL=true to enable)');
-      console.log('Note: Stripe data will be synced via webhooks in real-time');
+      logger.info('Stripe backfill sync skipped (set STRIPE_SYNC_BACKFILL=true to enable)');
+      logger.info('Note: Stripe data will be synced via webhooks in real-time');
     }
   } catch (error) {
-    console.error('Failed to initialize Stripe:', error);
+    logger.error({ err: error }, 'Failed to initialize Stripe');
   }
 }
 
@@ -82,14 +87,15 @@ app.post(
       const sig = Array.isArray(signature) ? signature[0] : signature;
 
       if (!Buffer.isBuffer(req.body)) {
-        console.error('STRIPE WEBHOOK ERROR: req.body is not a Buffer');
+        logger.error('STRIPE WEBHOOK ERROR: req.body is not a Buffer');
         return res.status(500).json({ error: 'Webhook processing error' });
       }
 
       await WebhookHandlers.processWebhook(req.body as Buffer, sig);
       res.status(200).json({ received: true });
-    } catch (error: any) {
-      console.error('Webhook error:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logger.error({ err: error }, `Webhook error: ${message}`);
       res.status(400).json({ error: 'Webhook processing error' });
     }
   }
@@ -106,15 +112,22 @@ app.use(
 
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
+// Compression des réponses
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6
+}));
 
-  console.log(`${formattedTime} [${source}] ${message}`);
+// Rate limiting pour les API
+app.use('/api', apiLimiter);
+
+export function log(message: string, source = "express") {
+  logger.info({ source }, message);
 }
 
 app.use((req, res, next) => {
@@ -146,29 +159,25 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
+  if (env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
 
+  // Error handling middlewares (must be last)
+  app.use(notFoundHandler);
+  app.use(errorHandler);
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = env.PORT;
   httpServer.listen(
     {
       port,

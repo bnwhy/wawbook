@@ -7,9 +7,9 @@ Ce module a été refactorisé pour améliorer la maintenabilité et la lisibili
 ### Fichiers principaux
 
 - **`routes.ts`** - Routes Express pour l'API (fortement réduit après refactoring)
-- **`idmlParser.ts`** - Parser pour les fichiers IDML InDesign
-- **`epubExtractor.ts`** - Extraction et traitement des fichiers EPUB
-- **`idmlMerger.ts`** - Fusion des données EPUB et IDML
+- **`idmlParser.ts`** - Parser pour les fichiers IDML InDesign (texte + mise en forme complète)
+- **`epubExtractor.ts`** - Extraction des fichiers EPUB (images + conteneurs vides + positions)
+- **`idmlMerger.ts`** - Fusion des conteneurs vides EPUB avec le texte/styles IDML
 - **`wizardConfigBuilder.ts`** - Construction de la configuration wizard depuis les caractéristiques
 
 ### Dossier `utils/`
@@ -20,6 +20,8 @@ Utilitaires réutilisables organisés par domaine :
 - **`cssHelpers.ts`** - Nettoyage CSS et détection de problèmes de polices
 - **`filenameParser.ts`** - Parsing des noms de fichiers avec caractéristiques
 - **`contentTypeHelpers.ts`** - Gestion des types MIME et chemins d'objets
+- **`fontNameParser.ts`** - Parsing des noms de fichiers de polices
+- **`fontPreflight.ts`** - Vérification de disponibilité des polices
 
 ## 🔧 Améliorations apportées
 
@@ -45,13 +47,31 @@ Utilitaires réutilisables organisés par domaine :
 
 ## 📝 Utilisation
 
-### Extraction d'un EPUB
+### Extraction d'un EPUB (images + conteneurs vides + positions)
 
 ```typescript
 import { extractEpubFromBuffer } from './epubExtractor';
 
 const result = await extractEpubFromBuffer(epubBuffer, bookId);
-// result contient : images, fonts, textPositions, imageElements, etc.
+// result contient : 
+//   - images: toutes les images du storyboard
+//   - textPositions: conteneurs VIDES avec positions uniquement (x, y, width, height)
+//   - pages: dimensions des pages
+//   - cssContent: CSS pour extraire les positions et transformations
+// ⚠️ L'EPUB ne contient PAS le contenu textuel, ni les polices, ni la mise en forme
+```
+
+### Parsing IDML (texte + mise en forme complète)
+
+```typescript
+import { parseIdmlBuffer } from './idmlParser';
+
+const idmlData = await parseIdmlBuffer(idmlBuffer);
+// idmlData contient TOUTE la mise en forme :
+//   - textFrames: contenu textuel complet avec variables
+//   - characterStyles: polices et styles de caractère (fontSize, color, fontWeight, etc.)
+//   - paragraphStyles: styles de paragraphe (textAlign, lineHeight, etc.)
+//   - colors: palette de couleurs InDesign
 ```
 
 ### Fusion EPUB + IDML
@@ -60,19 +80,12 @@ const result = await extractEpubFromBuffer(epubBuffer, bookId);
 import { mergeEpubWithIdml } from './idmlMerger';
 
 const mergedTexts = mergeEpubWithIdml(
-  epubTextPositions,
-  idmlData,
-  bookId
+  epubTextPositions,    // Conteneurs vides + positions depuis EPUB
+  idmlData,              // Texte + mise en forme complète depuis IDML
+  bookId,
+  cssFontMapping         // Non utilisé - conservé pour compatibilité API
 );
-```
-
-### Parsing IDML
-
-```typescript
-import { parseIdmlBuffer } from './idmlParser';
-
-const idmlData = await parseIdmlBuffer(idmlBuffer);
-// idmlData contient : characterStyles, paragraphStyles, textFrames, colors, etc.
+// Résultat : conteneurs EPUB remplis avec texte + mise en forme IDML
 ```
 
 ### Utilitaires

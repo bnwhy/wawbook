@@ -43,8 +43,12 @@ export interface FontWarning {
 
 /**
  * Détecte les problèmes de polices dans le CSS
+ * 
+ * Note: Les polices de l'EPUB sont ignorées. Elles doivent être uploadées manuellement.
+ * Cette fonction vérifie uniquement si les polices utilisées sont disponibles en base64
+ * ou sont des polices système natives.
  */
-export function detectFontIssues(css: string, fontMap: Record<string, string>): FontWarning[] {
+export function detectFontIssues(css: string, fontMap: Record<string, string> = {}): FontWarning[] {
   const warnings: FontWarning[] = [];
   const usedFonts = new Set<string>();
   
@@ -76,7 +80,7 @@ export function detectFontIssues(css: string, fontMap: Record<string, string>): 
         fontFamily: font,
         reason: 'not_embedded',
         severity: 'error',
-        message: `La police "${font}" n'est pas disponible sur le serveur. Elle doit être embarquée en base64 dans l'EPUB.`
+        message: `La police "${font}" n'est pas disponible sur le serveur. Vous devez uploader les fichiers de polices .ttf/.otf lors de l'import.`
       });
     }
   }

@@ -1,5 +1,14 @@
 /**
  * Module pour fusionner les positions EPUB avec le contenu/styles IDML
+ * 
+ * Architecture :
+ * - EPUB : fournit uniquement les positions (x, y, width, height) des zones de texte
+ * - IDML : fournit le contenu textuel, les polices et TOUS les styles
+ * 
+ * ⚠️ IMPORTANT : Les polices doivent OBLIGATOIREMENT être dans l'IDML.
+ * Le CSS de l'EPUB n'est JAMAIS utilisé comme fallback pour les polices.
+ * 
+ * Ce module associe chaque position EPUB avec le texte et les styles correspondants de l'IDML.
  */
 
 /**
@@ -29,6 +38,13 @@ function resolveStyleId(
 
 /**
  * Fusionne les positions de texte EPUB avec le contenu et les styles IDML
+ * 
+ * Sources de données :
+ * - epubTextPositions : positions uniquement (x, y, width, height) depuis l'EPUB
+ * - idmlData : TOUT le contenu textuel, polices et styles depuis l'IDML
+ * - cssFontMapping : INUTILISÉ - conservé pour compatibilité API mais non utilisé
+ * 
+ * ⚠️ Les polices DOIVENT être dans l'IDML. Pas de fallback CSS.
  * 
  * Stratégie de mapping déterministe :
  * 1. Groupe les conteneurs EPUB par page, trie par containerId numérique (_idContainer000, 001, etc.)
@@ -182,7 +198,15 @@ function extractContainerNumber(containerId: string): number {
 }
 
 /**
- * Crée un élément de texte fusionné
+ * Crée un élément de texte fusionné en combinant position EPUB et contenu/styles IDML
+ * 
+ * Hiérarchie des polices (priorité décroissante) - IDML UNIQUEMENT :
+ * 1. IDML Inline Character Properties (le plus spécifique)
+ * 2. IDML Applied Character Style
+ * 3. IDML Paragraph Style (contient aussi fontFamily)
+ * 
+ * ⚠️ Si aucune police n'est trouvée dans l'IDML, c'est une ERREUR.
+ * Le CSS de l'EPUB n'est PAS utilisé comme fallback.
  */
 function createMergedText(
   epubPos: any,
@@ -260,34 +284,11 @@ function createMergedText(
     }
   }
   
-  // Priority 3: Fallback on CSS class mapping from EPUB if still no fontFamily
-  if (!charStyle.fontFamily && cssFontMapping) {
-    // Try common EPUB CSS class patterns: CharOverride-1, CharOverride-2, etc.
-    // The containerId is like _idContainer005, and related text spans use CharOverride-X classes
-    // We look for classes that define fonts in the CSS
-    for (const [selector, fontFamily] of Object.entries(cssFontMapping)) {
-      // CharOverride classes are the most common for character styling
-      if (selector.includes('CharOverride') || selector.includes('char-override')) {
-        console.log(`[createMergedText]   ✓ Using font from CSS fallback (${selector}): ${fontFamily}`);
-        charStyle.fontFamily = fontFamily;
-        break;
-      }
-    }
-    
-    // If still no font, try span selectors
-    if (!charStyle.fontFamily) {
-      for (const [selector, fontFamily] of Object.entries(cssFontMapping)) {
-        if (selector.startsWith('span.') || selector.startsWith('.')) {
-          console.log(`[createMergedText]   ✓ Using font from CSS fallback (${selector}): ${fontFamily}`);
-          charStyle.fontFamily = fontFamily;
-          break;
-        }
-      }
-    }
-  }
-  
+  // ⚠️ Si toujours pas de fontFamily, c'est une ERREUR - pas de fallback CSS
   if (!charStyle.fontFamily) {
-    console.warn(`[createMergedText]   ⚠ No fontFamily found for text "${idmlFrame.content.substring(0, 30)}..." - will use browser default`);
+    console.error(`[createMergedText]   ❌ ERROR: No fontFamily found in IDML for text "${idmlFrame.content.substring(0, 30)}..."`);
+    console.error(`[createMergedText]   The IDML file must contain font information. CSS fallback is NOT used.`);
+    // On laisse undefined - le navigateur utilisera la police par défaut
   }
   
   // Extrait les propriétés de paragraphe locales (surcharges)

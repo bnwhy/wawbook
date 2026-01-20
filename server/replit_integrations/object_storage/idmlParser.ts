@@ -4,6 +4,15 @@ import { convertColorToHex } from './utils/colorConverter';
 
 /**
  * IDML Parser - Extrait les textes et styles depuis un fichier IDML InDesign
+ * 
+ * ⚠️ L'IDML est la SOURCE UNIQUE pour toutes les informations textuelles :
+ * - Contenu textuel complet avec variables ({nom_enfant}, etc.)
+ * - Polices (fontFamily) pour chaque zone de texte
+ * - Styles de caractère (fontSize, fontWeight, fontStyle, color, letterSpacing, etc.)
+ * - Styles de paragraphe (textAlign, lineHeight, marginTop, marginBottom, etc.)
+ * - Palette de couleurs InDesign
+ * 
+ * L'EPUB fournit uniquement les positions des zones de texte, pas le contenu ni les polices.
  */
 
 interface CharacterStyleProperties {
@@ -65,6 +74,13 @@ interface IdmlData {
 
 /**
  * Parse un fichier IDML (ZIP) et extrait tous les textes et styles
+ * 
+ * Extraction complète :
+ * - characterStyles : tous les styles de caractère avec fontFamily, fontSize, color, etc.
+ * - paragraphStyles : tous les styles de paragraphe avec textAlign, lineHeight, fontFamily, etc.
+ * - textFrames : contenu textuel de chaque zone avec ses variables
+ * - colors : palette de couleurs InDesign convertie en hex
+ * - pageDimensions : dimensions des pages (pour vérification)
  */
 export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
   const zip = await JSZip.loadAsync(idmlBuffer);
@@ -260,6 +276,19 @@ function extractColors(swatchesData: any): Record<string, string> {
 
 /**
  * Extract Character Styles from Styles.xml
+ * 
+ * Les Character Styles contiennent la police (fontFamily) et tous les styles de caractère.
+ * Ils sont appliqués sur des portions de texte spécifiques.
+ * 
+ * Propriétés extraites :
+ * - fontFamily : nom de la police (ex: "Minion Pro", "Arial Bold")
+ * - fontSize : taille en points
+ * - fontWeight, fontStyle : normal/bold, normal/italic
+ * - color : couleur du texte en hex
+ * - letterSpacing, baselineShift, textDecoration, textTransform
+ * 
+ * Gestion de l'héritage : si un style ne définit pas de police, on remonte
+ * la chaîne BasedOn pour trouver la police héritée.
  */
 export function extractCharacterStyles(
   stylesData: any,
@@ -454,6 +483,13 @@ export function extractCharacterStyles(
 
 /**
  * Extract Paragraph Styles from Styles.xml
+ * 
+ * Les Paragraph Styles contiennent :
+ * - Les propriétés de paragraphe (textAlign, lineHeight, marginTop, marginBottom, etc.)
+ * - La police du paragraphe (fontFamily) utilisée quand aucun Character Style n'est appliqué
+ * 
+ * ⚠️ Important : les Paragraph Styles peuvent aussi contenir fontFamily.
+ * Si une zone de texte n'a pas de Character Style appliqué, on utilise la police du Paragraph Style.
  */
 export function extractParagraphStyles(stylesData: any): Record<string, ParagraphStyleProperties> {
   const paragraphStyles: Record<string, ParagraphStyleProperties> = {};

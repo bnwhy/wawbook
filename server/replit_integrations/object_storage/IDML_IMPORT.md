@@ -3,13 +3,13 @@
 ## Vue d'ensemble
 
 Ce système permet d'importer un storyboard complet en combinant deux fichiers :
-- **EPUB** : Contient les images et les positions des zones de texte
-- **IDML** : Contient les textes complets avec toute leur mise en forme
+- **EPUB** : Contient **uniquement** les images et les conteneurs de texte vides avec positions
+- **IDML** : Contient **tout** le texte et la mise en forme complète
 
 ## Architecture
 
 ```
-EPUB (images + positions) + IDML (textes + styles) → ContentConfiguration complète
+EPUB (images + conteneurs vides + positions) + IDML (texte + mise en forme) → ContentConfiguration complète
 ```
 
 ### Répartition des sources
@@ -17,10 +17,15 @@ EPUB (images + positions) + IDML (textes + styles) → ContentConfiguration comp
 | Donnée | Source | Description |
 |--------|--------|-------------|
 | Images | EPUB | Toutes les images du storyboard |
-| Positions des zones de texte | EPUB | x, y, width, height, rotation, scale |
-| Textes complets | IDML | Contenu texte avec variables préservées |
-| Styles de texte | IDML | Character Styles + Paragraph Styles complets |
+| Conteneurs de texte vides | EPUB | Positions uniquement : x, y, width, height, rotation, scale |
+| CSS | EPUB | Pour extraire les positions et transformations uniquement |
 | Dimensions des pages | EPUB | Largeur et hauteur de chaque page |
+| **Texte complet** | **IDML** | Contenu texte avec variables préservées |
+| **Polices (fontFamily)** | **IDML** | Noms des polices - OBLIGATOIRE |
+| **Mise en forme** | **IDML** | fontSize, fontWeight, color, textAlign, lineHeight, etc. |
+
+**⚠️ IMPORTANT** : L'EPUB contient uniquement des **conteneurs vides** avec positions.  
+Tout le texte et la mise en forme viennent **OBLIGATOIREMENT** de l'IDML.
 
 ## Utilisation
 
@@ -192,10 +197,12 @@ Les logs du serveur affichent le mapping effectué pour vérification :
   Content: "Page 1..."
 ```
 
-## Styles extraits de l'IDML
+## Styles extraits de l'IDML (source unique pour le texte)
+
+L'IDML est la **seule source** pour toutes les informations textuelles :
 
 ### Character Styles (CharOverride)
-- `fontFamily` : Nom de la police
+- **`fontFamily`** : Nom de la police (ex: "Minion Pro", "Arial Bold") - **UNIQUEMENT depuis IDML**
 - `fontSize` : Taille en points (pt)
 - `fontWeight` : normal, bold
 - `fontStyle` : normal, italic
@@ -212,6 +219,15 @@ Les logs du serveur affichent le mapping effectué pour vérification :
 - `marginTop` : Espace avant en pt
 - `marginBottom` : Espace après en pt
 - `textIndent` : Retrait 1ère ligne en pt
+- **`fontFamily`** : Police du paragraphe (quand pas de CharacterStyle appliqué)
+
+### Hiérarchie des styles (priorité décroissante - IDML UNIQUEMENT)
+1. **Inline Character Properties** (le plus spécifique) - appliqué directement sur le texte
+2. **Applied Character Style** - style de caractère nommé
+3. **Paragraph Style** - style de paragraphe (contient aussi fontFamily)
+
+**⚠️ IMPORTANT : Si aucune police n'est trouvée dans l'IDML, c'est une ERREUR.**  
+L'EPUB ne contient AUCUNE information de mise en forme. Tout vient de l'IDML.
 
 ## Variables de texte
 

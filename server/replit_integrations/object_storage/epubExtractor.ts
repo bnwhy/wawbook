@@ -1,5 +1,21 @@
 /**
  * Module pour l'extraction et le traitement des fichiers EPUB
+ * 
+ * ⚠️ IMPORTANT : L'EPUB contient uniquement la structure visuelle et les positions.
+ * 
+ * L'EPUB fournit :
+ * - Les images du storyboard
+ * - Les conteneurs de texte VIDES (positions uniquement via CSS)
+ * - Le CSS pour extraire les positions et transformations (x, y, width, height, rotation, scale)
+ * - Les dimensions des pages
+ * 
+ * L'EPUB ne contient PAS :
+ * - Le contenu textuel (vient de l'IDML)
+ * - Les polices / fontFamily (vient de l'IDML)
+ * - Les styles de texte (fontSize, color, fontWeight, etc. - viennent de l'IDML)
+ * - La mise en forme (vient de l'IDML)
+ * 
+ * Résumé : EPUB = images + positions + conteneurs vides | IDML = texte + mise en forme complète
  */
 
 import JSZip from 'jszip';
@@ -15,7 +31,6 @@ interface EpubExtractionResult {
   bookId: string;
   assetsPath: string;
   images: Record<string, string>;
-  fonts: Record<string, string>;
   cssContent: string;
   pages: Array<{ width: number; height: number; pageIndex: number }>;
   textPositions: Array<any>;
@@ -28,6 +43,17 @@ interface EpubExtractionResult {
 
 /**
  * Extrait un fichier EPUB depuis un buffer vers le stockage local du serveur
+ * 
+ * L'EPUB contient :
+ * - Images : toutes les images du storyboard
+ * - Conteneurs de texte vides : positions uniquement (x, y, width, height)
+ * - CSS : pour extraire les positions et transformations
+ * - Dimensions : largeur et hauteur de chaque page
+ * 
+ * L'EPUB ne contient PAS :
+ * - Le contenu textuel → vient de l'IDML
+ * - Les polices / fontFamily → vient de l'IDML
+ * - La mise en forme (fontSize, color, styles) → vient de l'IDML
  */
 export async function extractEpubFromBuffer(
   epubBuffer: Buffer,
@@ -36,18 +62,15 @@ export async function extractEpubFromBuffer(
   // Crée les répertoires locaux pour ce livre
   const bookAssetsDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId);
   const imagesDir = path.join(bookAssetsDir, 'images');
-  const fontsDir = path.join(bookAssetsDir, 'fonts');
   const htmlDir = path.join(bookAssetsDir, 'html');
   
   await fs.promises.mkdir(imagesDir, { recursive: true });
-  await fs.promises.mkdir(fontsDir, { recursive: true });
   await fs.promises.mkdir(htmlDir, { recursive: true });
 
   // Extrait le ZIP
   const zip = await JSZip.loadAsync(epubBuffer);
   
   const imageMap: Record<string, string> = {};
-  const fontMap: Record<string, string> = {};
   const htmlFiles: string[] = [];
   const htmlContent: Record<string, string> = {};
   const cssContent: Record<string, string> = {};
@@ -66,11 +89,7 @@ export async function extractEpubFromBuffer(
     if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
       await extractImage(zipEntry, fileName, relativePath, imagesDir, bookId, imageMap, imageCharacteristicsMap, allCharacteristics);
     }
-    // Traite les polices
-    else if (/\.(ttf|otf|woff|woff2|eot)$/i.test(relativePath)) {
-      await extractFont(zipEntry, fileName, relativePath, fontsDir, bookId, fontMap);
-    }
-    // Traite HTML/XHTML
+    // Traite HTML/XHTML (les polices de l'EPUB sont ignorées - doivent être uploadées manuellement)
     else if (/\.(xhtml|html)$/i.test(relativePath)) {
       const content = await zipEntry.async('string');
       htmlFiles.push(relativePath);
@@ -89,9 +108,8 @@ export async function extractEpubFromBuffer(
     }
   }
 
-  // Traite le CSS pour embarquer les polices en base64
-  let allCss = cleanCssSyntax(Object.values(cssContent).join('\n'));
-  allCss = await embedFontsInCss(allCss, fontMap, fontsDir);
+  // Traite le CSS (nettoyage syntaxique uniquement, pas d'extraction de polices)
+  const allCss = cleanCssSyntax(Object.values(cssContent).join('\n'));
   
   // Sauvegarde le CSS traité
   const processedCssPath = path.join(htmlDir, 'styles.css');
@@ -125,8 +143,8 @@ export async function extractEpubFromBuffer(
     extractedImages.push(...result.images);
   }
 
-  // Détecte les problèmes de polices
-  const fontWarnings = detectFontIssues(allCss, fontMap);
+  // Détecte les problèmes de polices (fontMap vide car polices doivent être uploadées manuellement)
+  const fontWarnings = detectFontIssues(allCss, {});
   if (fontWarnings.length > 0) {
     console.log(`[epub-extract] Font warnings: ${fontWarnings.length}`);
     fontWarnings.forEach(w => console.log(`  - [${w.severity}] ${w.fontFamily}: ${w.reason}`));
@@ -135,16 +153,15 @@ export async function extractEpubFromBuffer(
   // Génère la configuration wizard depuis les caractéristiques détectées
   const generatedWizardTabs = buildWizardConfigFromCharacteristics(allCharacteristics);
   
-  // Extrait le mapping class -> fontFamily depuis le CSS
+  // Extrait le mapping class -> fontFamily depuis le CSS (pour compatibilité uniquement)
+  // ⚠️ Ce mapping n'est PAS utilisé - les polices doivent venir de l'IDML
   const cssFontMapping = extractCssFontMapping(allCss);
-  console.log(`[epub-extract] CSS font mapping: ${Object.keys(cssFontMapping).length} classes`);
-  for (const [selector, fontFamily] of Object.entries(cssFontMapping)) {
-    console.log(`[epub-extract]   ${selector} -> ${fontFamily}`);
-  }
+  console.log(`[epub-extract] CSS font mapping extracted: ${Object.keys(cssFontMapping).length} classes (NOT USED - fonts must come from IDML)`);
   
   console.log(`[epub-extract] =============== EXTRACTION COMPLETE ===============`);
-  console.log(`[epub-extract] Images: ${Object.keys(imageMap).length}, Fonts: ${Object.keys(fontMap).length}`);
+  console.log(`[epub-extract] Images: ${Object.keys(imageMap).length}`);
   console.log(`[epub-extract] Text zones: ${textPositions.length}, Image elements: ${extractedImages.length}`);
+  console.log(`[epub-extract] Note: Fonts must be uploaded manually (not extracted from EPUB)`);
   console.log(`[epub-extract] ===================================================`);
 
   return {
@@ -152,7 +169,6 @@ export async function extractEpubFromBuffer(
     bookId,
     assetsPath: `/assets/books/${bookId}`,
     images: imageMap,
-    fonts: fontMap,
     cssContent: allCss,
     pages: pagesDimensions,
     textPositions,
@@ -207,82 +223,6 @@ async function extractImage(
       imageMap[partialPath] = serverPath;
     }
   }
-}
-
-/**
- * Extrait une police du ZIP et la sauvegarde localement
- */
-async function extractFont(
-  zipEntry: any,
-  fileName: string,
-  relativePath: string,
-  fontsDir: string,
-  bookId: string,
-  fontMap: Record<string, string>
-): Promise<void> {
-  const fontBuffer = await zipEntry.async('nodebuffer');
-  const localPath = path.join(fontsDir, fileName);
-  await fs.promises.writeFile(localPath, fontBuffer);
-  
-  const serverPath = `/assets/books/${bookId}/fonts/${fileName}`;
-  fontMap[relativePath] = serverPath;
-  fontMap[fileName] = serverPath;
-  
-  // Ajoute tous les chemins partiels
-  const parts = relativePath.split('/');
-  for (let i = 1; i < parts.length; i++) {
-    const partialPath = parts.slice(i).join('/');
-    if (!fontMap[partialPath]) {
-      fontMap[partialPath] = serverPath;
-    }
-  }
-}
-
-/**
- * Embarque les polices en base64 dans le CSS
- */
-async function embedFontsInCss(
-  css: string,
-  fontMap: Record<string, string>,
-  fontsDir: string
-): Promise<string> {
-  let processedCss = css;
-  
-  for (const [originalPath, serverPath] of Object.entries(fontMap)) {
-    const filename = originalPath.split('/').pop() || originalPath;
-    const fontLocalPath = path.join(fontsDir, filename);
-    
-    try {
-      const fontBuffer = await fs.promises.readFile(fontLocalPath);
-      const fontBase64 = fontBuffer.toString('base64');
-      
-      const ext = filename.toLowerCase().split('.').pop();
-      let mimeType = 'font/truetype';
-      if (ext === 'otf') mimeType = 'font/opentype';
-      else if (ext === 'woff') mimeType = 'font/woff';
-      else if (ext === 'woff2') mimeType = 'font/woff2';
-      
-      const dataUri = `data:${mimeType};base64,${fontBase64}`;
-      
-      const pattern = new RegExp(
-        `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
-        'gi'
-      );
-      const formatHint = ext === 'otf' ? 'opentype' : ext === 'woff' ? 'woff' : ext === 'woff2' ? 'woff2' : 'truetype';
-      processedCss = processedCss.replace(pattern, `url("${dataUri}") format('${formatHint}')`);
-      
-      console.log(`[epub-extract] Font embedded as base64: ${filename} (${Math.round(fontBase64.length / 1024)}KB)`);
-    } catch (fontError) {
-      console.error(`[epub-extract] Failed to embed font ${filename}:`, fontError);
-      const pattern = new RegExp(
-        `url\\(["']?(?:\\.\\.\\/)*(?:[^"')]*\\/)?${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?\\)`,
-        'gi'
-      );
-      processedCss = processedCss.replace(pattern, `url("${serverPath}")`);
-    }
-  }
-  
-  return processedCss;
 }
 
 /**
@@ -402,7 +342,13 @@ async function processHtmlPage(
 }
 
 /**
- * Extrait la position CSS d'un élément
+ * Extrait la position et les transformations CSS d'un élément
+ * 
+ * Le CSS de l'EPUB sert UNIQUEMENT à extraire les propriétés de layout :
+ * - width, height : dimensions de l'élément
+ * - transform: translate() : position x, y
+ * - transform: rotate() : rotation
+ * - transform: scale() : échelle
  */
 function extractPositionFromCss(
   elementId: string,
@@ -471,9 +417,18 @@ function extractPositionFromCss(
 }
 
 /**
- * Extrait le mapping class/selector -> fontFamily depuis le CSS
- * Cela permet de retrouver la police depuis les classes CSS de l'EPUB
- * quand l'IDML n'a pas le fontFamily défini
+ * Extrait le mapping class/selector -> fontFamily depuis le CSS de l'EPUB
+ * 
+ * ⚠️ ATTENTION : Ce mapping n'est PAS utilisé pour les polices.
+ * Il est conservé pour compatibilité mais les polices doivent OBLIGATOIREMENT
+ * être définies dans l'IDML.
+ * 
+ * Hiérarchie des polices (IDML UNIQUEMENT) :
+ * 1. IDML Inline Character Properties (priorité la plus haute)
+ * 2. IDML Applied Character Style
+ * 3. IDML Paragraph Style
+ * 
+ * Si aucune police n'est trouvée dans l'IDML, c'est une erreur.
  */
 function extractCssFontMapping(css: string): Record<string, string> {
   const mapping: Record<string, string> = {};

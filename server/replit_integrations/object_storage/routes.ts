@@ -164,11 +164,9 @@ export function registerObjectStorageRoutes(app: Express): void {
       const zip = await JSZip.loadAsync(buffer);
       
       const imageMap: Record<string, string> = {};
-      const fontMap: Record<string, string> = {};
       const htmlFiles: string[] = [];
       const htmlContent: Record<string, string> = {};
       const cssContent: Record<string, string> = {};
-      const fontWarnings: string[] = [];
       
       const bucket = objectStorageClient.bucket(bucketName);
       
@@ -209,39 +207,7 @@ export function registerObjectStorageRoutes(app: Express): void {
             }
           }
         }
-        // Handle fonts (.ttf, .otf, .woff, .woff2)
-        else if (/\.(ttf|otf|woff2?|eot)$/i.test(relativePath)) {
-          const fontBuffer = await zipEntry.async('nodebuffer');
-          const ext = relativePath.split('.').pop() || 'ttf';
-          const fontId = randomUUID().substring(0, 8);
-          const storageName = `${sessionId}_${fontId}.${ext}`;
-          const objectName = basePath ? `${basePath}/fonts/${storageName}` : `fonts/${storageName}`;
-          
-          const file = bucket.file(objectName);
-          const contentType = getFontContentType(ext);
-          
-          await file.save(fontBuffer, {
-            contentType,
-            metadata: { cacheControl: 'public, max-age=31536000' },
-          });
-          
-          const objectPath = `/objects/${bucketName}/${objectName}`;
-          fontMap[relativePath] = objectPath;
-          
-          // Add various path mappings for font references
-          const parts = relativePath.split('/');
-          const justFilename = parts[parts.length - 1];
-          fontMap[justFilename] = objectPath;
-          
-          for (let i = 1; i < parts.length; i++) {
-            const partialPath = parts.slice(i).join('/');
-            if (!fontMap[partialPath]) {
-              fontMap[partialPath] = objectPath;
-            }
-          }
-          
-          console.log(`[EPUB] Extracted font: ${justFilename} -> ${objectPath}`);
-        }
+        // Fonts from EPUB are ignored - must be uploaded manually
         else if (/\.(html?|xhtml)$/i.test(relativePath)) {
           htmlFiles.push(relativePath);
           const content = await zipEntry.async('string');
@@ -252,47 +218,14 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
-      // Second pass: update CSS with correct font URLs and detect missing fonts
-      let allCssUpdated: Record<string, string> = {};
+      // Clean CSS syntax only (fonts are ignored - must be uploaded manually)
+      const allCssUpdated: Record<string, string> = {};
       for (const [cssPath, css] of Object.entries(cssContent)) {
-        // Clean CSS syntax errors (e.g., "src : url" -> "src: url")
-        let updatedCss = cleanCssSyntax(css);
-        
-        // Find all @font-face declarations and update src URLs
-        updatedCss = updatedCss.replace(
-          /(@font-face\s*\{[^}]*src\s*:\s*url\(["']?)([^"')]+)(["']?\)[^}]*\})/gi,
-          (match, before, fontPath, after) => {
-            // Clean up the font path (remove quotes, ../, etc.)
-            const cleanPath = fontPath.replace(/^["']|["']$/g, '').replace(/^\.\.\//, '').replace(/^\.\//, '');
-            const justFilename = cleanPath.split('/').pop() || cleanPath;
-            
-            // Look for the font in our fontMap
-            const storedPath = fontMap[cleanPath] || fontMap[justFilename];
-            
-            if (storedPath) {
-              console.log(`[EPUB] Updated font reference: ${fontPath} -> ${storedPath}`);
-              return `${before}${storedPath}${after}`;
-            } else {
-              // Font not found in EPUB - check if it might be a system/Google font
-              const fontNameMatch = match.match(/font-family\s*:\s*["']?([^"';,]+)/i);
-              const fontName = fontNameMatch ? fontNameMatch[1].trim() : justFilename.replace(/\.[^.]+$/, '');
-              fontWarnings.push(`Police "${fontName}" non trouvée dans l'EPUB (fichier: ${fontPath})`);
-              console.warn(`[EPUB] Font not found: ${fontPath}`);
-              return match; // Keep original
-            }
-          }
-        );
-        
-        allCssUpdated[cssPath] = updatedCss;
+        allCssUpdated[cssPath] = cleanCssSyntax(css);
       }
-      
-      // Combine all updated CSS content (with font URLs updated)
-      const allCss = Object.values(allCssUpdated).join('\n');
       
       res.json({
         images: imageMap,
-        fonts: fontMap,
-        fontWarnings,
         htmlFiles,
         htmlContent,
         cssContent: allCssUpdated,
@@ -1879,20 +1812,40 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
-   * Import storyboard from EPUB (positions/images) + IDML (texts/styles)
+   * Import storyboard from EPUB + IDML
+   * 
+   * ARCHITECTURE :
+   * - EPUB : fournit uniquement les images et les positions (x, y, width, height) des zones de texte
+   * - IDML : fournit le contenu textuel, les polices (fontFamily) et TOUS les styles de mise en forme
+   * 
+   * ⚠️ IMPORTANT : L'EPUB ne contient aucune information sur le texte ni les polices.
+   * Les polices doivent OBLIGATOIREMENT être définies dans l'IDML.
+   * Il n'y a AUCUN fallback CSS - si la police n'est pas dans l'IDML, c'est une erreur.
    * 
    * Request body (JSON):
    * {
-   *   "epub": "base64_encoded_epub_file",
-   *   "idml": "base64_encoded_idml_file",
-   *   "bookId": "unique_book_id"
+   *   "epub": "base64_encoded_epub_file",     // Images + positions uniquement
+   *   "idml": "base64_encoded_idml_file",     // Textes + polices + styles
+   *   "bookId": "unique_book_id",
+   *   "fonts": [                               // Polices personnalisées (optionnel)
+   *     { "name": "font.ttf", "data": "base64..." }
+   *   ]
    * }
    * 
    * Response:
    * {
    *   "success": true,
    *   "bookId": "...",
-   *   "contentConfig": { pages, texts, images, imageElements }
+   *   "contentConfig": { 
+   *     pages,           // Dimensions depuis EPUB
+   *     texts,           // Position (EPUB) + contenu/styles (IDML)
+   *     imageElements    // Images depuis EPUB
+   *   },
+   *   "stats": {
+   *     "pages": 10,
+   *     "texts": 25,     // Zones de texte avec position + contenu + styles
+   *     "images": 50
+   *   }
    * }
    */
   app.post("/api/books/import-storyboard", async (req, res) => {
@@ -1912,8 +1865,8 @@ export function registerObjectStorageRoutes(app: Express): void {
       console.log(`[import-storyboard] Custom fonts: ${fonts && Array.isArray(fonts) ? fonts.length : 0} file(s)`);
       console.log(`[import-storyboard] ========================================`);
 
-      // 1. Extract EPUB (images + text positions)
-      console.log(`[import-storyboard] Step 1: Extracting EPUB...`);
+      // 1. Extract EPUB (images + text positions ONLY - no text content or fonts)
+      console.log(`[import-storyboard] Step 1: Extracting EPUB (images + positions)...`);
       const epubBuffer = Buffer.from(epub, 'base64');
       const epubResult = await extractEpubFromBuffer(epubBuffer, bookId);
 
@@ -1923,7 +1876,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       }
 
       console.log(`[import-storyboard] ✓ EPUB extracted successfully`);
-      console.log(`[import-storyboard]   - Text positions: ${epubResult.textPositions.length}`);
+      console.log(`[import-storyboard]   - Text positions: ${epubResult.textPositions.length} (coordinates only, no content)`);
       console.log(`[import-storyboard]   - Images: ${epubResult.imageElements.length}`);
       console.log(`[import-storyboard]   - Pages: ${epubResult.pages.length}`);
 
@@ -2006,15 +1959,15 @@ export function registerObjectStorageRoutes(app: Express): void {
         console.log(`[import-storyboard] ✓ Processed ${Object.keys(uploadedFonts).length}/${fonts.length} fonts`);
       }
 
-      // 2. Parse IDML (texts + styles)
-      console.log(`[import-storyboard] Step 2: Parsing IDML...`);
+      // 2. Parse IDML (texts + fonts + styles - ONLY SOURCE for text information)
+      console.log(`[import-storyboard] Step 2: Parsing IDML (texts + fonts + styles)...`);
       const idmlBuffer = Buffer.from(idml, 'base64');
       const idmlData = await parseIdmlBuffer(idmlBuffer);
 
       console.log(`[import-storyboard] ✓ IDML parsed successfully`);
-      console.log(`[import-storyboard]   - Text frames: ${idmlData.textFrames.length}`);
-      console.log(`[import-storyboard]   - Character styles: ${Object.keys(idmlData.characterStyles).length}`);
-      console.log(`[import-storyboard]   - Paragraph styles: ${Object.keys(idmlData.paragraphStyles).length}`);
+      console.log(`[import-storyboard]   - Text frames: ${idmlData.textFrames.length} (with content, fonts, and styles)`);
+      console.log(`[import-storyboard]   - Character styles: ${Object.keys(idmlData.characterStyles).length} (fonts + character formatting)`);
+      console.log(`[import-storyboard]   - Paragraph styles: ${Object.keys(idmlData.paragraphStyles).length} (paragraph formatting + fonts)`);
       
       if (epubResult.textPositions.length === 0) {
         console.error(`[import-storyboard] ⚠️ WARNING: No text positions found in EPUB!`);
@@ -2024,16 +1977,19 @@ export function registerObjectStorageRoutes(app: Express): void {
         console.error(`[import-storyboard] ⚠️ WARNING: No text frames found in IDML!`);
       }
 
-      // 3. Merge EPUB positions with IDML texts/styles
-      console.log(`[import-storyboard] Step 3: Merging EPUB + IDML...`);
+      // 3. Merge EPUB positions with IDML texts/fonts/styles
+      console.log(`[import-storyboard] Step 3: Merging EPUB positions + IDML content/styles...`);
+      console.log(`[import-storyboard]   EPUB provides: positions (x, y, width, height)`);
+      console.log(`[import-storyboard]   IDML provides: text content, fonts (fontFamily), all styles`);
+      console.log(`[import-storyboard]   ⚠️ Fonts MUST be in IDML - no CSS fallback`);
       const mergedTexts = mergeEpubWithIdml(
-        epubResult.textPositions,
-        idmlData,
+        epubResult.textPositions,       // Positions from EPUB
+        idmlData,                        // Texts + fonts + styles from IDML
         bookId,
-        epubResult.cssFontMapping
+        epubResult.cssFontMapping        // NOT USED - kept for API compatibility
       );
 
-      console.log(`[import-storyboard] ✓ Merge completed: ${mergedTexts.length} texts created`);
+      console.log(`[import-storyboard] ✓ Merge completed: ${mergedTexts.length} text zones (position + content + styles)`);
       
       if (mergedTexts.length === 0 && epubResult.textPositions.length > 0 && idmlData.textFrames.length > 0) {
         console.error(`[import-storyboard] ⚠️ ERROR: Merge produced 0 texts but inputs were non-empty!`);
@@ -2083,6 +2039,16 @@ export function registerObjectStorageRoutes(app: Express): void {
         pageImages: [] // Legacy format
       };
 
+      // Save contentConfig to disk for render-pages endpoint
+      const bookDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId);
+      const contentJsonPath = path.join(bookDir, 'content.json');
+      await fs.promises.writeFile(
+        contentJsonPath,
+        JSON.stringify(contentConfig, null, 2),
+        'utf-8'
+      );
+      console.log(`[import-storyboard] ✓ Saved content.json (${mergedTexts.length} texts)`);
+
       // Add debug info to response
       const debugInfo = {
         epubTextPositionsCount: epubResult.textPositions.length,
@@ -2124,7 +2090,6 @@ export function registerObjectStorageRoutes(app: Express): void {
           pages: epubResult.pages.length,
           texts: mergedTexts.length,
           images: epubResult.imageElements.length,
-          fonts: Object.keys(epubResult.fonts).length,
           uploadedCustomFonts: Object.keys(uploadedFonts).length
         },
         debug: debugInfo

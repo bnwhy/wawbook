@@ -1,0 +1,99 @@
+{
+  "pages": [
+    {
+      "width": 629,
+      "height": 629,
+      "pageIndex": 1
+    },
+    {
+      "width": 629,
+      "height": 629,
+      "pageIndex": 2
+    },
+    {
+      "width": 629,
+      "height": 629,
+      "pageIndex": 3
+    },
+    {
+      "width": 629,
+      "height": 629,
+      "pageIndex": 4
+    },
+    {
+      "width": 629,
+      "height": 629,
+      "pageIndex": 5
+    },
+    {
+      "width": 629,
+      "height": 629,
+      "pageIndex": 6
+    }
+  ],
+  "texts": [
+    {
+      "id": "text-1768916363160-1-_idContainer001",
+      "type": "fixed",
+      "label": "_idContainer001",
+      "content": "Le château,de",
+      "originalContent": "Le château,de",
+      "variables": [],
+      "style": {
+        "fontFamily": "Sue Ellen Francisco",
+        "fontSize": "12pt",
+        "fontWeight": "normal",
+        "fontStyle": "normal",
+        "color": "#000000",
+        "letterSpacing": "normal",
+        "textDecoration": "none",
+        "textTransform": "none",
+        "textAlign": "left",
+        "lineHeight": "1",
+        "whiteSpace": "normal",
+        "overflow": "hidden"
+      },
+      "position": {
+        "x": 36,
+        "y": 31,
+        "width": 557.29,
+        "height": 190.08,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "layer": 50,
+        "pageIndex": 1,
+        "zoneId": "body"
+      },
+      "cssSelector": "#_idContainer001",
+      "combinationKey": "default",
+      "idmlFrameId": "u117",
+      "idmlFrameName": "u117",
+      "appliedParagraphStyle": "ParagraphStyle/Titre livre",
+      "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]"
+    }
+  ],
+  "images": [],
+  "imageElements": [
+    {
+      "id": "img-1768916363160-1-ea6gsbno",
+      "type": "static",
+      "label": "_idGenObjectAttribute-1 _idGenObjectAttribute-2",
+      "url": "/assets/books/1768916363160/images/page1_commonbg.jpg",
+      "position": {
+        "x": -0.001,
+        "y": 0,
+        "width": 629.29,
+        "height": 629.29,
+        "rotation": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "layer": 10,
+        "pageIndex": 1
+      },
+      "combinationKey": "default"
+    }
+  ],
+  "cssContent": "@font-face {\n\tfont-family:\"Sue Ellen Francisco \";\n\tfont-style:normal;\n\tfont-weight:normal;\n\tsrc: url(\"../font/SueEllenFrancisco.ttf\");\n}\nbody, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure {\n\tmargin:0;\n\tpadding:0;\n\tborder-width:0;\n\ttext-rendering:optimizeSpeed;\n}\ndiv.Bloc-graphique-standard {\n\tborder-color:#000000;\n\tborder-width:1px;\n\tborder-style:solid;\n}\ndiv.Bloc-de-texte-standard {\n\tborder-style:solid;\n}\np.ParaOverride-1 {\n\tline-height:1;\n\twhite-space:nowrap;\n}\nspan.CharOverride-1 {\n\t-webkit-text-stroke-color:#801a76;\n\t-webkit-text-stroke-width:20px;\n\tcolor:#6f1d76;\n\tfont-family:\"Sue Ellen Francisco \", sans-serif;\n\tfont-size:840px;\n\tfont-style:normal;\n\tfont-weight:normal;\n\ttext-stroke-color:#801a76;\n\ttext-stroke-width:20px;\n\ttext-transform:uppercase;\n}\n#_idContainer000 {\n\t-webkit-transform:translate(-0.001px,0.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:629.29px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(-0.001px,0.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:629.29px;\n}\n#_idContainer001 {\n\t-webkit-transform:translate(36.000px,31.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:190.08px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(36.000px,31.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:557.29px;\n}\nimg._idGenObjectAttribute-1 {\n\theight:100.00%;\n\tmin-width:100%;\n\twidth:100.00%;\n}\nimg._idGenObjectAttribute-2 {\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n}\ndiv._idGenObjectStyle-Disabled {\n\tbackground-color:transparent;\n\tborder-width:0px;\n}\n",
+  "pageImages": []
+}

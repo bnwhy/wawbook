@@ -6958,9 +6958,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm text-purple-800">
                         <p className="font-medium mb-1">Import combiné :</p>
                         <ul className="text-xs text-purple-700 space-y-1 ml-4 list-disc">
-                          <li><strong>EPUB</strong> : Images et positions des zones de texte</li>
-                          <li><strong>IDML</strong> : Textes complets avec mise en forme InDesign</li>
+                          <li><strong>EPUB</strong> : Images et positions (x, y, largeur, hauteur) uniquement</li>
+                          <li><strong>IDML</strong> : Textes, polices et tous les styles de mise en forme</li>
                         </ul>
+                        <div className="text-xs text-purple-600 bg-purple-50 p-2 rounded-md mt-2">
+                          ⚠️ L'EPUB ne contient pas le texte ni les polices. Ces informations viennent uniquement de l'IDML.
+                        </div>
                       </div>
                       
                       <div className="space-y-3">
@@ -7111,8 +7114,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </button>
                       </div>
                     </div>
-                    <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
-                      L'EPUB fournit les images et positions, l'IDML fournit les textes avec leur mise en forme complète.
+                    <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs space-y-1">
+                      <p className="text-slate-600 font-medium">Architecture :</p>
+                      <ul className="text-slate-500 space-y-0.5 ml-4 list-disc">
+                        <li><strong>EPUB</strong> : Images + Positions (x, y, w, h) des zones de texte</li>
+                        <li><strong>IDML</strong> : Textes + Polices (fontFamily) + Styles complets</li>
+                      </ul>
+                      <p className="text-purple-600 mt-2">
+                        💡 L'EPUB ne contient aucune information textuelle. Tout vient de l'IDML.
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -281,74 +281,113 @@ export async function registerRoutes(
         console.log(`[render-pages] Warning: No system fonts directory`);
       }
       
-      // Try to load CSS from local file (which has base64 embedded fonts) for accurate rendering
-      let cssContent = contentConfig?.cssContent || '';
-      const localCssPath = path.join(process.cwd(), 'server', 'assets', 'books', book.id, 'html', 'styles.css');
-      try {
-        const localCss = await fs.promises.readFile(localCssPath, 'utf-8');
-        if (localCss && localCss.includes('data:font/')) {
-          console.log(`[render-pages] Using base64-embedded CSS from local file`);
-          cssContent = localCss;
-        }
-      } catch (e) {
-        // Local CSS not found, use database CSS
-        console.log(`[render-pages] Local CSS not found, using database CSS`);
-      }
-      
+      // IGNORE EPUB CSS COMPLETELY - Only use IDML for text and fonts
+      // EPUB only provides positions and images
       const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
       const publicBucketPath = publicSearchPaths[0] || '/replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2/public';
       
-      // Extract font names from @font-face declarations BEFORE removing them
+      // Extract font names from IDML texts (not from EPUB CSS)
       const availableFonts: string[] = [];
-      const fontFaceRegex = /@font-face\s*\{[\s\S]*?font-family\s*:\s*["']?([^"';\n}]+)["']?/gi;
-      let fontMatch;
-      while ((fontMatch = fontFaceRegex.exec(cssContent)) !== null) {
-        const fontName = fontMatch[1]?.trim();
-        if (fontName && !availableFonts.includes(fontName)) {
-          availableFonts.push(fontName);
+      const allTexts = contentConfig?.texts || [];
+      
+      console.log(`[render-pages] Total texts in contentConfig: ${allTexts.length}`);
+      
+      for (const text of allTexts) {
+        const fontFamily = text.fontFamily || text.style?.fontFamily;
+        if (fontFamily) {
+          const cleanFont = fontFamily.replace(/['"]/g, '').trim();
+          if (cleanFont && !availableFonts.includes(cleanFont)) {
+            availableFonts.push(cleanFont);
+            console.log(`[render-pages] Found font in text: "${cleanFont}"`);
+          }
         }
       }
       
-      // CRITICAL: Remove corrupted base64 @font-face declarations
-      cssContent = cssContent.replace(/@font-face\s*\{[^}]*src\s*:\s*url\s*\(\s*["']?data:font\/[^}]+\}/gi, '');
+      console.log(`[render-pages] Fonts from IDML texts: ${availableFonts.join(', ') || 'none'}`);
       
-      // Copy system fonts to book directory and reference them via file:// URLs
-      // This works better than local() in Chromium headless
-      const bookFontsDir = path.join(process.cwd(), 'server', 'assets', 'books', book.id, 'fonts');
-      await fs.promises.mkdir(bookFontsDir, { recursive: true });
+      // Load EPUB CSS but ONLY for container positions/dimensions (NOT for fonts/text styles)
+      let cssContent = '';
+      const localCssPath = path.join(process.cwd(), 'server', 'assets', 'books', book.id, 'html', 'styles.css');
+      try {
+        const localCss = await fs.promises.readFile(localCssPath, 'utf-8');
+        // Remove ALL font-related rules from EPUB CSS (font-family, @font-face, etc.)
+        cssContent = localCss
+          .replace(/@font-face\s*\{[^}]+\}/gi, '') // Remove @font-face
+          .replace(/font-family\s*:[^;]+;/gi, '') // Remove font-family declarations
+          .replace(/font-size\s*:[^;]+;/gi, '') // Remove font-size
+          .replace(/font-weight\s*:[^;]+;/gi, '') // Remove font-weight
+          .replace(/font-style\s*:[^;]+;/gi, '') // Remove font-style
+          .replace(/color\s*:[^;]+;/gi, '') // Remove color
+          .replace(/text-[^:]+:[^;]+;/gi, ''); // Remove text-* properties
+        console.log(`[render-pages] Using EPUB CSS for layout only (fonts from IDML)`);
+      } catch (e) {
+        // No CSS file, use minimal CSS
+        cssContent = `
+body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure {
+  margin:0;
+  padding:0;
+  border-width:0;
+  text-rendering:optimizeSpeed;
+}
+`;
+        console.log(`[render-pages] No EPUB CSS found, using minimal CSS`);
+      }
       
+      // Embed system fonts as base64 in CSS
+      // This is the ONLY method that works reliably in Chromium headless
       const systemFontFaces: string[] = [];
       for (const fontName of availableFonts) {
         try {
-          // Try to find the font file in system fonts directory
+          // Try to find the font file in system fonts directory ONLY
+          // Do NOT use book fonts as they may be corrupted/obfuscated by InDesign
           const fontFiles = await fs.promises.readdir(systemFontsDir);
           
           // Search for font file (case-insensitive, handle spaces)
+          // Prioritize files with "Regular" in the name
           const searchName = fontName.toLowerCase().replace(/\s+/g, '');
-          const fontFile = fontFiles.find(f => {
+          const candidates = fontFiles.filter(f => {
             const fileName = f.toLowerCase().replace(/\s+/g, '').replace(/[-_]/g, '');
             return fileName.includes(searchName) && (f.endsWith('.ttf') || f.endsWith('.otf'));
           });
           
+          // Sort to prioritize Regular variants and larger files
+          const fontFile = candidates.sort((a, b) => {
+            const aHasRegular = a.toLowerCase().includes('regular');
+            const bHasRegular = b.toLowerCase().includes('regular');
+            if (aHasRegular && !bHasRegular) return -1;
+            if (!aHasRegular && bHasRegular) return 1;
+            return 0;
+          })[0];
+          
           if (fontFile) {
-            const srcPath = path.join(systemFontsDir, fontFile);
-            const destPath = path.join(bookFontsDir, fontFile);
+            const fontPath = path.join(systemFontsDir, fontFile);
             
-            // Copy font to book directory
-            await fs.promises.copyFile(srcPath, destPath);
+            // Verify font is valid before embedding
+            const fontBuffer = await fs.promises.readFile(fontPath);
+            const magic = fontBuffer.slice(0, 4).toString('hex').toUpperCase();
+            const validMagics = ['00010000', '74727565', '4F54544F', '774F4646', '774F4632'];
             
-            // Create @font-face with file:// URL
-            const fontUrl = `file://${destPath}`;
+            if (!validMagics.some(m => magic.startsWith(m))) {
+              console.warn(`[render-pages] Font ${fontName} appears corrupted (magic: ${magic}), skipping`);
+              continue;
+            }
+            
+            const fontBase64 = fontBuffer.toString('base64');
+            
+            // Create @font-face with base64 data
+            const mimeType = fontFile.endsWith('.otf') ? 'font/otf' : 'font/ttf';
             const format = fontFile.endsWith('.otf') ? 'opentype' : 'truetype';
+            const dataUri = `data:${mimeType};base64,${fontBase64}`;
+            
             systemFontFaces.push(
-              `@font-face { font-family: '${fontName}'; src: url('${fontUrl}') format('${format}'); }`
+              `@font-face { font-family: '${fontName}'; src: url('${dataUri}') format('${format}'); }`
             );
-            console.log(`[render-pages] Font copied for rendering: ${fontName} -> ${fontFile}`);
+            console.log(`[render-pages] Font embedded as base64: ${fontName} -> ${fontFile} (${Math.round(fontBase64.length / 1024)}KB, magic: ${magic})`);
           } else {
-            console.warn(`[render-pages] Font file not found for: ${fontName}`);
+            console.warn(`[render-pages] Font file not found in system fonts for: ${fontName}`);
           }
         } catch (err) {
-          console.error(`[render-pages] Error copying font ${fontName}:`, err);
+          console.error(`[render-pages] Error embedding font ${fontName}:`, err);
         }
       }
       
@@ -589,25 +628,39 @@ ${textsHtml}
             await browserPage.setContent(html, { waitUntil: 'networkidle' });
           }
           
-          // Wait for fonts to be ready
-          await browserPage.evaluate(async () => {
+          // CRITICAL: Force font loading with document.fonts.load()
+          // This is the ONLY way to ensure fonts are loaded in Chromium headless
+          const fontsLoaded = await browserPage.evaluate(async (fontNames: string[]) => {
+            const results: string[] = [];
+            
+            // Force load each font at multiple sizes
+            for (const fontName of fontNames) {
+              try {
+                await document.fonts.load(`12pt "${fontName}"`);
+                await document.fonts.load(`24pt "${fontName}"`);
+                results.push(`${fontName}: OK`);
+              } catch (e) {
+                results.push(`${fontName}: FAILED - ${e}`);
+              }
+            }
+            
+            // Wait for all fonts to be ready
             await document.fonts.ready;
-          });
-          
-          // Check font status
-          const fontsLoaded = await browserPage.evaluate(() => {
+            
+            // Check final status
             const allFonts = Array.from(document.fonts);
             return {
+              forced: results,
               total: allFonts.length,
               loaded: allFonts.filter(f => f.status === 'loaded').map(f => f.family),
               error: allFonts.filter(f => f.status === 'error').map(f => f.family),
             };
-          });
+          }, availableFonts);
           
           console.log(`[render-pages] Fonts status:`, JSON.stringify(fontsLoaded));
           
-          // Wait for font rendering
-          await browserPage.waitForTimeout(300);
+          // Wait for font rendering to stabilize
+          await browserPage.waitForTimeout(500);
 
           // Take screenshot
           const screenshot = await browserPage.screenshot({ type: 'jpeg', quality: 85 });

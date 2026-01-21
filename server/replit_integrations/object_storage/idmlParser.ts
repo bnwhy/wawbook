@@ -70,6 +70,7 @@ interface IdmlData {
   textFrames: TextFrameData[];
   colors: Record<string, string>;
   pageDimensions: Record<number, { width: number; height: number }>;
+  fonts?: string[]; // List of unique font families used in the document
 }
 
 /**
@@ -111,20 +112,14 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
       result.colors = extractColors(swatchesData);
     }
   } catch (e) {
-    console.warn('[idml-parser] Could not parse Swatches.xml:', e);
   }
   
   // 2. Extract Character Styles and Paragraph Styles from Styles.xml
   try {
     const stylesFile = zip.file('Resources/Styles.xml');
     if (stylesFile) {
-      console.log('[idml-parser] Styles.xml found, extracting styles...');
       const stylesXml = await stylesFile.async('string');
       const stylesData = parser.parse(stylesXml);
-      
-      // DEBUG: Log the actual structure to understand the XML
-      console.log('[idml-parser] Styles.xml structure:');
-      console.log('[idml-parser]   Root keys:', Object.keys(stylesData));
       
       // Try different possible paths
       const possibleRoots = [
@@ -135,12 +130,9 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
       
       for (const root of possibleRoots) {
         if (root) {
-          console.log('[idml-parser]   Checking root with keys:', Object.keys(root));
           if (root.RootCharacterStyleGroup) {
-            console.log('[idml-parser]   ✓ Found RootCharacterStyleGroup in this root');
           }
           if (root.RootParagraphStyleGroup) {
-            console.log('[idml-parser]   ✓ Found RootParagraphStyleGroup in this root');
           }
         }
       }
@@ -148,22 +140,15 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
       result.characterStyles = extractCharacterStyles(stylesData, result.colors);
       result.paragraphStyles = extractParagraphStyles(stylesData);
       
-      console.log(`[idml-parser] Extracted ${Object.keys(result.characterStyles).length} character styles`);
-      console.log(`[idml-parser] Extracted ${Object.keys(result.paragraphStyles).length} paragraph styles`);
     } else {
-      console.warn('[idml-parser] ⚠️ Styles.xml NOT FOUND in IDML!');
     }
   } catch (e) {
-    console.warn('[idml-parser] Could not parse Styles.xml:', e);
   }
   
   // 3. Extract all story contents into a map (storyId -> story data)
-  console.log('[idml-parser] Looking for Story files...');
   const allFiles = Object.keys(zip.files);
-  console.log(`[idml-parser] Total files in IDML: ${allFiles.length}`);
   
   const storyFiles = allFiles.filter(f => f.match(/^Stories\/Story_.*\.xml$/i));
-  console.log(`[idml-parser] Story files found: ${storyFiles.length}`, storyFiles);
   
   // Map: storyId -> story content + styles
   const storiesMap: Record<string, {
@@ -177,7 +162,6 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
   
   for (const storyPath of storyFiles) {
     try {
-      console.log(`[idml-parser] Parsing ${storyPath}...`);
       const storyFile = zip.file(storyPath);
       if (storyFile) {
         const storyXml = await storyFile.async('string');
@@ -194,15 +178,12 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
             localParaProperties: storyInfo.localParaProperties,
             inlineCharProperties: storyInfo.inlineCharProperties
           };
-          console.log(`[idml-parser] Stored story ${storyInfo.storyId}: "${storyInfo.content.substring(0, 50)}..."`);
         }
       }
     } catch (e) {
-      console.error(`[idml-parser] Error parsing ${storyPath}:`, e);
     }
   }
   
-  console.log(`[idml-parser] Extracted ${Object.keys(storiesMap).length} stories into map`);
   
   // 4. Extract TextFrames from Spreads and link to story contents
   try {
@@ -220,15 +201,14 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
         // Extract text frames from spreads (now creating TextFrameData entries)
         const textFramesFromSpread = extractTextFramesFromSpread(spreadData, pagesInfo, storiesMap);
         
-        console.log(`[idml-parser] Extracted ${textFramesFromSpread.length} text frames from ${spreadPath}`);
         result.textFrames.push(...textFramesFromSpread);
       }
     }
   } catch (e) {
-    console.warn('[idml-parser] Could not parse Spreads:', e);
   }
   
-  console.log(`[idml-parser] Extracted: ${Object.keys(result.characterStyles).length} char styles, ${Object.keys(result.paragraphStyles).length} para styles, ${result.textFrames.length} text frames`);
+  // Extract all unique fonts used in the document
+  result.fonts = extractUsedFonts(result);
   
   return result;
 }
@@ -266,7 +246,6 @@ function extractColors(swatchesData: any): Record<string, string> {
       }
     }
   } catch (e) {
-    console.warn('[idml-parser] Error extracting colors:', e);
   }
   
   return colors;
@@ -302,7 +281,6 @@ export function extractCharacterStyles(
     
     const rootCharStyles = stylesRoot?.RootCharacterStyleGroup?.CharacterStyle;
     if (!rootCharStyles) {
-      console.warn('[extractCharacterStyles] No CharacterStyle found. Checked paths: stylesData.RootCharacterStyleGroup, stylesData.idPkg_Styles.RootCharacterStyleGroup, stylesData.Styles.RootCharacterStyleGroup');
       return characterStyles;
     }
     
@@ -415,7 +393,6 @@ export function extractCharacterStyles(
       }
       
       if (!fontFamily) {
-        console.warn(`[extractCharacterStyles] ⚠️ Style ${self} (${name}) has NO font family (even after BasedOn resolution)`);
       }
       
       // Font style and weight from font style name
@@ -475,7 +452,6 @@ export function extractCharacterStyles(
       }
     }
   } catch (e) {
-    console.warn('[idml-parser] Error extracting character styles:', e);
   }
   
   return characterStyles;
@@ -500,7 +476,6 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
     
     const rootParaStyles = stylesRoot?.RootParagraphStyleGroup?.ParagraphStyle;
     if (!rootParaStyles) {
-      console.warn('[extractParagraphStyles] No ParagraphStyle found. Checked paths: stylesData.RootParagraphStyleGroup, stylesData.idPkg_Styles.RootParagraphStyleGroup, stylesData.Styles.RootParagraphStyleGroup');
       return paragraphStyles;
     }
     
@@ -685,7 +660,6 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       }
       
       if (!fontFamily) {
-        console.warn(`[extractParagraphStyles] ⚠️ Style ${self} (${name}) has NO font (even after BasedOn resolution)`);
       }
       
       paragraphStyles[self] = {
@@ -708,7 +682,6 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       }
     }
   } catch (e) {
-    console.warn('[idml-parser] Error extracting paragraph styles:', e);
   }
   
   return paragraphStyles;
@@ -811,11 +784,9 @@ function extractTextFromParagraphRanges(
     // Check for direct Justification attribute (common in IDML)
     if (paraRange['@_Justification']) {
       localParaProperties['@_Justification'] = paraRange['@_Justification'];
-      console.log(`[extractTextFromParagraphRanges] Found Justification attribute for ${frameId}: ${paraRange['@_Justification']}`);
     }
     
     if (Object.keys(localParaProperties).length > 0) {
-      console.log(`[extractTextFromParagraphRanges] Local properties for ${frameId}:`, localParaProperties);
     }
     
     // Extract character ranges
@@ -840,7 +811,6 @@ function extractTextFromParagraphRanges(
         // Source 1: Direct attribute on CharacterStyleRange
         if (charRange['@_AppliedFont']) {
           inlineFont = charRange['@_AppliedFont'];
-          console.log(`[extractTextFromParagraphRanges] Found font in @_AppliedFont: ${inlineFont}`);
         }
         
         // Source 2: Properties.AppliedFont as element or string
@@ -853,7 +823,6 @@ function extractTextFromParagraphRanges(
             inlineFont = props.AppliedFont['#text'] || props.AppliedFont['_'];
           }
           if (inlineFont) {
-            console.log(`[extractTextFromParagraphRanges] Found font in Properties.AppliedFont: ${inlineFont}`);
           }
         }
         
@@ -861,7 +830,6 @@ function extractTextFromParagraphRanges(
         if (!inlineFont) {
           inlineFont = props['@_AppliedFont'] || props['@_FontFamily'];
           if (inlineFont) {
-            console.log(`[extractTextFromParagraphRanges] Found font in Properties attributes: ${inlineFont}`);
           }
         }
         
@@ -878,7 +846,6 @@ function extractTextFromParagraphRanges(
                 : embedded.AppliedFont?.['#text'];
             }
             if (inlineFont) {
-              console.log(`[extractTextFromParagraphRanges] Found font in CharacterStyleProperties: ${inlineFont}`);
             }
           }
         }
@@ -888,9 +855,7 @@ function extractTextFromParagraphRanges(
         
         if (inlineFont && !inlineCharProperties.fontFamily) {
           inlineCharProperties.fontFamily = inlineFont;
-          console.log(`[extractTextFromParagraphRanges] ✓ Using inline font for ${frameId}: ${inlineFont}`);
         } else if (!inlineFont) {
-          console.log(`[extractTextFromParagraphRanges] ⚠ No inline font found for ${frameId}, will rely on CharacterStyle`);
         }
         if (inlineSize && !inlineCharProperties.fontSize) {
           inlineCharProperties.fontSize = parseFloat(inlineSize);
@@ -945,25 +910,20 @@ export function extractTextFrames(
     // Structure is: storyData.Story.Story (double nested)
     const outerStory = storyData?.Story;
     if (!outerStory) {
-      console.warn('[idml-parser] No outer Story element found in story data');
       return textFrames;
     }
     
     const story = outerStory?.Story;
     if (!story) {
-      console.warn('[idml-parser] No inner Story element found in story data');
-      console.warn('[idml-parser] Outer Story keys:', Object.keys(outerStory));
       return textFrames;
     }
     
     const storyId = story['@_Self'] || 'unknown';
-    console.log(`[idml-parser] Processing story ${storyId}`);
     
     // Case 1: Text in TextFrame elements
     const textFrameElements = story?.TextFrame;
     if (textFrameElements) {
       const textFrameArray = Array.isArray(textFrameElements) ? textFrameElements : [textFrameElements];
-      console.log(`[idml-parser] Found ${textFrameArray.length} TextFrame elements`);
       
       for (const textFrame of textFrameArray) {
         const frameId = textFrame['@_Self'];
@@ -1000,14 +960,12 @@ export function extractTextFrames(
           inlineCharProperties: extracted.inlineCharProperties
         });
         
-        console.log(`[idml-parser] Extracted text from TextFrame ${frameId}: "${extracted.content.substring(0, 50)}..."`);
       }
     }
     
     // Case 2: Text directly in Story (no TextFrame wrapper) - MOST COMMON CASE
     // This happens when text is directly in the Story element
     if (story?.ParagraphStyleRange) {
-      console.log('[idml-parser] Found ParagraphStyleRange directly in Story');
       
       const extracted = extractTextFromParagraphRanges(
         story.ParagraphStyleRange,
@@ -1036,16 +994,12 @@ export function extractTextFrames(
           inlineCharProperties: extracted.inlineCharProperties
         });
         
-        console.log(`[idml-parser] Extracted text from Story directly: "${extracted.content.substring(0, 50)}..."`);
       }
     }
     
     if (textFrames.length === 0) {
-      console.warn('[idml-parser] No text content found in story', storyId);
-      console.warn('[idml-parser] Story keys:', Object.keys(story));
     }
   } catch (e) {
-    console.error('[idml-parser] Error extracting text frames:', e);
   }
   
   return textFrames;
@@ -1102,12 +1056,10 @@ function extractPageDimensionsAndPositions(spreadData: any): {
             width
           });
           
-          console.log(`[idml-parser] Page ${pageIndex}: ${width.toFixed(1)}x${height.toFixed(1)} at x=${transformX.toFixed(1)}`);
         }
       }
     }
   } catch (e) {
-    console.warn('[idml-parser] Error extracting page dimensions:', e);
   }
   
   return { dimensions, pagesInfo };
@@ -1151,7 +1103,6 @@ function extractTextFramesFromSpread(
       // Get story content from the stories map
       const storyData = storiesMap[parentStory];
       if (!storyData || !storyData.content) {
-        console.warn(`[extractTextFramesFromSpread] No story content found for TextFrame ${textFrameId} (ParentStory: ${parentStory})`);
         continue;
       }
       
@@ -1225,7 +1176,6 @@ function extractTextFramesFromSpread(
         parentStory
       });
       
-      console.log(`[extractTextFramesFromSpread] TextFrame ${textFrameId} (order ${layoutOrder}): page ${pageIndex}, content="${storyData.content.substring(0, 40)}..."`);
     }
   } catch (e) {
     console.error('[extractTextFramesFromSpread] Error:', e);
@@ -1339,8 +1289,40 @@ function extractTextFramePositions(spreadData: any, spreadPagesInfo: Array<{page
       }
     }
   } catch (e) {
-    console.warn('[idml-parser] Error extracting text frame positions:', e);
   }
   
   return positions;
+}
+
+/**
+ * Extract all unique font families used in the IDML document
+ */
+export function extractUsedFonts(idmlData: IdmlData): string[] {
+  const fonts = new Set<string>();
+  
+  // Extract from character styles
+  Object.values(idmlData.characterStyles).forEach(style => {
+    if (style.fontFamily) {
+      // Normalize: trim extra spaces
+      fonts.add(style.fontFamily.trim());
+    }
+  });
+  
+  // Extract from paragraph styles
+  Object.values(idmlData.paragraphStyles).forEach(style => {
+    if (style.fontFamily) {
+      // Normalize: trim extra spaces
+      fonts.add(style.fontFamily.trim());
+    }
+  });
+  
+  // Extract from inline properties in text frames
+  idmlData.textFrames.forEach(frame => {
+    if (frame.inlineCharProperties?.fontFamily) {
+      // Normalize: trim extra spaces
+      fonts.add(frame.inlineCharProperties.fontFamily.trim());
+    }
+  });
+  
+  return Array.from(fonts).sort();
 }

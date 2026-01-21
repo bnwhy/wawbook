@@ -17,6 +17,7 @@ import {
   getExtensionFromContentType,
   parseObjectPathSimple 
 } from "./utils/contentTypeHelpers";
+import { logger } from "../../utils/logger";
 
 // Fonctions utilitaires déplacées vers utils/cssHelpers.ts, utils/filenameParser.ts, etc.
 
@@ -65,19 +66,11 @@ export function registerObjectStorageRoutes(app: Express): void {
     try {
       const { data, contentType, filename } = req.body;
 
-      console.log('[upload-base64] Request received:', {
-        hasData: !!data,
-        dataLength: data?.length,
-        contentType,
-        filename
-      });
-
       if (!data) {
-        console.error('[upload-base64] Missing data field');
         return res.status(400).json({ error: "Missing required field: data" });
       }
 
-      // TEMPORARY: Use local file storage instead of GCS due to permission issues
+      // Use local file storage
       const fs = await import('fs');
       const path = await import('path');
       
@@ -92,31 +85,25 @@ export function registerObjectStorageRoutes(app: Express): void {
       
       const localPath = path.join(uploadsDir, finalFilename);
       
-      console.log('[upload-base64] Decoding base64...');
       const buffer = Buffer.from(data, 'base64');
-      console.log('[upload-base64] Buffer size:', buffer.length, 'bytes');
-      
-      console.log('[upload-base64] Saving to local file:', localPath);
       await fs.promises.writeFile(localPath, buffer);
 
       // Return the asset path that can be served
       const assetPath = `/assets/uploads/${finalFilename}`;
 
-      console.log('[upload-base64] ✓ Upload successful:', assetPath);
       res.json({
         objectPath: assetPath,
         filename: finalFilename,
       });
     } catch (error: any) {
-      console.error("[upload-base64] ❌ Error uploading base64 image:", error);
-      console.error("[upload-base64] Error details:", {
-        message: error.message,
-        code: error.code,
-        stack: error.stack
-      });
-      res.status(500).json({ 
+      logger.error({ error, message: error.message }, "Error uploading base64 image");
+      res.status(500).json({
         error: "Failed to upload image",
-        details: error.message 
+        details: {
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        }
       });
     }
   });
@@ -149,7 +136,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       const protocol = req.headers['x-forwarded-proto'] || 'http';
       const host = req.headers['host'] || 'localhost:5000';
       const baseUrl = `${protocol}://${host}`;
-      console.log(`[extract-zip] Using base URL: ${baseUrl}`);
 
       const publicPaths = objectStorageService.getPublicObjectSearchPaths();
       if (!publicPaths.length) {
@@ -232,7 +218,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         sessionId,
       });
     } catch (error) {
-      console.error("Error extracting ZIP:", error);
+      logger.error({ error }, "Error extracting ZIP");
       res.status(500).json({ error: "Failed to extract ZIP file" });
     }
   });
@@ -278,7 +264,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         metadata: { name, size, contentType },
       });
     } catch (error) {
-      console.error("Error generating upload URL:", error);
+      logger.error({ error }, "Error generating upload URL");
       res.status(500).json({ error: "Failed to generate upload URL" });
     }
   });
@@ -302,7 +288,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       if (parts.length >= 2 && parts[0].startsWith('replit-objstore-')) {
         const bucketName = parts[0];
         const fileName = parts.slice(1).join('/');
-        console.log(`[objects] Direct bucket access: ${bucketName}/${fileName}`);
         try {
           const bucket = objectStorageClient.bucket(bucketName);
           const file = bucket.file(fileName);
@@ -311,7 +296,6 @@ export function registerObjectStorageRoutes(app: Express): void {
             await objectStorageService.downloadObject(file, res);
             return;
           } else {
-            console.log(`[objects] File not found in bucket ${bucketName}: ${fileName}`);
             return res.status(404).json({ error: "Object not found" });
           }
         } catch (bucketError) {
@@ -338,7 +322,7 @@ export function registerObjectStorageRoutes(app: Express): void {
 
       return res.status(404).json({ error: "Object not found" });
     } catch (error) {
-      console.error("Error serving object:", error);
+      logger.error({ error }, "Error serving object");
       if (error instanceof ObjectNotFoundError) {
         return res.status(404).json({ error: "Object not found" });
       }
@@ -371,7 +355,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       });
 
       const objectPath = `/objects/${bucketName}/${epubPath}`;
-      console.log(`[upload-epub] Uploaded EPUB to ${objectPath}`);
 
       res.json({
         objectPath,
@@ -379,7 +362,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         size: buffer.length,
       });
     } catch (error) {
-      console.error("Error uploading EPUB:", error);
+      logger.error({ error }, "Error uploading EPUB");
       res.status(500).json({ error: "Failed to upload EPUB" });
     }
   });
@@ -407,7 +390,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         // Ignore if PRIVATE_OBJECT_DIR is not set
       }
       
-      console.log(`[list-epubs] Searching in buckets:`, Array.from(bucketsToSearch));
       
       for (const bucketName of Array.from(bucketsToSearch)) {
         try {
@@ -415,7 +397,6 @@ export function registerObjectStorageRoutes(app: Express): void {
           
           // Search entire bucket for EPUB files
           const [files] = await bucket.getFiles();
-          console.log(`[list-epubs] Bucket ${bucketName}: found ${files.length} total files`);
           
           const epubs = files
             .filter(f => f.name.toLowerCase().endsWith('.epub'))
@@ -428,14 +409,12 @@ export function registerObjectStorageRoutes(app: Express): void {
           
           allEpubs.push(...epubs);
         } catch (bucketError) {
-          console.warn(`[list-epubs] Could not access bucket ${bucketName}:`, bucketError);
         }
       }
 
-      console.log(`[list-epubs] Found ${allEpubs.length} EPUB files total:`, allEpubs.map(e => e.name));
       res.json({ epubs: allEpubs });
     } catch (error) {
-      console.error("Error listing EPUBs:", error);
+      logger.error({ error }, "Error listing EPUBs");
       res.status(500).json({ error: "Failed to list EPUBs" });
     }
   });
@@ -451,7 +430,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(400).json({ error: "Missing required fields: epubPath, bookId" });
       }
 
-      console.log(`[epub-extract] Attempting to extract from bucket: ${epubPath}`);
 
       // Parse the epub path to get bucket and object name
       const pathWithoutPrefix = epubPath.replace(/^\/objects\//, '');
@@ -469,7 +447,6 @@ export function registerObjectStorageRoutes(app: Express): void {
 
       // Download EPUB to memory
       const [epubBuffer] = await epubFile.download();
-      console.log(`[epub-extract] Downloaded EPUB (${epubBuffer.length} bytes)`);
 
       // Use shared extraction logic
       const result = await extractEpubFromBuffer(epubBuffer, bookId);
@@ -482,7 +459,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         const wizardConfig = existingBook?.wizardConfig as any;
         
         if (wizardConfig?.tabs && wizardConfig.tabs.length > 0) {
-          console.log(`[epub-extract] Matching images to existing wizard with ${wizardConfig.tabs.length} tabs`);
           
           // Build a lookup: characteristic key -> { tabId, variantId, optionId, optionLabel }
           const wizardLookup: Record<string, Record<string, { tabId: string; variantId: string; optionId: string; optionLabel: string }>> = {};
@@ -545,7 +521,6 @@ export function registerObjectStorageRoutes(app: Express): void {
             }
           }
           
-          console.log(`[epub-extract] Created wizardLookup['hero'] with ${Object.keys(wizardLookup['hero']).length} entries from character tabs`);
           
           // Always try direct mapping by tab ID: if hero="father", look for tab with id="father"
           // Collect all hero values from images
@@ -627,7 +602,6 @@ export function registerObjectStorageRoutes(app: Express): void {
                   }
                 }
               }
-              console.log(`[epub-extract] Mappé hero="${heroValue}" vers onglet id="${matchingTab.id}"`);
               // Continue processing all hero values (removed break)
             }
           }
@@ -645,8 +619,6 @@ export function registerObjectStorageRoutes(app: Express): void {
           );
           
           if (unmappedHeroValues.length > 0) {
-            console.log(`[epub-extract] Unmapped hero values found: ${unmappedHeroValues.join(', ')}. Using fallback logic...`);
-              console.log(`[epub-extract] 'hero' not found directly, searching in character tabs...`);
               
               // Hero values that might appear in EPUB
               const heroValues = ['father', 'mother', 'boy', 'girl', 'grandpa', 'grandma', 'grandfather', 'grandmother'];
@@ -663,7 +635,6 @@ export function registerObjectStorageRoutes(app: Express): void {
                       );
                       
                       if (matchingOptions.length > 0) {
-                        console.log(`[epub-extract] Found hero-like options in tab '${tab.id}', variant '${variant.id}'`);
                         
                         // Create lookup for 'hero' using this variant
                         wizardLookup['hero'] = {};
@@ -733,13 +704,10 @@ export function registerObjectStorageRoutes(app: Express): void {
               }
               
               if (unmappedHeroValues.length > 0 && Object.keys(wizardLookup['hero']).length === 0) {
-                console.warn(`[epub-extract] Could not find any character tab with hero-like options`);
               }
           }
           
-          console.log(`[epub-extract] Wizard lookup keys:`, Object.keys(wizardLookup));
           if (wizardLookup['hero']) {
-            console.log(`[epub-extract] 'hero' mapped to tab/variant with ${Object.keys(wizardLookup['hero']).length} options`);
           }
           
           // Match each image's characteristics to wizard options
@@ -751,14 +719,10 @@ export function registerObjectStorageRoutes(app: Express): void {
               const conditions: Array<{ variantId: string; optionId: string }> = [];
               // IMPORTANT: originalCharacteristics must come ONLY from the filename, not from anywhere else
               const originalCharacteristics = { ...img.characteristics };
-              console.log(`[epub-extract] ===== Processing image ${img.id || img.label} =====`);
-              console.log(`[epub-extract] Image URL: ${img.url}`);
-              console.log(`[epub-extract] Original characteristics from filename (img.characteristics):`, originalCharacteristics);
               
               for (const [charKey, charValue] of Object.entries(img.characteristics)) {
                 // Skip 'hero' - it's just a marker for which character, not a condition
                 if (charKey === 'hero') {
-                  console.log(`[epub-extract] Skipping hero characteristic "${charValue}" - it's just a marker, not creating condition`);
                   continue;
                 }
                 
@@ -773,7 +737,6 @@ export function registerObjectStorageRoutes(app: Express): void {
                     variantId: match.variantId,
                     optionId: match.optionId,
                   });
-                  console.log(`[epub-extract] Matched ${charKey}:${charValue} -> tab:${match.tabId}/variant:${match.variantId}/option:${match.optionId} (${match.optionLabel})`);
                 } else if (lookup) {
                   // Try normalized match (case-insensitive, trimmed)
                   const normalizedMatch = Object.entries(lookup).find(([optId]) => 
@@ -786,14 +749,12 @@ export function registerObjectStorageRoutes(app: Express): void {
                       variantId: match.variantId,
                       optionId: match.optionId,
                     });
-                    console.log(`[epub-extract] Matched ${charKey}:${charValue} (normalized) -> tab:${match.tabId}/variant:${match.variantId}/option:${match.optionId} (${match.optionLabel})`);
                   } else {
                     // Track unmapped characteristics
                     if (!unmappedCharacteristics[charKey]) {
                       unmappedCharacteristics[charKey] = new Set<string>();
                     }
                     unmappedCharacteristics[charKey].add(charValue as string);
-                    console.warn(`[epub-extract] Unmapped characteristic: ${charKey}:${charValue} (no matching option in wizard)`);
                   }
                 } else {
                   // No lookup exists for this characteristic key
@@ -801,7 +762,6 @@ export function registerObjectStorageRoutes(app: Express): void {
                     unmappedCharacteristics[charKey] = new Set<string>();
                   }
                   unmappedCharacteristics[charKey].add(charValue as string);
-                  console.warn(`[epub-extract] Unmapped characteristic: ${charKey}:${charValue} (no lookup found for this key)`);
                 }
               }
               
@@ -842,12 +802,6 @@ export function registerObjectStorageRoutes(app: Express): void {
                 img.combinationKey = keyPartsFromOriginal.length > 0 ? keyPartsFromOriginal.join('_') : 'default';
                 
                 matchedCount++;
-                console.log(`[epub-extract] ===== Result for image ${img.id} =====`);
-                console.log(`[epub-extract] Final combinationKey: ${img.combinationKey}`);
-                console.log(`[epub-extract] Original characteristics keys: ${Object.keys(originalCharacteristics).join(', ')}`);
-                console.log(`[epub-extract] Key parts generated: ${keyPartsFromOriginal.join(', ')}`);
-                console.log(`[epub-extract] Total conditions created: ${conditions.length}`);
-                console.log(`[epub-extract] Conditions:`, conditions);
                 
                 // Verify: combinationKey should only contain characteristics from originalCharacteristics
                 const originalKeys = Object.keys(originalCharacteristics);
@@ -859,7 +813,6 @@ export function registerObjectStorageRoutes(app: Express): void {
                   console.error(`[epub-extract]   Key parts keys: ${keyPartsKeys.join(', ')}`);
                   console.error(`[epub-extract]   Extra keys: ${extraKeys.join(', ')}`);
                 } else {
-                  console.log(`[epub-extract] ✓ Verification passed: combinationKey only contains original characteristics`);
                 }
               } else {
                 // No conditions matched, keep original combinationKey or set to 'default'
@@ -871,7 +824,6 @@ export function registerObjectStorageRoutes(app: Express): void {
                     .join('_');
                   img.combinationKey = originalKeyParts || 'default';
                 }
-                console.warn(`[epub-extract] Image ${img.id}: No conditions matched, using combinationKey=${img.combinationKey}`);
               }
             }
           }
@@ -882,21 +834,16 @@ export function registerObjectStorageRoutes(app: Express): void {
           );
           
           if (Object.keys(unmappedSummary).length > 0) {
-            console.warn(`[epub-extract] Unmapped characteristics found:`, unmappedSummary);
             // Note: unmappedCharacteristics is for debugging only, not returned in result
           }
           
-          console.log(`[epub-extract] Matched ${matchedCount}/${result.imageElements.length} images to wizard`);
           
           // Log final combinationKeys for verification
-          console.log(`[epub-extract] ===== Final imageElements combinationKeys =====`);
           result.imageElements.forEach((img: any, idx: number) => {
             if (img.combinationKey && img.combinationKey !== 'default') {
-              console.log(`[epub-extract] Image ${idx + 1} (${img.id}): combinationKey="${img.combinationKey}", characteristics:`, img.characteristics);
             }
           });
         } else {
-          console.log(`[epub-extract] No wizard config found, skipping image matching`);
         }
       }
       
@@ -918,7 +865,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(400).json({ error: "Missing required fields: epubPath, bookId, tabId" });
       }
 
-      console.log(`[avatar-template] Extracting avatar EPUB for book ${bookId}, tab ${tabId}`);
 
       // Parse the epub path to get bucket and object name
       const pathWithoutPrefix = epubPath.replace(/^\/objects\//, '');
@@ -936,7 +882,6 @@ export function registerObjectStorageRoutes(app: Express): void {
 
       // Download EPUB to memory
       const [epubBuffer] = await epubFile.download();
-      console.log(`[avatar-template] Downloaded EPUB (${epubBuffer.length} bytes)`);
 
       // Extract images from EPUB
       const JSZip = (await import('jszip')).default;
@@ -967,7 +912,6 @@ export function registerObjectStorageRoutes(app: Express): void {
           const parsedFilename = parseImageFilename(fileName);
           const characteristics = parsedFilename.characteristics;
           
-          console.log(`[avatar-template] Extracted image: ${fileName}`, characteristics);
           
           // Security check: verify hero matches tabId
           if (characteristics.hero) {
@@ -975,7 +919,6 @@ export function registerObjectStorageRoutes(app: Express): void {
             const tabIdLower = tabId.toLowerCase();
             
             if (heroValue !== tabIdLower) {
-              console.log(`[avatar-template] Image ${fileName} has hero="${characteristics.hero}" but tabId="${tabId}", skipping`);
               continue;
             }
           }
@@ -984,7 +927,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
-      console.log(`[avatar-template] Extracted ${extractedImages.length} images total`);
       
       // Load the book to get the tab configuration
       const { storage } = await import('../../storage');
@@ -1006,9 +948,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       // Get option variants for this tab
       const optionVariants = tab.variants.filter((v: any) => v.type === 'options');
       
-      console.log(`[avatar-template] Tab ${tabId} has ${optionVariants.length} option variants:`, 
-        optionVariants.map((v: any) => v.id));
-      
       // Find images with all variants (complete avatars) first
       const completeAvatars = extractedImages.filter(img => {
         for (const variant of optionVariants) {
@@ -1023,7 +962,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       
       if (completeAvatars.length > 0) {
         // Use complete avatars directly (no composition needed)
-        console.log(`[avatar-template] Found ${completeAvatars.length} complete avatars`);
         
         for (const img of completeAvatars) {
           const optionIds = optionVariants.map((v: any) => img.characteristics[v.id]);
@@ -1031,11 +969,9 @@ export function registerObjectStorageRoutes(app: Express): void {
           const serverPath = `/assets/books/${bookId}/avatars/${tabId}/images/${img.fileName}`;
           avatarMappings[scopedKey] = serverPath;
           mappedCount++;
-          console.log(`[avatar-template] Mapped complete avatar ${img.fileName} -> ${scopedKey}`);
         }
       } else {
         // No complete avatars, need to compose from partial layers
-        console.log(`[avatar-template] No complete avatars, composing from ${extractedImages.length} partial layers`);
         
         // Generate all possible complete combinations by matching partial layers
         const variantValues: Record<string, Set<string>> = {};
@@ -1065,7 +1001,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         };
         
         const allPossibleCombos = generateCombos(0, {});
-        console.log(`[avatar-template] Generated ${allPossibleCombos.length} possible combinations from available values`);
         
         // For each combo, find matching layers and compose
         const sharp = (await import('sharp')).default;
@@ -1095,7 +1030,6 @@ export function registerObjectStorageRoutes(app: Express): void {
             }
             
             if (matchingLayers.length === 0) {
-              console.log(`[avatar-template] No layers found for combination ${Object.values(combo).join('_')}, skipping`);
               continue;
             }
             
@@ -1144,7 +1078,6 @@ export function registerObjectStorageRoutes(app: Express): void {
               .png()
               .toFile(outputPath);
             
-            console.log(`[avatar-template] Composed ${scopedKey} from ${matchingLayers.length} layers (${matchingLayers.map(l => l.fileName).join(' + ')})`);
             
             const serverPath = `/assets/books/${bookId}/avatars/${tabId}/composed/${outputFileName}`;
             avatarMappings[scopedKey] = serverPath;
@@ -1155,7 +1088,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
-      console.log(`[avatar-template] Generation complete: ${mappedCount} avatars created from ${extractedImages.length} source images`);
       
       // Count characteristics coverage
       const charCoverage: Record<string, Set<string>> = {};
@@ -1200,11 +1132,9 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(400).json({ error: "Missing required fields: epub, bookId, tabId" });
       }
 
-      console.log(`[avatar-template-file] Extracting avatar EPUB for book ${bookId}, tab ${tabId}`);
 
       // Decode base64 EPUB
       const epubBuffer = Buffer.from(epub, 'base64');
-      console.log(`[avatar-template-file] Decoded EPUB (${epubBuffer.length} bytes)`);
 
       // Extract images from EPUB
       const JSZip = (await import('jszip')).default;
@@ -1233,7 +1163,6 @@ export function registerObjectStorageRoutes(app: Express): void {
           const parsedFilename = parseImageFilename(fileName);
           const characteristics = parsedFilename.characteristics;
           
-          console.log(`[avatar-template-file] Extracted image: ${fileName}`, characteristics);
           
           // Security check: verify hero matches tabId
           if (characteristics.hero) {
@@ -1241,7 +1170,6 @@ export function registerObjectStorageRoutes(app: Express): void {
             const tabIdLower = tabId.toLowerCase();
             
             if (heroValue !== tabIdLower) {
-              console.log(`[avatar-template-file] Image ${fileName} has hero="${characteristics.hero}" but tabId="${tabId}", skipping`);
               continue;
             }
           }
@@ -1250,7 +1178,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
-      console.log(`[avatar-template-file] Extracted ${extractedImages.length} images total`);
       
       // Load the book to get the tab configuration
       const { storage } = await import('../../storage');
@@ -1272,9 +1199,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       // Get option variants for this tab
       const optionVariants = tab.variants.filter((v: any) => v.type === 'options');
       
-      console.log(`[avatar-template-file] Tab ${tabId} has ${optionVariants.length} option variants:`, 
-        optionVariants.map((v: any) => v.id));
-      
       // Group images by their characteristic sets to enable composition
       const imagesByCharSet: Record<string, Array<{ img: any; chars: string[] }>> = {};
       
@@ -1288,7 +1212,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         imagesByCharSet[charSetKey].push({ img, chars: charKeys });
       }
       
-      console.log(`[avatar-template-file] Image groups by char sets:`, Object.keys(imagesByCharSet));
       
       // Find images with all variants (complete avatars) first
       const completeAvatars = extractedImages.filter(img => {
@@ -1304,7 +1227,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       
       if (completeAvatars.length > 0) {
         // Use complete avatars directly (no composition needed)
-        console.log(`[avatar-template-file] Found ${completeAvatars.length} complete avatars`);
         
         for (const img of completeAvatars) {
           const optionIds = optionVariants.map((v: any) => img.characteristics[v.id]);
@@ -1312,11 +1234,9 @@ export function registerObjectStorageRoutes(app: Express): void {
           const serverPath = `/assets/books/${bookId}/avatars/${tabId}/images/${img.fileName}`;
           avatarMappings[scopedKey] = serverPath;
           mappedCount++;
-          console.log(`[avatar-template-file] Mapped complete avatar ${img.fileName} -> ${scopedKey}`);
         }
       } else {
         // No complete avatars, need to compose from partial layers
-        console.log(`[avatar-template-file] No complete avatars, composing from ${extractedImages.length} partial layers`);
         
         // Build index of available layers for each variant-option combination
         const layerIndex: Record<string, Array<{ img: any; missingVariants: string[] }>> = {};
@@ -1343,7 +1263,6 @@ export function registerObjectStorageRoutes(app: Express): void {
           layerIndex[partialKey].push({ img, missingVariants });
         }
         
-        console.log(`[avatar-template-file] Layer index created with ${Object.keys(layerIndex).length} partial combinations`);
         
         // Generate all possible complete combinations by matching partial layers
         const variantValues: Record<string, Set<string>> = {};
@@ -1373,7 +1292,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         };
         
         const allPossibleCombos = generateCombos(0, {});
-        console.log(`[avatar-template-file] Generated ${allPossibleCombos.length} possible combinations from available values`);
         
         // For each combo, find matching layers and compose
         const sharp = (await import('sharp')).default;
@@ -1403,7 +1321,6 @@ export function registerObjectStorageRoutes(app: Express): void {
             }
             
             if (matchingLayers.length === 0) {
-              console.log(`[avatar-template-file] No layers found for combination ${Object.values(combo).join('_')}, skipping`);
               continue;
             }
             
@@ -1452,7 +1369,6 @@ export function registerObjectStorageRoutes(app: Express): void {
               .png()
               .toFile(outputPath);
             
-            console.log(`[avatar-template-file] Composed ${scopedKey} from ${matchingLayers.length} layers (${matchingLayers.map(l => l.fileName).join(' + ')})`);
             
             const serverPath = `/assets/books/${bookId}/avatars/${tabId}/composed/${outputFileName}`;
             avatarMappings[scopedKey] = serverPath;
@@ -1463,7 +1379,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
-      console.log(`[avatar-template-file] Generation complete: ${mappedCount} avatars created from ${extractedImages.length} source images`);
       
       // Count characteristics coverage
       const charCoverage: Record<string, Set<string>> = {};
@@ -1513,7 +1428,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       // 1. Check IDML
       if (idml) {
         try {
-          console.log('[check-import] Checking IDML...');
           const idmlBuffer = Buffer.from(idml, 'base64');
           const idmlData = await parseIdmlBuffer(idmlBuffer);
           
@@ -1538,7 +1452,6 @@ export function registerObjectStorageRoutes(app: Express): void {
             },
             fonts: Array.from(detectedFonts),
           };
-          console.log('[check-import] IDML valid, fonts:', Array.from(detectedFonts));
         } catch (e: any) {
           results.idml = { valid: false, error: e.message };
           console.error('[check-import] IDML error:', e.message);
@@ -1548,12 +1461,10 @@ export function registerObjectStorageRoutes(app: Express): void {
       // 2. Check EPUB
       if (epub) {
         try {
-          console.log('[check-import] Checking EPUB...');
           const epubBuffer = Buffer.from(epub, 'base64');
           const zip = await JSZip.loadAsync(epubBuffer);
           const htmlFiles = Object.keys(zip.files).filter(f => /\.(xhtml|html)$/i.test(f));
           results.epub = { valid: true, pages: htmlFiles.length };
-          console.log('[check-import] EPUB valid, pages:', htmlFiles.length);
         } catch (e: any) {
           results.epub = { valid: false, error: e.message };
           console.error('[check-import] EPUB error:', e.message);
@@ -1563,7 +1474,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       // 3. Check fonts for obfuscation
       if (fonts && Array.isArray(fonts) && fonts.length > 0) {
         results.fonts = [];
-        console.log('[check-import] Checking', fonts.length, 'fonts...');
         
         for (const font of fonts) {
           const fontResult: { name: string; valid: boolean; obfuscated: boolean; error?: string; details?: string } = {
@@ -1585,7 +1495,6 @@ export function registerObjectStorageRoutes(app: Express): void {
             const magicHex = magic.toString('hex').toUpperCase();
             const magicStr = magic.toString('ascii');
             
-            console.log(`[check-import] Font ${font.name}: magic=${magicHex} (${magicStr})`);
             
             const validMagics: Record<string, string[]> = {
               ttf: ['00010000', '74727565'], // TTF signature or 'true'
@@ -1617,7 +1526,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         
         const validCount = results.fonts.filter(f => f.valid).length;
         const obfuscatedCount = results.fonts.filter(f => f.obfuscated).length;
-        console.log(`[check-import] Fonts: ${validCount}/${fonts.length} valid, ${obfuscatedCount} obfuscated`);
       }
       
       res.json({ success: true, results });
@@ -1638,7 +1546,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(400).json({ error: "Missing idml field (base64)" });
       }
       
-      console.log('[test-idml] Parsing IDML...');
       const idmlBuffer = Buffer.from(idml, 'base64');
       
       // Debug mode: return raw XML from first Spread to see TextFrame structure
@@ -1858,15 +1765,8 @@ export function registerObjectStorageRoutes(app: Express): void {
         });
       }
 
-      console.log(`[import-storyboard] ========================================`);
-      console.log(`[import-storyboard] Starting import for book ${bookId}`);
-      console.log(`[import-storyboard] EPUB size: ${Buffer.from(epub, 'base64').length} bytes`);
-      console.log(`[import-storyboard] IDML size: ${Buffer.from(idml, 'base64').length} bytes`);
-      console.log(`[import-storyboard] Custom fonts: ${fonts && Array.isArray(fonts) ? fonts.length : 0} file(s)`);
-      console.log(`[import-storyboard] ========================================`);
 
       // 1. Extract EPUB (images + text positions ONLY - no text content or fonts)
-      console.log(`[import-storyboard] Step 1: Extracting EPUB (images + positions)...`);
       const epubBuffer = Buffer.from(epub, 'base64');
       const epubResult = await extractEpubFromBuffer(epubBuffer, bookId);
 
@@ -1875,17 +1775,13 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(500).json({ error: "Failed to extract EPUB" });
       }
 
-      console.log(`[import-storyboard] ✓ EPUB extracted successfully`);
-      console.log(`[import-storyboard]   - Text positions: ${epubResult.textPositions.length} (coordinates only, no content)`);
-      console.log(`[import-storyboard]   - Images: ${epubResult.imageElements.length}`);
-      console.log(`[import-storyboard]   - Pages: ${epubResult.pages.length}`);
 
       // 1.5. Upload custom fonts if provided AND install them for Playwright
-      const uploadedFonts: Record<string, string> = {};
+      const uploadedFonts: Record<string, { url: string; fontFamily?: string; fontWeight?: string; fontStyle?: string }> = {};
       const systemFontsDir = path.join(process.env.HOME || '/home/runner', '.fonts');
       
+      
       if (fonts && Array.isArray(fonts) && fonts.length > 0) {
-        console.log(`[import-storyboard] Processing ${fonts.length} custom fonts...`);
         
         // Ensure system fonts directory exists
         await fs.promises.mkdir(systemFontsDir, { recursive: true });
@@ -1910,14 +1806,12 @@ export function registerObjectStorageRoutes(app: Express): void {
             const isValidFont = expectedMagics.some(m => magic.startsWith(m));
             
             if (!isValidFont) {
-              console.warn(`[import-storyboard] ⚠️ Font ${font.name} appears obfuscated (magic: ${magic}), skipping system install`);
               continue;
             }
             
             // Install font to system fonts directory for Playwright
             const systemFontPath = path.join(systemFontsDir, font.name);
             await fs.promises.writeFile(systemFontPath, fontBuffer);
-            console.log(`[import-storyboard] ✓ Font installed to system: ${font.name}`);
             
             // Also upload to object storage if available
             if (hasPublicPath) {
@@ -1938,10 +1832,15 @@ export function registerObjectStorageRoutes(app: Express): void {
               });
               
               const objectPath = `/objects/${bucketName}/${objectName}`;
-              uploadedFonts[font.name] = objectPath;
+              const parsed = parseFontFileName(font.name);
+              uploadedFonts[font.name] = {
+                url: objectPath,
+                fontFamily: font.fontFamily || parsed.fontFamily,
+                fontWeight: parsed.fontWeight,
+                fontStyle: parsed.fontStyle
+              };
             }
             
-            console.log(`[import-storyboard] ✓ Font processed: ${font.name}`);
           } catch (fontError) {
             console.error(`[import-storyboard] ⚠️ Failed to process font ${font.name}:`, fontError);
           }
@@ -1951,23 +1850,15 @@ export function registerObjectStorageRoutes(app: Express): void {
         try {
           const { execSync } = await import('child_process');
           execSync('fc-cache -f', { timeout: 5000 });
-          console.log(`[import-storyboard] ✓ Font cache refreshed`);
         } catch (fcErr) {
-          console.log(`[import-storyboard] fc-cache not available`);
         }
         
-        console.log(`[import-storyboard] ✓ Processed ${Object.keys(uploadedFonts).length}/${fonts.length} fonts`);
       }
 
       // 2. Parse IDML (texts + fonts + styles - ONLY SOURCE for text information)
-      console.log(`[import-storyboard] Step 2: Parsing IDML (texts + fonts + styles)...`);
       const idmlBuffer = Buffer.from(idml, 'base64');
       const idmlData = await parseIdmlBuffer(idmlBuffer);
 
-      console.log(`[import-storyboard] ✓ IDML parsed successfully`);
-      console.log(`[import-storyboard]   - Text frames: ${idmlData.textFrames.length} (with content, fonts, and styles)`);
-      console.log(`[import-storyboard]   - Character styles: ${Object.keys(idmlData.characterStyles).length} (fonts + character formatting)`);
-      console.log(`[import-storyboard]   - Paragraph styles: ${Object.keys(idmlData.paragraphStyles).length} (paragraph formatting + fonts)`);
       
       if (epubResult.textPositions.length === 0) {
         console.error(`[import-storyboard] ⚠️ WARNING: No text positions found in EPUB!`);
@@ -1978,18 +1869,17 @@ export function registerObjectStorageRoutes(app: Express): void {
       }
 
       // 3. Merge EPUB positions with IDML texts/fonts/styles
-      console.log(`[import-storyboard] Step 3: Merging EPUB positions + IDML content/styles...`);
-      console.log(`[import-storyboard]   EPUB provides: positions (x, y, width, height)`);
-      console.log(`[import-storyboard]   IDML provides: text content, fonts (fontFamily), all styles`);
-      console.log(`[import-storyboard]   ⚠️ Fonts MUST be in IDML - no CSS fallback`);
       const mergedTexts = mergeEpubWithIdml(
         epubResult.textPositions,       // Positions from EPUB
         idmlData,                        // Texts + fonts + styles from IDML
         bookId,
         epubResult.cssFontMapping        // NOT USED - kept for API compatibility
       );
+      // #region agent log
+      const fs2 = await import('fs');
+      fs2.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:1877',message:'Merged texts result',data:{mergedTextsCount:mergedTexts.length,sampleTexts:mergedTexts.slice(0,3).map(t=>({id:t.id,content:t.content?.substring(0,50),fontFamily:t.style?.fontFamily,fontSize:t.style?.fontSize}))},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})+'\n');
+      // #endregion
 
-      console.log(`[import-storyboard] ✓ Merge completed: ${mergedTexts.length} text zones (position + content + styles)`);
       
       if (mergedTexts.length === 0 && epubResult.textPositions.length > 0 && idmlData.textFrames.length > 0) {
         console.error(`[import-storyboard] ⚠️ ERROR: Merge produced 0 texts but inputs were non-empty!`);
@@ -1998,13 +1888,14 @@ export function registerObjectStorageRoutes(app: Express): void {
 
       // 4. Inject uploaded fonts into CSS
       let finalCssContent = epubResult.cssContent || '';
+      // #region agent log
+      const fs = await import('fs');
+      fs.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:1886',message:'Font injection start',data:{uploadedFontsCount:Object.keys(uploadedFonts).length,uploadedFonts:Object.entries(uploadedFonts).map(([k,v])=>({name:k,family:v.fontFamily,url:v.url,weight:v.fontWeight,style:v.fontStyle}))},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})+'\n');
+      // #endregion
       if (Object.keys(uploadedFonts).length > 0) {
-        console.log(`[import-storyboard] Injecting ${Object.keys(uploadedFonts).length} custom fonts into CSS...`);
         
         const fontFaceDeclarations: string[] = [];
-        for (const [fontName, fontUrl] of Object.entries(uploadedFonts)) {
-          const parsed = parseFontFileName(fontName);
-          
+        for (const [fontName, fontInfo] of Object.entries(uploadedFonts)) {
           const ext = fontName.split('.').pop()?.toLowerCase() || 'ttf';
           const formatMap: Record<string, string> = {
             'ttf': 'truetype',
@@ -2017,16 +1908,21 @@ export function registerObjectStorageRoutes(app: Express): void {
           
           const fontFaceRule = `
 @font-face {
-  font-family: "${parsed.fontFamily}";
-  src: url('${fontUrl}') format('${format}');
-  font-weight: ${parsed.fontWeight};
-  font-style: ${parsed.fontStyle};
+  font-family: "${fontInfo.fontFamily}";
+  src: url('${fontInfo.url}') format('${format}');
+  font-weight: ${fontInfo.fontWeight};
+  font-style: ${fontInfo.fontStyle};
 }`;
+          // #region agent log
+          fs.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:1907',message:'Font face generated',data:{fontName,fontFamily:fontInfo.fontFamily,url:fontInfo.url,format,ext,fontFaceRule},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})+'\n');
+          // #endregion
           fontFaceDeclarations.push(fontFaceRule);
         }
         
         finalCssContent = fontFaceDeclarations.join('\n') + '\n' + finalCssContent;
-        console.log(`[import-storyboard] ✓ Injected ${fontFaceDeclarations.length} @font-face declarations`);
+        // #region agent log
+        fs.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:1910',message:'Final CSS with fonts',data:{fontFaceCount:fontFaceDeclarations.length,cssFirstChars:finalCssContent.substring(0,300)},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})+'\n');
+        // #endregion
       }
 
       // 5. Build complete ContentConfiguration
@@ -2047,7 +1943,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         JSON.stringify(contentConfig, null, 2),
         'utf-8'
       );
-      console.log(`[import-storyboard] ✓ Saved content.json (${mergedTexts.length} texts)`);
 
       // Add debug info to response
       const debugInfo = {
@@ -2086,11 +1981,13 @@ export function registerObjectStorageRoutes(app: Express): void {
         wizardConfig: epubResult.generatedWizardTabs,
         fontWarnings: epubResult.fontWarnings,
         uploadedFonts,
+        detectedFonts: idmlData.fonts || [],
         stats: {
           pages: epubResult.pages.length,
           texts: mergedTexts.length,
           images: epubResult.imageElements.length,
-          uploadedCustomFonts: Object.keys(uploadedFonts).length
+          uploadedCustomFonts: Object.keys(uploadedFonts).length,
+          detectedFonts: (idmlData.fonts || []).length
         },
         debug: debugInfo
       });

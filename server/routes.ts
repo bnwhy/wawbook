@@ -10,6 +10,7 @@ import { getStripePublishableKey } from "./stripeClient";
 import * as path from "path";
 import * as fs from "fs";
 import { extractFontsFromCss } from "./utils/fontExtractor";
+import { logger } from "./utils/logger";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -21,7 +22,7 @@ export async function registerRoutes(
     maxAge: '1y',
     immutable: true,
   }));
-  console.log(`[routes] Serving local assets from ${assetsPath}`);
+  logger.info({ assetsPath }, 'Serving local assets');
 
   // ===== BOOKS =====
   app.get("/api/books", async (req, res) => {
@@ -29,7 +30,7 @@ export async function registerRoutes(
       const books = await storage.getAllBooks();
       res.json(books);
     } catch (error) {
-      console.error("Error getting books:", error);
+      logger.error({ error }, "Error getting books");
       res.status(500).json({ error: "Failed to get books" });
     }
   });
@@ -42,7 +43,7 @@ export async function registerRoutes(
       }
       res.json(book);
     } catch (error) {
-      console.error("Error getting book:", error);
+      logger.error({ error, bookId: req.params.id }, "Error getting book");
       res.status(500).json({ error: "Failed to get book" });
     }
   });
@@ -61,7 +62,7 @@ export async function registerRoutes(
       const book = await storage.createBook(validationResult.data);
       res.status(201).json(book);
     } catch (error) {
-      console.error("Error creating book:", error);
+      logger.error({ error }, "Error creating book");
       res.status(500).json({ error: "Failed to create book" });
     }
   });
@@ -74,12 +75,6 @@ export async function registerRoutes(
         price: rest.price != null ? String(rest.price) : (rest.price === null ? null : undefined),
         oldPrice: rest.oldPrice != null ? String(rest.oldPrice) : (rest.oldPrice === null ? null : undefined),
       };
-      console.log('[PATCH /api/books/:id] Received imageElements count:', body.contentConfig?.imageElements?.length);
-      if (body.contentConfig?.imageElements?.length > 0) {
-        const firstWithConditions = body.contentConfig.imageElements.find((img) => img.conditions && img.conditions.length > 0);
-        console.log('[PATCH /api/books/:id] First image with conditions:', JSON.stringify(firstWithConditions));
-      }
-      
       if (body.contentConfig?.cssContent) {
         const assetsBasePath = path.join(process.cwd(), 'server', 'assets');
         const { processedCss, fonts } = await extractFontsFromCss(
@@ -88,7 +83,6 @@ export async function registerRoutes(
           assetsBasePath
         );
         if (fonts.length > 0) {
-          console.log(`[PATCH /api/books/:id] Extracted ${fonts.length} fonts from CSS`);
           body.contentConfig.cssContent = processedCss;
           body.contentConfig.extractedFonts = fonts;
         }
@@ -100,7 +94,7 @@ export async function registerRoutes(
       }
       res.json(book);
     } catch (error) {
-      console.error("Error updating book:", error);
+      logger.error({ error, bookId: req.params.id }, "Error updating book");
       res.status(500).json({ error: "Failed to update book" });
     }
   });
@@ -134,10 +128,10 @@ export async function registerRoutes(
       try {
         if (fs.existsSync(resolvedPath)) {
           fs.rmSync(resolvedPath, { recursive: true, force: true });
-          console.log(`[DELETE /api/books/:id] Deleted local assets: ${resolvedPath}`);
+          logger.info({ path: resolvedPath }, 'Deleted local assets');
         }
       } catch (fsError) {
-        console.error(`[DELETE /api/books/:id] Error deleting local assets:`, fsError);
+        logger.error({ error: fsError, path: resolvedPath }, 'Error deleting local assets');
       }
       
       // 2. Delete previews from object storage
@@ -159,20 +153,20 @@ export async function registerRoutes(
           
           if (files.length > 0) {
             await Promise.all(files.map(file => file.delete()));
-            console.log(`[DELETE /api/books/:id] Deleted ${files.length} preview files from object storage`);
+            logger.info({ count: files.length, bookId }, 'Deleted preview files from object storage');
           }
         }
       } catch (storageError) {
-        console.error(`[DELETE /api/books/:id] Error deleting from object storage:`, storageError);
+        logger.error({ error: storageError, bookId }, 'Error deleting from object storage');
       }
       
       // 3. Delete book from database
       await storage.deleteBook(bookId);
-      console.log(`[DELETE /api/books/:id] Deleted book ${bookId} from database`);
+      logger.info({ bookId }, 'Deleted book from database');
       
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting book:", error);
+      logger.error({ error, bookId: req.params.id }, "Error deleting book");
       res.status(500).json({ error: "Failed to delete book" });
     }
   });
@@ -251,7 +245,7 @@ export async function registerRoutes(
       try {
         chromiumPath = execSync('which chromium', { encoding: 'utf-8' }).trim();
       } catch {
-        console.log('[render-pages] Could not find chromium in PATH, using default');
+        // Chromium not found in PATH, using default
       }
       
       // Launch browser using system Chromium
@@ -273,13 +267,6 @@ export async function registerRoutes(
       // Note: Fonts must be pre-installed in ~/.fonts (e.g., Andika from SIL)
       // We don't copy from book fonts as they may be corrupted
       const systemFontsDir = path.join(process.env.HOME || '/home/runner', '.fonts');
-      try {
-        const installedFonts = await fs.promises.readdir(systemFontsDir);
-        const fontCount = installedFonts.filter(f => f.endsWith('.ttf') || f.endsWith('.otf')).length;
-        console.log(`[render-pages] System fonts available: ${fontCount} in ${systemFontsDir}`);
-      } catch (fontsErr) {
-        console.log(`[render-pages] Warning: No system fonts directory`);
-      }
       
       // IGNORE EPUB CSS COMPLETELY - Only use IDML for text and fonts
       // EPUB only provides positions and images
@@ -290,20 +277,15 @@ export async function registerRoutes(
       const availableFonts: string[] = [];
       const allTexts = contentConfig?.texts || [];
       
-      console.log(`[render-pages] Total texts in contentConfig: ${allTexts.length}`);
-      
       for (const text of allTexts) {
         const fontFamily = text.fontFamily || text.style?.fontFamily;
         if (fontFamily) {
           const cleanFont = fontFamily.replace(/['"]/g, '').trim();
           if (cleanFont && !availableFonts.includes(cleanFont)) {
             availableFonts.push(cleanFont);
-            console.log(`[render-pages] Found font in text: "${cleanFont}"`);
           }
         }
       }
-      
-      console.log(`[render-pages] Fonts from IDML texts: ${availableFonts.join(', ') || 'none'}`);
       
       // Load EPUB CSS but ONLY for container positions/dimensions (NOT for fonts/text styles)
       let cssContent = '';
@@ -319,7 +301,6 @@ export async function registerRoutes(
           .replace(/font-style\s*:[^;]+;/gi, '') // Remove font-style
           .replace(/color\s*:[^;]+;/gi, '') // Remove color
           .replace(/text-[^:]+:[^;]+;/gi, ''); // Remove text-* properties
-        console.log(`[render-pages] Using EPUB CSS for layout only (fonts from IDML)`);
       } catch (e) {
         // No CSS file, use minimal CSS
         cssContent = `
@@ -330,7 +311,6 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
   text-rendering:optimizeSpeed;
 }
 `;
-        console.log(`[render-pages] No EPUB CSS found, using minimal CSS`);
       }
       
       // Embed system fonts as base64 in CSS
@@ -368,7 +348,6 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             const validMagics = ['00010000', '74727565', '4F54544F', '774F4646', '774F4632'];
             
             if (!validMagics.some(m => magic.startsWith(m))) {
-              console.warn(`[render-pages] Font ${fontName} appears corrupted (magic: ${magic}), skipping`);
               continue;
             }
             
@@ -382,40 +361,20 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             systemFontFaces.push(
               `@font-face { font-family: '${fontName}'; src: url('${dataUri}') format('${format}'); }`
             );
-            console.log(`[render-pages] Font embedded as base64: ${fontName} -> ${fontFile} (${Math.round(fontBase64.length / 1024)}KB, magic: ${magic})`);
-          } else {
-            console.warn(`[render-pages] Font file not found in system fonts for: ${fontName}`);
           }
         } catch (err) {
-          console.error(`[render-pages] Error embedding font ${fontName}:`, err);
+          logger.error({ error: err, fontName }, 'Error embedding font');
         }
       }
       
       cssContent = systemFontFaces.join('\n') + '\n' + cssContent;
       
-      // Log CSS info for debugging
-      console.log(`[render-pages] CSS length: ${cssContent.length} chars, using system fonts`);
-      
-      if (availableFonts.length > 0) {
-        console.log(`[render-pages] System fonts configured: ${availableFonts.join(', ')}`);
-      } else {
-        console.warn(`[render-pages] ⚠ No fonts found in CSS!`);
-      }
-      
       // Default font to use when no fontFamily is specified
       const defaultFont = availableFonts[0] || 'sans-serif';
-      console.log(`[render-pages] Default font: "${defaultFont}"`);
-      
-      console.log(`[render-pages] Rendering ${pages.length} pages for book ${book.id}`);
 
       for (const pageData of pages) {
         try {
           const browserPage = await browser.newPage();
-          
-          // Add console listeners to debug font loading errors
-          browserPage.on('console', msg => console.log('[browser-console]', msg.text()));
-          browserPage.on('pageerror', exception => console.log('[browser-pageerror]', exception));
-          browserPage.on('requestfailed', request => console.log('[browser-reqfailed]', request.url(), request.failure()?.errorText));
           
           const pageWidth = pageData.width || 400;
           const pageHeight = pageData.height || 293;
@@ -515,15 +474,12 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 }
               }
               
-              console.log(`[render-pages] Page ${pageData.pageIndex}: Position ${posKey} has ${imagesAtPosition.length} images, selected: ${bestImage.id} (score: ${bestScore})`);
               finalImages.push(bestImage);
             }
           }
           
           // Sort by layer if available
           finalImages.sort((a, b) => (a.position?.layer || 0) - (b.position?.layer || 0));
-          
-          console.log(`[render-pages] Page ${pageData.pageIndex}: Filtered ${pageImages.length} images to ${finalImages.length} (removed ${pageImages.length - finalImages.length} duplicates at same position)`);
           
           // Get text zones for this page
           const pageTexts = (contentConfig?.texts || []).filter(
@@ -584,9 +540,6 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             // Trim all whitespace to ensure clean alignment
             content = content.trim();
             
-            console.log(`[render-pages] Text: "${content.substring(0, 30)}..." fontFamily=${textFontFamily} fontSize=${textFontSize}`);
-            console.log(`[render-pages]   raw: "${style.fontFamily || 'UNDEFINED'}" -> resolved: ${textFontFamily}`);
-            
             // Escape HTML and convert line breaks
             const escapedContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
             
@@ -615,7 +568,6 @@ ${textsHtml}
           // Save HTML to temp file in public assets directory
           const tempHtmlPath = path.join(process.cwd(), 'server', 'assets', 'books', book.id, `render_${pageData.pageIndex}.html`);
           await fs.promises.writeFile(tempHtmlPath, html, 'utf-8');
-          console.log(`[render-pages] HTML saved to ${tempHtmlPath}`);
 
           // Load via HTTP URL instead of setContent for proper font loading
           const serverPort = process.env.PORT || 5001;
@@ -624,7 +576,6 @@ ${textsHtml}
           try {
             await browserPage.goto(htmlUrl, { waitUntil: 'networkidle', timeout: 10000 });
           } catch (gotoErr) {
-            console.log(`[render-pages] goto failed, falling back to setContent`);
             await browserPage.setContent(html, { waitUntil: 'networkidle' });
           }
           
@@ -657,8 +608,6 @@ ${textsHtml}
             };
           }, availableFonts);
           
-          console.log(`[render-pages] Fonts status:`, JSON.stringify(fontsLoaded));
-          
           // Wait for font rendering to stabilize
           await browserPage.waitForTimeout(500);
 
@@ -689,10 +638,9 @@ ${textsHtml}
             });
             for (const oldFile of files) {
               await oldFile.delete();
-              console.log(`[render-pages] Deleted old version: ${oldFile.name}`);
             }
           } catch (deleteError) {
-            console.warn(`[render-pages] Could not delete old versions:`, deleteError);
+            logger.warn({ error: deleteError, bookId: book.id }, 'Could not delete old versions');
           }
           
           const file = bucket.file(objectPath);
@@ -702,22 +650,18 @@ ${textsHtml}
           });
 
           const imageUrl = `/objects/${bucketName}/${objectPath}`;
-          console.log(`[render-pages] Generated imageUrl: ${imageUrl}`);
           renderedPages.push({ pageIndex: pageData.pageIndex, imageUrl });
-          
-          console.log(`[render-pages] Page ${pageData.pageIndex} uploaded to ${imageUrl}`);
         } catch (pageError) {
-          console.error(`[render-pages] Error rendering page ${pageData.pageIndex}:`, pageError);
+          logger.error({ error: pageError, pageIndex: pageData.pageIndex, bookId: book.id }, 'Error rendering page');
         }
       }
 
       await browser.close();
       
-      console.log(`[render-pages] Successfully rendered ${renderedPages.length} pages`);
-      console.log(`[render-pages] Returning pages:`, renderedPages.map(p => ({ pageIndex: p.pageIndex, url: p.imageUrl })));
+      logger.info({ count: renderedPages.length }, 'Successfully rendered pages');
       res.json({ success: true, pages: renderedPages });
     } catch (error) {
-      console.error("[render-pages] Error:", error);
+      logger.error({ error }, "Failed to render pages");
       res.status(500).json({ error: "Failed to render pages" });
     }
   });
@@ -740,7 +684,7 @@ ${textsHtml}
       const customers = await storage.getAllCustomers();
       res.json(customers);
     } catch (error) {
-      console.error("Error getting customers:", error);
+      logger.error({ error }, "Error getting customers");
       res.status(500).json({ error: "Failed to get customers" });
     }
   });
@@ -753,7 +697,7 @@ ${textsHtml}
       }
       res.json(customer);
     } catch (error) {
-      console.error("Error getting customer:", error);
+      logger.error({ error, customerId: req.params.id }, "Error getting customer");
       res.status(500).json({ error: "Failed to get customer" });
     }
   });
@@ -780,7 +724,7 @@ ${textsHtml}
       const customer = await storage.createCustomer(validationResult.data);
       res.status(201).json(customer);
     } catch (error) {
-      console.error("Error creating customer:", error);
+      logger.error({ error }, "Error creating customer");
       res.status(500).json({ error: "Failed to create customer" });
     }
   });
@@ -797,7 +741,7 @@ ${textsHtml}
       }
       res.json(customer);
     } catch (error) {
-      console.error("Error updating customer:", error);
+      logger.error({ error }, "Error updating customer");
       res.status(500).json({ error: "Failed to update customer" });
     }
   });
@@ -807,7 +751,7 @@ ${textsHtml}
       await storage.deleteCustomer(req.params.id);
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting customer:", error);
+      logger.error({ error }, "Error deleting customer");
       res.status(500).json({ error: "Failed to delete customer" });
     }
   });
@@ -822,7 +766,7 @@ ${textsHtml}
       const orderId = `ORD-${year}-${String(seq).padStart(7, '0')}`;
       res.json({ orderId });
     } catch (error) {
-      console.error("Error generating order ID:", error);
+      logger.error({ error }, "Error generating order ID");
       res.status(500).json({ error: "Failed to generate order ID" });
     }
   });
@@ -832,7 +776,7 @@ ${textsHtml}
       const orders = await storage.getAllOrders();
       res.json(orders);
     } catch (error) {
-      console.error("Error getting orders:", error);
+      logger.error({ error }, "Error getting orders");
       res.status(500).json({ error: "Failed to get orders" });
     }
   });
@@ -845,7 +789,7 @@ ${textsHtml}
       }
       res.json(order);
     } catch (error) {
-      console.error("Error getting order:", error);
+      logger.error({ error }, "Error getting order");
       res.status(500).json({ error: "Failed to get order" });
     }
   });
@@ -855,7 +799,7 @@ ${textsHtml}
       const orders = await storage.getOrdersByCustomer(req.params.customerId);
       res.json(orders);
     } catch (error) {
-      console.error("Error getting customer orders:", error);
+      logger.error({ error }, "Error getting customer orders");
       res.status(500).json({ error: "Failed to get customer orders" });
     }
   });
@@ -873,7 +817,7 @@ ${textsHtml}
       const order = await storage.createOrder(validationResult.data);
       res.status(201).json(order);
     } catch (error) {
-      console.error("Error creating order:", error);
+      logger.error({ error }, "Error creating order");
       res.status(500).json({ error: "Failed to create order" });
     }
   });
@@ -890,7 +834,7 @@ ${textsHtml}
       }
       res.json(order);
     } catch (error) {
-      console.error("Error updating order:", error);
+      logger.error({ error }, "Error updating order");
       res.status(500).json({ error: "Failed to update order" });
     }
   });
@@ -900,7 +844,7 @@ ${textsHtml}
       await storage.deleteOrder(req.params.id);
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting order:", error);
+      logger.error({ error }, "Error deleting order");
       res.status(500).json({ error: "Failed to delete order" });
     }
   });
@@ -911,7 +855,7 @@ ${textsHtml}
       const zones = await storage.getAllShippingZones();
       res.json(zones);
     } catch (error) {
-      console.error("Error getting shipping zones:", error);
+      logger.error({ error }, "Error getting shipping zones");
       res.status(500).json({ error: "Failed to get shipping zones" });
     }
   });
@@ -924,7 +868,7 @@ ${textsHtml}
       }
       res.json(zone);
     } catch (error) {
-      console.error("Error getting shipping zone:", error);
+      logger.error({ error }, "Error getting shipping zone");
       res.status(500).json({ error: "Failed to get shipping zone" });
     }
   });
@@ -938,7 +882,7 @@ ${textsHtml}
       const zone = await storage.createShippingZone(validationResult.data);
       res.status(201).json(zone);
     } catch (error) {
-      console.error("Error creating shipping zone:", error);
+      logger.error({ error }, "Error creating shipping zone");
       res.status(500).json({ error: "Failed to create shipping zone" });
     }
   });
@@ -951,7 +895,7 @@ ${textsHtml}
       }
       res.json(zone);
     } catch (error) {
-      console.error("Error updating shipping zone:", error);
+      logger.error({ error }, "Error updating shipping zone");
       res.status(500).json({ error: "Failed to update shipping zone" });
     }
   });
@@ -961,7 +905,7 @@ ${textsHtml}
       await storage.deleteShippingZone(req.params.id);
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting shipping zone:", error);
+      logger.error({ error }, "Error deleting shipping zone");
       res.status(500).json({ error: "Failed to delete shipping zone" });
     }
   });
@@ -972,7 +916,7 @@ ${textsHtml}
       const printers = await storage.getAllPrinters();
       res.json(printers);
     } catch (error) {
-      console.error("Error getting printers:", error);
+      logger.error({ error }, "Error getting printers");
       res.status(500).json({ error: "Failed to get printers" });
     }
   });
@@ -985,7 +929,7 @@ ${textsHtml}
       }
       res.json(printer);
     } catch (error) {
-      console.error("Error getting printer:", error);
+      logger.error({ error }, "Error getting printer");
       res.status(500).json({ error: "Failed to get printer" });
     }
   });
@@ -999,7 +943,7 @@ ${textsHtml}
       const printer = await storage.createPrinter(validationResult.data);
       res.status(201).json(printer);
     } catch (error) {
-      console.error("Error creating printer:", error);
+      logger.error({ error }, "Error creating printer");
       res.status(500).json({ error: "Failed to create printer" });
     }
   });
@@ -1012,7 +956,7 @@ ${textsHtml}
       }
       res.json(printer);
     } catch (error) {
-      console.error("Error updating printer:", error);
+      logger.error({ error }, "Error updating printer");
       res.status(500).json({ error: "Failed to update printer" });
     }
   });
@@ -1022,7 +966,7 @@ ${textsHtml}
       await storage.deletePrinter(req.params.id);
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting printer:", error);
+      logger.error({ error }, "Error deleting printer");
       res.status(500).json({ error: "Failed to delete printer" });
     }
   });
@@ -1033,7 +977,7 @@ ${textsHtml}
       const menus = await storage.getAllMenus();
       res.json(menus);
     } catch (error) {
-      console.error("Error getting menus:", error);
+      logger.error({ error }, "Error getting menus");
       res.status(500).json({ error: "Failed to get menus" });
     }
   });
@@ -1046,7 +990,7 @@ ${textsHtml}
       }
       res.json(menu);
     } catch (error) {
-      console.error("Error getting menu:", error);
+      logger.error({ error }, "Error getting menu");
       res.status(500).json({ error: "Failed to get menu" });
     }
   });
@@ -1060,7 +1004,7 @@ ${textsHtml}
       const menu = await storage.createMenu(validationResult.data);
       res.status(201).json(menu);
     } catch (error) {
-      console.error("Error creating menu:", error);
+      logger.error({ error }, "Error creating menu");
       res.status(500).json({ error: "Failed to create menu" });
     }
   });
@@ -1073,7 +1017,7 @@ ${textsHtml}
       }
       res.json(menu);
     } catch (error) {
-      console.error("Error updating menu:", error);
+      logger.error({ error }, "Error updating menu");
       res.status(500).json({ error: "Failed to update menu" });
     }
   });
@@ -1083,7 +1027,7 @@ ${textsHtml}
       await storage.deleteMenu(req.params.id);
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting menu:", error);
+      logger.error({ error }, "Error deleting menu");
       res.status(500).json({ error: "Failed to delete menu" });
     }
   });
@@ -1097,7 +1041,7 @@ ${textsHtml}
       }
       res.json(setting);
     } catch (error) {
-      console.error("Error getting setting:", error);
+      logger.error({ error }, "Error getting setting");
       res.status(500).json({ error: "Failed to get setting" });
     }
   });
@@ -1107,7 +1051,7 @@ ${textsHtml}
       const setting = await storage.setSetting(req.params.key, req.body.value);
       res.json(setting);
     } catch (error) {
-      console.error("Error setting value:", error);
+      logger.error({ error }, "Error setting value");
       res.status(500).json({ error: "Failed to set value" });
     }
   });
@@ -1121,7 +1065,7 @@ ${textsHtml}
       const publishableKey = await getStripePublishableKey();
       res.json({ publishableKey });
     } catch (error) {
-      console.error("Error getting Stripe config:", error);
+      logger.error({ error }, "Error getting Stripe config");
       res.status(500).json({ error: "Failed to get Stripe config" });
     }
   });
@@ -1166,7 +1110,7 @@ ${textsHtml}
 
       res.json({ url: session.url, sessionId: session.id });
     } catch (error) {
-      console.error("Error creating checkout session:", error);
+      logger.error({ error }, "Error creating checkout session");
       res.status(500).json({ error: "Failed to create checkout session" });
     }
   });
@@ -1196,7 +1140,7 @@ ${textsHtml}
         paymentIntentId: paymentResult.paymentIntentId,
       });
     } catch (error) {
-      console.error("Error verifying payment:", error);
+      logger.error({ error }, "Error verifying payment");
       res.status(500).json({ error: "Failed to verify payment" });
     }
   });
@@ -1240,7 +1184,7 @@ ${textsHtml}
         });
       }
     } catch (error) {
-      console.error("Error getting payment status:", error);
+      logger.error({ error }, "Error getting payment status");
       res.status(500).json({ error: "Failed to get payment status" });
     }
   });

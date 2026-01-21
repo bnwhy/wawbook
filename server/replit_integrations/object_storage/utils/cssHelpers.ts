@@ -63,7 +63,7 @@ export function detectFontIssues(css: string, fontMap: Record<string, string> = 
   while ((match = fontFamilyRegex.exec(cssWithoutFontFace)) !== null) {
     const fontList = match[1]
       .split(',')
-      .map(f => f.trim().replace(/["']/g, '').toLowerCase())
+      .map(f => normalizeFontName(f.replace(/["']/g, '')))
       .filter(f => f && !['inherit', 'initial', 'unset'].includes(f));
     
     fontList.forEach(f => usedFonts.add(f));
@@ -89,6 +89,17 @@ export function detectFontIssues(css: string, fontMap: Record<string, string> = 
 }
 
 /**
+ * Normalise un nom de police pour la comparaison
+ * Supprime les espaces multiples, trim, et met en minuscules
+ */
+function normalizeFontName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, ' ')  // Remplace les espaces multiples par un seul
+    .trim();
+}
+
+/**
  * Extrait les polices qui ont des données base64 embarquées
  */
 function extractFontsWithBase64(css: string): Set<string> {
@@ -101,7 +112,7 @@ function extractFontsWithBase64(css: string): Set<string> {
     const familyMatch = block.match(/font-family\s*:\s*["']?([^;"']+)["']?/i);
     
     if (familyMatch && (block.includes('data:font') || block.includes('data:application'))) {
-      fontsWithBase64.add(familyMatch[1].trim().toLowerCase());
+      fontsWithBase64.add(normalizeFontName(familyMatch[1]));
     }
   }
   

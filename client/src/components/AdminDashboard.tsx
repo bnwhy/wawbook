@@ -219,7 +219,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isImportingStoryboard, setIsImportingStoryboard] = useState(false);
   const [epubFile, setEpubFile] = useState<File | null>(null);
   const [idmlFile, setIdmlFile] = useState<File | null>(null);
-  const [fontFiles, setFontFiles] = useState<File[]>([]);
+  const [fontFilesByFamily, setFontFilesByFamily] = useState<Record<string, File[]>>({});
+  const [detectedFonts, setDetectedFonts] = useState<string[]>([]);
 
   // Avatar EPUB import state
   const [showAvatarEpubSelector, setShowAvatarEpubSelector] = useState(false);
@@ -649,17 +650,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const epubBase64 = await fileToBase64(epubFile);
       const idmlBase64 = await fileToBase64(idmlFile);
       
-      // Convert font files to base64 if any
-      const fontsData: Array<{ name: string; data: string }> = [];
-      if (fontFiles.length > 0) {
-        for (const fontFile of fontFiles) {
-          const fontBase64 = await fileToBase64(fontFile);
+      // Convert font files to base64 if any, organized by font family
+      const fontsData: Array<{ name: string; data: string; fontFamily: string }> = [];
+      for (const [fontFamily, files] of Object.entries(fontFilesByFamily)) {
+        for (const file of files) {
+          const fontBase64 = await fileToBase64(file);
           fontsData.push({
-            name: fontFile.name,
+            name: file.name,
             data: fontBase64,
+            fontFamily: fontFamily
           });
         }
       }
+      
+      // #region agent log
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:666',message:'Sending import request',data:{fontsCount:fontsData.length,fontsSample:fontsData.map(f=>({name:f.name,fontFamily:f.fontFamily,dataLength:f.data?.length||0})),fontFilesByFamily:Object.entries(fontFilesByFamily).map(([k,v])=>({family:k,filesCount:v.length}))},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       
       const response = await fetch('/api/books/import-storyboard', {
         method: 'POST',
@@ -678,8 +684,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       const result = await response.json();
-      console.log('[Storyboard Import] Result:', result);
-      console.log('[Storyboard Import] Debug Info:', result.debug);
 
       // Log detailed debug info
       if (result.debug) {
@@ -729,7 +733,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       };
       
-      console.log('[Storyboard Import] Updated book texts:', updatedBook.contentConfig.texts?.length);
       
       // Save to database
       await updateBook(updatedBook);
@@ -738,11 +741,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setShowIdmlImporter(false);
       setEpubFile(null);
       setIdmlFile(null);
-      setFontFiles([]);
+      setFontFilesByFamily({});
+      setDetectedFonts([]);
       
       // Show custom fonts upload status
       if (result.uploadedFonts && Object.keys(result.uploadedFonts).length > 0) {
         toast.success(`${Object.keys(result.uploadedFonts).length} police(s) uploadée(s)`);
+      }
+      
+      // Store detected fonts from IDML
+      if (result.detectedFonts && result.detectedFonts.length > 0) {
+        setDetectedFonts(result.detectedFonts);
+        // Initialiser avec un tableau vide pour chaque police
+        const initialFonts: Record<string, File[]> = {};
+        result.detectedFonts.forEach((font: string) => {
+          initialFonts[font] = [];
+        });
+        setFontFilesByFamily(initialFonts);
       }
       
       // Show warnings if any
@@ -768,11 +783,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const successMsg = `Import terminé : ${result.stats.pages} pages, ${result.stats.texts} textes, ${result.stats.images} images`;
       toast.success(successMsg);
       
-      // Show debug warning if no texts were created
+      // Show warning if no texts were created
       if (result.debug && result.stats.texts === 0) {
-        const debugMsg = `⚠️ DEBUG: EPUB zones=${result.debug.epubTextPositionsCount}, IDML frames=${result.debug.idmlTextFramesCount}, Merged=${result.debug.mergedTextsCount}`;
-        toast.warning(debugMsg, { duration: 10000 });
-        console.error('[Storyboard Import] No texts created! Check debug info above.');
+        toast.warning('Aucun texte créé lors de l\'import. Vérifiez la structure du fichier.', { duration: 10000 });
       }
     } catch (error: any) {
       console.error('Error importing storyboard:', error);
@@ -797,7 +810,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Function to check import files (IDML, EPUB, fonts)
   const handleCheckImport = async () => {
-    if (!idmlFile && !epubFile && fontFiles.length === 0) {
+    const totalFontFiles = Object.values(fontFilesByFamily).reduce((sum, files) => sum + files.length, 0);
+    if (!idmlFile && !epubFile && totalFontFiles === 0) {
       toast.error('Veuillez sélectionner au moins un fichier à vérifier');
       return;
     }
@@ -806,20 +820,32 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       toast.info('Vérification des fichiers d\'import...');
       
       // Prepare data
-      const payload: { idml?: string; epub?: string; fonts?: Array<{ name: string; data: string }> } = {};
+      const payload: { idml?: string; epub?: string; fonts?: Array<{ name: string; data: string; fontFamily: string }> } = {};
       
       if (idmlFile) {
+        console.log('[Check Import] Processing IDML file:', idmlFile.name, `(${(idmlFile.size / 1024 / 1024).toFixed(2)} MB)`);
         payload.idml = await fileToBase64(idmlFile);
       }
       if (epubFile) {
+        console.log('[Check Import] Processing EPUB file:', epubFile.name, `(${(epubFile.size / 1024 / 1024).toFixed(2)} MB)`);
         payload.epub = await fileToBase64(epubFile);
       }
-      if (fontFiles.length > 0) {
+      if (totalFontFiles > 0) {
         payload.fonts = [];
-        for (const fontFile of fontFiles) {
-          const fontBase64 = await fileToBase64(fontFile);
-          payload.fonts.push({ name: fontFile.name, data: fontBase64 });
+        for (const [fontFamily, files] of Object.entries(fontFilesByFamily)) {
+          for (const file of files) {
+            const fontBase64 = await fileToBase64(file);
+            payload.fonts.push({ name: file.name, data: fontBase64, fontFamily });
+          }
         }
+      }
+      
+      const payloadSize = JSON.stringify(payload).length / 1024 / 1024;
+      console.log('[Check Import] Payload size:', payloadSize.toFixed(2), 'MB');
+      
+      if (payloadSize > 50) {
+        toast.error(`Fichiers trop volumineux (${payloadSize.toFixed(2)} MB). Limite: 50 MB`);
+        return;
       }
       
       const response = await fetch('/api/books/check-import', {
@@ -844,6 +870,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             { duration: 6000 }
           );
           if (results.idml.fonts && results.idml.fonts.length > 0) {
+            // Store detected fonts
+            setDetectedFonts(results.idml.fonts);
+            
+            // Initialize font upload containers
+            const initialFonts: Record<string, File[]> = {};
+            results.idml.fonts.forEach((font: string) => {
+              initialFonts[font] = [];
+            });
+            setFontFilesByFamily(initialFonts);
+            
             const fontsList = results.idml.fonts.slice(0, 5).join(', ');
             const suffix = results.idml.fonts.length > 5 ? ` (+${results.idml.fonts.length - 5})` : '';
             toast.info(`Polices IDML : ${fontsList}${suffix}`, { duration: 8000 });
@@ -887,8 +923,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
       
     } catch (error: any) {
-      console.error('Error checking import:', error);
-      toast.error(`Erreur de vérification : ${error.message}`);
+      console.error('[Check Import] Error:', error);
+      
+      let errorMessage = error.message;
+      if (error.message === 'Failed to fetch') {
+        errorMessage = 'Impossible de contacter le serveur. Vérifiez que le serveur est démarré et que les fichiers ne sont pas trop volumineux.';
+      }
+      
+      toast.error(`Erreur de vérification : ${errorMessage}`, { duration: 8000 });
     }
   };
 
@@ -1522,8 +1564,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  // Snap to 45 deg
                  newR = e.shiftKey ? Math.round((angleDeg + 90) / 45) * 45 : angleDeg + 90;
             } else {
-                // Resize logic (Simplified - assumes no rotation for resize math for now)
-                // TODO: Handle rotated resize properly
+                // Resize logic (Simplified)
                 
                 if (resizeHandle.includes('e')) {
                     newW = (initialDims?.w || 0) + deltaXPercent;
@@ -1854,6 +1895,75 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           if (event.target) event.target.value = '';
       };
       reader.readAsText(file);
+  };
+
+  // Composant pour uploader les fichiers de police par famille
+  const FontFamilyUploader = ({ 
+    fontFamily, 
+    files, 
+    onFilesChange 
+  }: { 
+    fontFamily: string; 
+    files: File[]; 
+    onFilesChange: (files: File[]) => void;
+  }) => {
+    const inputId = `font-input-${fontFamily.replace(/\s+/g, '-')}`;
+    
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        const newFiles = Array.from(e.target.files);
+        onFilesChange([...files, ...newFiles]);
+      }
+    };
+    
+    const removeFile = (index: number) => {
+      onFilesChange(files.filter((_, i) => i !== index));
+    };
+    
+    return (
+      <div className="border border-purple-200 rounded-lg p-3 bg-purple-50/50">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-purple-900">{fontFamily}</span>
+          <span className="text-xs text-purple-600">
+            {files.length} fichier(s)
+          </span>
+        </div>
+        
+        <div className="space-y-2">
+          {files.map((file, idx) => (
+            <div key={idx} className="flex items-center justify-between bg-white px-2 py-1.5 rounded text-xs">
+              <span className="truncate text-slate-700">{file.name}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">{(file.size / 1024).toFixed(0)} KB</span>
+                <button
+                  type="button"
+                  onClick={() => removeFile(idx)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+          
+          <label htmlFor={inputId} className="block">
+            <input
+              id={inputId}
+              type="file"
+              accept=".ttf,.otf,.woff,.woff2"
+              multiple
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          <div className="border-2 border-dashed border-purple-300 rounded p-2 hover:bg-purple-100 cursor-pointer text-center transition-colors">
+            <span className="text-xs text-purple-600">
+              + Ajouter fichier(s)
+            </span>
+          </div>
+          </label>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -6231,7 +6341,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   <CloudDownload size={18} />
                               </button>
                               <button 
-                                  onClick={() => setShowIdmlImporter(true)}
+                                  onClick={() => {
+                                    setShowIdmlImporter(true);
+                                    setDetectedFonts([]);
+                                  }}
                                   className="p-2 bg-purple-100 hover:bg-purple-200 rounded text-purple-700 shrink-0" 
                                   title="Importer EPUB + IDML (InDesign)"
                               >
@@ -6947,7 +7060,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           setShowIdmlImporter(false);
                           setEpubFile(null);
                           setIdmlFile(null);
-                          setFontFiles([]);
+                          setFontFilesByFamily({});
+                          setDetectedFonts([]);
                         }}
                         className="p-1 hover:bg-white rounded-lg transition-colors"
                       >
@@ -7043,53 +7157,47 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <div>
                           <label className="text-sm font-medium text-slate-700 block mb-2">
                             3. Polices (optionnel)
+                            {detectedFonts.length > 0 && (
+                              <span className="ml-2 text-xs text-purple-600 font-normal">
+                                {detectedFonts.length} police(s) détectée(s) dans l'IDML
+                              </span>
+                            )}
                           </label>
-                          <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
-                            <input
-                              type="file"
-                              accept=".ttf,.otf,.woff,.woff2"
-                              multiple
-                              onChange={(e) => setFontFiles(Array.from(e.target.files || []))}
-                              className="hidden"
-                              id="font-files-input"
-                            />
-                            <label 
-                              htmlFor="font-files-input"
-                              className="cursor-pointer flex flex-col items-center gap-2"
-                            >
-                              {fontFiles.length > 0 ? (
-                                <div className="w-full space-y-1">
-                                  <div className="flex items-center gap-2 text-green-600 mb-2">
-                                    <FileCode size={20} />
-                                    <span className="text-sm font-medium">{fontFiles.length} fichier(s)</span>
-                                  </div>
-                                  <div className="max-h-32 overflow-y-auto space-y-1">
-                                    {fontFiles.map((file, idx) => (
-                                      <div key={idx} className="text-xs text-slate-600 flex items-center justify-between bg-slate-50 px-2 py-1 rounded">
-                                        <span className="truncate">{file.name}</span>
-                                        <span className="text-slate-400 ml-2">
-                                          {(file.size / 1024).toFixed(0)} KB
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  <Upload size={24} className="text-slate-400" />
-                                  <span className="text-sm text-slate-600">Polices du package InDesign</span>
-                                  <span className="text-xs text-slate-400">.ttf, .otf, .woff, .woff2</span>
-                                </>
-                              )}
-                            </label>
-                          </div>
+                          
+          {detectedFonts.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-purple-900">
+                {detectedFonts.length} police(s) détectée(s) - Uploadez les fichiers correspondants :
+              </p>
+                              
+                              {detectedFonts.map((fontFamily, idx) => (
+                                <FontFamilyUploader
+                                  key={idx}
+                                  fontFamily={fontFamily}
+                                  files={fontFilesByFamily[fontFamily] || []}
+                                  onFilesChange={(files) => {
+                                    setFontFilesByFamily(prev => ({
+                                      ...prev,
+                                      [fontFamily]: files
+                                    }));
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center">
+                              <p className="text-sm text-slate-500">
+                                Aucune police détectée. Uploadez d'abord un fichier IDML.
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       <div className="flex gap-2">
                         <button
                           onClick={handleCheckImport}
-                          disabled={!idmlFile && !epubFile && fontFiles.length === 0}
+                          disabled={!idmlFile && !epubFile && Object.values(fontFilesByFamily).reduce((sum, files) => sum + files.length, 0) === 0}
                           className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300"
                         >
                           <Search size={18} />

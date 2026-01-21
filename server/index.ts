@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes/index";
+import { registerRoutes as registerLegacyRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { runMigrations } from 'stripe-replit-sync';
@@ -10,6 +11,7 @@ import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { env } from "./config/env";
 import compression from "compression";
 import { apiLimiter } from "./middleware/rate-limit";
+import { storage } from "./storage";
 
 const app = express();
 const httpServer = createServer(app);
@@ -17,6 +19,22 @@ const httpServer = createServer(app);
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
+  }
+}
+
+async function initDefaultSettings() {
+  try {
+    logger.info('Initializing default settings...');
+    
+    const defaultShippingRate = await storage.getSetting('defaultShippingRate');
+    if (!defaultShippingRate) {
+      await storage.setSetting('defaultShippingRate', 5.99);
+      logger.info('Created default shipping rate setting: 5.99€');
+    }
+    
+    logger.info('Default settings initialized');
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to initialize default settings');
   }
 }
 
@@ -71,6 +89,7 @@ async function initStripe() {
   }
 }
 
+initDefaultSettings();
 initStripe();
 
 app.post(
@@ -158,6 +177,7 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
+  await registerLegacyRoutes(httpServer, app);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route

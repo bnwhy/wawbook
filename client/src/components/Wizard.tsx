@@ -552,9 +552,6 @@ const Wizard: React.FC<WizardProps> = (props) => {
                              {(variant.options || []).map((opt) => {
                                // Prefer resource (uploaded image) over legacy thumbnail
                                const imageUrl = opt.resource && !opt.resource.startsWith('#') ? opt.resource : opt.thumbnail;
-                               if (imageUrl && !imageUrl.startsWith('#')) {
-                                 console.log('[Wizard] Displaying image:', { optionId: opt.id, imageUrl });
-                               }
                                
                                return (
                                <button

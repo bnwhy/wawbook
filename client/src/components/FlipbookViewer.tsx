@@ -39,7 +39,6 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }));
 
     useEffect(() => {
-      console.log('[FlipbookViewer] useEffect triggered, pages:', pages.length, 'width:', width, 'height:', height);
       if (!containerRef.current || pages.length === 0) return;
       
       const flipbookEl = containerRef.current.querySelector('.c-flipbook') as HTMLElement;
@@ -96,10 +95,9 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
           {pages.map((pageUrl, index) => (
             <div 
               key={`page-${index}-${pageUrl.substring(0, 30)}`} 
-              className="c-flipbook__page shadow-2xl rounded-none border border-gray-300"
+              className="c-flipbook__page rounded-none border border-gray-300"
               style={{ 
-                borderRadius: 0,
-                filter: 'drop-shadow(0 0 2px rgba(0, 0, 0, 0.1))'
+                borderRadius: 0
               }}
             >
             <img

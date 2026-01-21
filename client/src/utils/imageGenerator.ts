@@ -23,22 +23,17 @@ export const matchesImageConditions = (
     const normalizedVariantId = cond.variantId.toLowerCase().trim();
     const normalizedOptionId = cond.optionId.toLowerCase().trim();
     
-    console.log(`[matchesImageConditions] Checking condition: variantId="${cond.variantId}", optionId="${cond.optionId}"`);
-    
     // Strategy 1: For characteristic-based wizards, tabId often equals variantId
     // Try direct lookup: selections[variantId][variantId] = optionId
     const directTabSelections = selections[cond.variantId];
     if (directTabSelections) {
-      console.log(`[matchesImageConditions] Strategy 1: Found direct tab selections for "${cond.variantId}":`, directTabSelections);
       // Check exact match
       if (directTabSelections[cond.variantId] === cond.optionId) {
-        console.log(`[matchesImageConditions] ✓ Strategy 1: Exact match found`);
         return true;
       }
       // Check normalized match
       const selectedValue = directTabSelections[cond.variantId];
       if (selectedValue && String(selectedValue).toLowerCase().trim() === normalizedOptionId) {
-        console.log(`[matchesImageConditions] ✓ Strategy 1: Normalized match found (${selectedValue} === ${cond.optionId})`);
         return true;
       }
     }
@@ -46,16 +41,13 @@ export const matchesImageConditions = (
     // Strategy 2: Search through all tabs to find where this variant exists
     // This handles cases like tabId="father", variantId="haircolor"
     for (const [tabId, tabSelections] of Object.entries(selections)) {
-      console.log(`[matchesImageConditions] Strategy 2: Checking tab "${tabId}" with selections:`, tabSelections);
       // Check exact variant ID match in this tab's selections
       if (tabSelections[cond.variantId] === cond.optionId) {
-        console.log(`[matchesImageConditions] ✓ Strategy 2: Exact match in tab "${tabId}" (${tabSelections[cond.variantId]} === ${cond.optionId})`);
         return true;
       }
       // Check normalized match
       const selectedValue = tabSelections[cond.variantId];
       if (selectedValue && String(selectedValue).toLowerCase().trim() === normalizedOptionId) {
-        console.log(`[matchesImageConditions] ✓ Strategy 2: Normalized match in tab "${tabId}" (${selectedValue} === ${cond.optionId})`);
         return true;
       }
       
@@ -78,7 +70,6 @@ export const matchesImageConditions = (
     
     // Strategy 3: If we have the book config, try to find the tab that contains this variant
     if (book?.wizardConfig?.tabs) {
-      console.log(`[matchesImageConditions] Strategy 3: Searching in ${book.wizardConfig.tabs.length} tabs`);
       for (const tab of book.wizardConfig.tabs) {
         if (tab.type === 'character' && tab.variants) {
           for (const variant of tab.variants) {
@@ -87,32 +78,26 @@ export const matchesImageConditions = (
                                     variant.id.toLowerCase().trim() === normalizedVariantId;
             
             if (variantIdMatches) {
-              console.log(`[matchesImageConditions] Strategy 3: Found matching variant "${variant.id}" in tab "${tab.id}"`);
               // Found the tab containing this variant
               const tabSelections = selections[tab.id] || {};
-              console.log(`[matchesImageConditions] Strategy 3: Tab "${tab.id}" selections:`, tabSelections);
               
               // Check exact match
               if (tabSelections[cond.variantId] === cond.optionId) {
-                console.log(`[matchesImageConditions] ✓ Strategy 3: Exact match in tab "${tab.id}"`);
                 return true;
               }
               
               // Check normalized match
               const selectedValue = tabSelections[cond.variantId];
               if (selectedValue && String(selectedValue).toLowerCase().trim() === normalizedOptionId) {
-                console.log(`[matchesImageConditions] ✓ Strategy 3: Normalized match in tab "${tab.id}" (${selectedValue} === ${cond.optionId})`);
                 return true;
               }
               
               // Also check if variant.id is in tabSelections (for characteristic-based)
               if (tabSelections[variant.id] === cond.optionId) {
-                console.log(`[matchesImageConditions] ✓ Strategy 3: Match via variant.id in tab "${tab.id}"`);
                 return true;
               }
               const variantSelectedValue = tabSelections[variant.id];
               if (variantSelectedValue && String(variantSelectedValue).toLowerCase().trim() === normalizedOptionId) {
-                console.log(`[matchesImageConditions] ✓ Strategy 3: Normalized match via variant.id in tab "${tab.id}"`);
                 return true;
               }
             }
@@ -121,15 +106,8 @@ export const matchesImageConditions = (
       }
     }
     
-    console.log(`[matchesImageConditions] ✗ No match found for variantId="${cond.variantId}", optionId="${cond.optionId}"`);
-    // #region agent log
-    setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:127',message:'Condition not matched',data:{variantId:cond.variantId,optionId:cond.optionId,selections},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{}),0);
-    // #endregion
     return false; // Condition not satisfied
   });
-  // #region agent log
-  setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:129',message:'matchesImageConditions result',data:{conditions,result},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{}),0);
-  // #endregion
   return result;
 };
 
@@ -190,51 +168,36 @@ function mapTextAlignToCanvas(
   textAlignLast: string | undefined,
   idmlJustification: string | undefined
 ): CanvasTextAlign {
-  console.log('[mapTextAlignToCanvas] Input:', { textAlign, textAlignLast, idmlJustification });
-  
   // Si on a la valeur IDML originale, l'utiliser pour un mapping précis
   if (idmlJustification) {
-    let result: CanvasTextAlign;
     switch (idmlJustification) {
       case 'LeftAlign':
       case 'LeftJustified':
-        result = 'left';
-        break;
+        return 'left';
       case 'CenterAlign':
       case 'CenterJustified':
-        result = 'center';
-        break;
+        return 'center';
       case 'RightAlign':
       case 'RightJustified':
-        result = 'right';
-        break;
+        return 'right';
       case 'FullyJustified':
-        result = 'left'; // Canvas ne supporte pas justify, approximation
-        break;
+        return 'left'; // Canvas ne supporte pas justify, approximation
       case 'ToBindingSide':
-        result = 'left';
-        break;
+        return 'left';
       case 'AwayFromBindingSide':
-        result = 'right';
-        break;
+        return 'right';
       default:
-        result = 'left';
+        return 'left';
     }
-    console.log('[mapTextAlignToCanvas] Mapped from IDML:', result);
-    return result;
   }
   
   // Fallback sur textAlign CSS
   if (textAlign === 'justify') {
     // Pour justify, utiliser textAlignLast comme guide (alignement de la dernière ligne)
-    const result = (textAlignLast as CanvasTextAlign) || 'left';
-    console.log('[mapTextAlignToCanvas] Mapped from justify/textAlignLast:', result);
-    return result;
+    return (textAlignLast as CanvasTextAlign) || 'left';
   }
   
-  const result = (textAlign as CanvasTextAlign) || 'left';
-  console.log('[mapTextAlignToCanvas] Mapped from textAlign:', result);
-  return result;
+  return (textAlign as CanvasTextAlign) || 'left';
 }
 
 /**
@@ -310,9 +273,18 @@ export const generateBookPages = async (
   };
 
   // Generate each page
-  // We scan for all relevant page indices found in content + Cover (0) + Back (999)
+  // Use configured pages from content.json if available
   const relevantPages = new Set<number>([0, 999]);
-  for(let i=1; i<=maxPage; i++) relevantPages.add(i);
+  
+  if (book.contentConfig?.pages && book.contentConfig.pages.length > 0) {
+    // Use pages defined in content.json
+    book.contentConfig.pages.forEach(page => {
+      if (page.pageIndex) relevantPages.add(page.pageIndex);
+    });
+  } else {
+    // Fallback: generate all pages up to maxPage
+    for(let i=1; i<=maxPage; i++) relevantPages.add(i);
+  }
   
   // Sort pages to process in order
   const pageIndices = Array.from(relevantPages).sort((a,b) => a - b);
@@ -368,21 +340,12 @@ export const generateBookPages = async (
             return keyMatches; // Fall back to key matching if no conditions
           }
       ) || [];
-      // #region agent log
-      setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:303',message:'Filtered images after evaluation',data:{pageIndex,count:imageLayers.length,images:imageLayers.map(i=>({id:i.id,label:i.label,url:i.url?.substring(0,50),layer:i.position.layer,conditions:i.conditions}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{}),0);
-      // #endregion
       
       // Sort by layer if available
        imageLayers.sort((a, b) => (a.position.layer || 0) - (b.position.layer || 0));
-      // #region agent log
-      setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:306',message:'Images sorted by layer',data:{pageIndex,layers:imageLayers.map(i=>({id:i.id,label:i.label,layer:i.position.layer,url:i.url?.substring(0,50)}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{}),0);
-      // #endregion
       
       for (const layer of imageLayers) {
           if (layer.url) {
-             // #region agent log
-             setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:309',message:'Drawing image layer',data:{pageIndex,imageId:layer.id,label:layer.label,url:layer.url?.substring(0,50),x:layer.position.x,y:layer.position.y,width:layer.position.width,height:layer.position.height,layer:layer.position.layer},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{}),0);
-             // #endregion
              try {
                  const img = await loadImage(layer.url);
                  
@@ -411,14 +374,6 @@ export const generateBookPages = async (
       
       for (const layer of textLayers) {
           let text = resolveText(layer.content);
-          
-          console.log(`[generateBookPages] Rendering text layer:`, {
-            content: text.substring(0, 50),
-            textAlign: layer.style?.textAlign,
-            textAlignLast: layer.style?.textAlignLast,
-            idmlJustification: layer.style?.idmlJustification,
-            allStyles: layer.style
-          });
           
           ctx.save();
           const x = (layer.position.x || 0) / 100 * width;
@@ -509,7 +464,6 @@ export const generateBookPages = async (
             }
           }
           
-          console.log(`[Render] Text "${text.substring(0, 30)}..." - align: ${canvasAlign}, lineHeight: ${lineHeightMultiplier.toFixed(2)}, letterSpacing: ${letterSpacing.toFixed(2)}px, textIndent: ${textIndent.toFixed(2)}px`);
           
           // Word wrapping with paragraph support
           const lines: Array<{text: string, isFirstLine: boolean}> = [];
@@ -587,7 +541,6 @@ export const generateBookPages = async (
                 currentX = xPos - totalWidth / 2;
               } else if (canvasAlign === 'right') {
                 currentX = xPos - totalWidth;
-                console.log(`[Render RIGHT] lineText="${lineText}", totalWidth=${totalWidth.toFixed(2)}, xPos=${xPos.toFixed(2)}, currentX=${currentX.toFixed(2)}, w=${w.toFixed(2)}`);
               }
               
               for (const char of lineText) {
@@ -598,7 +551,6 @@ export const generateBookPages = async (
               ctx.textAlign = savedAlign; // Restore original alignment
             } else {
               if (canvasAlign === 'right') {
-                console.log(`[Render RIGHT no-spacing] lineText="${lineText}", xPos=${xPos.toFixed(2)}, w=${w.toFixed(2)}, textWidth=${ctx.measureText(lineText).width.toFixed(2)}`);
               }
               ctx.fillText(lineText, xPos, yPos);
             }

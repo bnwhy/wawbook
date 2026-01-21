@@ -29,6 +29,14 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const { addToCart, updateItem } = useCart();
   const [, setLocation] = useLocation();
   const book = bookProduct || books.find(b => b.name === story.title);
+  
+  // #region agent log
+  useEffect(() => {
+    if (book) {
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:33',message:'Book data loaded',data:{bookId:book.id,hasCssContent:!!book.contentConfig?.cssContent,cssLength:book.contentConfig?.cssContent?.length||0,textsCount:book.contentConfig?.texts?.length||0,sampleText:book.contentConfig?.texts?.[0]?.style?.fontFamily},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})}).catch(()=>{});
+    }
+  }, [book]);
+  // #endregion
 
   const [currentView, setCurrentView] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -176,7 +184,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     return { width: 210, height: 210 };
   };
   const dims = getBookDimensions();
-  console.log('[BookPreview] Using dimensions:', dims);
   
   // Spread aspect ratio = (Single Page Width * 2) / Page Height
   const spreadAspectRatio = (dims.width * 2) / dims.height;
@@ -212,6 +219,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
             if (fontName) usedFonts.add(fontName);
         }
     });
+    
+    // #region agent log
+    if (texts.length > 0) {
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:213',message:'Text styles collected',data:{textsCount:texts.length,usedFonts:Array.from(usedFonts),sampleTextStyle:texts[0]?.style},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})}).catch(()=>{});
+    }
+    // #endregion
 
     // Local/system fonts that are NOT on Google Fonts - skip loading these
     const nonGoogleFonts = new Set([
@@ -220,6 +233,10 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       'serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'
     ]);
 
+    // #region agent log
+    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:222',message:'Used fonts detected',data:{usedFonts:Array.from(usedFonts),nonGoogleFonts:Array.from(nonGoogleFonts)},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})}).catch(()=>{});
+    // #endregion
+    
     usedFonts.forEach(font => {
          // Skip non-Google fonts
          if (nonGoogleFonts.has(font)) return;
@@ -238,7 +255,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
            }
          } catch (e) {
            // Skip fonts with special characters that break querySelector
-           console.warn(`[Fonts] Could not check/load font: ${font}`);
          }
     });
   }, [book]);
@@ -481,7 +497,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   const renderPageContent = (pageIndex: number, isLeft: boolean) => {
-      console.log('[BookPreview] renderPageContent called for page:', pageIndex, 'hasGeneratedPage:', !!generatedPages[pageIndex], 'availablePages:', Object.keys(generatedPages));
       // 1. Check if we have generated image
       if (generatedPages[pageIndex]) {
           return (
@@ -737,9 +752,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   // Convert generatedPages to array for FlipbookViewer
   const flipbookPages = useMemo(() => {
-    console.log('[BookPreview] Building flipbookPages from generatedPages:', Object.keys(generatedPages).length, 'pages available');
-    console.log('[BookPreview] generatedPages keys:', Object.keys(generatedPages));
-    
     const pages: string[] = [];
     
     // Get all page indices that exist in generatedPages, sorted
@@ -748,31 +760,38 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       .filter(k => !isNaN(k) && k !== 999) // Exclude back cover for now
       .sort((a, b) => a - b);
     
-    console.log('[BookPreview] Existing page indices (excluding 999):', existingIndices);
-    
     // Add all pages in order
     existingIndices.forEach(idx => {
       if (generatedPages[idx]) {
         pages.push(generatedPages[idx]);
-        console.log(`[BookPreview] Added page ${idx}:`, generatedPages[idx].substring(0, 80));
       }
     });
     
     // Back cover (index 999) at the end
     if (generatedPages[999]) {
       pages.push(generatedPages[999]);
-      console.log('[BookPreview] Added back cover (999)');
     }
     
-    console.log('[BookPreview] Final flipbookPages array:', pages.length, 'pages');
-    if (pages.length > 0) {
-      console.log('[BookPreview] First page URL:', pages[0]);
-    }
     return pages;
   }, [generatedPages]);
 
+  // #region agent log
+  useEffect(() => {
+    if (book?.contentConfig?.cssContent) {
+      const fontFaces = (book.contentConfig.cssContent.match(/@font-face[^}]+}/g) || []);
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:762',message:'CSS content injected',data:{hasCss:true,cssLength:book.contentConfig.cssContent.length,fontFacesCount:fontFaces.length,fontFacesSample:fontFaces.slice(0,2)},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})}).catch(()=>{});
+    } else {
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:762',message:'No CSS content',data:{hasCss:false},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})}).catch(()=>{});
+    }
+  }, [book?.contentConfig?.cssContent]);
+  // #endregion
+  
   return (
       <div className={`flex flex-col font-sans bg-stone-100 ${isModal ? 'h-full' : 'min-h-screen'}`}>
+          {/* Inject custom CSS from contentConfig (includes @font-face declarations) */}
+          {book?.contentConfig?.cssContent && (
+            <style dangerouslySetInnerHTML={{ __html: book.contentConfig.cssContent }} />
+          )}
           <style>{`
             @keyframes float {
               0%, 100% { transform: translateY(0px); }

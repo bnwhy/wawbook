@@ -1910,8 +1910,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const inputId = `font-input-${fontFamily.replace(/\s+/g, '-')}`;
     
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      // #region agent log
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:1912',message:'Font file change event',data:{fontFamily,hasFiles:!!e.target.files,filesCount:e.target.files?.length||0,currentFilesCount:files.length},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'UI'})}).catch(()=>{});
+      // #endregion
       if (e.target.files) {
         const newFiles = Array.from(e.target.files);
+        // #region agent log
+        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:1915',message:'Calling onFilesChange',data:{fontFamily,newFilesCount:newFiles.length,totalAfter:files.length+newFiles.length},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'UI'})}).catch(()=>{});
+        // #endregion
         onFilesChange([...files, ...newFiles]);
       }
     };

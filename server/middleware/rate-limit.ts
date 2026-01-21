@@ -3,11 +3,11 @@ import { logger } from '../utils/logger';
 
 /**
  * Rate limiter général pour les API
- * 100 requêtes par IP toutes les 15 minutes
+ * 100 requêtes par IP toutes les 15 minutes (1000 en dev)
  */
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limite par IP
+  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // limite plus élevée en dev
   message: 'Too many requests from this IP, please try again later',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers

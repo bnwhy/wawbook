@@ -1789,6 +1789,10 @@ export function registerObjectStorageRoutes(app: Express): void {
         const publicPaths = objectStorageService.getPublicObjectSearchPaths();
         const hasPublicPath = publicPaths.length > 0;
         
+        // #region agent log
+        console.log('[DEBUG routes.ts:1794] Font processing start:', {fontsCount:fonts.length,hasPublicPath,publicPaths});
+        // #endregion
+        
         for (const font of fonts) {
           try {
             const fontBuffer = Buffer.from(font.data, 'base64');
@@ -1813,8 +1817,15 @@ export function registerObjectStorageRoutes(app: Express): void {
             const systemFontPath = path.join(systemFontsDir, font.name);
             await fs.promises.writeFile(systemFontPath, fontBuffer);
             
+            // #region agent log
+            console.log('[DEBUG routes.ts:1821] Font saved locally:', {fontName:font.name,systemFontPath,hasPublicPath});
+            // #endregion
+            
             // Also upload to object storage if available
             if (hasPublicPath) {
+              // #region agent log
+              console.log('[DEBUG routes.ts:1825] Uploading to object storage:', {fontName:font.name});
+              // #endregion
               const publicPath = publicPaths[0];
               const { bucketName, objectName: basePath } = parseObjectPathSimple(publicPath);
               const bucket = objectStorageClient.bucket(bucketName);
@@ -1839,6 +1850,13 @@ export function registerObjectStorageRoutes(app: Express): void {
                 fontWeight: parsed.fontWeight,
                 fontStyle: parsed.fontStyle
               };
+              // #region agent log
+              console.log('[DEBUG routes.ts:1848] Font added to uploadedFonts:', {fontName:font.name,fontFamily:font.fontFamily||parsed.fontFamily,url:objectPath});
+              // #endregion
+            } else {
+              // #region agent log
+              console.log('[DEBUG routes.ts:1860] NO PUBLIC PATH - font NOT added to uploadedFonts:', {fontName:font.name,hasPublicPath});
+              // #endregion
             }
             
           } catch (fontError) {
@@ -1875,23 +1893,18 @@ export function registerObjectStorageRoutes(app: Express): void {
         bookId,
         epubResult.cssFontMapping        // NOT USED - kept for API compatibility
       );
+      
+      // 4. Inject uploaded fonts into CSS
+      let finalCssContent = epubResult.cssContent || '';
       // #region agent log
-      const fs2 = await import('fs');
-      fs2.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:1877',message:'Merged texts result',data:{mergedTextsCount:mergedTexts.length,sampleTexts:mergedTexts.slice(0,3).map(t=>({id:t.id,content:t.content?.substring(0,50),fontFamily:t.style?.fontFamily,fontSize:t.style?.fontSize}))},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})+'\n');
+      fs.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:1877',message:'Merged texts result',data:{mergedTextsCount:mergedTexts.length,sampleTexts:mergedTexts.slice(0,3).map(t=>({id:t.id,content:t.content?.substring(0,50),fontFamily:t.style?.fontFamily,fontSize:t.style?.fontSize}))},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})+'\n');
+      fs.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:1886',message:'Font injection start',data:{uploadedFontsCount:Object.keys(uploadedFonts).length,uploadedFonts:Object.entries(uploadedFonts).map(([k,v])=>({name:k,family:v.fontFamily,url:v.url,weight:v.fontWeight,style:v.fontStyle}))},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})+'\n');
       // #endregion
-
       
       if (mergedTexts.length === 0 && epubResult.textPositions.length > 0 && idmlData.textFrames.length > 0) {
         console.error(`[import-storyboard] ⚠️ ERROR: Merge produced 0 texts but inputs were non-empty!`);
         console.error(`[import-storyboard]   This should not happen. Check merge logic.`);
       }
-
-      // 4. Inject uploaded fonts into CSS
-      let finalCssContent = epubResult.cssContent || '';
-      // #region agent log
-      const fs = await import('fs');
-      fs.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:1886',message:'Font injection start',data:{uploadedFontsCount:Object.keys(uploadedFonts).length,uploadedFonts:Object.entries(uploadedFonts).map(([k,v])=>({name:k,family:v.fontFamily,url:v.url,weight:v.fontWeight,style:v.fontStyle}))},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})+'\n');
-      // #endregion
       if (Object.keys(uploadedFonts).length > 0) {
         
         const fontFaceDeclarations: string[] = [];

@@ -33,7 +33,7 @@
   ],
   "texts": [
     {
-      "id": "text-1768989476119-1-_idContainer001",
+      "id": "text-1768995839800-1-_idContainer001",
       "type": "fixed",
       "label": "_idContainer001",
       "content": "Le château,de",
@@ -76,10 +76,10 @@
   "images": [],
   "imageElements": [
     {
-      "id": "img-1768989476119-1-4okq7ifb",
+      "id": "img-1768995839800-1-rwa1021f",
       "type": "static",
       "label": "_idGenObjectAttribute-1 _idGenObjectAttribute-2",
-      "url": "/assets/books/1768989476119/images/page1_commonbg.jpg",
+      "url": "/assets/books/1768995839800/images/page1_commonbg.jpg",
       "position": {
         "x": -0.001,
         "y": 0,

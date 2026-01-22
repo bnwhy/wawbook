@@ -313,34 +313,52 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
 `;
       }
       
-      // Embed system fonts as base64 in CSS
+      // Embed fonts as base64 in CSS
       // This is the ONLY method that works reliably in Chromium headless
       const systemFontFaces: string[] = [];
+      const bookFontDir = path.join(process.cwd(), 'server', 'assets', 'books', book.id, 'font');
+      
       for (const fontName of availableFonts) {
         try {
-          // Try to find the font file in system fonts directory ONLY
-          // Do NOT use book fonts as they may be corrupted/obfuscated by InDesign
-          const fontFiles = await fs.promises.readdir(systemFontsDir);
+          let fontPath: string | null = null;
+          let fontFile: string | null = null;
           
           // Search for font file (case-insensitive, handle spaces)
-          // Prioritize files with "Regular" in the name
           const searchName = fontName.toLowerCase().replace(/\s+/g, '');
-          const candidates = fontFiles.filter(f => {
-            const fileName = f.toLowerCase().replace(/\s+/g, '').replace(/[-_]/g, '');
-            return fileName.includes(searchName) && (f.endsWith('.ttf') || f.endsWith('.otf'));
-          });
           
-          // Sort to prioritize Regular variants and larger files
-          const fontFile = candidates.sort((a, b) => {
-            const aHasRegular = a.toLowerCase().includes('regular');
-            const bHasRegular = b.toLowerCase().includes('regular');
-            if (aHasRegular && !bHasRegular) return -1;
-            if (!aHasRegular && bHasRegular) return 1;
-            return 0;
-          })[0];
+          // Helper to search in a directory
+          const searchFontInDir = async (dir: string) => {
+            try {
+              const fontFiles = await fs.promises.readdir(dir);
+              const candidates = fontFiles.filter(f => {
+                const fileName = f.toLowerCase().replace(/\s+/g, '').replace(/[-_]/g, '');
+                return fileName.includes(searchName) && (f.endsWith('.ttf') || f.endsWith('.otf'));
+              });
+              
+              return candidates.sort((a, b) => {
+                const aHasRegular = a.toLowerCase().includes('regular');
+                const bHasRegular = b.toLowerCase().includes('regular');
+                if (aHasRegular && !bHasRegular) return -1;
+                if (!aHasRegular && bHasRegular) return 1;
+                return 0;
+              })[0];
+            } catch (err) {
+              return null;
+            }
+          };
           
+          // Try book fonts first, then system fonts
+          fontFile = await searchFontInDir(bookFontDir);
           if (fontFile) {
-            const fontPath = path.join(systemFontsDir, fontFile);
+            fontPath = path.join(bookFontDir, fontFile);
+          } else {
+            fontFile = await searchFontInDir(systemFontsDir);
+            if (fontFile) {
+              fontPath = path.join(systemFontsDir, fontFile);
+            }
+          }
+          
+          if (fontPath && fontFile) {
             
             // Verify font is valid before embedding
             const fontBuffer = await fs.promises.readFile(fontPath);
@@ -518,13 +536,22 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             }
             
             const textColor = style.color || '#000000';
-            const textFontSize = style.fontSize || '16px';
+            
+            // BUGFIX: Convertir fontSize de points vers pixels comme l'EPUB
+            // L'EPUB InDesign utilise un facteur de 20px par point (840px pour 42pt)
+            // Cela garantit un rendu identique à l'EPUB
+            let textFontSize = style.fontSize || '16pt';
+            if (textFontSize.includes('pt')) {
+              const ptValue = parseFloat(textFontSize);
+              textFontSize = `${ptValue * 20}px`; // Facteur 20 comme l'EPUB InDesign
+            }
+            
             // Ensure font family is properly quoted for CSS (handles fonts with spaces like "Minion Pro")
             let rawFontFamily = style.fontFamily || defaultFont;
             // Remove existing quotes if any
             rawFontFamily = rawFontFamily.replace(/^["']|["']$/g, '');
-            // Add quotes if font name contains spaces
-            const textFontFamily = rawFontFamily.includes(' ') ? `"${rawFontFamily}"` : rawFontFamily;
+            // Use single quotes to avoid breaking the HTML style attribute (which uses double quotes)
+            const textFontFamily = rawFontFamily.includes(' ') ? `'${rawFontFamily}'` : rawFontFamily;
             const fontWeight = style.fontWeight || 'normal';
             const fontStyle = style.fontStyle || 'normal';
             const letterSpacing = style.letterSpacing || 'normal';
@@ -536,6 +563,16 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             const marginTop = style.marginTop || '0';
             const marginBottom = style.marginBottom || '0';
             
+            // BUGFIX: Extraire le stroke (contour du texte) depuis IDML
+            const strokeColor = style.strokeColor || undefined;
+            const strokeWeight = style.strokeWeight || undefined;
+            
+            // Convertir strokeWeight de points vers pixels (facteur 20)
+            // Si strokeColor défini mais pas strokeWeight, utiliser 1pt (20px) par défaut comme l'EPUB
+            const strokeWidthPx = strokeColor
+              ? (strokeWeight ? `${strokeWeight * 20}px` : '20px')
+              : undefined;
+            
             // For proper text-align, we need to clean the content properly
             // Trim all whitespace to ensure clean alignment
             content = content.trim();
@@ -546,11 +583,24 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             // Build the text-align-last CSS if defined
             const textAlignLastCss = textAlignLast ? `text-align-last:${textAlignLast};` : '';
             
-            // Use a single div with proper text styling
-            // Remove display:inline-block which can cause alignment issues
-            const containerStyle = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;height:${pos.height}px;box-sizing:border-box;overflow:hidden;font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};text-align:${textAlign};${textAlignLastCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};text-indent:${textIndent};padding-top:${marginTop};padding-bottom:${marginBottom};line-height:${lineHeight};margin:0;padding-left:0;padding-right:0;transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});transform-origin:0 0;`;
+            // BUGFIX: Utiliser pixels comme l'EPUB (facteur 20px par point)
+            // L'EPUB InDesign utilise 840px pour 42pt = 20px/pt
+            // Cela reproduit exactement le rendu EPUB
+            const finalFontSize = textFontSize;
             
-            return `<div style="${containerStyle}">${escapedContent}</div>`;
+            // Construire les propriétés de stroke (contour du texte)
+            const strokeCss = strokeColor && strokeWidthPx
+              ? `-webkit-text-stroke-color:${strokeColor};-webkit-text-stroke-width:${strokeWidthPx};text-stroke-color:${strokeColor};text-stroke-width:${strokeWidthPx};`
+              : '';
+            
+            // Utiliser flexbox pour centrer verticalement, comme l'approche EPUB
+            // overflow:visible permet au texte de déborder naturellement (comme l'EPUB)
+            const containerStyle = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;box-sizing:border-box;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};font-family:${textFontFamily};font-size:${finalFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};line-height:${lineHeight};margin:0;padding:0;transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});transform-origin:0 0;`;
+            
+            // Wrapper interne pour le texte avec text-align et text-indent
+            const innerStyle = `width:100%;text-align:${textAlign};${textAlignLastCss}text-indent:${textIndent};margin:0;padding:0;`;
+            
+            return `<div style="${containerStyle}"><div style="${innerStyle}">${escapedContent}</div></div>`;
           }).join('\n');
           
           let html = `<!DOCTYPE html>

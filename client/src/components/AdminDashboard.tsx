@@ -663,10 +663,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       }
       
-      // #region agent log
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:666',message:'Sending import request',data:{fontsCount:fontsData.length,fontsSample:fontsData.map(f=>({name:f.name,fontFamily:f.fontFamily,dataLength:f.data?.length||0})),fontFilesByFamily:Object.entries(fontFilesByFamily).map(([k,v])=>({family:k,filesCount:v.length}))},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
-      
       const response = await fetch('/api/books/import-storyboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1211,8 +1207,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const generateAvatarCombinations = (tab: any): Array<{ parts: Array<{ variantId: string; id: string; label: string }>, key: string }> => {
     if (!tab || !tab.variants) return [];
     
-    // Filter option variants only
-    const optionVariants = tab.variants.filter((v: any) => v.type === 'options' || !v.type);
+    // Filter option variants only (include color type for avatar combinations)
+    const optionVariants = tab.variants.filter((v: any) => v.type === 'options' || v.type === 'color' || !v.type);
     
     // Filter variants that have options
     const variantsWithOptions = optionVariants.filter((v: any) => v.options && v.options.length > 0);
@@ -1910,14 +1906,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const inputId = `font-input-${fontFamily.replace(/\s+/g, '-')}`;
     
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // #region agent log
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:1912',message:'Font file change event',data:{fontFamily,hasFiles:!!e.target.files,filesCount:e.target.files?.length||0,currentFilesCount:files.length},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'UI'})}).catch(()=>{});
-      // #endregion
       if (e.target.files) {
         const newFiles = Array.from(e.target.files);
-        // #region agent log
-        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:1915',message:'Calling onFilesChange',data:{fontFamily,newFilesCount:newFiles.length,totalAfter:files.length+newFiles.length},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'UI'})}).catch(()=>{});
-        // #endregion
         onFilesChange([...files, ...newFiles]);
       }
     };
@@ -6068,8 +6058,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           const targetTab = selectedBook.wizardConfig.tabs.find(t => t.id === (selectedAvatarTabId || selectedBook.wizardConfig.tabs[0]?.id));
                           if (!targetTab) return <div className="text-gray-400">Aucun personnage trouvé.</div>;
 
-                          // Filter options variants only
-                          const optionVariants = targetTab.variants.filter(v => v.type === 'options' || !v.type);
+                          // Filter options variants only (include color type for avatar filters)
+                          const optionVariants = targetTab.variants.filter(v => v.type === 'options' || v.type === 'color' || !v.type);
 
                           const combinations = generateAvatarCombinations(targetTab).filter(combo => {
                               // Apply filters
@@ -6620,8 +6610,33 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                     </span>
                                                                                 )}
                                                                             </div>
-                                                                            <div className="text-sm text-slate-700 mb-2 p-2 bg-white rounded border border-slate-100 italic">
-                                                                                "{text.content?.length > 80 ? text.content.substring(0, 80) + '...' : text.content || '(vide)'}"
+                                                                            <div 
+                                                                                className="mb-2 p-2 bg-white rounded border border-slate-100 whitespace-pre-wrap"
+                                                                                style={{
+                                                                                    // Appliquer TOUS les styles extraits de l'IDML
+                                                                                    fontFamily: text.style?.fontFamily || 'inherit',
+                                                                                    fontSize: text.style?.fontSize || 'inherit',
+                                                                                    fontWeight: text.style?.fontWeight || 'normal',
+                                                                                    fontStyle: text.style?.fontStyle || 'normal',
+                                                                                    color: text.style?.color || '#000000',
+                                                                                    textAlign: text.style?.textAlign as any || 'left',
+                                                                                    lineHeight: text.style?.lineHeight || 'normal',
+                                                                                    letterSpacing: text.style?.letterSpacing || 'normal',
+                                                                                    textDecoration: text.style?.textDecoration || 'none',
+                                                                                    textTransform: text.style?.textTransform as any || 'none',
+                                                                                    textIndent: text.style?.textIndent || '0',
+                                                                                    // Styles avancés
+                                                                                    fontStretch: text.style?.fontStretch as any,
+                                                                                    fontKerning: text.style?.fontKerning as any,
+                                                                                    fontVariantLigatures: text.style?.fontVariantLigatures as any,
+                                                                                    textDecorationColor: text.style?.textDecorationColor,
+                                                                                    textDecorationThickness: text.style?.textDecorationThickness,
+                                                                                    textUnderlineOffset: text.style?.textUnderlineOffset,
+                                                                                    direction: text.style?.direction as any,
+                                                                                    hyphens: text.style?.hyphens as any,
+                                                                                }}
+                                                                            >
+                                                                                {text.content?.length > 80 ? text.content.substring(0, 80) + '...' : text.content || '(vide)'}
                                                                             </div>
                                                                             <div className="flex flex-wrap gap-2 mb-3">
                                                                                 {text.style?.fontFamily ? (

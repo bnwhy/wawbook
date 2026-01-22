@@ -100,7 +100,7 @@ function normalizeFontName(name: string): string {
 }
 
 /**
- * Extrait les polices qui ont des données base64 embarquées
+ * Extrait les polices qui ont des données base64 embarquées ou des URLs valides
  */
 function extractFontsWithBase64(css: string): Set<string> {
   const fontsWithBase64 = new Set<string>();
@@ -111,7 +111,8 @@ function extractFontsWithBase64(css: string): Set<string> {
     const block = match[1];
     const familyMatch = block.match(/font-family\s*:\s*["']?([^;"']+)["']?/i);
     
-    if (familyMatch && (block.includes('data:font') || block.includes('data:application'))) {
+    // Accept fonts with base64 data OR any URL reference (local or remote)
+    if (familyMatch && (block.includes('data:font') || block.includes('data:application') || block.includes('url('))) {
       fontsWithBase64.add(normalizeFontName(familyMatch[1]));
     }
   }

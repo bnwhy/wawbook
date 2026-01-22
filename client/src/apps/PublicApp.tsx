@@ -12,6 +12,7 @@ import { generateStoryText } from '../services/geminiService';
 import { Switch, Route, useLocation } from 'wouter';
 import StaticPage from '../pages/StaticPage';
 import CategoryPage from '../pages/CategoryPage';
+import CataloguePage from '../pages/CataloguePage';
 import NotFound from '../pages/NotFound';
 import { BooksProvider } from '../context/BooksContext';
 import { MenuProvider } from '../context/MenuContext';
@@ -117,6 +118,15 @@ const PublicApp: React.FC = () => {
                   )}
                 </Route>
 
+                <Route path="/catalogue">
+                  <CataloguePage 
+                    onSelectBook={(title) => {
+                      startCreation(undefined, undefined, title);
+                      setLocation('/');
+                    }} 
+                  />
+                </Route>
+
                 <Route path="/cart">
                   <CartPage onEdit={(item) => {
                     startCreation(
@@ -134,24 +144,20 @@ const PublicApp: React.FC = () => {
                 <Route path="/checkout/cancel" component={CheckoutCancelPage} />
 
                 <Route path="/products/:category">
-                  {(params) => (
-                    <CategoryPage 
-                      onSelectBook={(title) => {
-                        startCreation(undefined, undefined, title);
-                        setLocation('/');
-                      }} 
-                    />
-                  )}
+                  <CataloguePage 
+                    onSelectBook={(title) => {
+                      startCreation(undefined, undefined, title);
+                      setLocation('/');
+                    }} 
+                  />
                 </Route>
                 <Route path="/occasion/:occasion">
-                  {(params) => (
-                    <CategoryPage 
-                      onSelectBook={(title) => {
-                        startCreation(undefined, undefined, title);
-                        setLocation('/');
-                      }} 
-                    />
-                  )}
+                  <CataloguePage 
+                    onSelectBook={(title) => {
+                      startCreation(undefined, undefined, title);
+                      setLocation('/');
+                    }} 
+                  />
                 </Route>
                 
                 <Route path="/for/:audience">

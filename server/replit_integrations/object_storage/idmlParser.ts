@@ -25,6 +25,49 @@ interface CharacterStyleProperties {
   baselineShift: number;
   textDecoration: string;
   textTransform: string;
+  
+  // PRIORITY 1: Transformations et crénage
+  horizontalScale?: number;      // HorizontalScale (100 = normal)
+  verticalScale?: number;        // VerticalScale (100 = normal)
+  skew?: number;                 // Skew en degrés
+  kerningMethod?: string;        // Optical, Metrics, None
+  ligatures?: boolean;           // Activer ligatures
+  noBreak?: boolean;             // Empêcher coupure
+  
+  // PRIORITY 1: Couleurs et contours
+  fillTint?: number;             // Teinte de couleur (0-100%)
+  strokeColor?: string;          // Couleur du contour
+  strokeTint?: number;           // Teinte du contour (0-100%)
+  strokeWeight?: number;         // Épaisseur du contour en points
+  overprintFill?: boolean;       // Surimpression du remplissage
+  overprintStroke?: boolean;     // Surimpression du contour
+  
+  // PRIORITY 1: Soulignement et barré avancés
+  underlineColor?: string;       // Couleur du soulignement
+  underlineWeight?: number;      // Épaisseur du soulignement
+  underlineOffset?: number;      // Décalage vertical du soulignement
+  strikeThroughColor?: string;   // Couleur du barré
+  strikeThroughWeight?: number;  // Épaisseur du barré
+  strikeThroughOffset?: number;  // Décalage vertical du barré
+  
+  // PRIORITY 1: Position
+  position?: string;             // Normal, Superscript, Subscript, etc.
+  
+  // PRIORITY 2: OpenType Features
+  otfContextualAlternate?: boolean;
+  otfDiscretionaryLigature?: boolean;
+  otfFraction?: boolean;
+  otfHistorical?: boolean;
+  otfOrdinal?: boolean;
+  otfSlashedZero?: boolean;
+  otfSwash?: boolean;
+  otfTitling?: boolean;
+  otfStylisticSets?: string;     // Liste des stylistic sets (ex: "ss01 ss03")
+  glyphForm?: string;            // JIS78, JIS83, Traditional, Expert, etc.
+  
+  // PRIORITY 2: Soulignement/barré - types
+  underlineType?: string;        // Type de ligne soulignement
+  strikeThroughType?: string;    // Type de ligne barré
 }
 
 interface ParagraphStyleProperties {
@@ -40,6 +83,70 @@ interface ParagraphStyleProperties {
   fontSize?: number;
   fontWeight?: string;
   fontStyle?: string;
+  
+  // PRIORITY 1: Retraits
+  leftIndent?: number;           // LeftIndent
+  rightIndent?: number;          // RightIndent
+  
+  // PRIORITY 1: Césure
+  hyphenate?: boolean;           // Hyphenation on/off
+  
+  // PRIORITY 1: Langue et composition
+  appliedLanguage?: string;      // Langue appliquée (ex: $ID/French)
+  composer?: string;             // Compositeur de paragraphe
+  
+  // PRIORITY 2: Interlignage avancé
+  autoLeading?: number;          // AutoLeading en % (défaut 120)
+  leadingModel?: string;         // LeadingModel (TopDown, Baseline, etc.)
+  
+  // PRIORITY 2: Lettrines
+  dropCapCharacters?: number;    // Nombre de caractères en lettrine
+  dropCapLines?: number;         // Nombre de lignes de hauteur
+  
+  // PRIORITY 2: Keep options (pagination)
+  keepWithNext?: boolean;        // Garder avec paragraphe suivant
+  keepLinesTogether?: boolean;   // Garder lignes ensemble
+  keepFirstLines?: number;       // Nb lignes à garder au début
+  keepLastLines?: number;        // Nb lignes à garder à la fin
+  keepAllLinesTogether?: boolean;// Forcer toutes lignes ensemble
+  
+  // PRIORITY 2: Justification avancée (valeurs "desired")
+  desiredLetterSpacing?: number; // Espacement lettres désiré (%)
+  desiredWordSpacing?: number;   // Espacement mots désiré (%)
+  desiredGlyphScaling?: number;  // Échelle glyphes désirée (%)
+  
+  // PRIORITY 2: Justification single word
+  singleWordJustification?: string; // Comment justifier un mot seul
+  balanceRaggedLines?: boolean;     // Équilibrer lignes non justifiées
+  
+  // PRIORITY 3: Direction (RTL support)
+  paragraphDirection?: string;   // LeftToRightDirection | RightToLeftDirection
+  
+  // PRIORITY 3: Justification complète (min/max)
+  minimumLetterSpacing?: number;
+  maximumLetterSpacing?: number;
+  minimumWordSpacing?: number;
+  maximumWordSpacing?: number;
+  minimumGlyphScaling?: number;
+  maximumGlyphScaling?: number;
+  
+  // PRIORITY 3: Césure détaillée
+  hyphenateBeforeLast?: number;      // Nb caractères avant dernier trait
+  hyphenateAfterFirst?: number;      // Nb caractères après premier trait
+  hyphenateCapitalizedWords?: boolean; // Césure des mots capitalisés
+  hyphenateLadderLimit?: number;     // Nb max traits d'union consécutifs
+  hyphenateWordsLongerThan?: number; // Longueur min des mots à couper
+  hyphenationZone?: number;          // Zone de césure en points
+  hyphenWeight?: number;             // Poids de la césure
+  
+  // PROPRIÉTÉS DE CARACTÈRE SUR PARAGRAPHSTYLE
+  // Quand le ParagraphStyle définit des propriétés de caractère (sans CharacterStyle)
+  paraHorizontalScale?: number;      // HorizontalScale défini sur ParagraphStyle
+  paraTextTransform?: string;        // Capitalization défini sur ParagraphStyle
+  paraColor?: string;                // FillColor défini sur ParagraphStyle
+  paraLetterSpacing?: number;        // Tracking défini sur ParagraphStyle
+  paraStrokeColor?: string;          // StrokeColor défini sur ParagraphStyle
+  paraStrokeWeight?: number;         // StrokeWeight défini sur ParagraphStyle (en points)
 }
 
 interface TextFrameData {
@@ -93,6 +200,10 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
     parseAttributeValue: false, // Keep as strings to avoid parsing issues
     trimValues: true,
     removeNSPrefix: true, // Remove namespace prefixes (idPkg:, etc.)
+    isArray: (tagName) => {
+      // Force ces éléments à être toujours des arrays pour gérer les multiples occurrences
+      return ['Content', 'Br', 'ParagraphStyleRange', 'CharacterStyleRange'].includes(tagName);
+    },
   });
   
   const result: IdmlData = {
@@ -103,7 +214,8 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
     pageDimensions: {}
   };
   
-  // 1. Extract colors from Resources/Swatches.xml
+  // 1. Extract colors from Resources/Swatches.xml AND Resources/Graphic.xml
+  // BUGFIX: Les couleurs peuvent être dans Swatches.xml OU Graphic.xml
   try {
     const swatchesFile = zip.file('Resources/Swatches.xml');
     if (swatchesFile) {
@@ -112,6 +224,19 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
       result.colors = extractColors(swatchesData);
     }
   } catch (e) {
+  }
+  
+  // BUGFIX: Si pas de Swatches.xml ou si vide, essayer Graphic.xml
+  if (Object.keys(result.colors).length === 0) {
+    try {
+      const graphicFile = zip.file('Resources/Graphic.xml');
+      if (graphicFile) {
+        const graphicXml = await graphicFile.async('string');
+        const graphicData = parser.parse(graphicXml);
+        result.colors = extractColors(graphicData);
+      }
+    } catch (e) {
+    }
   }
   
   // 2. Extract Character Styles and Paragraph Styles from Styles.xml
@@ -138,7 +263,7 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
       }
 
       result.characterStyles = extractCharacterStyles(stylesData, result.colors);
-      result.paragraphStyles = extractParagraphStyles(stylesData);
+      result.paragraphStyles = extractParagraphStyles(stylesData, result.colors);
       
     } else {
     }
@@ -214,22 +339,49 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
 }
 
 /**
- * Extract colors from Swatches.xml
+ * Extract colors from Swatches.xml OR Graphic.xml
+ * BUGFIX: Les couleurs peuvent être dans deux emplacements différents:
+ * - Swatches.xml: structure ColorGroup > Color
+ * - Graphic.xml: structure directe avec éléments Color
  */
-function extractColors(swatchesData: any): Record<string, string> {
+function extractColors(data: any): Record<string, string> {
   const colors: Record<string, string> = {};
   
   try {
-    const colorGroup = swatchesData?.ColorGroup;
-    if (!colorGroup) return colors;
-    
-    const swatches = Array.isArray(colorGroup) ? colorGroup : [colorGroup];
-    
-    for (const swatch of swatches) {
-      const colorSwatches = swatch?.Color;
-      if (!colorSwatches) continue;
+    // Structure 1: Swatches.xml avec ColorGroup
+    const colorGroup = data?.ColorGroup;
+    if (colorGroup) {
+      const swatches = Array.isArray(colorGroup) ? colorGroup : [colorGroup];
       
-      const colorArray = Array.isArray(colorSwatches) ? colorSwatches : [colorSwatches];
+      for (const swatch of swatches) {
+        const colorSwatches = swatch?.Color;
+        if (!colorSwatches) continue;
+        
+        const colorArray = Array.isArray(colorSwatches) ? colorSwatches : [colorSwatches];
+        
+        for (const color of colorArray) {
+          const self = color['@_Self'];
+          const name = color['@_Name'];
+          const space = color['@_Space'];
+          const colorValue = color['@_ColorValue'];
+          
+          if (self && colorValue) {
+            colors[self] = convertColorToHex(space, colorValue);
+            if (name) {
+              colors[name] = convertColorToHex(space, colorValue);
+            }
+          }
+        }
+      }
+    }
+    
+    // Structure 2: Graphic.xml avec Color directement sous la racine
+    // Essayer différents chemins possibles
+    const graphicRoot = data?.idPkg_Graphic || data?.Graphic || data;
+    const directColors = graphicRoot?.Color;
+    
+    if (directColors) {
+      const colorArray = Array.isArray(directColors) ? directColors : [directColors];
       
       for (const color of colorArray) {
         const self = color['@_Self'];
@@ -239,7 +391,7 @@ function extractColors(swatchesData: any): Record<string, string> {
         
         if (self && colorValue) {
           colors[self] = convertColorToHex(space, colorValue);
-          if (name) {
+          if (name && name !== '$ID/') {
             colors[name] = convertColorToHex(space, colorValue);
           }
         }
@@ -417,6 +569,53 @@ export function extractCharacterStyles(
       // Baseline shift - check both locations
       const baselineShift = parseFloat(charStyle['@_BaselineShift'] || props['@_BaselineShift']) || 0;
       
+      // PRIORITY 1: Transformations
+      const horizontalScale = parseFloat(charStyle['@_HorizontalScale'] || props['@_HorizontalScale']) || 100;
+      const verticalScale = parseFloat(charStyle['@_VerticalScale'] || props['@_VerticalScale']) || 100;
+      const skew = parseFloat(charStyle['@_Skew'] || props['@_Skew']) || 0;
+      
+      // PRIORITY 1: Crénage et ligatures
+      const kerningMethod = charStyle['@_KerningMethod'] || props['@_KerningMethod'];
+      const ligatures = charStyle['@_Ligatures'] === 'true' || props['@_Ligatures'] === 'true';
+      const noBreak = charStyle['@_NoBreak'] === 'true' || props['@_NoBreak'] === 'true';
+      
+      // PRIORITY 1: Couleurs et contours avancés
+      const fillTint = parseFloat(charStyle['@_FillTint'] || props['@_FillTint']);
+      const strokeColorRef = charStyle['@_StrokeColor'] || props['@_StrokeColor'];
+      const strokeColor = strokeColorRef && colors[strokeColorRef] ? colors[strokeColorRef] : undefined;
+      const strokeTint = parseFloat(charStyle['@_StrokeTint'] || props['@_StrokeTint']);
+      const strokeWeight = parseFloat(charStyle['@_StrokeWeight'] || props['@_StrokeWeight']);
+      const overprintFill = charStyle['@_OverprintFill'] === 'true' || props['@_OverprintFill'] === 'true';
+      const overprintStroke = charStyle['@_OverprintStroke'] === 'true' || props['@_OverprintStroke'] === 'true';
+      
+      // PRIORITY 1: Soulignement et barré avancés
+      const underlineColorRef = charStyle['@_UnderlineColor'] || props['@_UnderlineColor'];
+      const underlineColor = underlineColorRef && colors[underlineColorRef] ? colors[underlineColorRef] : undefined;
+      const underlineWeight = parseFloat(charStyle['@_UnderlineWeight'] || props['@_UnderlineWeight']);
+      const underlineOffset = parseFloat(charStyle['@_UnderlineOffset'] || props['@_UnderlineOffset']);
+      const underlineType = charStyle['@_UnderlineType'] || props['@_UnderlineType'];
+      
+      const strikeThroughColorRef = charStyle['@_StrikeThroughColor'] || props['@_StrikeThroughColor'];
+      const strikeThroughColor = strikeThroughColorRef && colors[strikeThroughColorRef] ? colors[strikeThroughColorRef] : undefined;
+      const strikeThroughWeight = parseFloat(charStyle['@_StrikeThroughWeight'] || props['@_StrikeThroughWeight']);
+      const strikeThroughOffset = parseFloat(charStyle['@_StrikeThroughOffset'] || props['@_StrikeThroughOffset']);
+      const strikeThroughType = charStyle['@_StrikeThroughType'] || props['@_StrikeThroughType'];
+      
+      // PRIORITY 1: Position (superscript/subscript)
+      const position = charStyle['@_Position'] || props['@_Position'];
+      
+      // PRIORITY 2: OpenType Features
+      const otfContextualAlternate = charStyle['@_OTFContextualAlternate'] === 'true' || props['@_OTFContextualAlternate'] === 'true';
+      const otfDiscretionaryLigature = charStyle['@_OTFDiscretionaryLigature'] === 'true' || props['@_OTFDiscretionaryLigature'] === 'true';
+      const otfFraction = charStyle['@_OTFFraction'] === 'true' || props['@_OTFFraction'] === 'true';
+      const otfHistorical = charStyle['@_OTFHistorical'] === 'true' || props['@_OTFHistorical'] === 'true';
+      const otfOrdinal = charStyle['@_OTFOrdinal'] === 'true' || props['@_OTFOrdinal'] === 'true';
+      const otfSlashedZero = charStyle['@_OTFSlashedZero'] === 'true' || props['@_OTFSlashedZero'] === 'true';
+      const otfSwash = charStyle['@_OTFSwash'] === 'true' || props['@_OTFSwash'] === 'true';
+      const otfTitling = charStyle['@_OTFTitling'] === 'true' || props['@_OTFTitling'] === 'true';
+      const otfStylisticSets = charStyle['@_OTFStylisticSets'] || props['@_OTFStylisticSets'];
+      const glyphForm = charStyle['@_GlyphForm'] || props['@_GlyphForm'];
+      
       // Text decoration - check both locations
       let textDecoration = 'none';
       if (charStyle['@_Underline'] === 'true' || props['@_Underline'] === 'true') {
@@ -443,7 +642,50 @@ export function extractCharacterStyles(
         letterSpacing,
         baselineShift,
         textDecoration,
-        textTransform
+        textTransform,
+        
+        // PRIORITY 1: Transformations (uniquement si différent du défaut)
+        horizontalScale: horizontalScale !== 100 ? horizontalScale : undefined,
+        verticalScale: verticalScale !== 100 ? verticalScale : undefined,
+        skew: skew !== 0 ? skew : undefined,
+        
+        // PRIORITY 1: Crénage et ligatures
+        kerningMethod: kerningMethod || undefined,
+        ligatures: ligatures || undefined,
+        noBreak: noBreak || undefined,
+        
+        // PRIORITY 1: Couleurs et contours
+        fillTint: !isNaN(fillTint) ? fillTint : undefined,
+        strokeColor: strokeColor || undefined,
+        strokeTint: !isNaN(strokeTint) ? strokeTint : undefined,
+        strokeWeight: !isNaN(strokeWeight) ? strokeWeight : undefined,
+        overprintFill: overprintFill || undefined,
+        overprintStroke: overprintStroke || undefined,
+        
+        // PRIORITY 1: Soulignement et barré avancés
+        underlineColor: underlineColor || undefined,
+        underlineWeight: !isNaN(underlineWeight) ? underlineWeight : undefined,
+        underlineOffset: !isNaN(underlineOffset) ? underlineOffset : undefined,
+        underlineType: underlineType || undefined,
+        strikeThroughColor: strikeThroughColor || undefined,
+        strikeThroughWeight: !isNaN(strikeThroughWeight) ? strikeThroughWeight : undefined,
+        strikeThroughOffset: !isNaN(strikeThroughOffset) ? strikeThroughOffset : undefined,
+        strikeThroughType: strikeThroughType || undefined,
+        
+        // PRIORITY 1: Position
+        position: position && position !== 'Normal' ? position : undefined,
+        
+        // PRIORITY 2: OpenType Features
+        otfContextualAlternate: otfContextualAlternate || undefined,
+        otfDiscretionaryLigature: otfDiscretionaryLigature || undefined,
+        otfFraction: otfFraction || undefined,
+        otfHistorical: otfHistorical || undefined,
+        otfOrdinal: otfOrdinal || undefined,
+        otfSlashedZero: otfSlashedZero || undefined,
+        otfSwash: otfSwash || undefined,
+        otfTitling: otfTitling || undefined,
+        otfStylisticSets: otfStylisticSets || undefined,
+        glyphForm: glyphForm || undefined
       };
       
       // Also store by name for easier lookup
@@ -467,19 +709,54 @@ export function extractCharacterStyles(
  * ⚠️ Important : les Paragraph Styles peuvent aussi contenir fontFamily.
  * Si une zone de texte n'a pas de Character Style appliqué, on utilise la police du Paragraph Style.
  */
-export function extractParagraphStyles(stylesData: any): Record<string, ParagraphStyleProperties> {
+export function extractParagraphStyles(stylesData: any, colors: Record<string, string> = {}): Record<string, ParagraphStyleProperties> {
   const paragraphStyles: Record<string, ParagraphStyleProperties> = {};
 
   try {
     // Try different possible root paths (XML parser transforms idPkg:Styles -> idPkg_Styles)
     const stylesRoot = stylesData?.idPkg_Styles || stylesData?.Styles || stylesData;
     
-    const rootParaStyles = stylesRoot?.RootParagraphStyleGroup?.ParagraphStyle;
-    if (!rootParaStyles) {
+    // BUGFIX: Les styles peuvent être dans RootParagraphStyleGroup OU dans des ParagraphStyleGroup imbriqués
+    // D'après la spec IDML, la structure peut être:
+    // RootParagraphStyleGroup
+    //   ├─ ParagraphStyle (styles directs)
+    //   └─ ParagraphStyleGroup (groupes de styles)
+    //        └─ ParagraphStyle (styles dans le groupe)
+    
+    const rootGroup = stylesRoot?.RootParagraphStyleGroup;
+    if (!rootGroup) {
+      console.warn('[extractParagraphStyles] No RootParagraphStyleGroup found in Styles.xml');
       return paragraphStyles;
     }
     
-    const paraStylesArray = Array.isArray(rootParaStyles) ? rootParaStyles : [rootParaStyles];
+    // Collecte tous les ParagraphStyle (directs + dans les groupes)
+    const allParaStyles: any[] = [];
+    
+    // Styles directs dans RootParagraphStyleGroup
+    if (rootGroup.ParagraphStyle) {
+      const direct = Array.isArray(rootGroup.ParagraphStyle) ? rootGroup.ParagraphStyle : [rootGroup.ParagraphStyle];
+      allParaStyles.push(...direct);
+    }
+    
+    // Styles dans les ParagraphStyleGroup imbriqués
+    if (rootGroup.ParagraphStyleGroup) {
+      const groups = Array.isArray(rootGroup.ParagraphStyleGroup) ? rootGroup.ParagraphStyleGroup : [rootGroup.ParagraphStyleGroup];
+      groups.forEach((group: any) => {
+        if (group.ParagraphStyle) {
+          const groupStyles = Array.isArray(group.ParagraphStyle) ? group.ParagraphStyle : [group.ParagraphStyle];
+          allParaStyles.push(...groupStyles);
+        }
+      });
+    }
+    
+    if (allParaStyles.length === 0) {
+      console.warn('[extractParagraphStyles] No ParagraphStyle found');
+      return paragraphStyles;
+    }
+    
+    console.log(`[extractParagraphStyles] Found ${allParaStyles.length} paragraph styles (including nested groups)`);
+    
+    const paraStylesArray = allParaStyles;
     
     // First pass: Create a temporary map with raw data
     const rawParaStylesMap = new Map<string, any>();
@@ -505,9 +782,11 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
       const props = paraStyle?.Properties || {};
       
       // Text align (justification)
+      // BUGFIX: Justification peut être soit sur l'élément ParagraphStyle directement,
+      // soit dans Properties. On vérifie les deux emplacements.
       let textAlign = 'left';
       let textAlignLast = undefined;
-      const justification = props['@_Justification'];
+      const justification = paraStyle['@_Justification'] || props['@_Justification'];
       switch (justification) {
         case 'LeftAlign':
           textAlign = 'left';
@@ -561,30 +840,93 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
         whiteSpace = 'nowrap';
       }
       
-      // Spacing
-      const marginTop = parseFloat(props['@_SpaceBefore']) || 0;
-      const marginBottom = parseFloat(props['@_SpaceAfter']) || 0;
-      const textIndent = parseFloat(props['@_FirstLineIndent']) || 0;
+      // Spacing - BUGFIX: Vérifier d'abord l'élément paraStyle, puis Properties
+      const marginTop = parseFloat(paraStyle['@_SpaceBefore'] || props['@_SpaceBefore']) || 0;
+      const marginBottom = parseFloat(paraStyle['@_SpaceAfter'] || props['@_SpaceAfter']) || 0;
+      const textIndent = parseFloat(paraStyle['@_FirstLineIndent'] || props['@_FirstLineIndent']) || 0;
+      
+      // PRIORITY 1: Retraits - BUGFIX: Vérifier d'abord l'élément paraStyle
+      const leftIndent = parseFloat(paraStyle['@_LeftIndent'] || props['@_LeftIndent']) || 0;
+      const rightIndent = parseFloat(paraStyle['@_RightIndent'] || props['@_RightIndent']) || 0;
+      
+      // PRIORITY 1: Césure - BUGFIX: Peut être "false" (string) ou false (boolean)
+      const hyphenate = paraStyle['@_Hyphenate'] === 'true' || paraStyle['@_Hyphenate'] === true ||
+                        props['@_Hyphenate'] === 'true' || props['@_Hyphenate'] === true;
+      
+      // PRIORITY 1: Langue et composition
+      const appliedLanguage = paraStyle['@_AppliedLanguage'] || props['@_AppliedLanguage'];
+      const composer = paraStyle['@_Composer'] || props['@_Composer'];
+      
+      // PRIORITY 2: Interlignage avancé - BUGFIX: Vérifier paraStyle d'abord
+      const autoLeading = parseFloat(paraStyle['@_AutoLeading'] || props['@_AutoLeading']) || 120;
+      const leadingModel = paraStyle['@_LeadingModel'] || props['@_LeadingModel'];
+      
+      // PRIORITY 2: Lettrines - BUGFIX: Vérifier paraStyle d'abord
+      const dropCapCharacters = parseInt(paraStyle['@_DropCapCharacters'] || props['@_DropCapCharacters']) || 0;
+      const dropCapLines = parseInt(paraStyle['@_DropCapLines'] || props['@_DropCapLines']) || 0;
+      
+      // PRIORITY 2: Keep options - BUGFIX: Vérifier paraStyle d'abord
+      const keepWithNext = paraStyle['@_KeepWithNext'] === 'true' || props['@_KeepWithNext'] === 'true';
+      const keepLinesTogether = paraStyle['@_KeepLinesTogether'] === 'true' || props['@_KeepLinesTogether'] === 'true';
+      const keepFirstLines = parseInt(paraStyle['@_KeepFirstLines'] || props['@_KeepFirstLines']);
+      const keepLastLines = parseInt(paraStyle['@_KeepLastLines'] || props['@_KeepLastLines']);
+      const keepAllLinesTogether = paraStyle['@_KeepAllLinesTogether'] === 'true' || props['@_KeepAllLinesTogether'] === 'true';
+      
+      // PRIORITY 2: Justification avancée (valeurs desired) - BUGFIX: Vérifier paraStyle d'abord
+      const desiredLetterSpacing = parseFloat(paraStyle['@_DesiredLetterSpacing'] || props['@_DesiredLetterSpacing']);
+      const desiredWordSpacing = parseFloat(paraStyle['@_DesiredWordSpacing'] || props['@_DesiredWordSpacing']);
+      const desiredGlyphScaling = parseFloat(paraStyle['@_DesiredGlyphScaling'] || props['@_DesiredGlyphScaling']);
+      
+      // PRIORITY 2: Single word justification - BUGFIX: Vérifier paraStyle d'abord
+      const singleWordJustification = paraStyle['@_SingleWordJustification'] || props['@_SingleWordJustification'];
+      const balanceRaggedLines = paraStyle['@_BalanceRaggedLines'] === 'true' || props['@_BalanceRaggedLines'] === 'true';
+      
+      // PRIORITY 3: Direction (RTL) - Déjà correct
+      const paragraphDirection = paraStyle['@_ParagraphDirection'] || props['@_ParagraphDirection'];
+      
+      // PRIORITY 3: Justification complète (min/max) - BUGFIX: Vérifier paraStyle d'abord
+      const minimumLetterSpacing = parseFloat(paraStyle['@_MinimumLetterSpacing'] || props['@_MinimumLetterSpacing']);
+      const maximumLetterSpacing = parseFloat(paraStyle['@_MaximumLetterSpacing'] || props['@_MaximumLetterSpacing']);
+      const minimumWordSpacing = parseFloat(paraStyle['@_MinimumWordSpacing'] || props['@_MinimumWordSpacing']);
+      const maximumWordSpacing = parseFloat(paraStyle['@_MaximumWordSpacing'] || props['@_MaximumWordSpacing']);
+      const minimumGlyphScaling = parseFloat(paraStyle['@_MinimumGlyphScaling'] || props['@_MinimumGlyphScaling']);
+      const maximumGlyphScaling = parseFloat(paraStyle['@_MaximumGlyphScaling'] || props['@_MaximumGlyphScaling']);
+      
+      // PRIORITY 3: Césure détaillée - BUGFIX: Vérifier paraStyle d'abord
+      const hyphenateBeforeLast = parseInt(paraStyle['@_HyphenateBeforeLast'] || props['@_HyphenateBeforeLast']);
+      const hyphenateAfterFirst = parseInt(paraStyle['@_HyphenateAfterFirst'] || props['@_HyphenateAfterFirst']);
+      const hyphenateCapitalizedWords = paraStyle['@_HyphenateCapitalizedWords'] === 'true' || props['@_HyphenateCapitalizedWords'] === 'true';
+      const hyphenateLadderLimit = parseInt(paraStyle['@_HyphenateLadderLimit'] || props['@_HyphenateLadderLimit']);
+      const hyphenateWordsLongerThan = parseInt(paraStyle['@_HyphenateWordsLongerThan'] || props['@_HyphenateWordsLongerThan']);
+      const hyphenationZone = parseFloat(paraStyle['@_HyphenationZone'] || props['@_HyphenationZone']);
+      const hyphenWeight = parseInt(paraStyle['@_HyphenWeight'] || props['@_HyphenWeight']);
       
       // Font properties (ParagraphStyle can have font properties when no CharacterStyle is used)
-      // In many IDMLs, paragraph style font info is stored under Properties.CharacterStyleProperties.
+      // BUGFIX: Font properties peuvent être:
+      // 1. Directement sur l'élément ParagraphStyle (attributs)
+      // 2. Dans Properties (sous-élément)
+      // 3. Dans Properties.CharacterStyleProperties (sous-sous-élément)
       const embeddedCharProps = Array.isArray(props?.CharacterStyleProperties)
         ? props.CharacterStyleProperties[0]
         : props?.CharacterStyleProperties;
 
+      // On vérifie d'abord l'élément paraStyle lui-même, puis Properties
       const fontCandidates = [paraStyle, props, embeddedCharProps].filter(Boolean);
 
       let fontFamily: string | undefined = undefined;
       let fontSize: number | undefined = undefined;
       let fontStyleName: string = '';
-
+      
+      // BUGFIX CRITIQUE: Extraire TOUTES les propriétés de caractère depuis ParagraphStyle
+      // Ces propriétés peuvent être directement sur l'élément ParagraphStyle (attributs)
       for (const c of fontCandidates) {
         if (!fontFamily) {
           const appliedFont =
             c['@_AppliedFont'] ||
             c['@_FontFamily'] ||
             (typeof c.AppliedFont === 'string' ? c.AppliedFont : c.AppliedFont?.['#text']);
-          if (appliedFont) fontFamily = appliedFont;
+          // BUGFIX: Trim les espaces (InDesign peut ajouter des espaces trailing)
+          if (appliedFont) fontFamily = String(appliedFont).trim();
         }
         if (!fontStyleName) {
           const fs = c['@_FontStyle'];
@@ -659,7 +1001,44 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
         }
       }
       
+      // EXTRACTION COMPLÈTE: Propriétés de caractère sur ParagraphStyle
+      // Ces propriétés s'appliquent au texte quand il n'y a pas de CharacterStyle
+      
+      // HorizontalScale sur ParagraphStyle
+      const paraHorizontalScale = parseFloat(paraStyle['@_HorizontalScale'] || props['@_HorizontalScale']) || undefined;
+      
+      // Capitalization sur ParagraphStyle
+      const paraCapitalization = paraStyle['@_Capitalization'] || props['@_Capitalization'];
+      let paraTextTransform: string | undefined = undefined;
+      if (paraCapitalization === 'AllCaps') {
+        paraTextTransform = 'uppercase';
+      } else if (paraCapitalization === 'SmallCaps') {
+        paraTextTransform = 'uppercase'; // Approximate
+      }
+      
+      // FillColor sur ParagraphStyle
+      const paraFillColorRef = paraStyle['@_FillColor'] || props['@_FillColor'];
+      const paraColor = paraFillColorRef && colors[paraFillColorRef] ? colors[paraFillColorRef] : undefined;
+      
+      // StrokeColor et StrokeWeight sur ParagraphStyle (contour du texte)
+      const paraStrokeColorRef = paraStyle['@_StrokeColor'] || props['@_StrokeColor'];
+      const paraStrokeColor = paraStrokeColorRef && colors[paraStrokeColorRef] ? colors[paraStrokeColorRef] : undefined;
+      const paraStrokeWeight = parseFloat(paraStyle['@_StrokeWeight'] || props['@_StrokeWeight']) || undefined;
+      
+      // Tracking sur ParagraphStyle
+      const paraTracking = parseFloat(paraStyle['@_Tracking'] || props['@_Tracking']) || undefined;
+      const paraLetterSpacing = paraTracking ? paraTracking / 1000 : undefined;
+      
       if (!fontFamily) {
+      }
+      
+      // DEBUG: Log pour voir les styles extraits
+      if (name === 'Titre livre' || self.includes('Titre livre')) {
+        console.log(`[extractParagraphStyles] ✓ Found "Titre livre" style!`);
+        console.log(`  Self: ${self}`);
+        console.log(`  Name: ${name}`);
+        console.log(`  textAlign: ${textAlign}`);
+        console.log(`  Justification: ${justification}`);
       }
       
       paragraphStyles[self] = {
@@ -673,7 +1052,69 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
         fontFamily,
         fontSize,
         fontWeight,
-        fontStyle
+        fontStyle,
+        
+        // EXTRACTION COMPLÈTE: Propriétés de caractère définies sur ParagraphStyle
+        // Ces propriétés s'appliquent au texte quand il n'y a pas de CharacterStyle
+        paraHorizontalScale: paraHorizontalScale,
+        paraTextTransform: paraTextTransform,
+        paraColor: paraColor,
+        paraLetterSpacing: paraLetterSpacing,
+        paraStrokeColor: paraStrokeColor,
+        paraStrokeWeight: paraStrokeWeight,
+        
+        // PRIORITY 1: Retraits
+        leftIndent: leftIndent !== 0 ? leftIndent : undefined,
+        rightIndent: rightIndent !== 0 ? rightIndent : undefined,
+        
+        // PRIORITY 1: Césure
+        hyphenate: hyphenate || undefined,
+        
+        // PRIORITY 1: Langue et composition
+        appliedLanguage: appliedLanguage || undefined,
+        composer: composer || undefined,
+        
+        // PRIORITY 2: Interlignage avancé
+        autoLeading: autoLeading !== 120 ? autoLeading : undefined,
+        leadingModel: leadingModel || undefined,
+        
+        // PRIORITY 2: Lettrines
+        dropCapCharacters: dropCapCharacters > 0 ? dropCapCharacters : undefined,
+        dropCapLines: dropCapLines > 0 ? dropCapLines : undefined,
+        
+        // PRIORITY 2: Keep options
+        keepWithNext: keepWithNext || undefined,
+        keepLinesTogether: keepLinesTogether || undefined,
+        keepFirstLines: !isNaN(keepFirstLines) && keepFirstLines > 0 ? keepFirstLines : undefined,
+        keepLastLines: !isNaN(keepLastLines) && keepLastLines > 0 ? keepLastLines : undefined,
+        keepAllLinesTogether: keepAllLinesTogether || undefined,
+        
+        // PRIORITY 2: Justification avancée
+        desiredLetterSpacing: !isNaN(desiredLetterSpacing) ? desiredLetterSpacing : undefined,
+        desiredWordSpacing: !isNaN(desiredWordSpacing) ? desiredWordSpacing : undefined,
+        desiredGlyphScaling: !isNaN(desiredGlyphScaling) ? desiredGlyphScaling : undefined,
+        singleWordJustification: singleWordJustification || undefined,
+        balanceRaggedLines: balanceRaggedLines || undefined,
+        
+        // PRIORITY 3: Direction
+        paragraphDirection: paragraphDirection || undefined,
+        
+        // PRIORITY 3: Justification complète
+        minimumLetterSpacing: !isNaN(minimumLetterSpacing) ? minimumLetterSpacing : undefined,
+        maximumLetterSpacing: !isNaN(maximumLetterSpacing) ? maximumLetterSpacing : undefined,
+        minimumWordSpacing: !isNaN(minimumWordSpacing) ? minimumWordSpacing : undefined,
+        maximumWordSpacing: !isNaN(maximumWordSpacing) ? maximumWordSpacing : undefined,
+        minimumGlyphScaling: !isNaN(minimumGlyphScaling) ? minimumGlyphScaling : undefined,
+        maximumGlyphScaling: !isNaN(maximumGlyphScaling) ? maximumGlyphScaling : undefined,
+        
+        // PRIORITY 3: Césure détaillée
+        hyphenateBeforeLast: !isNaN(hyphenateBeforeLast) ? hyphenateBeforeLast : undefined,
+        hyphenateAfterFirst: !isNaN(hyphenateAfterFirst) ? hyphenateAfterFirst : undefined,
+        hyphenateCapitalizedWords: hyphenateCapitalizedWords || undefined,
+        hyphenateLadderLimit: !isNaN(hyphenateLadderLimit) ? hyphenateLadderLimit : undefined,
+        hyphenateWordsLongerThan: !isNaN(hyphenateWordsLongerThan) ? hyphenateWordsLongerThan : undefined,
+        hyphenationZone: !isNaN(hyphenationZone) ? hyphenationZone : undefined,
+        hyphenWeight: !isNaN(hyphenWeight) ? hyphenWeight : undefined
       };
       
       // Also store by name
@@ -681,7 +1122,14 @@ export function extractParagraphStyles(stylesData: any): Record<string, Paragrap
         paragraphStyles[name] = paragraphStyles[self];
       }
     }
+    
+    // DEBUG: Log all extracted paragraph styles
+    console.log(`[extractParagraphStyles] Extracted ${Object.keys(paragraphStyles).length} paragraph style entries:`);
+    Object.keys(paragraphStyles).forEach(key => {
+      console.log(`  - "${key}" → textAlign: ${paragraphStyles[key].textAlign}`);
+    });
   } catch (e) {
+    console.error('[extractParagraphStyles] Error:', e);
   }
   
   return paragraphStyles;
@@ -870,15 +1318,54 @@ function extractTextFromParagraphRanges(
           }
         }
         
-        // Get text content - try multiple properties
-        const content = charRange?.Content || charRange?.['#text'] || '';
-        if (content) {
-          fullContent += content;
-        }
+        // BUGFIX: Handle mixed content (Content + Br + TextVariableInstance)
+        // In IDML, text with line breaks and variables is structured as:
+        // <CharacterStyleRange>
+        //   <Content>Text line 1</Content>
+        //   <Br/>
+        //   <Content>Text line 2</Content>
+        // </CharacterStyleRange>
+        // <CharacterStyleRange>
+        //   <TextVariableInstance Name="{var_name}" ResultText="{var_name}" />
+        // </CharacterStyleRange>
+        //
+        // The XML parser may represent Content as:
+        // - A single string: "Text line 1"
+        // - An array: ["Text line 1", "Text line 2"]
+        // - Or the Br may be a separate property
         
-        // Handle Br (line breaks)
-        if (charRange?.Br) {
-          fullContent += '\n';
+        const content = charRange?.Content;
+        const br = charRange?.Br;
+        const textVariable = charRange?.TextVariableInstance;
+        
+        if (Array.isArray(content)) {
+          // Multiple Content elements - interleave with Br
+          content.forEach((text, idx) => {
+            fullContent += text;
+            // Add newline after each content except the last
+            // (unless there's a Br element)
+            if (idx < content.length - 1 || br) {
+              fullContent += '\n';
+            }
+          });
+        } else if (content) {
+          // Single Content element
+          fullContent += content;
+          // Add newline if there's a Br element after
+          if (br) {
+            const brArray = Array.isArray(br) ? br : [br];
+            fullContent += '\n'.repeat(brArray.length);
+          }
+        } else if (textVariable) {
+          // BUGFIX: Extract text variables
+          // TextVariableInstance has Name and ResultText attributes
+          const varName = textVariable['@_Name'] || textVariable['@_ResultText'];
+          if (varName) {
+            fullContent += varName;
+          }
+        } else if (charRange?.['#text']) {
+          // Fallback to #text property
+          fullContent += charRange['#text'];
         }
       }
     }

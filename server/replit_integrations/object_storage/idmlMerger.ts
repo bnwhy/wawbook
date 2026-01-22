@@ -42,9 +42,8 @@ function resolveStyleId(
  * Sources de données :
  * - epubTextPositions : positions uniquement (x, y, width, height) depuis l'EPUB
  * - idmlData : TOUT le contenu textuel, polices et styles depuis l'IDML
- * - cssFontMapping : INUTILISÉ - conservé pour compatibilité API mais non utilisé
  * 
- * ⚠️ Les polices DOIVENT être dans l'IDML. Pas de fallback CSS.
+ * ⚠️ Les polices viennent UNIQUEMENT de l'IDML.
  * 
  * Stratégie de mapping déterministe :
  * 1. Groupe les conteneurs EPUB par page, trie par containerId numérique (_idContainer000, 001, etc.)
@@ -85,8 +84,7 @@ export function mergeEpubWithIdml(
       parentStory?: string;
     }>;
   },
-  bookId: string,
-  cssFontMapping?: Record<string, string>
+  bookId: string
 ): any[] {
   const mergedTexts: any[] = [];
   
@@ -171,7 +169,7 @@ export function mergeEpubWithIdml(
       
       console.log(`✓ [merge] MATCHED [${i}]: ${epubPos.containerId} → ${idmlFrame.id} (Story: ${idmlFrame.parentStory || 'N/A'})`);
       
-      const mergedText = createMergedText(epubPos, idmlFrame, idmlData, bookId, cssFontMapping);
+      const mergedText = createMergedText(epubPos, idmlFrame, idmlData, bookId);
       mergedTexts.push(mergedText);
     }
     
@@ -212,8 +210,7 @@ function createMergedText(
   epubPos: any,
   idmlFrame: any,
   idmlData: any,
-  bookId: string,
-  cssFontMapping?: Record<string, string>
+  bookId: string
 ): any {
   const charStyleId = idmlFrame.appliedCharacterStyle;
   const paraStyleId = idmlFrame.appliedParagraphStyle;
@@ -246,6 +243,10 @@ function createMergedText(
     console.warn(`[createMergedText] ⚠️ ParagraphStyle "${paraStyleId}" NOT FOUND in styles dictionary`);
   }
   
+  // DEBUG: Log paragraph style alignment
+  console.log(`[createMergedText]   ParaStyle textAlign: ${paraStyle.textAlign || 'UNDEFINED'}`);
+  console.log(`[createMergedText]   LocalParaProperties:`, idmlFrame.localParaProperties);
+  
   console.log(`[createMergedText]   Found CharStyle:`, charStyle);
   console.log(`[createMergedText]   CharStyle fontFamily: ${charStyle.fontFamily || 'UNDEFINED'}`);
   console.log(`[createMergedText]   ParaStyle fontFamily: ${paraStyle.fontFamily || 'UNDEFINED'}`);
@@ -270,10 +271,13 @@ function createMergedText(
   }
   
   // Priority 2: If no CharacterStyle or no font in CharacterStyle, use ParagraphStyle font properties
+  // BUGFIX: Quand le CharacterStyle n'a pas de police (style par défaut), on doit utiliser
+  // TOUTES les propriétés du ParagraphStyle, pas juste la police
   if (!charStyle.fontFamily && paraStyle.fontFamily) {
     console.log(`[createMergedText]   ✓ Using font from ParagraphStyle: ${paraStyle.fontFamily}`);
     charStyle.fontFamily = paraStyle.fontFamily;
-    if (paraStyle.fontSize && !charStyle.fontSize) {
+    // Copier toutes les propriétés du ParagraphStyle (pas seulement si undefined)
+    if (paraStyle.fontSize) {
       charStyle.fontSize = paraStyle.fontSize;
     }
     if (paraStyle.fontWeight) {
@@ -281,6 +285,19 @@ function createMergedText(
     }
     if (paraStyle.fontStyle) {
       charStyle.fontStyle = paraStyle.fontStyle;
+    }
+    // BUGFIX: Copier aussi la couleur, text-transform et stroke du ParagraphStyle
+    if (paraStyle.paraColor) {
+      charStyle.color = paraStyle.paraColor;
+    }
+    if (paraStyle.paraTextTransform) {
+      charStyle.textTransform = paraStyle.paraTextTransform;
+    }
+    if (paraStyle.paraStrokeColor) {
+      charStyle.strokeColor = paraStyle.paraStrokeColor;
+    }
+    if (paraStyle.paraStrokeWeight) {
+      charStyle.strokeWeight = paraStyle.paraStrokeWeight;
     }
   }
   
@@ -388,7 +405,7 @@ function extractLocalParagraphStyle(props: any): any {
 }
 
 /**
- * Construit l'objet de style complet
+ * Construit l'objet de style complet avec toutes les propriétés IDML extraites
  */
 function buildCompleteStyle(
   charStyle: any,
@@ -396,27 +413,324 @@ function buildCompleteStyle(
   localParaStyle: any
 ): Record<string, any> {
   const completeStyle: Record<string, any> = {
-    // Styles de caractère
-    fontFamily: charStyle.fontFamily || undefined,
-    fontSize: charStyle.fontSize ? `${charStyle.fontSize}pt` : '12pt',
-    fontWeight: charStyle.fontWeight || 'normal',
-    fontStyle: charStyle.fontStyle || 'normal',
-    color: charStyle.color || '#000000',
-    letterSpacing: charStyle.letterSpacing ? `${charStyle.letterSpacing}em` : 'normal',
+    // ==================== STYLES DE CARACTÈRE ====================
+    
+    // BUGFIX CRITIQUE: Les propriétés de caractère peuvent venir de 3 sources (priorité décroissante):
+    // 1. CharacterStyle (le plus spécifique)
+    // 2. ParagraphStyle (quand pas de CharacterStyle)
+    // 3. Valeurs par défaut
+    
+    // Base
+    fontFamily: charStyle.fontFamily || paraStyle.fontFamily || undefined,
+    fontSize: charStyle.fontSize ? `${charStyle.fontSize}pt` : 
+              paraStyle.fontSize ? `${paraStyle.fontSize}pt` : '12pt',
+    fontWeight: charStyle.fontWeight || paraStyle.fontWeight || 'normal',
+    fontStyle: charStyle.fontStyle || paraStyle.fontStyle || 'normal',
+    color: charStyle.color || paraStyle.paraColor || '#000000',
+    letterSpacing: charStyle.letterSpacing ? `${charStyle.letterSpacing}em` : 
+                   paraStyle.paraLetterSpacing ? `${paraStyle.paraLetterSpacing}em` : 'normal',
     textDecoration: charStyle.textDecoration || 'none',
-    textTransform: charStyle.textTransform || 'none',
-
-    // Styles de paragraphe (les propriétés locales surchargent les globales)
+    textTransform: charStyle.textTransform || paraStyle.paraTextTransform || 'none',
+    
+    // BUGFIX: Stroke (contour du texte) pour reproduire l'épaisseur de l'EPUB
+    strokeColor: charStyle.strokeColor || paraStyle.paraStrokeColor || undefined,
+    // Si strokeColor défini mais pas strokeWeight, utiliser 1pt par défaut (comme l'EPUB qui utilise 20px)
+    strokeWeight: charStyle.strokeWeight || paraStyle.paraStrokeWeight || 
+                  ((charStyle.strokeColor || paraStyle.paraStrokeColor) ? 1 : undefined),
+    
+    // BUGFIX: Ne pas utiliser overflow:hidden car cela coupe les lettres hautes (majuscules, polices manuscrites)
+    // L'EPUB InDesign n'utilise pas overflow:hidden, le texte peut déborder naturellement de sa zone
+    overflow: 'visible',
+    
+    // ==================== STYLES DE PARAGRAPHE ====================
+    
+    // Alignement
     textAlign: localParaStyle.textAlign || paraStyle.textAlign || 'left',
-    lineHeight: paraStyle.lineHeight || '1.2',
+    // BUGFIX: lineHeight "1" de l'IDML coupe les ascendantes (lettres hautes)
+    // Utiliser au minimum 1.3 pour laisser de l'espace, surtout pour les polices manuscrites
+    lineHeight: (paraStyle.lineHeight && paraStyle.lineHeight !== '1') ? paraStyle.lineHeight : '1.3',
     whiteSpace: paraStyle.whiteSpace || 'normal',
-
-    // Overflow pour la zone de texte
-    overflow: 'hidden',
     
     // Valeur IDML originale pour l'affichage
     idmlJustification: localParaStyle.idmlJustification || undefined
   };
+  
+  // ==================== PRIORITY 1: TRANSFORMATIONS ====================
+  
+  // Horizontal/Vertical Scale - BUGFIX: Peut venir du CharacterStyle OU du ParagraphStyle
+  const effectiveHorizontalScale = charStyle.horizontalScale || paraStyle.paraHorizontalScale;
+  
+  if (effectiveHorizontalScale && effectiveHorizontalScale !== 100) {
+    // Option 1: font-stretch (mieux pour le flux de texte)
+    const scalePercent = effectiveHorizontalScale;
+    if (scalePercent < 62.5) completeStyle.fontStretch = 'ultra-condensed';
+    else if (scalePercent < 75) completeStyle.fontStretch = 'extra-condensed';
+    else if (scalePercent < 87.5) completeStyle.fontStretch = 'condensed';
+    else if (scalePercent < 93.75) completeStyle.fontStretch = 'semi-condensed';
+    else if (scalePercent <= 106.25) completeStyle.fontStretch = 'normal';
+    else if (scalePercent < 112.5) completeStyle.fontStretch = 'semi-expanded';
+    else if (scalePercent < 125) completeStyle.fontStretch = 'expanded';
+    else if (scalePercent < 150) completeStyle.fontStretch = 'extra-expanded';
+    else completeStyle.fontStretch = 'ultra-expanded';
+    
+    // Option 2: transform (plus fidèle pour les valeurs extrêmes comme 141%)
+    // Pour les valeurs > 150%, font-stretch ne suffit pas, on utilise transform
+    if (scalePercent > 150 || scalePercent < 50) {
+      completeStyle.transform = `scaleX(${scalePercent / 100})`;
+    }
+    
+    // Stocker la valeur exacte pour référence
+    completeStyle.idmlHorizontalScale = effectiveHorizontalScale;
+  }
+  
+  if (charStyle.verticalScale && charStyle.verticalScale !== 100) {
+    completeStyle.idmlVerticalScale = charStyle.verticalScale;
+    // Note: pas d'équivalent CSS direct pour verticalScale sans transform
+    // On pourrait utiliser transform: scaleY() mais ça affecte le layout
+  }
+  
+  // Skew
+  if (charStyle.skew && charStyle.skew !== 0) {
+    // Font-style oblique avec angle (CSS Fonts Level 4)
+    completeStyle.fontStyle = `oblique ${charStyle.skew}deg`;
+    completeStyle.idmlSkew = charStyle.skew;
+  }
+  
+  // ==================== PRIORITY 1: CRÉNAGE ET LIGATURES ====================
+  
+  if (charStyle.kerningMethod) {
+    if (charStyle.kerningMethod === 'None') {
+      completeStyle.fontKerning = 'none';
+    } else if (charStyle.kerningMethod === 'Optical') {
+      completeStyle.fontKerning = 'auto';
+    } else if (charStyle.kerningMethod === 'Metrics') {
+      completeStyle.fontKerning = 'normal';
+    }
+  }
+  
+  if (charStyle.ligatures === false) {
+    completeStyle.fontVariantLigatures = 'none';
+  } else if (charStyle.ligatures === true) {
+    completeStyle.fontVariantLigatures = 'common-ligatures';
+  }
+  
+  if (charStyle.noBreak) {
+    completeStyle.whiteSpace = 'nowrap';
+  }
+  
+  // ==================== PRIORITY 1: COULEURS ET CONTOURS ====================
+  
+  if (charStyle.fillTint !== undefined && charStyle.fillTint !== 100) {
+    completeStyle.idmlFillTint = charStyle.fillTint;
+    // On pourrait ajuster l'opacité de la couleur en fonction de la teinte
+  }
+  
+  if (charStyle.strokeColor) {
+    completeStyle.webkitTextStroke = charStyle.strokeColor;
+    completeStyle.webkitTextStrokeColor = charStyle.strokeColor;
+    if (charStyle.strokeWeight) {
+      completeStyle.webkitTextStrokeWidth = `${charStyle.strokeWeight}pt`;
+    }
+  }
+  
+  if (charStyle.strokeTint !== undefined) {
+    completeStyle.idmlStrokeTint = charStyle.strokeTint;
+  }
+  
+  // ==================== PRIORITY 1: SOULIGNEMENT ET BARRÉ AVANCÉS ====================
+  
+  if (charStyle.underlineColor) {
+    completeStyle.textDecorationColor = charStyle.underlineColor;
+  }
+  
+  if (charStyle.underlineWeight !== undefined) {
+    completeStyle.textDecorationThickness = `${charStyle.underlineWeight}pt`;
+  }
+  
+  if (charStyle.underlineOffset !== undefined) {
+    completeStyle.textUnderlineOffset = `${charStyle.underlineOffset}pt`;
+  }
+  
+  if (charStyle.underlineType) {
+    // Types: Solid, Dashed, Dotted, etc.
+    const typeMap: Record<string, string> = {
+      'Solid': 'solid',
+      'Dashed': 'dashed',
+      'Dotted': 'dotted',
+      'Wavy': 'wavy'
+    };
+    completeStyle.textDecorationStyle = typeMap[charStyle.underlineType] || 'solid';
+  }
+  
+  if (charStyle.strikeThroughColor) {
+    completeStyle.idmlStrikeThroughColor = charStyle.strikeThroughColor;
+    // Note: CSS ne supporte pas de couleur différente pour le barré
+  }
+  
+  // ==================== PRIORITY 1: POSITION ====================
+  
+  if (charStyle.position) {
+    switch (charStyle.position) {
+      case 'Superscript':
+      case 'OTSuperscript':
+        completeStyle.verticalAlign = 'super';
+        completeStyle.fontSize = '0.6em';
+        break;
+      case 'Subscript':
+      case 'OTSubscript':
+        completeStyle.verticalAlign = 'sub';
+        completeStyle.fontSize = '0.6em';
+        break;
+      case 'OTNumerator':
+        completeStyle.fontFeatureSettings = '"numr"';
+        break;
+      case 'OTDenominator':
+        completeStyle.fontFeatureSettings = '"dnom"';
+        break;
+    }
+    completeStyle.idmlPosition = charStyle.position;
+  }
+  
+  // ==================== PRIORITY 2: OPENTYPE FEATURES ====================
+  
+  const fontFeatures: string[] = [];
+  
+  if (charStyle.otfContextualAlternate) fontFeatures.push('"calt"');
+  if (charStyle.otfDiscretionaryLigature) fontFeatures.push('"dlig"');
+  if (charStyle.otfFraction) fontFeatures.push('"frac"');
+  if (charStyle.otfHistorical) fontFeatures.push('"hist"');
+  if (charStyle.otfOrdinal) fontFeatures.push('"ordn"');
+  if (charStyle.otfSlashedZero) fontFeatures.push('"zero"');
+  if (charStyle.otfSwash) fontFeatures.push('"swsh"');
+  if (charStyle.otfTitling) fontFeatures.push('"titl"');
+  
+  if (charStyle.otfStylisticSets) {
+    // Format: "ss01 ss03" -> ['"ss01"', '"ss03"']
+    const sets = charStyle.otfStylisticSets.split(' ').map((s: string) => `"${s}"`);
+    fontFeatures.push(...sets);
+  }
+  
+  if (fontFeatures.length > 0) {
+    completeStyle.fontFeatureSettings = fontFeatures.join(', ');
+  }
+  
+  if (charStyle.glyphForm) {
+    completeStyle.idmlGlyphForm = charStyle.glyphForm;
+  }
+  
+  // ==================== PRIORITY 1: RETRAITS ====================
+  
+  if (paraStyle.leftIndent && paraStyle.leftIndent !== 0) {
+    completeStyle.paddingLeft = `${paraStyle.leftIndent}pt`;
+  }
+  
+  if (paraStyle.rightIndent && paraStyle.rightIndent !== 0) {
+    completeStyle.paddingRight = `${paraStyle.rightIndent}pt`;
+  }
+  
+  // ==================== PRIORITY 1: LANGUE ET COMPOSITION ====================
+  
+  if (paraStyle.appliedLanguage) {
+    // Convertir $ID/French -> fr, $ID/English -> en, etc.
+    const langMap: Record<string, string> = {
+      '$ID/French': 'fr',
+      '$ID/English': 'en',
+      '$ID/Spanish': 'es',
+      '$ID/German': 'de',
+      '$ID/Italian': 'it',
+      '$ID/Portuguese': 'pt',
+      '$ID/Dutch': 'nl',
+      '$ID/Japanese': 'ja',
+      '$ID/Chinese': 'zh',
+      '$ID/Korean': 'ko',
+      '$ID/Russian': 'ru',
+      '$ID/Arabic': 'ar',
+      '$ID/Hebrew': 'he'
+    };
+    completeStyle.lang = langMap[paraStyle.appliedLanguage] || 'en';
+    completeStyle.idmlLanguage = paraStyle.appliedLanguage;
+  }
+  
+  if (paraStyle.composer) {
+    completeStyle.idmlComposer = paraStyle.composer;
+  }
+  
+  // ==================== PRIORITY 1: CÉSURE ====================
+  
+  if (paraStyle.hyphenate) {
+    completeStyle.hyphens = 'auto';
+    completeStyle.WebkitHyphens = 'auto';
+  }
+  
+  // ==================== PRIORITY 2: INTERLIGNAGE AVANCÉ ====================
+  
+  if (paraStyle.autoLeading && paraStyle.autoLeading !== 120) {
+    completeStyle.idmlAutoLeading = paraStyle.autoLeading;
+    // Note: CSS n'a pas d'équivalent direct pour autoLeading
+  }
+  
+  if (paraStyle.leadingModel) {
+    completeStyle.idmlLeadingModel = paraStyle.leadingModel;
+  }
+  
+  // ==================== PRIORITY 2: LETTRINES ====================
+  
+  if (paraStyle.dropCapCharacters && paraStyle.dropCapLines) {
+    completeStyle.dropCap = {
+      characters: paraStyle.dropCapCharacters,
+      lines: paraStyle.dropCapLines
+    };
+    // Note: Nécessite un traitement spécial côté client avec ::first-letter
+  }
+  
+  // ==================== PRIORITY 2: KEEP OPTIONS ====================
+  
+  if (paraStyle.keepWithNext) {
+    completeStyle.pageBreakAfter = 'avoid';
+    completeStyle.breakAfter = 'avoid';
+  }
+  
+  if (paraStyle.keepAllLinesTogether) {
+    completeStyle.pageBreakInside = 'avoid';
+    completeStyle.breakInside = 'avoid';
+  }
+  
+  // ==================== PRIORITY 2: JUSTIFICATION AVANCÉE ====================
+  
+  if (paraStyle.desiredWordSpacing !== undefined) {
+    completeStyle.wordSpacing = `${paraStyle.desiredWordSpacing}%`;
+  }
+  
+  if (paraStyle.singleWordJustification) {
+    completeStyle.idmlSingleWordJustification = paraStyle.singleWordJustification;
+  }
+  
+  // ==================== PRIORITY 3: DIRECTION RTL ====================
+  
+  if (paraStyle.paragraphDirection) {
+    if (paraStyle.paragraphDirection === 'RightToLeftDirection') {
+      completeStyle.direction = 'rtl';
+      completeStyle.unicodeBidi = 'embed';
+    } else {
+      completeStyle.direction = 'ltr';
+    }
+  }
+  
+  // ==================== PRIORITY 3: CÉSURE DÉTAILLÉE ====================
+  
+  if (paraStyle.hyphenateBeforeLast !== undefined) {
+    completeStyle.hyphenateLimitChars = `${paraStyle.hyphenateBeforeLast} ${paraStyle.hyphenateAfterFirst || 2} auto`;
+  }
+  
+  if (paraStyle.hyphenateLadderLimit !== undefined) {
+    completeStyle.hyphenateLimitLines = paraStyle.hyphenateLadderLimit;
+  }
+  
+  if (paraStyle.hyphenationZone !== undefined) {
+    completeStyle.hyphenateZone = `${paraStyle.hyphenationZone}pt`;
+  }
+  
+  // ==================== ESPACEMENT ET BASELINE ====================
   
   // Ajouter textAlignLast si défini
   if (localParaStyle.textAlignLast || paraStyle.textAlignLast) {
@@ -428,6 +742,40 @@ function buildCompleteStyle(
   if (paraStyle.marginBottom) completeStyle.marginBottom = `${paraStyle.marginBottom}pt`;
   if (paraStyle.textIndent) completeStyle.textIndent = `${paraStyle.textIndent}pt`;
   if (charStyle.baselineShift) completeStyle.baselineShift = `${charStyle.baselineShift}pt`;
+  
+  // ==================== PROPRIÉTÉS IDML NON-CSS (pour référence) ====================
+  
+  // Stocker les valeurs IDML qui n'ont pas d'équivalent CSS direct
+  if (paraStyle.desiredLetterSpacing !== undefined) {
+    completeStyle.idmlDesiredLetterSpacing = paraStyle.desiredLetterSpacing;
+  }
+  if (paraStyle.minimumLetterSpacing !== undefined) {
+    completeStyle.idmlMinimumLetterSpacing = paraStyle.minimumLetterSpacing;
+  }
+  if (paraStyle.maximumLetterSpacing !== undefined) {
+    completeStyle.idmlMaximumLetterSpacing = paraStyle.maximumLetterSpacing;
+  }
+  if (paraStyle.desiredGlyphScaling !== undefined) {
+    completeStyle.idmlDesiredGlyphScaling = paraStyle.desiredGlyphScaling;
+  }
+  if (paraStyle.minimumGlyphScaling !== undefined) {
+    completeStyle.idmlMinimumGlyphScaling = paraStyle.minimumGlyphScaling;
+  }
+  if (paraStyle.maximumGlyphScaling !== undefined) {
+    completeStyle.idmlMaximumGlyphScaling = paraStyle.maximumGlyphScaling;
+  }
+  if (paraStyle.keepFirstLines !== undefined) {
+    completeStyle.idmlKeepFirstLines = paraStyle.keepFirstLines;
+  }
+  if (paraStyle.keepLastLines !== undefined) {
+    completeStyle.idmlKeepLastLines = paraStyle.keepLastLines;
+  }
+  if (charStyle.overprintFill) {
+    completeStyle.idmlOverprintFill = true;
+  }
+  if (charStyle.overprintStroke) {
+    completeStyle.idmlOverprintStroke = true;
+  }
   
   return completeStyle;
 }

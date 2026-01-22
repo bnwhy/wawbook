@@ -38,7 +38,6 @@ interface EpubExtractionResult {
   fontWarnings: FontWarning[];
   generatedWizardTabs: WizardTabServer[];
   detectedCharacteristics: Record<string, string[]>;
-  cssFontMapping: Record<string, string>; // Maps CSS class/selector to fontFamily
 }
 
 /**
@@ -153,11 +152,6 @@ export async function extractEpubFromBuffer(
   // Génère la configuration wizard depuis les caractéristiques détectées
   const generatedWizardTabs = buildWizardConfigFromCharacteristics(allCharacteristics);
   
-  // Extrait le mapping class -> fontFamily depuis le CSS (pour compatibilité uniquement)
-  // ⚠️ Ce mapping n'est PAS utilisé - les polices doivent venir de l'IDML
-  const cssFontMapping = extractCssFontMapping(allCss);
-  console.log(`[epub-extract] CSS font mapping extracted: ${Object.keys(cssFontMapping).length} classes (NOT USED - fonts must come from IDML)`);
-  
   console.log(`[epub-extract] =============== EXTRACTION COMPLETE ===============`);
   console.log(`[epub-extract] Images: ${Object.keys(imageMap).length}`);
   console.log(`[epub-extract] Text zones: ${textPositions.length}, Image elements: ${extractedImages.length}`);
@@ -177,8 +171,7 @@ export async function extractEpubFromBuffer(
     generatedWizardTabs,
     detectedCharacteristics: Object.fromEntries(
       Object.entries(allCharacteristics).map(([key, values]) => [key, Array.from(values)])
-    ),
-    cssFontMapping,
+    )
   };
 }
 
@@ -414,61 +407,4 @@ function extractPositionFromCss(
     scaleY,
     layer: defaultHeight === 30 ? 50 : 10, // Texte = 50, Image = 10
   };
-}
-
-/**
- * Extrait le mapping class/selector -> fontFamily depuis le CSS de l'EPUB
- * 
- * ⚠️ ATTENTION : Ce mapping n'est PAS utilisé pour les polices.
- * Il est conservé pour compatibilité mais les polices doivent OBLIGATOIREMENT
- * être définies dans l'IDML.
- * 
- * Hiérarchie des polices (IDML UNIQUEMENT) :
- * 1. IDML Inline Character Properties (priorité la plus haute)
- * 2. IDML Applied Character Style
- * 3. IDML Paragraph Style
- * 
- * Si aucune police n'est trouvée dans l'IDML, c'est une erreur.
- */
-function extractCssFontMapping(css: string): Record<string, string> {
-  const mapping: Record<string, string> = {};
-  
-  // Regex pour trouver les règles CSS avec font-family
-  // Supporte les sélecteurs complexes comme "span.CharOverride-1", "p.ParaOverride-1", etc.
-  const ruleRegex = /([\w.#\-\[\]=~^$*|:"\s,]+)\s*\{([^}]+)\}/gi;
-  
-  let match;
-  while ((match = ruleRegex.exec(css)) !== null) {
-    const selector = match[1].trim();
-    const declarations = match[2];
-    
-    // Ignore les @font-face et les @-rules
-    if (selector.toLowerCase().includes('font-face') || selector.startsWith('@')) {
-      continue;
-    }
-    
-    // Cherche font-family dans les déclarations
-    const fontFamilyMatch = declarations.match(/font-family\s*:\s*([^;]+)/i);
-    if (fontFamilyMatch) {
-      // Nettoie la valeur font-family
-      let fontFamily = fontFamilyMatch[1].trim();
-      // Retire les quotes et prend la première police de la liste
-      fontFamily = fontFamily.split(',')[0].trim().replace(/["']/g, '');
-      
-      // Stocke le mapping pour chaque sélecteur
-      const selectors = selector.split(',').map(s => s.trim());
-      for (const sel of selectors) {
-        if (sel && fontFamily) {
-          mapping[sel] = fontFamily;
-          // Extrait aussi juste le nom de la classe pour un fallback plus facile
-          const classMatch = sel.match(/\.([\w\-]+)/);
-          if (classMatch) {
-            mapping[`.${classMatch[1]}`] = fontFamily;
-          }
-        }
-      }
-    }
-  }
-  
-  return mapping;
 }

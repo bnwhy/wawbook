@@ -30,13 +30,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [, setLocation] = useLocation();
   const book = bookProduct || books.find(b => b.name === story.title);
   
-  // #region agent log
-  useEffect(() => {
-    if (book) {
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:33',message:'Book data loaded',data:{bookId:book.id,hasCssContent:!!book.contentConfig?.cssContent,cssLength:book.contentConfig?.cssContent?.length||0,textsCount:book.contentConfig?.texts?.length||0,sampleText:book.contentConfig?.texts?.[0]?.style?.fontFamily},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})}).catch(()=>{});
-    }
-  }, [book]);
-  // #endregion
 
   const [currentView, setCurrentView] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -220,11 +213,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         }
     });
     
-    // #region agent log
-    if (texts.length > 0) {
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:213',message:'Text styles collected',data:{textsCount:texts.length,usedFonts:Array.from(usedFonts),sampleTextStyle:texts[0]?.style},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H1'})}).catch(()=>{});
-    }
-    // #endregion
 
     // Local/system fonts that are NOT on Google Fonts - skip loading these
     const nonGoogleFonts = new Set([
@@ -233,9 +221,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       'serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'
     ]);
 
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:222',message:'Used fonts detected',data:{usedFonts:Array.from(usedFonts),nonGoogleFonts:Array.from(nonGoogleFonts)},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})}).catch(()=>{});
-    // #endregion
     
     usedFonts.forEach(font => {
          // Skip non-Google fonts
@@ -697,7 +682,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                {backCoverTexts.map(text => (
                                    <div 
                                        key={text.id}
-                                       className="absolute z-20 text-slate-800 overflow-hidden break-words whitespace-pre-wrap pointer-events-none"
+                                       className="absolute z-20 text-slate-800 break-words whitespace-pre-wrap pointer-events-none"
                                        style={{
                                            left: `${text.position.x}%`,
                                            top: `${text.position.y}%`,
@@ -775,22 +760,14 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     return pages;
   }, [generatedPages]);
 
-  // #region agent log
-  useEffect(() => {
-    if (book?.contentConfig?.cssContent) {
-      const fontFaces = (book.contentConfig.cssContent.match(/@font-face[^}]+}/g) || []);
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:762',message:'CSS content injected',data:{hasCss:true,cssLength:book.contentConfig.cssContent.length,fontFacesCount:fontFaces.length,fontFacesSample:fontFaces.slice(0,2)},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})}).catch(()=>{});
-    } else {
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:762',message:'No CSS content',data:{hasCss:false},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3'})}).catch(()=>{});
-    }
-  }, [book?.contentConfig?.cssContent]);
-  // #endregion
+  // CSS from content.json (already cleaned of font declarations during import)
+  const cssContent = book?.contentConfig?.cssContent || '';
   
   return (
       <div className={`flex flex-col font-sans bg-stone-100 ${isModal ? 'h-full' : 'min-h-screen'}`}>
-          {/* Inject custom CSS from contentConfig (includes @font-face declarations) */}
-          {book?.contentConfig?.cssContent && (
-            <style dangerouslySetInnerHTML={{ __html: book.contentConfig.cssContent }} />
+          {/* Inject CSS from contentConfig (positions and dimensions only, no fonts) */}
+          {cssContent && (
+            <style dangerouslySetInnerHTML={{ __html: cssContent }} />
           )}
           <style>{`
             @keyframes float {

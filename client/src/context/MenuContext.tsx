@@ -8,13 +8,9 @@ const INITIAL_MENU: MenuItem[] = [
     id: 'products',
     label: "Produits",
     type: "simple",
-    basePath: "/products",
+    basePath: "/catalogue",
     items: [
-      "Nouveau",
-      "Bestsellers",
-      "Livres d'enfants personnalisés",
-      "Livres à chercher et à trouver",
-      "Histoires à dormir debout"
+      "Voir tout le catalogue"
     ]
   },
   {

@@ -612,11 +612,11 @@ const Wizard: React.FC<WizardProps> = (props) => {
           </div>
 
           {/* --- RIGHT COLUMN: PREVIEW --- */}
-          <div className="hidden lg:flex flex-col gap-6 flex-1 h-[700px] sticky top-0 relative items-center justify-start px-8 pb-8 pt-[53px]">
+          <div className="hidden lg:flex flex-col gap-6 flex-1 relative items-center justify-start px-8 pb-8 pt-[53px]">
              
              {/* Avatar Visualization (Above Book) */}
              <div className="flex flex-col items-center animate-drop-in z-20 -ml-24">
-                <div className="w-72 h-72 rounded-full bg-white/70 backdrop-blur-md border border-gray-300 overflow-hidden relative shadow-2xl">
+                <div className="w-72 h-72 rounded-full bg-white/70 backdrop-blur-md border border-gray-300 overflow-hidden relative shadow-2xl flex-shrink-0">
                    {renderCharacterAvatar(
                      activeTab?.type === 'character' 
                        ? activeTabId 

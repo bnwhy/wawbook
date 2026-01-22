@@ -82,21 +82,24 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
 
         {/* Desktop Menu */}
         <div className="flex items-center gap-1">
-          {mainMenu.filter(menu => menu.id !== 'help').map((menu, idx) => (
-            <div 
-              key={idx}
-              className="relative group"
-              onMouseEnter={() => setHoveredIndex(idx)}
-              onMouseLeave={() => setHoveredIndex(null)}
-            >
-              <button className={`px-4 py-2 rounded-full font-bold text-cloud-dark/70 hover:text-cloud-blue hover:bg-cloud-light/50 transition-all flex items-center gap-1 text-lg ${hoveredIndex === idx ? 'text-cloud-blue bg-cloud-light/50' : ''}`}>
-                {menu.label}
-                <ChevronDown size={14} className={`transition-transform duration-300 ${hoveredIndex === idx ? 'rotate-180' : ''}`} />
-              </button>
+          {mainMenu.filter(menu => menu.id !== 'help').map((menu, idx) => {
+            const hasSubMenu = (menu.items && menu.items.length > 0) || (menu.columns && menu.columns.length > 0);
+            
+            return hasSubMenu ? (
+              <div 
+                key={idx}
+                className="relative group"
+                onMouseEnter={() => setHoveredIndex(idx)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                <button className={`px-4 py-2 rounded-full font-bold text-cloud-dark/70 hover:text-cloud-blue hover:bg-cloud-light/50 transition-all flex items-center gap-1 text-lg ${hoveredIndex === idx ? 'text-cloud-blue bg-cloud-light/50' : ''}`}>
+                  {menu.label}
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${hoveredIndex === idx ? 'rotate-180' : ''}`} />
+                </button>
 
-              {/* Dropdown Panel */}
-              <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-4 w-max min-w-[200px] transition-all duration-200 origin-top ${hoveredIndex === idx ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}>
-                <div className="bg-white rounded-2xl shadow-cloud border-4 border-cloud-lightest p-2 overflow-hidden">
+                {/* Dropdown Panel */}
+                <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-4 w-max min-w-[200px] transition-all duration-200 origin-top ${hoveredIndex === idx ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}>
+                  <div className="bg-white rounded-2xl shadow-cloud border-4 border-cloud-lightest p-2 overflow-hidden">
                   
                   {/* Simple List Type */}
                   {menu.type === 'simple' && menu.items && (
@@ -143,8 +146,17 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
 
                 </div>
               </div>
-            </div>
-          ))}
+              </div>
+            ) : (
+              <Link 
+                key={idx}
+                href={menu.basePath || '/'}
+                className="px-4 py-2 rounded-full font-bold text-cloud-dark/70 hover:text-cloud-blue hover:bg-cloud-light/50 transition-all text-lg"
+              >
+                {menu.label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Desktop Cart Button */}
@@ -205,19 +217,22 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
             </div>
 
             <div className="p-4 flex flex-col gap-2">
-               {mainMenu.filter(menu => menu.id !== 'help').map((menu, idx) => (
-                 <div key={idx} className="border-b border-cloud-lightest last:border-0 pb-2 mb-2">
-                   <button 
-                     onClick={() => setExpandedMobileItem(expandedMobileItem === idx ? null : idx)}
-                     className="w-full flex items-center justify-between py-3 px-2 font-bold text-cloud-dark text-lg"
-                   >
-                     {menu.label}
-                     <ChevronDown size={20} className={`transition-transform ${expandedMobileItem === idx ? 'rotate-180 text-cloud-blue' : 'text-gray-300'}`} />
-                   </button>
-                   
-                   {/* Mobile Submenu */}
-                   <div className={`overflow-hidden transition-all duration-300 ${expandedMobileItem === idx ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                     <div className="bg-cloud-lightest/50 rounded-xl p-3 flex flex-col gap-2 mb-2">
+               {mainMenu.filter(menu => menu.id !== 'help').map((menu, idx) => {
+                 const hasSubMenu = (menu.items && menu.items.length > 0) || (menu.columns && menu.columns.length > 0);
+                 
+                 return hasSubMenu ? (
+                   <div key={idx} className="border-b border-cloud-lightest last:border-0 pb-2 mb-2">
+                     <button 
+                       onClick={() => setExpandedMobileItem(expandedMobileItem === idx ? null : idx)}
+                       className="w-full flex items-center justify-between py-3 px-2 font-bold text-cloud-dark text-lg"
+                     >
+                       {menu.label}
+                       <ChevronDown size={20} className={`transition-transform ${expandedMobileItem === idx ? 'rotate-180 text-cloud-blue' : 'text-gray-300'}`} />
+                     </button>
+                     
+                     {/* Mobile Submenu */}
+                     <div className={`overflow-hidden transition-all duration-300 ${expandedMobileItem === idx ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                       <div className="bg-cloud-lightest/50 rounded-xl p-3 flex flex-col gap-2 mb-2">
                         {menu.type === 'simple' && menu.items && menu.items.map((item, i) => (
                           <Link key={i} href={getLink(menu.basePath || '', item as string)} onClick={() => setMobileMenuOpen(false)} className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">
                             {item as string}
@@ -240,10 +255,20 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                             ))}
                           </div>
                         ))}
+                       </div>
                      </div>
                    </div>
-                 </div>
-               ))}
+                 ) : (
+                   <Link
+                     key={idx}
+                     href={menu.basePath || '/'}
+                     onClick={() => setMobileMenuOpen(false)}
+                     className="w-full py-3 px-2 font-bold text-cloud-dark text-lg hover:text-cloud-blue border-b border-cloud-lightest last:border-0"
+                   >
+                     {menu.label}
+                   </Link>
+                 );
+               })}
             </div>
 
             <div className="mt-auto p-6 border-t border-cloud-light">

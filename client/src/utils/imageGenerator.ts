@@ -274,16 +274,26 @@ export const generateBookPages = async (
 
   // Generate each page
   // Use configured pages from content.json if available
-  const relevantPages = new Set<number>([0, 999]);
+  const relevantPages = new Set<number>();
   
   if (book.contentConfig?.pages && book.contentConfig.pages.length > 0) {
     // Use pages defined in content.json
     book.contentConfig.pages.forEach(page => {
-      if (page.pageIndex) relevantPages.add(page.pageIndex);
+      if (page.pageIndex !== undefined) relevantPages.add(page.pageIndex);
     });
   } else {
     // Fallback: generate all pages up to maxPage
     for(let i=1; i<=maxPage; i++) relevantPages.add(i);
+  }
+  
+  // Add cover (0) and back cover (999) only if they have content
+  if (book.contentConfig?.images?.some(img => img.position?.pageIndex === 0) ||
+      book.contentConfig?.texts?.some(txt => txt.position?.pageIndex === 0)) {
+    relevantPages.add(0);
+  }
+  if (book.contentConfig?.images?.some(img => img.position?.pageIndex === 999) ||
+      book.contentConfig?.texts?.some(txt => txt.position?.pageIndex === 999)) {
+    relevantPages.add(999);
   }
   
   // Sort pages to process in order

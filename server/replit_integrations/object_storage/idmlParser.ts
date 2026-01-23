@@ -222,7 +222,7 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
     attributeNamePrefix: '@_',
     textNodeName: '#text',
     parseAttributeValue: false, // Keep as strings to avoid parsing issues
-    trimValues: true,
+    trimValues: true, // Retour à true (valeur originale)
     removeNSPrefix: true, // Remove namespace prefixes (idPkg:, etc.)
     isArray: (tagName) => {
       // Force ces éléments à être toujours des arrays pour gérer les multiples occurrences
@@ -1444,7 +1444,6 @@ function extractTextFromParagraphRanges(
           // TextVariableInstance has Name and ResultText attributes
           const varName = textVariable['@_Name'] || textVariable['@_ResultText'];
           if (varName) {
-            // Garder tel quel - les accolades sont déjà dans l'IDML
             fullContent += varName;
           }
         } else if (charRange?.['#text']) {

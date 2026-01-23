@@ -33,7 +33,7 @@
   ],
   "texts": [
     {
-      "id": "text-1769147003557-1-_idContainer001",
+      "id": "text-1769148131636-1-_idContainer001",
       "type": "variable",
       "label": "_idContainer001",
       "content": "Le château\nde\n{{child_name}}",
@@ -84,10 +84,10 @@
   "images": [],
   "imageElements": [
     {
-      "id": "img-1769147003557-1-5tkfto8x",
+      "id": "img-1769148131636-1-t28a6vrl",
       "type": "static",
       "label": "_idGenObjectAttribute-1 _idGenObjectAttribute-2",
-      "url": "/assets/books/1769147003557/images/page1_commonbg.jpg",
+      "url": "/assets/books/1769148131636/images/page1_commonbg.jpg",
       "position": {
         "x": -0.001,
         "y": 0,

@@ -33,12 +33,14 @@
   ],
   "texts": [
     {
-      "id": "text-1769145618850-1-_idContainer001",
-      "type": "fixed",
+      "id": "text-1769147003557-1-_idContainer001",
+      "type": "variable",
       "label": "_idContainer001",
-      "content": "Le château\nde\nchild_name",
-      "originalContent": "Le château\nde\nchild_name",
-      "variables": [],
+      "content": "Le château\nde\n{{child_name}}",
+      "originalContent": "Le château\nde\n{child_name}",
+      "variables": [
+        "child_name"
+      ],
       "style": {
         "fontFamily": "Sue Ellen Francisco",
         "fontSize": "42pt",
@@ -82,10 +84,10 @@
   "images": [],
   "imageElements": [
     {
-      "id": "img-1769145618850-1-f3hf5l92",
+      "id": "img-1769147003557-1-5tkfto8x",
       "type": "static",
       "label": "_idGenObjectAttribute-1 _idGenObjectAttribute-2",
-      "url": "/assets/books/1769145618850/images/page1_commonbg.jpg",
+      "url": "/assets/books/1769147003557/images/page1_commonbg.jpg",
       "position": {
         "x": -0.001,
         "y": 0,

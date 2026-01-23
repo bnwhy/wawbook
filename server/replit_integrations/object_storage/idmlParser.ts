@@ -1444,11 +1444,7 @@ function extractTextFromParagraphRanges(
           // TextVariableInstance has Name and ResultText attributes
           const varName = textVariable['@_Name'] || textVariable['@_ResultText'];
           if (varName) {
-            console.log('[IDML Parser] TextVariable detected:', {
-              varName,
-              hasBraces: varName.includes('{'),
-              fullContent: fullContent.substring(0, 50)
-            });
+            // Garder tel quel - les accolades sont déjà dans l'IDML
             fullContent += varName;
           }
         } else if (charRange?.['#text']) {

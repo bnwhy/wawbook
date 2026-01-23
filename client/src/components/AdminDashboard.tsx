@@ -734,6 +734,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       await updateBook(updatedBook);
       setDraftBook(updatedBook);
 
+      // Afficher message de succès avec détails
+      const successMsg = missingPages.length === 0
+        ? `✅ Storyboard importé avec succès ! ${expectedPages} page(s) générée(s).`
+        : `⚠️ Storyboard importé mais ${missingPages.length} page(s) manquante(s).`;
+      
+      toast.success(successMsg);
+      
       setShowIdmlImporter(false);
       setEpubFile(null);
       setIdmlFile(null);
@@ -743,6 +750,25 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       // Show custom fonts upload status
       if (result.uploadedFonts && Object.keys(result.uploadedFonts).length > 0) {
         toast.success(`${Object.keys(result.uploadedFonts).length} police(s) uploadée(s)`);
+      }
+      
+      // Vérifier si toutes les pages ont été générées
+      const expectedPages = result.contentConfig.pages?.length || 0;
+      const generatedPages = result.generatedPages || [];
+      const missingPages = [];
+      
+      for (let i = 1; i <= expectedPages; i++) {
+        if (!generatedPages.includes(i)) {
+          missingPages.push(i);
+        }
+      }
+      
+      if (missingPages.length > 0) {
+        toast.error(
+          `⚠️ Erreur de génération : ${missingPages.length} page(s) non générée(s) (${missingPages.join(', ')}). ` +
+          `Vérifiez les logs serveur pour plus de détails.`,
+          { duration: 10000 }
+        );
       }
       
       // Store detected fonts from IDML
@@ -774,10 +800,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           );
         }
       }
-      
-      // Show success with detailed info
-      const successMsg = `Import terminé : ${result.stats.pages} pages, ${result.stats.texts} textes, ${result.stats.images} images`;
-      toast.success(successMsg);
       
       // Show warning if no texts were created
       if (result.debug && result.stats.texts === 0) {

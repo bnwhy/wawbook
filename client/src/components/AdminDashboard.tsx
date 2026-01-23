@@ -6659,6 +6659,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         {text.style.color}
                                                                                     </span>
                                                                                 )}
+                                                                                {text.style?.idmlHorizontalScale && text.style.idmlHorizontalScale !== 100 && (
+                                                                                    <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium" title="Espacement horizontal (HorizontalScale IDML)">
+                                                                                        H: {text.style.idmlHorizontalScale}%
+                                                                                    </span>
+                                                                                )}
+                                                                                {text.style?.idmlVerticalScale && text.style.idmlVerticalScale !== 100 && (
+                                                                                    <span className="text-[10px] bg-cyan-100 text-cyan-700 px-1.5 py-0.5 rounded font-medium" title="Espacement vertical (VerticalScale IDML)">
+                                                                                        V: {text.style.idmlVerticalScale}%
+                                                                                    </span>
+                                                                                )}
+                                                                                {text.style?.letterSpacing && text.style.letterSpacing !== 'normal' && (
+                                                                                    <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-medium" title="Espacement entre lettres (Tracking IDML)">
+                                                                                        Tracking: {text.style.letterSpacing}
+                                                                                    </span>
+                                                                                )}
                                                                                 {text.style?.textAlign && (
                                                                                     <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium" title={`Alignement du texte${text.style.idmlJustification ? ` (IDML: ${text.style.idmlJustification})` : ''}`}>
                                                                                         {(() => {
@@ -6686,32 +6701,81 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         })()}
                                                                                     </span>
                                                                                 )}
+                                                                                {/* Badge variables - TOUJOURS afficher pour debug */}
+                                                                                <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-medium" title={`Variables: ${JSON.stringify({orig: text.originalContent?.substring(0,50), vars: text.variables, type: text.type})}`}>
+                                                                                    📝 {text.originalContent?.includes('{') ? text.originalContent.match(/\{([^}]+)\}/g)?.[0] || 'N/A' : text.type === 'variable' ? 'VAR' : 'FIXE'}
+                                                                                </span>
                                                                             </div>
-                                                                            <select
-                                                                                value={text.type === 'variable' ? text.content : ''}
-                                                                                onChange={(e) => {
-                                                                                    const newVal = e.target.value;
-                                                                                    const currentBook = draftBook || selectedBook;
-                                                                                    const updatedTexts = currentBook.contentConfig.texts.map((t: any) =>
-                                                                                        t.id === text.id 
-                                                                                            ? { ...t, type: newVal ? 'variable' : 'fixed', content: newVal || text.content }
-                                                                                            : t
-                                                                                    );
-                                                                                    const updatedBook = {
-                                                                                        ...currentBook,
-                                                                                        contentConfig: {
-                                                                                            ...currentBook.contentConfig,
-                                                                                            texts: updatedTexts
-                                                                                        }
-                                                                                    };
-                                                                                    setDraftBook(updatedBook);
-                                                                                }}
-                                                                                className="w-full text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-white focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral"
-                                                                            >
-                                                                                {variableOptions.map(opt => (
-                                                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                                                ))}
-                                                                            </select>
+                                                                            
+                                                                            {/* Affichage des variables détectées */}
+                                                                            {((text.variables && text.variables.length > 0) || text.type === 'variable') && (
+                                                                                <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+                                                                                    <div className="text-[10px] font-bold text-blue-700 mb-1">
+                                                                                        {text.type === 'variable' ? 'Texte variable' : 'Variables détectées'} :
+                                                                                    </div>
+                                                                                    <div className="flex flex-wrap gap-2">
+                                                                                        {/* Extraire variables du originalContent si disponible */}
+                                                                                        {(() => {
+                                                                                            const varsToDisplay = text.variables && text.variables.length > 0 
+                                                                                                ? text.variables 
+                                                                                                : (text.originalContent?.match(/\{([^}]+)\}/g) || []).map((v: string) => v.replace(/[{}]/g, ''));
+                                                                                            
+                                                                                            if (varsToDisplay.length === 0 && text.type === 'variable') {
+                                                                                                // Afficher le contenu comme variable
+                                                                                                return (
+                                                                                                    <div className="text-[10px] bg-white border border-blue-300 rounded px-2 py-1">
+                                                                                                        <div className="font-mono text-purple-600">Contenu: {text.content}</div>
+                                                                                                        <div className="text-slate-500 text-[9px] mt-0.5">Type: variable</div>
+                                                                                                    </div>
+                                                                                                );
+                                                                                            }
+                                                                                            
+                                                                                            return varsToDisplay.map((variable: string) => {
+                                                                                            // Parser la variable pour extraire hero et attribut
+                                                                                            const parts = variable.replace(/[{}]/g, '').split('_');
+                                                                                            const knownHeroes = ['child', 'father', 'mother', 'boy', 'girl', 'grandpa', 'grandma'];
+                                                                                            const knownAttributes = ['name', 'hero', 'skin', 'hair', 'eyes', 'gender'];
+                                                                                            
+                                                                                            let heroId = '';
+                                                                                            let attributeId = '';
+                                                                                            
+                                                                                            if (parts.length === 2) {
+                                                                                                const [part1, part2] = parts;
+                                                                                                if (knownHeroes.includes(part1)) {
+                                                                                                    heroId = part1;
+                                                                                                    attributeId = part2;
+                                                                                                } else if (knownHeroes.includes(part2)) {
+                                                                                                    heroId = part2;
+                                                                                                    attributeId = part1;
+                                                                                                } else if (knownAttributes.includes(part1)) {
+                                                                                                    attributeId = part1;
+                                                                                                    heroId = part2;
+                                                                                                } else {
+                                                                                                    attributeId = part1;
+                                                                                                    heroId = part2;
+                                                                                                }
+                                                                                            }
+                                                                                            
+                                                                                            const wizardFormat = heroId && attributeId ? `${heroId}_${attributeId}` : variable;
+                                                                                            
+                                                                                            return (
+                                                                                                <div key={variable} className="text-[10px] bg-white border border-blue-300 rounded px-2 py-1">
+                                                                                                    <div className="font-mono text-purple-600">IDML: {`{${variable}}`}</div>
+                                                                                                    <div className="text-blue-700 mt-0.5">
+                                                                                                        → Wizard: <span className="font-semibold">{wizardFormat}</span>
+                                                                                                    </div>
+                                                                                                    {heroId && attributeId && (
+                                                                                                        <div className="text-slate-500 text-[9px] mt-0.5">
+                                                                                                            Hero: {heroId} | Attr: {attributeId}
+                                                                                                        </div>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            );
+                                                                                            });
+                                                                                        })()}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     ))}
                                                                 </div>

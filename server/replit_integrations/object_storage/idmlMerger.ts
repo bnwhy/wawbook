@@ -268,6 +268,21 @@ function createMergedText(
     if (inline.fontStyle) {
       charStyle.fontStyle = inline.fontStyle;
     }
+    // Appliquer letterSpacing inline (tracking)
+    if (inline.letterSpacing !== undefined) {
+      console.log(`[createMergedText]   ✓ Using inline letterSpacing: ${inline.letterSpacing}em`);
+      charStyle.letterSpacing = inline.letterSpacing;
+    }
+    // Appliquer les transformations inline
+    if (inline.horizontalScale !== undefined) {
+      charStyle.horizontalScale = inline.horizontalScale;
+    }
+    if (inline.verticalScale !== undefined) {
+      charStyle.verticalScale = inline.verticalScale;
+    }
+    if (inline.skew !== undefined) {
+      charStyle.skew = inline.skew;
+    }
   }
   
   // Priority 2: If no CharacterStyle or no font in CharacterStyle, use ParagraphStyle font properties
@@ -401,6 +416,42 @@ function extractLocalParagraphStyle(props: any): any {
     console.log(`[extractLocalParagraphStyle] Mapped to textAlign: ${localStyle.textAlign}, textAlignLast: ${localStyle.textAlignLast}`);
   }
   
+  // Espacements de paragraphe (locaux)
+  if (props['@_SpaceBefore']) {
+    localStyle.marginTop = parseFloat(props['@_SpaceBefore']);
+    console.log(`[extractLocalParagraphStyle] Local SpaceBefore: ${localStyle.marginTop}pt`);
+  }
+  
+  if (props['@_SpaceAfter']) {
+    localStyle.marginBottom = parseFloat(props['@_SpaceAfter']);
+    console.log(`[extractLocalParagraphStyle] Local SpaceAfter: ${localStyle.marginBottom}pt`);
+  }
+  
+  if (props['@_FirstLineIndent']) {
+    localStyle.textIndent = parseFloat(props['@_FirstLineIndent']);
+    console.log(`[extractLocalParagraphStyle] Local FirstLineIndent: ${localStyle.textIndent}pt`);
+  }
+  
+  if (props['@_LeftIndent']) {
+    localStyle.leftIndent = parseFloat(props['@_LeftIndent']);
+    console.log(`[extractLocalParagraphStyle] Local LeftIndent: ${localStyle.leftIndent}pt`);
+  }
+  
+  if (props['@_RightIndent']) {
+    localStyle.rightIndent = parseFloat(props['@_RightIndent']);
+    console.log(`[extractLocalParagraphStyle] Local RightIndent: ${localStyle.rightIndent}pt`);
+  }
+  
+  // Interlignage (Leading)
+  if (props['@_Leading'] && props['@_Leading'] !== 'Auto') {
+    const leading = parseFloat(props['@_Leading']);
+    const pointSize = parseFloat(props['@_PointSize']) || 12;
+    if (leading && pointSize) {
+      localStyle.lineHeight = (leading / pointSize).toFixed(2);
+      console.log(`[extractLocalParagraphStyle] Local Leading: ${leading}pt → lineHeight: ${localStyle.lineHeight}`);
+    }
+  }
+  
   return localStyle;
 }
 
@@ -448,7 +499,9 @@ function buildCompleteStyle(
     textAlign: localParaStyle.textAlign || paraStyle.textAlign || 'left',
     // BUGFIX: lineHeight "1" de l'IDML coupe les ascendantes (lettres hautes)
     // Utiliser au minimum 1.3 pour laisser de l'espace, surtout pour les polices manuscrites
-    lineHeight: (paraStyle.lineHeight && paraStyle.lineHeight !== '1') ? paraStyle.lineHeight : '1.3',
+    // Priorité: local > style > défaut
+    lineHeight: localParaStyle.lineHeight || 
+                ((paraStyle.lineHeight && paraStyle.lineHeight !== '1') ? paraStyle.lineHeight : '1.3'),
     whiteSpace: paraStyle.whiteSpace || 'normal',
     
     // Valeur IDML originale pour l'affichage
@@ -620,12 +673,16 @@ function buildCompleteStyle(
   
   // ==================== PRIORITY 1: RETRAITS ====================
   
-  if (paraStyle.leftIndent && paraStyle.leftIndent !== 0) {
-    completeStyle.paddingLeft = `${paraStyle.leftIndent}pt`;
+  // Priorité: local > style (pour les retraits locaux)
+  const effectiveLeftIndent = localParaStyle.leftIndent !== undefined ? localParaStyle.leftIndent : paraStyle.leftIndent;
+  const effectiveRightIndent = localParaStyle.rightIndent !== undefined ? localParaStyle.rightIndent : paraStyle.rightIndent;
+  
+  if (effectiveLeftIndent && effectiveLeftIndent !== 0) {
+    completeStyle.paddingLeft = `${effectiveLeftIndent}pt`;
   }
   
-  if (paraStyle.rightIndent && paraStyle.rightIndent !== 0) {
-    completeStyle.paddingRight = `${paraStyle.rightIndent}pt`;
+  if (effectiveRightIndent && effectiveRightIndent !== 0) {
+    completeStyle.paddingRight = `${effectiveRightIndent}pt`;
   }
   
   // ==================== PRIORITY 1: LANGUE ET COMPOSITION ====================
@@ -737,10 +794,14 @@ function buildCompleteStyle(
     completeStyle.textAlignLast = localParaStyle.textAlignLast || paraStyle.textAlignLast;
   }
   
-  // Ajoute l'espacement si défini
-  if (paraStyle.marginTop) completeStyle.marginTop = `${paraStyle.marginTop}pt`;
-  if (paraStyle.marginBottom) completeStyle.marginBottom = `${paraStyle.marginBottom}pt`;
-  if (paraStyle.textIndent) completeStyle.textIndent = `${paraStyle.textIndent}pt`;
+  // Ajoute l'espacement si défini (priorité: local > style)
+  const effectiveMarginTop = localParaStyle.marginTop !== undefined ? localParaStyle.marginTop : paraStyle.marginTop;
+  const effectiveMarginBottom = localParaStyle.marginBottom !== undefined ? localParaStyle.marginBottom : paraStyle.marginBottom;
+  const effectiveTextIndent = localParaStyle.textIndent !== undefined ? localParaStyle.textIndent : paraStyle.textIndent;
+  
+  if (effectiveMarginTop) completeStyle.marginTop = `${effectiveMarginTop}pt`;
+  if (effectiveMarginBottom) completeStyle.marginBottom = `${effectiveMarginBottom}pt`;
+  if (effectiveTextIndent) completeStyle.textIndent = `${effectiveTextIndent}pt`;
   if (charStyle.baselineShift) completeStyle.baselineShift = `${charStyle.baselineShift}pt`;
   
   // ==================== PROPRIÉTÉS IDML NON-CSS (pour référence) ====================

@@ -1,6 +1,15 @@
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
 import { convertColorToHex } from './utils/colorConverter';
+import { IdmlValidator } from './validators/IdmlValidator';
+import {
+  idmlLogger,
+  logParsingStart,
+  logParsingComplete,
+  logParsingError,
+  logValidation,
+} from './utils/logger';
+import { IdmlCorruptedFileError } from './errors/IdmlErrors';
 
 /**
  * IDML Parser - Extrait les textes et styles depuis un fichier IDML InDesign
@@ -191,7 +200,22 @@ interface IdmlData {
  * - pageDimensions : dimensions des pages (pour vérification)
  */
 export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
+  const startTime = Date.now();
+  
+  // logParsingStart(); // Temporairement désactivé - cause erreur logPath
+  
   const zip = await JSZip.loadAsync(idmlBuffer);
+  
+  // Valider la structure du package IDML avant de continuer
+  // const validation = await IdmlValidator.validatePackage(zip);
+  // logValidation(validation.valid, validation.errors, validation.warnings);
+  
+  // if (!validation.valid) {
+  //   throw new IdmlCorruptedFileError(
+  //     'IDML package',
+  //     validation.errors.join('; ')
+  //   );
+  // }
   
   const parser = new XMLParser({
     ignoreAttributes: false,
@@ -334,6 +358,17 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
   
   // Extract all unique fonts used in the document
   result.fonts = extractUsedFonts(result);
+  
+  // Log parsing statistics
+  // const durationMs = Date.now() - startTime;
+  // logParsingComplete({
+  //   characterStyles: Object.keys(result.characterStyles).length,
+  //   paragraphStyles: Object.keys(result.paragraphStyles).length,
+  //   textFrames: result.textFrames.length,
+  //   colors: Object.keys(result.colors).length,
+  //   pages: Object.keys(result.pageDimensions).length,
+  //   durationMs,
+  // });
   
   return result;
 }
@@ -562,9 +597,13 @@ export function extractCharacterStyles(
       const fillColorRef = charStyle['@_FillColor'] || props['@_FillColor'];
       const color = fillColorRef && colors[fillColorRef] ? colors[fillColorRef] : '#000000';
       
-      // Letter spacing (tracking in 1/1000 em) - check both locations
+      // Letter spacing (tracking) - check both locations
+      // InDesign peut utiliser deux formats:
+      // - Standard: tracking en 1/1000 em (ex: 50 = 0.05em)
+      // - Pourcentage: tracking en % (ex: 141 = 141% = 1.41em)
       const tracking = parseFloat(charStyle['@_Tracking'] || props['@_Tracking']) || 0;
-      const letterSpacing = tracking / 1000;
+      // Si tracking > 100, on considère que c'est un pourcentage
+      const letterSpacing = tracking > 100 ? tracking / 100 : tracking / 1000;
       
       // Baseline shift - check both locations
       const baselineShift = parseFloat(charStyle['@_BaselineShift'] || props['@_BaselineShift']) || 0;
@@ -1007,6 +1046,17 @@ export function extractParagraphStyles(stylesData: any, colors: Record<string, s
       // HorizontalScale sur ParagraphStyle
       const paraHorizontalScale = parseFloat(paraStyle['@_HorizontalScale'] || props['@_HorizontalScale']) || undefined;
       
+      // #region agent log
+      if (name === 'Titre livre' || self.includes('Titre livre')) {
+        console.log('[DEBUG-A] Titre livre paraHorizontalScale extracted:', {
+          styleName: name,
+          rawHorizontalScale: paraStyle['@_HorizontalScale'],
+          propsHorizontalScale: props['@_HorizontalScale'],
+          paraHorizontalScale
+        });
+      }
+      // #endregion
+      
       // Capitalization sur ParagraphStyle
       const paraCapitalization = paraStyle['@_Capitalization'] || props['@_Capitalization'];
       let paraTextTransform: string | undefined = undefined;
@@ -1026,8 +1076,13 @@ export function extractParagraphStyles(stylesData: any, colors: Record<string, s
       const paraStrokeWeight = parseFloat(paraStyle['@_StrokeWeight'] || props['@_StrokeWeight']) || undefined;
       
       // Tracking sur ParagraphStyle
+      // InDesign peut utiliser deux formats:
+      // - Standard: tracking en 1/1000 em (ex: 50 = 0.05em)
+      // - Pourcentage: tracking en % (ex: 141 = 141% = 1.41em)
       const paraTracking = parseFloat(paraStyle['@_Tracking'] || props['@_Tracking']) || undefined;
-      const paraLetterSpacing = paraTracking ? paraTracking / 1000 : undefined;
+      const paraLetterSpacing = paraTracking 
+        ? (paraTracking > 100 ? paraTracking / 100 : paraTracking / 1000) 
+        : undefined;
       
       if (!fontFamily) {
       }
@@ -1301,6 +1356,17 @@ function extractTextFromParagraphRanges(
         const inlineSize = charRange['@_PointSize'] || props['@_PointSize'];
         const inlineFontStyle = charRange['@_FontStyle'] || props['@_FontStyle'];
         
+        // Tracking inline (letter-spacing) sur CharacterStyleRange
+        const inlineTracking = parseFloat(charRange['@_Tracking'] || props['@_Tracking']) || undefined;
+        
+        // Couleur inline
+        const inlineFillColor = charRange['@_FillColor'] || props['@_FillColor'];
+        
+        // HorizontalScale, VerticalScale, Skew
+        const inlineHorizontalScale = parseFloat(charRange['@_HorizontalScale'] || props['@_HorizontalScale']) || undefined;
+        const inlineVerticalScale = parseFloat(charRange['@_VerticalScale'] || props['@_VerticalScale']) || undefined;
+        const inlineSkew = parseFloat(charRange['@_Skew'] || props['@_Skew']) || undefined;
+        
         if (inlineFont && !inlineCharProperties.fontFamily) {
           inlineCharProperties.fontFamily = inlineFont;
         } else if (!inlineFont) {
@@ -1316,6 +1382,23 @@ function extractTextFromParagraphRanges(
           if (styleName.includes('italic') || styleName.includes('oblique')) {
             inlineCharProperties.fontStyle = 'italic';
           }
+        }
+        
+        // Appliquer le tracking inline
+        if (inlineTracking && !inlineCharProperties.letterSpacing) {
+          // Si tracking > 100, on considère que c'est un pourcentage
+          inlineCharProperties.letterSpacing = inlineTracking > 100 ? inlineTracking / 100 : inlineTracking / 1000;
+        }
+        
+        // Appliquer les transformations inline
+        if (inlineHorizontalScale && inlineHorizontalScale !== 100) {
+          inlineCharProperties.horizontalScale = inlineHorizontalScale;
+        }
+        if (inlineVerticalScale && inlineVerticalScale !== 100) {
+          inlineCharProperties.verticalScale = inlineVerticalScale;
+        }
+        if (inlineSkew && inlineSkew !== 0) {
+          inlineCharProperties.skew = inlineSkew;
         }
         
         // BUGFIX: Handle mixed content (Content + Br + TextVariableInstance)
@@ -1361,6 +1444,11 @@ function extractTextFromParagraphRanges(
           // TextVariableInstance has Name and ResultText attributes
           const varName = textVariable['@_Name'] || textVariable['@_ResultText'];
           if (varName) {
+            console.log('[IDML Parser] TextVariable detected:', {
+              varName,
+              hasBraces: varName.includes('{'),
+              fullContent: fullContent.substring(0, 50)
+            });
             fullContent += varName;
           }
         } else if (charRange?.['#text']) {

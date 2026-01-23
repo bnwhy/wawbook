@@ -583,9 +583,13 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             // Build the text-align-last CSS if defined
             const textAlignLastCss = textAlignLast ? `text-align-last:${textAlignLast};` : '';
             
-            // BUGFIX: Utiliser pixels comme l'EPUB (facteur 20px par point)
-            // L'EPUB InDesign utilise 840px pour 42pt = 20px/pt
-            // Cela reproduit exactement le rendu EPUB
+            // BUGFIX: Reproduire exactement l'approche EPUB avec conteneur géant + scale
+            // L'EPUB utilise un conteneur 20x plus grand que la zone finale, puis scale(0.05)
+            // Cela permet au texte de 840px d'avoir assez d'espace
+            
+            const scaleFactor = 20; // Facteur 20 comme l'EPUB (42pt → 840px)
+            const containerWidth = pos.width * scaleFactor;
+            const containerHeight = pos.height * scaleFactor;
             const finalFontSize = textFontSize;
             
             // Construire les propriétés de stroke (contour du texte)
@@ -593,9 +597,31 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               ? `-webkit-text-stroke-color:${strokeColor};-webkit-text-stroke-width:${strokeWidthPx};text-stroke-color:${strokeColor};text-stroke-width:${strokeWidthPx};`
               : '';
             
-            // Utiliser flexbox pour centrer verticalement, comme l'approche EPUB
+            // Conteneur avec dimensions géantes, puis scale pour revenir à la taille finale
             // overflow:visible permet au texte de déborder naturellement (comme l'EPUB)
-            const containerStyle = `position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.width}px;box-sizing:border-box;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};font-family:${textFontFamily};font-size:${finalFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};line-height:${lineHeight};margin:0;padding:0;transform:rotate(${pos.rotation || 0}deg) scale(${pos.scaleX || 1}, ${pos.scaleY || 1});transform-origin:0 0;`;
+            // BUGFIX: Ajouter font-stretch et scaleX() pour HorizontalScale
+            const fontStretchCss = style.fontStretch ? `font-stretch:${style.fontStretch};` : '';
+            
+            
+            // BUGFIX: Appliquer HorizontalScale via scaleX()
+            // Pour texte centré, compenser le décalage en ajustant left
+            let transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor})`;
+            let finalPosX = pos.x;
+            
+            if (style.idmlHorizontalScale && style.idmlHorizontalScale !== 100) {
+              const scaleXValue = style.idmlHorizontalScale / 100;
+              transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor}) scaleX(${scaleXValue})`;
+              
+              // Pour texte centré, compenser le décalage
+              // Le scaleX étire depuis transform-origin (0,0), donc décale vers la droite
+              // On doit reculer de la moitié de l'espace supplémentaire créé
+              if (textAlign === 'center') {
+                const extraWidth = pos.width * (scaleXValue - 1); // 557.29 * 0.41 = ~228px
+                finalPosX = pos.x - (extraWidth / 2); // 36 - 114 = -78px
+              }
+            }
+            
+            const containerStyle = `position:absolute;left:${finalPosX}px;top:${finalPosY}px;width:${containerWidth}px;height:${containerHeight}px;box-sizing:border-box;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};font-family:${textFontFamily};font-size:${finalFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}${fontStretchCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};line-height:${lineHeight};margin:0;padding:0;transform:${transformValue};transform-origin:0 0;`;
             
             // Wrapper interne pour le texte avec text-align et text-indent
             const innerStyle = `width:100%;text-align:${textAlign};${textAlignLastCss}text-indent:${textIndent};margin:0;padding:0;`;

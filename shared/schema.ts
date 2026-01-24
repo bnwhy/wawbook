@@ -89,12 +89,37 @@ export const imageElementSchema = z.object({
   conditions: z.array(conditionSchema).optional(),
 });
 
+/**
+ * Schéma pour la condition parsée d'un segment conditionnel
+ * Pattern de naming IDML: (TXTCOND)tabId_variantId-optionId (même format que les images)
+ */
+export const parsedConditionSchema = z.object({
+  tabId: z.string(),      // ex: "hero-child"
+  variantId: z.string(),  // ex: "gender"
+  optionId: z.string(),   // ex: "boy"
+});
+
+/**
+ * Schéma pour un segment de texte conditionnel (partie d'un TextFrame)
+ * Utilisé pour le texte conditionnel InDesign (AppliedConditions)
+ */
+export const conditionalSegmentSchema = z.object({
+  text: z.string(),                              // Le texte du segment
+  condition: z.string().optional(),              // Nom de la condition (ex: "(TXTCOND)hero-child_gender-boy")
+  parsedCondition: parsedConditionSchema.optional(), // Condition parsée pour le matching wizard
+  variables: z.array(z.string()).optional(),     // Variables dans ce segment (ex: ["name_child"])
+  appliedCharacterStyle: z.string().optional(),  // Style de caractère appliqué
+});
+
 export const textElementSchema = z.object({
   id: z.string(),
   content: z.string(),
   position: positionSchema.optional(),
   style: textStyleSchema.optional(),
   fontFamily: z.string().optional(),
+  // Support du texte conditionnel InDesign
+  conditionalSegments: z.array(conditionalSegmentSchema).optional(),
+  availableConditions: z.array(z.string()).optional(),
 });
 
 export const pageSchema = z.object({
@@ -126,6 +151,8 @@ export type BookConfiguration = z.infer<typeof bookConfigurationSchema>;
 export type Position = z.infer<typeof positionSchema>;
 export type ImageElement = z.infer<typeof imageElementSchema>;
 export type TextElement = z.infer<typeof textElementSchema>;
+export type ConditionalSegment = z.infer<typeof conditionalSegmentSchema>;
+export type ParsedCondition = z.infer<typeof parsedConditionSchema>;
 
 // ===== BOOKS =====
 export const books = pgTable("books", {

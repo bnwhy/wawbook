@@ -158,6 +158,23 @@ interface ParagraphStyleProperties {
   paraStrokeWeight?: number;         // StrokeWeight défini sur ParagraphStyle (en points)
 }
 
+/**
+ * Segment conditionnel - un morceau de texte avec une condition optionnelle
+ * Pattern de naming: TXTCOND_personnage_variant-option
+ * Ex: TXTCOND_hero-child_gender-boy, TXTCOND_hero-child_gender-girl
+ */
+interface ConditionalTextSegment {
+  text: string;                    // Le texte du segment
+  condition?: string;              // Nom de la condition (ex: "TXTCOND_hero-child_gender-boy")
+  parsedCondition?: {              // Condition parsée pour le matching wizard
+    character: string;             // ex: "hero-child"
+    variant: string;               // ex: "gender"
+    option: string;                // ex: "boy"
+  };
+  variables?: string[];            // Variables dans ce segment (ex: ["name_child"])
+  appliedCharacterStyle?: string;  // Style de caractère appliqué
+}
+
 interface TextFrameData {
   id: string;
   name: string;
@@ -165,6 +182,10 @@ interface TextFrameData {
   content: string;
   variables: string[];
   conditions?: Array<{ name: string; visible: boolean }>;
+  // NOUVEAU: Segments conditionnels pour le texte conditionnel InDesign
+  conditionalSegments?: ConditionalTextSegment[];
+  // Liste des conditions uniques utilisées dans ce TextFrame
+  availableConditions?: string[];
   appliedCharacterStyle?: string;
   appliedParagraphStyle?: string;
   localParaProperties?: any; // Local paragraph properties (overrides)
@@ -299,7 +320,7 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
   
   const storyFiles = allFiles.filter(f => f.match(/^Stories\/Story_.*\.xml$/i));
   
-  // Map: storyId -> story content + styles
+  // Map: storyId -> story content + styles + segments conditionnels
   const storiesMap: Record<string, {
     content: string;
     variables: string[];
@@ -307,6 +328,8 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
     appliedParagraphStyle?: string;
     localParaProperties?: any;
     inlineCharProperties?: any;
+    conditionalSegments?: ConditionalTextSegment[];
+    availableConditions?: string[];
   }> = {};
   
   for (const storyPath of storyFiles) {
@@ -325,7 +348,10 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
             appliedCharacterStyle: storyInfo.appliedCharStyle,
             appliedParagraphStyle: storyInfo.appliedParaStyle,
             localParaProperties: storyInfo.localParaProperties,
-            inlineCharProperties: storyInfo.inlineCharProperties
+            inlineCharProperties: storyInfo.inlineCharProperties,
+            // NOUVEAU: Segments conditionnels
+            conditionalSegments: storyInfo.conditionalSegments,
+            availableConditions: storyInfo.availableConditions
           };
         }
       }
@@ -1046,17 +1072,6 @@ export function extractParagraphStyles(stylesData: any, colors: Record<string, s
       // HorizontalScale sur ParagraphStyle
       const paraHorizontalScale = parseFloat(paraStyle['@_HorizontalScale'] || props['@_HorizontalScale']) || undefined;
       
-      // #region agent log
-      if (name === 'Titre livre' || self.includes('Titre livre')) {
-        console.log('[DEBUG-A] Titre livre paraHorizontalScale extracted:', {
-          styleName: name,
-          rawHorizontalScale: paraStyle['@_HorizontalScale'],
-          propsHorizontalScale: props['@_HorizontalScale'],
-          paraHorizontalScale
-        });
-      }
-      // #endregion
-      
       // Capitalization sur ParagraphStyle
       const paraCapitalization = paraStyle['@_Capitalization'] || props['@_Capitalization'];
       let paraTextTransform: string | undefined = undefined;
@@ -1201,6 +1216,8 @@ function extractStoryContent(storyData: any): {
   appliedParaStyle: string;
   localParaProperties?: any;
   inlineCharProperties?: any;
+  conditionalSegments?: ConditionalTextSegment[];
+  availableConditions?: string[];
 } | null {
   try {
     const outerStory = storyData?.Story;
@@ -1230,7 +1247,17 @@ function extractStoryContent(storyData: any): {
       });
     }
     
-    return {
+    const result: {
+      storyId: string;
+      content: string;
+      variables: string[];
+      appliedCharStyle: string;
+      appliedParaStyle: string;
+      localParaProperties?: any;
+      inlineCharProperties?: any;
+      conditionalSegments?: ConditionalTextSegment[];
+      availableConditions?: string[];
+    } = {
       storyId,
       content: extracted.content,
       variables,
@@ -1239,6 +1266,16 @@ function extractStoryContent(storyData: any): {
       localParaProperties: extracted.localParaProperties,
       inlineCharProperties: extracted.inlineCharProperties
     };
+    
+    // NOUVEAU: Ajouter les segments conditionnels si présents
+    if (extracted.conditionalSegments && extracted.conditionalSegments.length > 0) {
+      result.conditionalSegments = extracted.conditionalSegments;
+      result.availableConditions = extracted.availableConditions;
+      console.log(`[extractStoryContent] Story ${storyId} has ${extracted.conditionalSegments.length} conditional segments`);
+      console.log(`[extractStoryContent] Available conditions: ${extracted.availableConditions?.join(', ')}`);
+    }
+    
+    return result;
   } catch (e) {
     console.error('[extractStoryContent] Error:', e);
     return null;
@@ -1246,7 +1283,73 @@ function extractStoryContent(storyData: any): {
 }
 
 /**
+ * Parse le nom d'une condition IDML pour extraire les informations de matching
+ * Pattern: (TXTCOND)tabId_variantId-optionId (même format que les images)
+ * 
+ * Exemples:
+ *   "Condition/(TXTCOND)hero-child_gender-boy" → { tabId: "hero-child", variantId: "gender", optionId: "boy" }
+ *   "(TXTCOND)hero-child_gender-girl" → { tabId: "hero-child", variantId: "gender", optionId: "girl" }
+ *   "Version_Garcon" → null (ancien format non supporté)
+ */
+function parseConditionName(conditionRef: string): { tabId: string; variantId: string; optionId: string } | null {
+  // Retirer le préfixe "Condition/" si présent
+  const conditionName = conditionRef.replace(/^Condition\//, '');
+  
+  // Pattern: (TXTCOND)tabId_variantId-optionId
+  const match = conditionName.match(/^\(TXTCOND\)([^_]+)_([^-]+)-(.+)$/);
+  if (match) {
+    return {
+      tabId: match[1],      // ex: "hero-child"
+      variantId: match[2],  // ex: "gender"
+      optionId: match[3]    // ex: "boy"
+    };
+  }
+  
+  return null;
+}
+
+/**
+ * Extrait le texte d'un CharacterStyleRange (contenu + variables)
+ */
+function extractTextFromCharRange(charRange: any): { text: string; variables: string[] } {
+  let text = '';
+  const variables: string[] = [];
+  
+  const content = charRange?.Content;
+  const br = charRange?.Br;
+  const textVariable = charRange?.TextVariableInstance;
+  
+  if (Array.isArray(content)) {
+    content.forEach((t, idx) => {
+      text += t;
+      if (idx < content.length - 1 || br) {
+        text += '\n';
+      }
+    });
+  } else if (content) {
+    text += content;
+    if (br) {
+      const brArray = Array.isArray(br) ? br : [br];
+      text += '\n'.repeat(brArray.length);
+    }
+  } else if (textVariable) {
+    let varName = textVariable['@_Name'] || textVariable['@_ResultText'];
+    if (varName) {
+      if (!varName.startsWith('{')) varName = '{' + varName;
+      if (!varName.endsWith('}')) varName = varName + '}';
+      text += varName;
+      variables.push(varName.replace(/[{}]/g, ''));
+    }
+  } else if (charRange?.['#text']) {
+    text += charRange['#text'];
+  }
+  
+  return { text, variables };
+}
+
+/**
  * Extract text content from ParagraphStyleRange structure
+ * Retourne maintenant aussi les segments conditionnels pour le texte conditionnel InDesign
  */
 function extractTextFromParagraphRanges(
   paraRanges: any,
@@ -1258,12 +1361,19 @@ function extractTextFromParagraphRanges(
   appliedParaStyle: string; 
   localParaProperties?: any;
   inlineCharProperties?: any;
+  conditionalSegments?: ConditionalTextSegment[];
+  availableConditions?: string[];
 } {
   let fullContent = '';
   let appliedCharStyle = '';
   let appliedParaStyle = '';
   let localParaProperties: any = null;
   let inlineCharProperties: any = null;
+  
+  // NOUVEAU: Segments conditionnels
+  const conditionalSegments: ConditionalTextSegment[] = [];
+  const availableConditionsSet = new Set<string>();
+  let hasAnyCondition = false;
   
   if (!paraRanges) {
     return { content: '', appliedCharStyle: '', appliedParaStyle: '' };
@@ -1299,6 +1409,30 @@ function extractTextFromParagraphRanges(
       
       for (const charRange of charArray) {
         appliedCharStyle = charRange['@_AppliedCharacterStyle'] || appliedCharStyle;
+        
+        // NOUVEAU: Capturer la condition appliquée sur ce CharacterStyleRange
+        const appliedConditions = charRange['@_AppliedConditions'];
+        let conditionName: string | undefined;
+        let parsedCondition: { tabId: string; variantId: string; optionId: string } | undefined;
+        
+        // #region agent log
+        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:1417',message:'CharRange AppliedConditions',data:{appliedConditions,hasCondition:!!appliedConditions},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
+        if (appliedConditions) {
+          // AppliedConditions peut être une string ou un array
+          // Format: "Condition/TXTCOND_hero-child_gender-boy" ou "Condition/Version_Garcon"
+          const conditionRef = Array.isArray(appliedConditions) ? appliedConditions[0] : appliedConditions;
+          conditionName = conditionRef.replace(/^Condition\//, '');
+          availableConditionsSet.add(conditionName);
+          hasAnyCondition = true;
+          
+          // Parser la condition pour le matching wizard
+          const parsed = parseConditionName(conditionRef);
+          if (parsed) {
+            parsedCondition = parsed;
+          }
+        }
         
         // Extract inline character properties (direct on CharacterStyleRange)
         if (!inlineCharProperties) {
@@ -1417,38 +1551,30 @@ function extractTextFromParagraphRanges(
         // - An array: ["Text line 1", "Text line 2"]
         // - Or the Br may be a separate property
         
-        const content = charRange?.Content;
-        const br = charRange?.Br;
-        const textVariable = charRange?.TextVariableInstance;
+        // Utiliser la fonction helper pour extraire le texte
+        const { text: segmentText, variables: segmentVars } = extractTextFromCharRange(charRange);
         
-        if (Array.isArray(content)) {
-          // Multiple Content elements - interleave with Br
-          content.forEach((text, idx) => {
-            fullContent += text;
-            // Add newline after each content except the last
-            // (unless there's a Br element)
-            if (idx < content.length - 1 || br) {
-              fullContent += '\n';
-            }
-          });
-        } else if (content) {
-          // Single Content element
-          fullContent += content;
-          // Add newline if there's a Br element after
-          if (br) {
-            const brArray = Array.isArray(br) ? br : [br];
-            fullContent += '\n'.repeat(brArray.length);
+        // Ajouter au contenu complet (pour rétrocompatibilité)
+        fullContent += segmentText;
+        
+        // NOUVEAU: Créer un segment conditionnel si du texte est présent
+        if (segmentText) {
+          const segment: ConditionalTextSegment = {
+            text: segmentText,
+            appliedCharacterStyle: appliedCharStyle
+          };
+          
+          if (conditionName) {
+            segment.condition = conditionName;
           }
-        } else if (textVariable) {
-          // BUGFIX: Extract text variables
-          // TextVariableInstance has Name and ResultText attributes
-          const varName = textVariable['@_Name'] || textVariable['@_ResultText'];
-          if (varName) {
-            fullContent += varName;
+          if (parsedCondition) {
+            segment.parsedCondition = parsedCondition;
           }
-        } else if (charRange?.['#text']) {
-          // Fallback to #text property
-          fullContent += charRange['#text'];
+          if (segmentVars.length > 0) {
+            segment.variables = segmentVars;
+          }
+          
+          conditionalSegments.push(segment);
         }
       }
     }
@@ -1457,13 +1583,34 @@ function extractTextFromParagraphRanges(
     fullContent += '\n';
   }
   
-  return {
+  // Construire le résultat
+  const result: {
+    content: string;
+    appliedCharStyle: string;
+    appliedParaStyle: string;
+    localParaProperties?: any;
+    inlineCharProperties?: any;
+    conditionalSegments?: ConditionalTextSegment[];
+    availableConditions?: string[];
+  } = {
     content: fullContent.trim(),
     appliedCharStyle,
     appliedParaStyle,
     localParaProperties,
     inlineCharProperties
   };
+  
+  // Ajouter les segments conditionnels seulement si des conditions sont présentes
+  if (hasAnyCondition && conditionalSegments.length > 0) {
+    result.conditionalSegments = conditionalSegments;
+    result.availableConditions = Array.from(availableConditionsSet);
+  }
+  
+  // #region agent log
+  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:extractTextFromParagraphRanges-exit',message:'Extraction result',data:{hasAnyCondition,segmentsCount:conditionalSegments.length,conditions:Array.from(availableConditionsSet)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
+  return result;
 }
 
 /**
@@ -1648,6 +1795,8 @@ function extractTextFramesFromSpread(
     appliedParagraphStyle?: string;
     localParaProperties?: any;
     inlineCharProperties?: any;
+    conditionalSegments?: ConditionalTextSegment[];
+    availableConditions?: string[];
   }>
 ): TextFrameData[] {
   const textFrames: TextFrameData[] = [];
@@ -1731,7 +1880,7 @@ function extractTextFramesFromSpread(
       }
       
       // Create TextFrameData entry
-      textFrames.push({
+      const textFrameData: TextFrameData = {
         id: textFrameId,
         name: textFrameId,
         pageIndex,
@@ -1744,7 +1893,15 @@ function extractTextFramesFromSpread(
         position: { x, y, width, height },
         layoutOrder,
         parentStory
-      });
+      };
+      
+      // NOUVEAU: Ajouter les segments conditionnels si présents
+      if (storyData.conditionalSegments && storyData.conditionalSegments.length > 0) {
+        textFrameData.conditionalSegments = storyData.conditionalSegments;
+        textFrameData.availableConditions = storyData.availableConditions;
+      }
+      
+      textFrames.push(textFrameData);
       
     }
   } catch (e) {

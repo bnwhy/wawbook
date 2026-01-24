@@ -1450,10 +1450,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         } catch (e: any) {
           results.idml = { valid: false, error: e.message };
           console.error('[check-import] IDML error:', e.message);
-          // #region agent log
-          const logEntry5 = JSON.stringify({location:'routes.ts:check-import:idmlError',message:'IDML parsing failed',data:{errorMessage:e.message,errorStack:e.stack},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'}) + '\n';
-          fs.appendFileSync(logPath, logEntry5);
-          // #endregion
         }
       }
       
@@ -1935,6 +1931,9 @@ export function registerObjectStorageRoutes(app: Express): void {
         epubTextPositionsCount: epubResult.textPositions.length,
         idmlTextFramesCount: idmlData.textFrames.length,
         mergedTextsCount: mergedTexts.length,
+        conditionalTextFrames: idmlData.textFrames.filter((tf: any) => 
+          tf.conditionalSegments && tf.conditionalSegments.length > 0
+        ).length,
         epubTextPositionsSample: epubResult.textPositions.slice(0, 3).map(tp => ({
           containerId: tp.containerId,
           pageIndex: tp.pageIndex,
@@ -1964,7 +1963,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         success: true,
         bookId,
         contentConfig,
-        wizardConfig: epubResult.generatedWizardTabs,
+        wizardConfig: epubResult.generatedWizardTabs || [],
         fontWarnings: fontWarnings,
         uploadedFonts,
         detectedFonts: idmlData.fonts || [],
@@ -1973,7 +1972,10 @@ export function registerObjectStorageRoutes(app: Express): void {
           texts: mergedTexts.length,
           images: epubResult.imageElements.length,
           uploadedCustomFonts: Object.keys(uploadedFonts).length,
-          detectedFonts: (idmlData.fonts || []).length
+          detectedFonts: (idmlData.fonts || []).length,
+          conditionalTextFrames: idmlData.textFrames.filter((tf: any) => 
+            tf.conditionalSegments && tf.conditionalSegments.length > 0
+          ).length
         },
         debug: debugInfo
       });

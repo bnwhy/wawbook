@@ -74,6 +74,15 @@ export function mergeEpubWithIdml(
       content: string;
       variables: string[];
       conditions?: Array<{ name: string; visible: boolean }>;
+      // NOUVEAU: Segments conditionnels pour le texte conditionnel InDesign
+      conditionalSegments?: Array<{
+        text: string;
+        condition?: string;
+        parsedCondition?: { tabId: string; variantId: string; optionId: string };
+        variables?: string[];
+        appliedCharacterStyle?: string;
+      }>;
+      availableConditions?: string[];
       appliedCharacterStyle?: string;
       appliedParagraphStyle?: string;
       localParaProperties?: any;
@@ -341,7 +350,8 @@ function createMergedText(
   // Construit l'objet de style complet
   const completeStyle = buildCompleteStyle(charStyle, paraStyle, localParaStyle);
   
-  return {
+  // Construire l'objet résultat
+  const result: any = {
     id: `text-${bookId}-${epubPos.pageIndex}-${epubPos.containerId}`,
     type: isVariable ? 'variable' : 'fixed',
     label: epubPos.containerId,
@@ -362,6 +372,26 @@ function createMergedText(
     appliedParagraphStyle: paraStyleId,
     appliedCharacterStyle: charStyleId
   };
+  
+  // NOUVEAU: Ajouter les segments conditionnels si présents
+  if (idmlFrame.conditionalSegments && idmlFrame.conditionalSegments.length > 0) {
+    result.conditionalSegments = idmlFrame.conditionalSegments;
+    result.availableConditions = idmlFrame.availableConditions;
+    
+    // Marquer le type comme 'conditional' si des conditions sont présentes
+    if (idmlFrame.availableConditions && idmlFrame.availableConditions.length > 0) {
+      result.type = 'conditional';
+    }
+    
+    // #region agent log
+    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:createMergedText',message:'Propagating conditional segments',data:{segmentsCount:idmlFrame.conditionalSegments.length,conditions:idmlFrame.availableConditions,resultType:result.type},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
+    console.log(`[createMergedText] Text has ${idmlFrame.conditionalSegments.length} conditional segments`);
+    console.log(`[createMergedText] Available conditions: ${idmlFrame.availableConditions?.join(', ')}`);
+  }
+  
+  return result;
 }
 
 /**

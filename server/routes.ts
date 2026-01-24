@@ -11,6 +11,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { extractFontsFromCss } from "./utils/fontExtractor";
 import { logger } from "./utils/logger";
+import { resolveConditionalText } from "./replit_integrations/object_storage/utils/conditionalTextResolver";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -516,15 +517,24 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             return `<img src="${imgUrl}" style="position:absolute;left:${pos.x || 0}px;top:${pos.y || 0}px;width:${pos.width || pageWidth}px;height:${pos.height || pageHeight}px;object-fit:cover;transform:rotate(${rotation}deg) scale(${scaleX}, ${scaleY});transform-origin:0% 0%;" />`;
           }).join('\n');
           
-          let textsHtml = pageTexts.map((txt) => {
+          let textsHtml = pageTexts.map((txt: any) => {
             const pos = txt.position || {};
             const style = txt.style || {};
             let content = txt.content || '';
             
-            // Replace variables
+            // NOUVEAU: Résoudre les textes conditionnels si présents
+            if (txt.conditionalSegments && txt.conditionalSegments.length > 0) {
+              // Résoudre le texte conditionnel avec les sélections du wizard
+              // Format attendu: { tabId: { variantId: optionId } }
+              content = resolveConditionalText(txt.conditionalSegments, characters || {});
+            }
+            
+            // Replace variables - support multiple formats
             if (config.childName) {
-              content = content.replace(/\{\{nom_enfant\}\}/g, config.childName);
-              content = content.replace(/\{nom_enfant\}/g, config.childName);
+              content = content.replace(/\{\{child_name\}\}/gi, config.childName);
+              content = content.replace(/\{\{nom_enfant\}\}/gi, config.childName);
+              content = content.replace(/\{child_name\}/gi, config.childName);
+              content = content.replace(/\{nom_enfant\}/gi, config.childName);
             }
             
             // Apply text transform
@@ -607,6 +617,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             // Pour texte centré, compenser le décalage en ajustant left
             let transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor})`;
             let finalPosX = pos.x;
+            const finalPosY = pos.y;
             
             if (style.idmlHorizontalScale && style.idmlHorizontalScale !== 100) {
               const scaleXValue = style.idmlHorizontalScale / 100;

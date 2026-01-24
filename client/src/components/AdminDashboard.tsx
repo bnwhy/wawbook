@@ -717,7 +717,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         console.log('==================');
       }
 
-      // Update book with merged content
+      // Update book with merged content (wizardConfig reste inchangé, pas de création automatique de tabs)
       const updatedBook = {
         ...selectedBook,
         contentConfig: {
@@ -6699,6 +6699,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         })()}
                                                                                     </span>
                                                                                 )}
+                                                                                {/* Badge mapping variables */}
+                                                                                {text.variables && text.variables.length > 0 && text.variables.map((v: string) => (
+                                                                                    <span key={v} className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-medium" title={`Variable IDML: {${v}}`}>
+                                                                                        📝 {v}
+                                                                                    </span>
+                                                                                ))}
                                                                             </div>
                                                                         </div>
                                                                     ))}

@@ -1295,8 +1295,8 @@ function parseConditionName(conditionRef: string): { tabId: string; variantId: s
   // Retirer le préfixe "Condition/" si présent
   const conditionName = conditionRef.replace(/^Condition\//, '');
   
-  // Pattern: (TXTCOND)tabId_variantId-optionId
-  const match = conditionName.match(/^\(TXTCOND\)([^_]+)_([^-]+)-(.+)$/);
+  // Pattern: TXTCOND_tabId_variantId-optionId (format InDesign)
+  const match = conditionName.match(/^TXTCOND_([^_]+)_([^-]+)-(.+)$/);
   if (match) {
     return {
       tabId: match[1],      // ex: "hero-child"

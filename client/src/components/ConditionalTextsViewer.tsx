@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 interface ConditionalSegment {
   text: string;
@@ -9,6 +9,7 @@ interface ConditionalSegment {
     variantId: string;
     optionId: string;
   };
+  variables?: string[];
 }
 
 interface TextElement {
@@ -38,17 +39,7 @@ const ConditionalTextsViewer: React.FC<ConditionalTextsViewerProps> = ({ texts, 
     return texts.filter(t => t.conditionalSegments && t.conditionalSegments.length > 0);
   }, [texts]);
 
-  const totalConditions = useMemo(() => {
-    const allConditions = new Set<string>();
-    textsWithConditions.forEach(t => {
-      t.conditionalSegments?.forEach(seg => {
-        if (seg.condition) allConditions.add(seg.condition);
-      });
-    });
-    return allConditions.size;
-  }, [textsWithConditions]);
-
-  // Fonction pour mapper les IDs de condition vers les IDs du wizard
+  // Mapper les IDs de condition vers les IDs du wizard
   const mapConditionTabIdToWizardTabId = (conditionTabId: string): string => {
     if (conditionTabId.startsWith('hero-')) {
       return conditionTabId.replace(/^hero-/, '');
@@ -56,143 +47,172 @@ const ConditionalTextsViewer: React.FC<ConditionalTextsViewerProps> = ({ texts, 
     return conditionTabId;
   };
 
-  // Vérifier si une condition est bien mappée
-  const checkConditionMapping = (parsedCondition: ConditionalSegment['parsedCondition']) => {
-    if (!parsedCondition) return { status: 'unknown', message: 'Non parsée' };
+  // Analyser toutes les conditions et variables
+  const conditionsSummary = useMemo(() => {
+    const allConditions: Array<{
+      rawCondition: string;
+      parsed: { tabId: string; variantId: string; optionId: string } | null;
+      wizardTabId: string;
+      status: 'ok' | 'error' | 'warning';
+      message: string;
+      variables?: string[];
+    }> = [];
 
-    const { tabId, variantId, optionId } = parsedCondition;
-    const wizardTabId = mapConditionTabIdToWizardTabId(tabId);
+    const seenConditions = new Set<string>();
 
-    // Chercher le tab dans le wizard
-    const tab = wizardTabs.find(t => t.id === wizardTabId);
-    if (!tab) {
-      return { 
-        status: 'error', 
-        message: `Tab "${wizardTabId}" introuvable (mappé depuis "${tabId}")` 
-      };
-    }
+    textsWithConditions.forEach(text => {
+      text.conditionalSegments?.forEach(seg => {
+        if (seg.condition && !seenConditions.has(seg.condition)) {
+          seenConditions.add(seg.condition);
 
-    // Chercher le variant
-    const variant = tab.variants.find(v => v.id === variantId);
-    if (!variant) {
-      return { 
-        status: 'error', 
-        message: `Variant "${variantId}" introuvable dans tab "${tab.label}"` 
-      };
-    }
+          const parsed = seg.parsedCondition;
+          if (!parsed) {
+          allConditions.push({
+            rawCondition: seg.condition,
+            parsed: null,
+            wizardTabId: '',
+            status: 'error',
+            message: 'Condition non parsée - format invalide',
+            variables: seg.variables
+          });
+          return;
+        }
 
-    // Chercher l'option
-    const option = variant.options?.find(o => o.id === optionId);
-    if (!option) {
-      return { 
-        status: 'warning', 
-        message: `Option "${optionId}" introuvable dans variant "${variant.label}"` 
-      };
-    }
+        const wizardTabId = mapConditionTabIdToWizardTabId(parsed.tabId);
+        const tab = wizardTabs.find(t => t.id === wizardTabId);
+        
+        if (!tab) {
+          allConditions.push({
+            rawCondition: seg.condition,
+            parsed,
+            wizardTabId,
+            status: 'error',
+            message: `Tab "${wizardTabId}" introuvable (mappé depuis "${parsed.tabId}")`,
+            variables: seg.variables
+          });
+          return;
+        }
 
-    return { 
-      status: 'success', 
-      message: `✓ ${tab.label} > ${variant.label} > ${option.label}`,
-      details: { tab: tab.label, variant: variant.label, option: option.label }
-    };
-  };
+        const variant = tab.variants.find(v => v.id === parsed.variantId);
+        if (!variant) {
+          allConditions.push({
+            rawCondition: seg.condition,
+            parsed,
+            wizardTabId,
+            status: 'error',
+            message: `Variant "${parsed.variantId}" introuvable dans tab "${tab.label}"`,
+            variables: seg.variables
+          });
+          return;
+        }
+
+        const option = variant.options?.find(o => o.id === parsed.optionId);
+        if (!option) {
+          allConditions.push({
+            rawCondition: seg.condition,
+            parsed,
+            wizardTabId,
+            status: 'warning',
+            message: `Option "${parsed.optionId}" introuvable`,
+            variables: seg.variables
+          });
+          return;
+        }
+
+        allConditions.push({
+          rawCondition: seg.condition,
+          parsed,
+          wizardTabId,
+          status: 'ok',
+          message: `${tab.label} › ${variant.label} › ${option.label}`,
+          variables: seg.variables
+        });
+        }
+      });
+    });
+
+    return allConditions;
+  }, [textsWithConditions, wizardTabs]);
 
   if (textsWithConditions.length === 0) {
-    return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-blue-700 text-sm">
-          Aucun texte conditionnel détecté dans ce livre.
-        </p>
-        <p className="text-blue-600 text-xs mt-2">
-          Pour utiliser des textes conditionnels, ajoutez des conditions InDesign avec le format : <code className="bg-blue-100 px-1 rounded">(TXTCOND)tabId_variantId-optionId</code>
-        </p>
-      </div>
-    );
+    return null;
   }
 
+  const okCount = conditionsSummary.filter(c => c.status === 'ok').length;
+  const errorCount = conditionsSummary.filter(c => c.status === 'error').length;
+  const warningCount = conditionsSummary.filter(c => c.status === 'warning').length;
+
   return (
-    <div className="space-y-4">
-      {/* Résumé */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
-        <h3 className="font-bold text-indigo-900 mb-2">📝 Textes conditionnels détectés</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-indigo-600">Textes avec conditions :</span>
-            <span className="font-bold ml-2">{textsWithConditions.length}</span>
-          </div>
-          <div>
-            <span className="text-indigo-600">Conditions uniques :</span>
-            <span className="font-bold ml-2">{totalConditions}</span>
-          </div>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-slate-700 flex items-center gap-2">
+          <span className="text-purple-600">📝</span>
+          Textes conditionnels détectés
+        </h3>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="flex items-center gap-1 text-green-600 font-medium">
+            <CheckCircle size={14} /> {okCount} OK
+          </span>
+          {errorCount > 0 && (
+            <span className="flex items-center gap-1 text-red-600 font-medium">
+              <XCircle size={14} /> {errorCount} Erreurs
+            </span>
+          )}
+          {warningCount > 0 && (
+            <span className="flex items-center gap-1 text-orange-600 font-medium">
+              <AlertTriangle size={14} /> {warningCount} Warnings
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Liste des textes */}
-      <div className="space-y-3">
-        {textsWithConditions.map((text, idx) => (
-          <div key={text.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-            <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
-              <span className="font-mono text-xs text-gray-500">Texte #{idx + 1} ({text.id})</span>
-              <span className="text-xs text-gray-400">{text.conditionalSegments?.length} segment(s)</span>
+      <div className="grid grid-cols-1 gap-2">
+        {conditionsSummary.map((cond, idx) => (
+          <div 
+            key={idx} 
+            className={`flex items-start gap-3 p-3 rounded-lg border text-sm ${
+              cond.status === 'ok' 
+                ? 'bg-green-50 border-green-200' 
+                : cond.status === 'error'
+                ? 'bg-red-50 border-red-200'
+                : 'bg-orange-50 border-orange-200'
+            }`}
+          >
+            <div className="flex-shrink-0 mt-0.5">
+              {cond.status === 'ok' && <CheckCircle size={16} className="text-green-600" />}
+              {cond.status === 'error' && <XCircle size={16} className="text-red-600" />}
+              {cond.status === 'warning' && <AlertTriangle size={16} className="text-orange-600" />}
             </div>
             
-            <div className="p-4 space-y-3">
-              {text.conditionalSegments?.map((seg, segIdx) => {
-                const mapping = checkConditionMapping(seg.parsedCondition);
-                
-                return (
-                  <div key={segIdx} className="border-l-4 pl-3 py-2" style={{
-                    borderColor: mapping.status === 'success' ? '#10b981' : mapping.status === 'error' ? '#ef4444' : '#f59e0b'
-                  }}>
-                    <div className="flex items-start gap-2 mb-1">
-                      {mapping.status === 'success' && <CheckCircle size={16} className="text-green-500 mt-0.5 flex-shrink-0" />}
-                      {mapping.status === 'error' && <XCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />}
-                      {mapping.status === 'warning' && <AlertCircle size={16} className="text-orange-500 mt-0.5 flex-shrink-0" />}
-                      {mapping.status === 'unknown' && <AlertCircle size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />}
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700 break-words">
-                          "{seg.text.trim()}"
-                        </p>
-                        
-                        {seg.condition && (
-                          <p className="text-xs font-mono text-gray-500 mt-1 bg-gray-50 px-2 py-1 rounded inline-block">
-                            {seg.condition}
-                          </p>
-                        )}
-                        
-                        <div className="mt-2 text-xs">
-                          {mapping.status === 'success' && (
-                            <span className="text-green-700 font-medium">{mapping.message}</span>
-                          )}
-                          {mapping.status === 'error' && (
-                            <span className="text-red-700 font-medium">❌ {mapping.message}</span>
-                          )}
-                          {mapping.status === 'warning' && (
-                            <span className="text-orange-700 font-medium">⚠️ {mapping.message}</span>
-                          )}
-                          {mapping.status === 'unknown' && (
-                            <span className="text-gray-500">{mapping.message}</span>
-                          )}
-                        </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-mono text-xs text-slate-600 mb-1 break-all">
+                {cond.rawCondition}
+              </div>
+              
+              {cond.parsed && cond.parsed.tabId !== cond.wizardTabId && (
+                <div className="text-xs text-purple-600 mb-1">
+                  Mapping : <code className="bg-purple-100 px-1 rounded">{cond.parsed.tabId} → {cond.wizardTabId}</code>
+                </div>
+              )}
+              
+              <div className={`text-xs font-medium ${
+                cond.status === 'ok' ? 'text-green-700' : 
+                cond.status === 'error' ? 'text-red-700' : 
+                'text-orange-700'
+              }`}>
+                {cond.message}
+              </div>
 
-                        {seg.parsedCondition && (
-                          <div className="mt-2 text-xs bg-indigo-50 px-2 py-1 rounded inline-block">
-                            <span className="text-indigo-600">Mapping : </span>
-                            <code className="text-indigo-900">
-                              {seg.parsedCondition.tabId} 
-                              {seg.parsedCondition.tabId.startsWith('hero-') && 
-                                <span className="text-indigo-500"> → {mapConditionTabIdToWizardTabId(seg.parsedCondition.tabId)}</span>
-                              }
-                              .{seg.parsedCondition.variantId} = {seg.parsedCondition.optionId}
-                            </code>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {cond.variables && cond.variables.length > 0 && (
+                <div className="mt-2 text-xs">
+                  <span className="text-slate-500">Variables : </span>
+                  {cond.variables.map((v, i) => (
+                    <code key={i} className="bg-blue-100 text-blue-700 px-1 rounded ml-1">
+                      {'{' + v + '}'}
+                    </code>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -8,7 +8,7 @@
   ],
   "texts": [
     {
-      "id": "text-1769247195619-1-_idContainer000",
+      "id": "text-1769249177343-1-_idContainer000",
       "type": "conditional",
       "label": "_idContainer000",
       "content": "Le petitLa petite{{TXTVAR_hero-child_name}}est venu.est venue.",
@@ -52,17 +52,32 @@
         {
           "text": "Le petit",
           "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
-          "condition": "TXTCOND_hero-child_gender-boy"
+          "condition": "TXTCOND_hero-child_gender-boy",
+          "parsedCondition": {
+            "tabId": "hero-child",
+            "variantId": "gender",
+            "optionId": "boy"
+          }
         },
         {
           "text": "La petite",
           "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
-          "condition": "TXTCOND_hero-child_gender-girl"
+          "condition": "TXTCOND_hero-child_gender-girl",
+          "parsedCondition": {
+            "tabId": "hero-child",
+            "variantId": "gender",
+            "optionId": "girl"
+          }
         },
         {
           "text": "{TXTVAR_hero-child_name}",
           "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
           "condition": "TXTCOND_hero-child_gender-girl",
+          "parsedCondition": {
+            "tabId": "hero-child",
+            "variantId": "gender",
+            "optionId": "girl"
+          },
           "variables": [
             "TXTVAR_hero-child_name"
           ]
@@ -70,12 +85,22 @@
         {
           "text": "est venu.",
           "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
-          "condition": "TXTCOND_hero-child_gender-boy"
+          "condition": "TXTCOND_hero-child_gender-boy",
+          "parsedCondition": {
+            "tabId": "hero-child",
+            "variantId": "gender",
+            "optionId": "boy"
+          }
         },
         {
           "text": "est venue.",
           "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
-          "condition": "TXTCOND_hero-child_gender-girl"
+          "condition": "TXTCOND_hero-child_gender-girl",
+          "parsedCondition": {
+            "tabId": "hero-child",
+            "variantId": "gender",
+            "optionId": "girl"
+          }
         }
       ],
       "availableConditions": [

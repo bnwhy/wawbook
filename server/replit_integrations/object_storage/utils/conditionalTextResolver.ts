@@ -32,20 +32,21 @@ export type WizardSelections = Record<string, Record<string, string>>;
 
 /**
  * Résout le texte conditionnel en filtrant les segments selon les sélections actives
+ * et en remplaçant les variables de texte
  * 
  * @param segments - Segments conditionnels du TextFrame
  * @param selections - Sélections du wizard { tabId: { variantId: optionId } }
- * @returns Texte résolu après filtrage des conditions
+ * @returns Texte résolu après filtrage des conditions et remplacement des variables
  * 
  * @example
  * const segments = [
- *   { text: 'Le petit ', condition: '(TXTCOND)hero-child_gender-boy' },
- *   { text: 'La petite ', condition: '(TXTCOND)hero-child_gender-girl' },
- *   { text: 'enfant joue.' }
+ *   { text: 'Le petit ', condition: 'TXTCOND_hero-child_gender-boy' },
+ *   { text: 'La petite ', condition: 'TXTCOND_hero-child_gender-girl' },
+ *   { text: '{name_child} joue.', variables: ['name_child'] }
  * ];
  * 
- * const result = resolveConditionalText(segments, { 'hero-child': { gender: 'boy' } });
- * // => 'Le petit enfant joue.'
+ * const result = resolveConditionalText(segments, { 'hero-child': { gender: 'boy', name: 'Tom' } });
+ * // => 'Le petit Tom joue.'
  */
 export function resolveConditionalText(
   segments: ConditionalSegment[],
@@ -64,13 +65,27 @@ export function resolveConditionalText(
   for (const segment of segments) {
     // Segment sans condition: toujours inclus
     if (!segment.condition) {
-      result.push(segment.text);
+      let text = segment.text;
+      
+      // Remplacer les variables si présentes
+      if (segment.variables && segment.variables.length > 0) {
+        text = resolveVariablesInText(text, selections);
+      }
+      
+      result.push(text);
       continue;
     }
     
     // Vérifier si la condition est satisfaite
     if (isConditionActive(segment, selections)) {
-      result.push(segment.text);
+      let text = segment.text;
+      
+      // Remplacer les variables dans le segment conditionnel actif
+      if (segment.variables && segment.variables.length > 0) {
+        text = resolveVariablesInText(text, selections);
+      }
+      
+      result.push(text);
     }
   }
   
@@ -90,6 +105,47 @@ function mapConditionTabIdToWizardTabId(conditionTabId: string): string {
   
   // Sinon, on retourne tel quel
   return conditionTabId;
+}
+
+/**
+ * Résout les variables dans un texte selon les sélections du wizard
+ * Pattern des variables InDesign: {name_child}, {age_child}, etc.
+ * Mapping: {variantId_tabId} → selections[tabId][variantId]
+ * 
+ * Ex: {name_child} avec selections = { child: { name: 'Tom' } } → 'Tom'
+ */
+function resolveVariablesInText(
+  text: string,
+  selections: WizardSelections
+): string {
+  let result = text;
+  
+  // Pattern: {variantId_tabId} ou {variantId-tabId}
+  const variablePattern = /\{([^}]+)\}/g;
+  
+  result = result.replace(variablePattern, (match, varName) => {
+    // Essayer de parser le format variant_tab ou variant-tab
+    const parts = varName.split(/[_-]/);
+    
+    if (parts.length === 2) {
+      const [variantId, tabId] = parts;
+      
+      // Chercher dans les sélections avec mapping hero-*
+      for (const [selTabId, selValues] of Object.entries(selections)) {
+        // Vérifier si tabId correspond (avec mapping hero-child → child)
+        if (selTabId === tabId || selTabId === `hero-${tabId}` || `hero-${selTabId}` === tabId) {
+          if (selValues[variantId]) {
+            return selValues[variantId];
+          }
+        }
+      }
+    }
+    
+    // Si pas trouvé, retourner la variable inchangée
+    return match;
+  });
+  
+  return result;
 }
 
 /**
@@ -151,7 +207,7 @@ function isConditionActive(
 
 /**
  * Parse le nom d'une condition IDML
- * Pattern: (TXTCOND)tabId_variantId-optionId
+ * Pattern: TXTCOND_tabId_variantId-optionId (format InDesign)
  */
 function parseConditionName(
   conditionRef: string
@@ -159,8 +215,8 @@ function parseConditionName(
   // Retirer le préfixe "Condition/" si présent
   const conditionName = conditionRef.replace(/^Condition\//, '');
   
-  // Pattern: (TXTCOND)tabId_variantId-optionId
-  const match = conditionName.match(/^\(TXTCOND\)([^_]+)_([^-]+)-(.+)$/);
+  // Pattern: TXTCOND_tabId_variantId-optionId
+  const match = conditionName.match(/^TXTCOND_([^_]+)_([^-]+)-(.+)$/);
   if (match) {
     return {
       tabId: match[1],

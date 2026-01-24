@@ -6031,20 +6031,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           )}
                        </div>
                     </div>
-
-                    {/* Section Visualisation Textes Conditionnels */}
-                    {selectedBook.contentConfig?.texts && (
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
-                          <FileText size={24} className="text-purple-600" />
-                          Textes Conditionnels (InDesign)
-                        </h2>
-                        <ConditionalTextsViewer 
-                          texts={selectedBook.contentConfig.texts}
-                          wizardTabs={selectedBook.wizardConfig.tabs}
-                        />
-                      </div>
-                    )}
                  </div>
               )}
 
@@ -6386,6 +6372,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </div>
                        </div>
                     </div>
+
+                    {/* Conditional Texts Panel - Compact */}
+                    {selectedBook.contentConfig?.texts?.some((t: any) => t.conditionalSegments && t.conditionalSegments.length > 0) && (
+                      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 shrink-0">
+                        <ConditionalTextsViewer 
+                          texts={selectedBook.contentConfig.texts}
+                          wizardTabs={selectedBook.wizardConfig.tabs}
+                        />
+                      </div>
+                    )}
 
                     <div className="flex-1 min-h-0 flex gap-6">
                         {/* Storyboard Grid */}

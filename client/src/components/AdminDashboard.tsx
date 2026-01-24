@@ -18,6 +18,7 @@ import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
 import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
+import ConditionalTextsViewer from './ConditionalTextsViewer';
 
 
 const slugify = (text: string) => {
@@ -6030,6 +6031,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           )}
                        </div>
                     </div>
+
+                    {/* Section Visualisation Textes Conditionnels */}
+                    {selectedBook.contentConfig?.texts && (
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
+                          <FileText size={24} className="text-purple-600" />
+                          Textes Conditionnels (InDesign)
+                        </h2>
+                        <ConditionalTextsViewer 
+                          texts={selectedBook.contentConfig.texts}
+                          wizardTabs={selectedBook.wizardConfig.tabs}
+                        />
+                      </div>
+                    )}
                  </div>
               )}
 

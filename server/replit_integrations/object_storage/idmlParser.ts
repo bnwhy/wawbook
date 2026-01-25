@@ -20,8 +20,20 @@ import { IdmlCorruptedFileError } from './errors/IdmlErrors';
  * - Styles de caractère (fontSize, fontWeight, fontStyle, color, letterSpacing, etc.)
  * - Styles de paragraphe (textAlign, lineHeight, marginTop, marginBottom, etc.)
  * - Palette de couleurs InDesign
+ * - Textes conditionnels (AppliedConditions sur CharacterStyleRange)
+ * - Variables de texte (TextVariableInstance)
  * 
  * L'EPUB fournit uniquement les positions des zones de texte, pas le contenu ni les polices.
+ * 
+ * ## Textes Conditionnels
+ * 
+ * Format des conditions : TXTCOND_tabId_variantId-optionId
+ * Exemple : TXTCOND_hero-child_gender-boy
+ * 
+ * Format des variables : TXTVAR_tabId_variantId
+ * Exemple : TXTVAR_hero-child_name
+ * 
+ * Mapping automatique : hero-child → child (pour compatibilité avec wizard existants)
  */
 
 interface CharacterStyleProperties {
@@ -1415,10 +1427,6 @@ function extractTextFromParagraphRanges(
         let conditionName: string | undefined;
         let parsedCondition: { tabId: string; variantId: string; optionId: string } | undefined;
         
-        // #region agent log
-        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:1417',message:'CharRange AppliedConditions',data:{appliedConditions,hasCondition:!!appliedConditions},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        
         if (appliedConditions) {
           // AppliedConditions peut être une string ou un array
           // Format: "Condition/TXTCOND_hero-child_gender-boy" ou "Condition/Version_Garcon"
@@ -1557,25 +1565,23 @@ function extractTextFromParagraphRanges(
         // Ajouter au contenu complet (pour rétrocompatibilité)
         fullContent += segmentText;
         
-        // NOUVEAU: Créer un segment conditionnel si du texte est présent
-        if (segmentText) {
-          const segment: ConditionalTextSegment = {
-            text: segmentText,
-            appliedCharacterStyle: appliedCharStyle
-          };
-          
-          if (conditionName) {
-            segment.condition = conditionName;
-          }
-          if (parsedCondition) {
-            segment.parsedCondition = parsedCondition;
-          }
-          if (segmentVars.length > 0) {
-            segment.variables = segmentVars;
-          }
-          
-          conditionalSegments.push(segment);
+        // NOUVEAU: Créer un segment conditionnel (même si vide, pour préserver les espaces)
+        const segment: ConditionalTextSegment = {
+          text: segmentText,
+          appliedCharacterStyle: appliedCharStyle
+        };
+        
+        if (conditionName) {
+          segment.condition = conditionName;
         }
+        if (parsedCondition) {
+          segment.parsedCondition = parsedCondition;
+        }
+        if (segmentVars.length > 0) {
+          segment.variables = segmentVars;
+        }
+        
+        conditionalSegments.push(segment);
       }
     }
     
@@ -1606,9 +1612,6 @@ function extractTextFromParagraphRanges(
     result.availableConditions = Array.from(availableConditionsSet);
   }
   
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:extractTextFromParagraphRanges-exit',message:'Extraction result',data:{hasAnyCondition,segmentsCount:conditionalSegments.length,conditions:Array.from(availableConditionsSet)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
   
   return result;
 }

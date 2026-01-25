@@ -4,8 +4,30 @@
  * Lors de la génération du livre, cette fonction filtre les segments
  * conditionnels selon les sélections du wizard utilisateur.
  * 
- * Pattern de condition: (TXTCOND)tabId_variantId-optionId (même format que les images)
- * Ex: (TXTCOND)hero-child_gender-boy
+ * ## Formats supportés
+ * 
+ * **Conditions** : TXTCOND_tabId_variantId-optionId
+ * - Exemple : TXTCOND_hero-child_gender-boy
+ * - Appliquées via AppliedConditions dans InDesign
+ * 
+ * **Variables** : TXTVAR_tabId_variantId
+ * - Exemple : TXTVAR_hero-child_name
+ * - Insérées via TextVariableInstance dans InDesign
+ * 
+ * ## Mapping automatique
+ * 
+ * Les tabIds avec préfixe "hero-" sont mappés automatiquement :
+ * - hero-child → child
+ * - hero-parent → parent
+ * 
+ * Cela permet d'utiliser des IDs descriptifs dans InDesign tout en gardant
+ * des IDs courts dans le wizard.
+ * 
+ * ## Workaround espaces
+ * 
+ * InDesign n'exporte pas les espaces entre CharacterStyleRange dans le XML.
+ * Le système ajoute automatiquement un espace avant et après chaque variable
+ * remplacée pour compenser ce comportement.
  */
 
 /**
@@ -52,10 +74,6 @@ export function resolveConditionalText(
   segments: ConditionalSegment[],
   selections: WizardSelections
 ): string {
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'conditionalTextResolver.ts:resolveConditionalText-entry',message:'Entry',data:{segmentsCount:segments?.length||0,selections},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
-  
   if (!segments || segments.length === 0) {
     return '';
   }
@@ -109,10 +127,10 @@ function mapConditionTabIdToWizardTabId(conditionTabId: string): string {
 
 /**
  * Résout les variables dans un texte selon les sélections du wizard
- * Pattern des variables InDesign: {name_child}, {age_child}, etc.
- * Mapping: {variantId_tabId} → selections[tabId][variantId]
+ * Pattern des variables InDesign: {TXTVAR_tabId_variantId}
+ * Mapping: {TXTVAR_hero-child_name} → selections[child][name]
  * 
- * Ex: {name_child} avec selections = { child: { name: 'Tom' } } → 'Tom'
+ * Ex: {TXTVAR_hero-child_name} avec selections = { child: { name: 'Tom' } } → 'Tom'
  */
 function resolveVariablesInText(
   text: string,
@@ -120,25 +138,17 @@ function resolveVariablesInText(
 ): string {
   let result = text;
   
-  // Pattern: {variantId_tabId} ou {variantId-tabId}
-  const variablePattern = /\{([^}]+)\}/g;
+  // Pattern: {TXTVAR_tabId_variantId}
+  const variablePattern = /\{TXTVAR_([^_]+)_([^}]+)\}/g;
   
-  result = result.replace(variablePattern, (match, varName) => {
-    // Essayer de parser le format variant_tab ou variant-tab
-    const parts = varName.split(/[_-]/);
+  result = result.replace(variablePattern, (match, tabId, variantId) => {
+    // Mapper le tabId avec mapping hero-*
+    const tabSelections = findTabSelections(tabId, selections);
     
-    if (parts.length === 2) {
-      const [variantId, tabId] = parts;
-      
-      // Chercher dans les sélections avec mapping hero-*
-      for (const [selTabId, selValues] of Object.entries(selections)) {
-        // Vérifier si tabId correspond (avec mapping hero-child → child)
-        if (selTabId === tabId || selTabId === `hero-${tabId}` || `hero-${selTabId}` === tabId) {
-          if (selValues[variantId]) {
-            return selValues[variantId];
-          }
-        }
-      }
+    if (tabSelections && tabSelections[variantId]) {
+      // Ajouter automatiquement des espaces autour pour compenser l'absence d'espaces dans l'IDML
+      // InDesign n'exporte pas les espaces entre CharacterStyleRange dans le XML
+      return ' ' + tabSelections[variantId] + ' ';
     }
     
     // Si pas trouvé, retourner la variable inchangée
@@ -163,7 +173,7 @@ function findTabSelections(
  * Vérifie si la condition d'un segment est active selon les sélections
  * 
  * Logique:
- * 1. Si parsedCondition disponible, utilise le matching structuré avec fallback hero-*
+ * 1. Si parsedCondition disponible, utilise le matching structuré avec mapping hero-*
  * 2. Sinon, tente de parser la condition et matcher
  */
 function isConditionActive(
@@ -178,13 +188,11 @@ function isConditionActive(
   if (parsedCondition) {
     const { tabId, variantId, optionId } = parsedCondition;
     
-    // Vérifier avec fallback hero-*
+    // Vérifier avec mapping hero-*
     const tabSelections = findTabSelections(tabId, selections);
-    if (tabSelections && tabSelections[variantId] === optionId) {
-      return true;
-    }
+    const isActive = tabSelections && tabSelections[variantId] === optionId;
     
-    return false;
+    return isActive;
   }
   
   // Fallback: parser la condition manuellement
@@ -193,11 +201,9 @@ function isConditionActive(
     const { tabId, variantId, optionId } = parsed;
     
     const tabSelections = findTabSelections(tabId, selections);
-    if (tabSelections && tabSelections[variantId] === optionId) {
-      return true;
-    }
+    const isActive = tabSelections && tabSelections[variantId] === optionId;
     
-    return false;
+    return isActive;
   }
   
   // Condition inconnue: on l'inclut par défaut (sécurité)

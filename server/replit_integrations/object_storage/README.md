@@ -17,6 +17,7 @@ Ce module a été refactorisé pour améliorer la maintenabilité et la lisibili
 Utilitaires réutilisables organisés par domaine :
 
 - **`colorConverter.ts`** - Conversion de couleurs IDML → Hex
+- **`colorConverter.ts`** - Conversion de couleurs IDML → Hex
 - **`cssHelpers.ts`** - Nettoyage CSS et détection de problèmes de polices
 - **`filenameParser.ts`** - Parsing des noms de fichiers avec caractéristiques
 - **`contentTypeHelpers.ts`** - Gestion des types MIME et chemins d'objets
@@ -26,6 +27,7 @@ Utilitaires réutilisables organisés par domaine :
 - **`readingOrderValidator.ts`** ✨ - Validation ordre de lecture des TextFrames
 - **`xmlFlags.ts`** ✨ - Flags XML avancés (SimpleIDML)
 - **`logger.ts`** ✨ - Logger structuré Pino
+- **`conditionalTextResolver.ts`** ✨ - Résolution des textes conditionnels et variables IDML
 
 ### Dossier `errors/` ✨
 
@@ -101,10 +103,12 @@ import { parseIdmlBuffer } from './idmlParser';
 
 const idmlData = await parseIdmlBuffer(idmlBuffer);
 // idmlData contient TOUTE la mise en forme :
-//   - textFrames: contenu textuel complet avec variables
+//   - textFrames: contenu textuel complet avec variables et textes conditionnels
 //   - characterStyles: polices et styles de caractère (fontSize, color, fontWeight, etc.)
 //   - paragraphStyles: styles de paragraphe (textAlign, lineHeight, etc.)
 //   - colors: palette de couleurs InDesign
+//   - conditionalSegments: segments conditionnels (AppliedConditions)
+//   - variables: variables de texte (TextVariableInstance)
 ```
 
 ### Fusion EPUB + IDML
@@ -120,6 +124,21 @@ const mergedTexts = mergeEpubWithIdml(
 );
 // Résultat : conteneurs EPUB remplis avec texte + mise en forme IDML
 ```
+
+### Résolution des textes conditionnels
+
+```typescript
+import { resolveConditionalText } from './utils/conditionalTextResolver';
+
+// Résoudre un texte conditionnel selon les sélections du wizard
+const resolvedText = resolveConditionalText(
+  textElement.conditionalSegments,
+  { 'hero-child': { gender: 'boy', name: 'Tom' } }
+);
+// Résultat : "Le petit Tom est venu."
+```
+
+Voir [CONDITIONAL_TEXT.md](./CONDITIONAL_TEXT.md) pour le guide complet.
 
 ### Utilitaires
 

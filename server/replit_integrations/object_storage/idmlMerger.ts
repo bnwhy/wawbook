@@ -383,9 +383,6 @@ function createMergedText(
       result.type = 'conditional';
     }
     
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:createMergedText',message:'Propagating conditional segments',data:{segmentsCount:idmlFrame.conditionalSegments.length,conditions:idmlFrame.availableConditions,resultType:result.type},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     
     console.log(`[createMergedText] Text has ${idmlFrame.conditionalSegments.length} conditional segments`);
     console.log(`[createMergedText] Available conditions: ${idmlFrame.availableConditions?.join(', ')}`);

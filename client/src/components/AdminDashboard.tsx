@@ -18,7 +18,6 @@ import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
 import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
-import ConditionalTextsViewer from './ConditionalTextsViewer';
 
 
 const slugify = (text: string) => {
@@ -1182,6 +1181,79 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     document.head.appendChild(link);
   };
 
+  // Utility function to resolve wizard mapping from parsed condition
+  const resolveWizardMapping = (
+    parsedCondition: { tabId: string; variantId: string; optionId: string },
+    wizardConfig: any
+  ): string | null => {
+    // Handle hero-* -> * mapping
+    let effectiveTabId = parsedCondition.tabId;
+    if (effectiveTabId.startsWith('hero-')) {
+      effectiveTabId = effectiveTabId.substring(5); // Remove "hero-"
+    }
+    
+    // Find the tab
+    const tab = wizardConfig?.tabs?.find((t: any) => t.id === effectiveTabId);
+    if (!tab) return null;
+    
+    // Find the variant
+    const variant = tab.variants?.find((v: any) => v.id === parsedCondition.variantId);
+    if (!variant) return null;
+    
+    // Find the option
+    const option = variant.options?.find((o: any) => o.id === parsedCondition.optionId);
+    
+    return `${tab.label} > ${variant.title || variant.label} > ${option?.label || parsedCondition.optionId}`;
+  };
+
+  // Utility function to resolve variable mapping
+  const resolveVariableMapping = (
+    variableName: string,
+    wizardConfig: any
+  ): string | null => {
+    // Expected format: TXTVAR_tabId_variantId or just variantId
+    let tabId = '';
+    let variantId = variableName;
+    
+    // Parse TXTVAR_ format
+    if (variableName.includes('_')) {
+      const parts = variableName.split('_');
+      if (parts.length >= 3) {
+        // Format: TXTVAR_hero-child_name -> parts = ["TXTVAR", "hero-child", "name"]
+        tabId = parts[1];
+        variantId = parts[2];
+      } else if (parts.length === 2) {
+        // Format: tabId_variantId -> parts = ["tabId", "variantId"]
+        tabId = parts[0];
+        variantId = parts[1];
+      }
+    }
+    
+    // Handle hero-* mapping
+    if (tabId.startsWith('hero-')) {
+      tabId = tabId.substring(5);
+    }
+    
+    // If no tabId, search in all tabs
+    if (!tabId) {
+      for (const tab of (wizardConfig?.tabs || [])) {
+        const variant = tab.variants?.find((v: any) => v.id === variantId);
+        if (variant) {
+          return `${tab.label} > ${variant.title || variant.label}`;
+        }
+      }
+      return null;
+    }
+    
+    // Search in specific tab
+    const tab = wizardConfig?.tabs?.find((t: any) => t.id === tabId);
+    if (!tab) return null;
+    
+    const variant = tab.variants?.find((v: any) => v.id === variantId);
+    if (!variant) return null;
+    
+    return `${tab.label} > ${variant.title || variant.label}`;
+  };
 
   // Printers State - loaded from API
   const [printers, setPrinters] = useState<PrinterType[]>([]);
@@ -6373,16 +6445,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </div>
                     </div>
 
-                    {/* Conditional Texts Panel - Compact */}
-                    {selectedBook.contentConfig?.texts?.some((t: any) => t.conditionalSegments && t.conditionalSegments.length > 0) && (
-                      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 shrink-0">
-                        <ConditionalTextsViewer 
-                          texts={selectedBook.contentConfig.texts}
-                          wizardTabs={selectedBook.wizardConfig.tabs}
-                        />
-                      </div>
-                    )}
-
                     <div className="flex-1 min-h-0 flex gap-6">
                         {/* Storyboard Grid */}
                         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 rounded-xl border border-slate-200/50">
@@ -6613,11 +6675,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                 <span className="text-[10px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded truncate max-w-[150px]" title={text.id}>
                                                                                     {text.label || text.id?.split('-').pop() || `text-${idx}`}
                                                                                 </span>
-                                                                                {text.type === 'variable' && (
-                                                                                    <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium shrink-0">
-                                                                                        VAR
-                                                                                    </span>
-                                                                                )}
+                                                                                <div className="flex gap-1 shrink-0">
+                                                                                    {text.type === 'variable' && (
+                                                                                        <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">
+                                                                                            VAR
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {text.conditionalSegments && text.conditionalSegments.length > 0 && (
+                                                                                        <span className="text-[10px] bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-medium" title={`${text.conditionalSegments.length} segment(s) conditionnel(s)`}>
+                                                                                            🔀 {text.conditionalSegments.length}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
                                                                             </div>
                                                                             <div 
                                                                                 className="mb-2 p-2 bg-white rounded border border-slate-100 whitespace-pre-wrap"
@@ -6710,13 +6779,127 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         })()}
                                                                                     </span>
                                                                                 )}
-                                                                                {/* Badge mapping variables */}
-                                                                                {text.variables && text.variables.length > 0 && text.variables.map((v: string) => (
-                                                                                    <span key={v} className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-medium" title={`Variable IDML: {${v}}`}>
-                                                                                        📝 {v}
-                                                                                    </span>
-                                                                                ))}
                                                                             </div>
+                                                                            
+                                                                            {/* Sections textes conditionnels et variables - NOUVEAU */}
+                                                                            {text.conditionalSegments && text.conditionalSegments.length > 0 && (() => {
+                                                                                const currentBook = draftBook || selectedBook;
+                                                                                
+                                                                                // Filtrer et séparer les segments
+                                                                                const conditionalSegments = text.conditionalSegments.filter((seg: any) => seg.condition);
+                                                                                const variableSegments = text.conditionalSegments.filter((seg: any) => 
+                                                                                    seg.variables && seg.variables.length > 0
+                                                                                );
+                                                                                
+                                                                                // Ne rien afficher si pas de segments conditionnels ni de variables
+                                                                                if (conditionalSegments.length === 0 && variableSegments.length === 0) {
+                                                                                    return null;
+                                                                                }
+                                                                                
+                                                                                return (
+                                                                                    <div className="mt-3 pt-3 border-t border-slate-200 space-y-3">
+                                                                                        {/* Section Textes conditionnels */}
+                                                                                        {conditionalSegments.length > 0 && (
+                                                                                            <div>
+                                                                                                <h5 className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
+                                                                                                    <span className="w-1 h-4 bg-teal-500 rounded-full"></span>
+                                                                                                    Textes conditionnels ({conditionalSegments.length})
+                                                                                                </h5>
+                                                                                                <div className="space-y-2">
+                                                                                                    {conditionalSegments.map((segment: any, segIdx: number) => {
+                                                                                                        const wizardMapping = segment.parsedCondition 
+                                                                                                            ? resolveWizardMapping(segment.parsedCondition, currentBook?.wizardConfig)
+                                                                                                            : null;
+                                                                                                        
+                                                                                                        return (
+                                                                                                            <div key={segIdx} className="bg-white rounded border border-teal-100 p-2 text-xs">
+                                                                                                                <div className="flex items-start gap-2 mb-1">
+                                                                                                                    <span className="font-mono text-[10px] bg-slate-100 px-1 py-0.5 rounded shrink-0">
+                                                                                                                        #{segIdx + 1}
+                                                                                                                    </span>
+                                                                                                                    <span className="text-slate-700 flex-1 font-mono bg-slate-50 px-1 rounded" style={{ whiteSpace: 'pre-wrap' }}>
+                                                                                                                        "{segment.text || '(vide)'}"
+                                                                                                                    </span>
+                                                                                                                </div>
+                                                                                                                
+                                                                                                                <div className="ml-6 mt-1 space-y-1">
+                                                                                                                    {/* Nom technique de la condition */}
+                                                                                                                    <div className="flex items-center gap-1 text-[10px]">
+                                                                                                                        <span className="text-slate-400 font-medium">🔧</span>
+                                                                                                                        <span className="text-slate-500 font-mono">{segment.condition?.replace(/_/g, ' ')}</span>
+                                                                                                                    </div>
+                                                                                                                    
+                                                                                                                    {/* Mapping wizard */}
+                                                                                                                    {wizardMapping ? (
+                                                                                                                        <div className="flex items-center gap-1 text-[10px]">
+                                                                                                                            <span className="text-teal-600 font-medium">→</span>
+                                                                                                                            <span className="text-teal-700 font-medium">{wizardMapping}</span>
+                                                                                                                        </div>
+                                                                                                                    ) : (
+                                                                                                                        <div className="flex items-center gap-1 text-[10px]">
+                                                                                                                            <span className="text-orange-600">⚠</span>
+                                                                                                                            <span className="text-orange-600">(non mappé au wizard)</span>
+                                                                                                                        </div>
+                                                                                                                    )}
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        );
+                                                                                                    })}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                        
+                                                                                        {/* Section Variables de texte */}
+                                                                                        {variableSegments.length > 0 && (
+                                                                                            <div>
+                                                                                                <h5 className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
+                                                                                                    <span className="w-1 h-4 bg-purple-500 rounded-full"></span>
+                                                                                                    Variables de texte ({variableSegments.length})
+                                                                                                </h5>
+                                                                                                <div className="space-y-2">
+                                                                                                    {variableSegments.map((segment: any, segIdx: number) => {
+                                                                                                        return (
+                                                                                                            <div key={segIdx} className="bg-white rounded border border-purple-100 p-2 text-xs">
+                                                                                                                <div className="flex items-start gap-2 mb-1">
+                                                                                                                    <span className="font-mono text-[10px] bg-slate-100 px-1 py-0.5 rounded shrink-0">
+                                                                                                                        #{segIdx + 1}
+                                                                                                                    </span>
+                                                                                                                    <span className="text-slate-700 flex-1 font-mono bg-slate-50 px-1 rounded" style={{ whiteSpace: 'pre-wrap' }}>
+                                                                                                                        "{segment.text || '(vide)'}"
+                                                                                                                    </span>
+                                                                                                                </div>
+                                                                                                                
+                                                                                                                <div className="ml-6 mt-1 space-y-1">
+                                                                                                                    {segment.variables.map((varName: string, varIdx: number) => {
+                                                                                                                        const varMapping = resolveVariableMapping(varName, currentBook?.wizardConfig);
+                                                                                                                        return (
+                                                                                                                            <div key={varIdx} className="space-y-0.5">
+                                                                                                                                {/* Nom technique de la variable */}
+                                                                                                                                <div className="flex items-center gap-1 text-[10px]">
+                                                                                                                                    <span className="text-slate-400 font-medium">📝</span>
+                                                                                                                                    <span className="font-mono text-slate-500">{varName}</span>
+                                                                                                                                </div>
+                                                                                                                                
+                                                                                                                                {/* Mapping wizard */}
+                                                                                                                                {varMapping && (
+                                                                                                                                    <div className="flex items-center gap-1 text-[10px] ml-4">
+                                                                                                                                        <span className="text-purple-500">→</span>
+                                                                                                                                        <span className="text-purple-700 font-medium">{varMapping}</span>
+                                                                                                                                    </div>
+                                                                                                                                )}
+                                                                                                                            </div>
+                                                                                                                        );
+                                                                                                                    })}
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        );
+                                                                                                    })}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                );
+                                                                            })()}
                                                                         </div>
                                                                     ))}
                                                                 </div>

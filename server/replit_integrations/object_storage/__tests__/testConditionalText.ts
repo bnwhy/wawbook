@@ -2,8 +2,14 @@
  * Test script pour vérifier l'extraction des textes conditionnels
  * et leur résolution selon les sélections du wizard
  * 
- * Pattern de condition: (TXTCOND)tabId_variantId-optionId
- * Ex: (TXTCOND)hero-child_gender-boy
+ * Pattern de condition: TXTCOND_tabId_variantId-optionId
+ * Exemple : TXTCOND_hero-child_gender-boy
+ * 
+ * Pattern de variable: TXTVAR_tabId_variantId
+ * Exemple : TXTVAR_hero-child_name
+ * 
+ * Utilisation :
+ *   npx tsx server/replit_integrations/object_storage/__tests__/testConditionalText.ts
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -49,12 +55,12 @@ async function testConditionalText() {
       // Format: { tabId: { variantId: optionId } }
       console.log('\n  --- TEST RÉSOLUTION ---');
       
-      // Version garçon
-      const textBoy = resolveConditionalText(frame.conditionalSegments, { 'hero-child': { gender: 'boy' } });
+      // Version garçon (avec mapping automatique hero-child → child)
+      const textBoy = resolveConditionalText(frame.conditionalSegments, { 'child': { gender: 'boy', name: 'Tom' } });
       console.log(`  Version garçon: "${textBoy}"`);
       
       // Version fille
-      const textGirl = resolveConditionalText(frame.conditionalSegments, { 'hero-child': { gender: 'girl' } });
+      const textGirl = resolveConditionalText(frame.conditionalSegments, { 'child': { gender: 'girl', name: 'Lily' } });
       console.log(`  Version fille: "${textGirl}"`);
       
       // Génération de toutes les variantes

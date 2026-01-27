@@ -1,6 +1,10 @@
 import { BookProduct, ContentConfiguration, ImageElement, TextElement, ImageVariant, ImageCondition } from '../types/admin';
 import { BookConfig } from '../types';
 
+// Import des fonctions de résolution de texte conditionnel
+// @ts-ignore - Import depuis le serveur
+import { resolveConditionalText } from '../../../server/replit_integrations/object_storage/utils/conditionalTextResolver';
+
 /**
  * Checks if all image conditions are satisfied by the current wizard selections.
  * 
@@ -201,13 +205,257 @@ function mapTextAlignToCanvas(
 }
 
 /**
+ * Rend les segments conditionnels avec leurs styles spécifiques sur le Canvas
+ */
+function renderConditionalSegments(
+  ctx: CanvasRenderingContext2D,
+  layer: any, // TextElement
+  wizardSelections: Record<string, Record<string, string>>,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  rotation: number
+) {
+  if (!layer.conditionalSegments || layer.conditionalSegments.length === 0) {
+    return;
+  }
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (rotation) {
+    ctx.rotate(rotation * Math.PI / 180);
+  }
+
+  // Filtrer les segments actifs selon les conditions
+  const activeSegments = layer.conditionalSegments.filter((segment: any) => {
+    if (!segment.condition) return true;
+    
+    // Vérifier si la condition est satisfaite
+    if (segment.parsedCondition) {
+      const { tabId, variantId, optionId } = segment.parsedCondition;
+      
+      // Mapper hero-* vers le tabId du wizard
+      const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
+      const tabSelections = wizardSelections[wizardTabId];
+      
+      return tabSelections && tabSelections[variantId] === optionId;
+    }
+    
+    return true;
+  });
+
+  // Configuration commune (du style global du layer comme fallback)
+  const globalStyle = layer.style || {};
+  const globalFontSize = parseFloat(globalStyle.fontSize || '16') * 4;
+  const globalLineHeight = globalFontSize * (parseFloat(globalStyle.lineHeight || '1.2'));
+  
+  // Parse textIndent from global style
+  let textIndent = 0;
+  if (globalStyle.textIndent) {
+    const ti = globalStyle.textIndent;
+    if (typeof ti === 'string' && ti.endsWith('pt')) {
+      textIndent = parseFloat(ti) * 4;
+    } else if (typeof ti === 'number') {
+      textIndent = ti * 4;
+    }
+  }
+
+  // Alignement du texte
+  const textAlign = globalStyle.textAlign || 'left';
+  let canvasAlign: CanvasTextAlign = 'left';
+  if (textAlign === 'center') canvasAlign = 'center';
+  else if (textAlign === 'right') canvasAlign = 'right';
+  else if (textAlign === 'justify') canvasAlign = 'left'; // Justification manuelle
+
+  // Rendu segment par segment
+  const lines: Array<{segments: Array<{text: string, style: any}>, isFirstLine: boolean}> = [];
+  let currentLine: Array<{text: string, style: any}> = [];
+  let currentLineWidth = 0;
+  let isFirstLineOfPara = true;
+
+  for (const segment of activeSegments) {
+    const segmentStyle = segment.resolvedStyle || globalStyle;
+    
+    // #region agent log
+    console.log(`[renderConditionalSegments] Segment: "${segment.text?.substring(0,20)}"`, {
+      hasResolvedStyle: !!segment.resolvedStyle,
+      segmentColor: segmentStyle.color,
+      segmentFontSize: segmentStyle.fontSize,
+      usingGlobalStyle: !segment.resolvedStyle
+    });
+    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:277',message:'Rendering segment',data:{segmentText:segment.text?.substring(0,20),hasResolvedStyle:!!segment.resolvedStyle,segmentColor:segmentStyle.color,segmentFontSize:segmentStyle.fontSize,usingGlobalStyle:!segment.resolvedStyle},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H8,H9,H10'})}).catch(()=>{});
+    // #endregion
+    
+    // Extraire les propriétés de style du segment
+    const fontSize = parseFloat(segmentStyle.fontSize?.toString() || '16') * 4;
+    const fontFamily = segmentStyle.fontFamily || 'serif';
+    const fontWeight = segmentStyle.fontWeight || 'normal';
+    const fontStyle = segmentStyle.fontStyle || 'normal';
+    const color = segmentStyle.color || '#000000';
+    const textTransform = segmentStyle.textTransform || 'none';
+    const strokeColor = segmentStyle.strokeColor || segmentStyle.webkitTextStroke || segmentStyle.webkitTextStrokeColor;
+    const strokeWeight = segmentStyle.strokeWeight || (segmentStyle.webkitTextStrokeWidth ? parseFloat(segmentStyle.webkitTextStrokeWidth) : undefined);
+    
+    console.log(`[renderConditionalSegments] Parsed style:`, { fontSize, fontFamily, color, strokeColor, strokeWeight });
+    
+    // Letter spacing
+    let letterSpacing = 0;
+    if (segmentStyle.letterSpacing && segmentStyle.letterSpacing !== 'normal') {
+      const ls = segmentStyle.letterSpacing;
+      if (typeof ls === 'string' && ls.endsWith('em')) {
+        letterSpacing = parseFloat(ls) * fontSize;
+      } else if (typeof ls === 'number') {
+        letterSpacing = ls * fontSize; // Assume em unit
+      }
+    }
+
+    // Résoudre les variables dans le texte
+    let text = segment.text || '';
+    text = text.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (match: string, tabId: string, variantId: string) => {
+      const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
+      const tabSelections = wizardSelections[wizardTabId];
+      if (tabSelections && tabSelections[variantId]) {
+        return ' ' + tabSelections[variantId] + ' '; // Espaces autour (workaround IDML)
+      }
+      return match;
+    });
+
+    // Appliquer text-transform
+    if (textTransform === 'uppercase') {
+      text = text.toUpperCase();
+    } else if (textTransform === 'lowercase') {
+      text = text.toLowerCase();
+    }
+
+    // Word wrapping avec styles mixtes
+    const paragraphs = text.split('\n');
+    
+    for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+      const para = paragraphs[pIdx];
+      const words = para.split(' ');
+      
+      for (const word of words) {
+        if (!word) continue;
+        
+        const testWord = word + ' ';
+        
+        // Configurer le contexte pour mesurer
+        ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+        const metrics = ctx.measureText(testWord);
+        const wordWidth = metrics.width + (letterSpacing * testWord.length);
+        
+        const maxWidth = isFirstLineOfPara ? w - textIndent : w;
+        
+        if (currentLineWidth + wordWidth > maxWidth && currentLine.length > 0) {
+          // Nouvelle ligne
+          lines.push({ segments: currentLine, isFirstLine: isFirstLineOfPara });
+          currentLine = [];
+          currentLineWidth = 0;
+          isFirstLineOfPara = false;
+        }
+        
+        currentLine.push({
+          text: testWord,
+          style: {
+            fontSize,
+            fontFamily,
+            fontWeight,
+            fontStyle,
+            color,
+            letterSpacing,
+            strokeColor,
+            strokeWeight
+          }
+        });
+        currentLineWidth += wordWidth;
+      }
+      
+      // Fin de paragraphe
+      if (pIdx < paragraphs.length - 1) {
+        lines.push({ segments: currentLine, isFirstLine: isFirstLineOfPara });
+        currentLine = [];
+        currentLineWidth = 0;
+        isFirstLineOfPara = true;
+      }
+    }
+  }
+
+  // Ajouter la dernière ligne
+  if (currentLine.length > 0) {
+    lines.push({ segments: currentLine, isFirstLine: isFirstLineOfPara });
+  }
+
+  // Rendu des lignes
+  let currentY = 0;
+  for (const line of lines) {
+    let currentX = line.isFirstLine ? textIndent : 0;
+    
+    if (canvasAlign === 'center') {
+      // Calculer la largeur totale de la ligne
+      let lineWidth = 0;
+      for (const seg of line.segments) {
+        ctx.font = `${seg.style.fontStyle} ${seg.style.fontWeight} ${seg.style.fontSize}px ${seg.style.fontFamily}`;
+        lineWidth += ctx.measureText(seg.text).width + (seg.style.letterSpacing * seg.text.length);
+      }
+      currentX = (w - lineWidth) / 2;
+    } else if (canvasAlign === 'right') {
+      let lineWidth = 0;
+      for (const seg of line.segments) {
+        ctx.font = `${seg.style.fontStyle} ${seg.style.fontWeight} ${seg.style.fontSize}px ${seg.style.fontFamily}`;
+        lineWidth += ctx.measureText(seg.text).width + (seg.style.letterSpacing * seg.text.length);
+      }
+      currentX = w - lineWidth;
+    }
+    
+    // Rendre chaque segment de la ligne
+    for (const seg of line.segments) {
+      ctx.font = `${seg.style.fontStyle} ${seg.style.fontWeight} ${seg.style.fontSize}px ${seg.style.fontFamily}`;
+      ctx.fillStyle = seg.style.color;
+      ctx.textBaseline = 'top';
+      
+      // Configurer le strokeColor si présent (contour du texte)
+      const hasStroke = seg.style.strokeColor && seg.style.strokeWeight;
+      if (hasStroke) {
+        ctx.strokeStyle = seg.style.strokeColor;
+        ctx.lineWidth = seg.style.strokeWeight * 4; // Convertir pt en px (facteur 4 comme fontSize)
+        ctx.lineJoin = 'round';
+        ctx.miterLimit = 2;
+      }
+      
+      // Rendre le texte caractère par caractère avec letter-spacing
+      if (seg.style.letterSpacing > 0) {
+        for (const char of seg.text) {
+          if (hasStroke) {
+            ctx.strokeText(char, currentX, currentY);
+          }
+          ctx.fillText(char, currentX, currentY);
+          currentX += ctx.measureText(char).width + seg.style.letterSpacing;
+        }
+      } else {
+        if (hasStroke) {
+          ctx.strokeText(seg.text, currentX, currentY);
+        }
+        ctx.fillText(seg.text, currentX, currentY);
+        currentX += ctx.measureText(seg.text).width;
+      }
+    }
+    
+    currentY += globalLineHeight;
+  }
+
+  ctx.restore();
+}
+
+/**
  * Simulates backend generation of book pages as JPGs.
  * Returns a map of pageIndex -> Data URL (base64 encoded JPG).
  */
 export const generateBookPages = async (
   book: BookProduct, 
   config: BookConfig, 
-  combinationKey: string = 'default'
+  combinationKey: string = 'default',
+  onProgress?: (progress: number) => void
 ): Promise<Record<number, string>> => {
   
   const pages: Record<number, string> = {};
@@ -298,6 +546,8 @@ export const generateBookPages = async (
   
   // Sort pages to process in order
   const pageIndices = Array.from(relevantPages).sort((a,b) => a - b);
+  const totalPages = pageIndices.length;
+  let processedPages = 0;
   
   for (const pageIndex of pageIndices) {
       // Clear canvas
@@ -383,6 +633,44 @@ export const generateBookPages = async (
       ) || [];
       
       for (const layer of textLayers) {
+          // Déterminer si on doit utiliser le rendu par segments ou le rendu classique
+          const hasConditionalSegmentsWithStyles = layer.conditionalSegments && 
+                                                   layer.conditionalSegments.length > 0 &&
+                                                   layer.conditionalSegments.some((seg: any) => seg.resolvedStyle);
+          
+          // #region agent log
+          console.log(`[imageGenerator] Layer ${layer.id}:`, {
+            hasSegments: !!layer.conditionalSegments,
+            segmentsCount: layer.conditionalSegments?.length || 0,
+            hasResolvedStyle: hasConditionalSegmentsWithStyles,
+            firstSegmentHasResolvedStyle: layer.conditionalSegments?.[0]?.resolvedStyle ? 'YES' : 'NO',
+            firstSegmentColor: layer.conditionalSegments?.[0]?.resolvedStyle?.color
+          });
+          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:606',message:'Checking layer for segment rendering',data:{layerId:layer.id,hasSegments:!!layer.conditionalSegments,segmentsCount:layer.conditionalSegments?.length||0,hasResolvedStyle:hasConditionalSegmentsWithStyles,firstSegmentHasResolvedStyle:layer.conditionalSegments?.[0]?.resolvedStyle?'YES':'NO'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H6,H8,H10'})}).catch(()=>{});
+          // #endregion
+          
+          if (hasConditionalSegmentsWithStyles) {
+              // #region agent log
+              console.log(`[imageGenerator] ✓ Using segment-by-segment rendering for ${layer.id}`);
+              fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:610',message:'Using segment-by-segment rendering',data:{layerId:layer.id,segmentsCount:layer.conditionalSegments.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H8,H10'})}).catch(()=>{});
+              // #endregion
+              
+              // Rendu segment-par-segment avec styles spécifiques
+              const x = (layer.position.x || 0) / 100 * width;
+              const y = (layer.position.y || 0) / 100 * height;
+              const w = (layer.position.width || 30) / 100 * width;
+              const h = (layer.position.height || 30) / 100 * height;
+              const rotation = layer.position.rotation || 0;
+              
+              renderConditionalSegments(ctx, layer, config.characters || {}, x, y, w, h, rotation);
+              continue; // Passer au layer suivant
+          }
+          
+          // #region agent log
+          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:623',message:'Using classic rendering (no segments)',data:{layerId:layer.id,globalColor:layer.style?.color},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H8,H10'})}).catch(()=>{});
+          // #endregion
+          
+          // Rendu classique (code existant)
           let text = resolveText(layer.content);
           
           ctx.save();
@@ -606,6 +894,13 @@ export const generateBookPages = async (
       
       // Export page
       pages[pageIndex] = canvas.toDataURL('image/jpeg', 0.8);
+      
+      // Report progress if callback provided
+      processedPages++;
+      if (onProgress) {
+        const progress = (processedPages / totalPages) * 100;
+        onProgress(progress);
+      }
   }
 
   return pages;

@@ -1,11 +1,24 @@
+/**
+ * BookPreview - Aperçu du livre personnalisé avec animation de chargement intégrée
+ * 
+ * Génération en 2 phases :
+ * - Phase 1 (0-30%) : Génération du texte (si story non fourni)
+ * - Phase 2 (30-100%) : Génération des pages (3 priorités : EPUB → Serveur → Client)
+ * 
+ * Animation intégrée : affichée au centre avec livre grisé/flouté en arrière-plan
+ * - Icônes animées : BookOpen (flip 3D) → PenTool → Image → Sparkles
+ * - Barre de progression bleue avec effets shimmer et brillance
+ * - Couleur : bleu clair du site (#0EA5E9)
+ */
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Loader2, PenTool, Image, Sparkles } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { Story, BookConfig, Gender } from '../types';
+import { Story, BookConfig, Gender, Theme } from '../types';
 import { BookProduct, TextElement, ImageElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
 import { generateBookPages, matchesImageConditions, getCombinationKey as getCombinationKeyUtil } from '../utils/imageGenerator';
+import { generateStoryText } from '../services/geminiService';
 import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
 import Footer from './Footer';
@@ -14,21 +27,101 @@ import { formatPrice } from '../utils/formatPrice';
 const hardcoverIcon = null;
 const softcoverIcon = null;
 
+/**
+ * LoadingAnimation - Affichée au centre pendant isGenerating=true
+ * Icônes : BookOpen (flip 3D) → PenTool → Image → Sparkles
+ * Barre : dégradé bleu avec shimmer + brillance animés
+ */
+interface LoadingAnimationProps {
+  progress: number;
+  message: string;
+}
+
+const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ progress, message }) => {
+  const getCurrentIcon = () => {
+    if (progress < 20) return <BookOpen className="w-16 h-16" />;
+    if (progress < 40) return <PenTool className="w-16 h-16" />;
+    if (progress < 90) return <Image className="w-16 h-16" />;
+    return <Sparkles className="w-16 h-16" />;
+  };
+  
+  const getCurrentColor = () => {
+    return "#0EA5E9"; // Bleu clair du site (cloud-blue)
+  };
+  
+  return (
+    <div className="relative flex flex-col items-center justify-center">
+      {/* Contenu centré */}
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Icône animée qui change selon la progression */}
+        <div 
+          className="mb-6"
+          style={{ 
+            color: getCurrentColor(),
+            animation: progress < 20 ? 'book-flip 2s ease-in-out infinite' : 'bounce 1s ease-in-out infinite'
+          }}
+        >
+          {getCurrentIcon()}
+        </div>
+        
+        <h3 className="text-xl font-semibold text-slate-800 mb-4 font-display text-center drop-shadow-sm">
+          {message}
+        </h3>
+        
+        {/* Bandeau de chargement (barre de progression) */}
+        <div className="w-80 max-w-md mb-4">
+          <div className="h-3 bg-white/40 backdrop-blur-sm rounded-full overflow-hidden relative shadow-inner">
+            {/* Effet shimmer pour donner l'impression de mouvement */}
+            <div 
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              style={{
+                animation: 'shimmer 2s ease-in-out infinite'
+              }}
+            ></div>
+            
+            {/* Barre de progression réelle */}
+            <div 
+              className="h-full bg-gradient-to-r from-cloud-blue via-cloud-sky to-cloud-lighter rounded-full transition-all duration-500 relative overflow-hidden"
+              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            >
+              {/* Effet de brillance qui se déplace */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                style={{
+                  animation: 'slide-shine 1.5s ease-in-out infinite'
+                }}
+              ></div>
+            </div>
+          </div>
+        </div>
+        
+        <p className="text-slate-600 font-hand text-lg font-medium text-center drop-shadow-sm">
+          Un instant, la magie opère !
+        </p>
+      </div>
+    </div>
+  );
+};
+
 interface BookPreviewProps {
-  story: Story;
+  story?: Story;
   config: BookConfig;
   bookProduct?: BookProduct;
   onReset: () => void;
   onStart: () => void;
   editingCartItemId?: string;
   isModal?: boolean;
+  bookTitle?: string;
+  initialTheme?: Theme;
 }
 
-const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, onReset, onStart, editingCartItemId, isModal = false }) => {
+const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, onReset, onStart, editingCartItemId, isModal = false, bookTitle, initialTheme }) => {
   const { books } = useBooks();
   const { addToCart, updateItem } = useCart();
   const [, setLocation] = useLocation();
-  const book = bookProduct || books.find(b => b.name === story.title);
+  const [localStory, setLocalStory] = useState<Story | undefined>(story);
+  const currentStory = localStory || story;
+  const book = bookProduct || books.find(b => b.name === currentStory?.title || b.name === bookTitle);
   
 
   const [currentView, setCurrentView] = useState(0);
@@ -38,6 +131,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
   const [generatedPages, setGeneratedPages] = useState<Record<number, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("Chargement...");
   
   // Mobile single-page mode
   const [isMobile, setIsMobile] = useState(false);
@@ -90,29 +185,77 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     return book ? getCombinationKeyUtil(book, config) : 'default';
   }, [book, config.characters]);
 
+  // Phase 1 (0-30%) : Génération du texte - sauté si story déjà fourni
   useEffect(() => {
-    if (book) {
+    if (!currentStory && bookTitle) {
+      setIsGenerating(true);
+      setLoadingProgress(0);
+      setLoadingMessage("On ouvre le grimoire...");
+      
+      const generateText = async () => {
+        try {
+          setLoadingProgress(10);
+          await new Promise(resolve => setTimeout(resolve, 150));
+          
+          setLoadingProgress(20);
+          setLoadingMessage("Personnalisation de l'histoire...");
+          
+          const generatedStory = await generateStoryText(config, bookTitle, initialTheme);
+          setLocalStory(generatedStory);
+          
+          setLoadingProgress(30);
+          setLoadingMessage("Chargement du livre...");
+        } catch (err) {
+          console.error("Failed to generate story text", err);
+          setIsGenerating(false);
+        }
+      };
+      
+      generateText();
+    }
+  }, [bookTitle, config, currentStory, initialTheme]);
+
+  // Phase 2 (30-100%) : Génération des pages - 3 priorités (EPUB → Serveur → Client)
+  useEffect(() => {
+    if (book && currentStory) {
         setIsGenerating(true);
         setGeneratedPages({});
+        setLoadingProgress(30);
+        setLoadingMessage("Chargement du livre...");
+        
         const timer = setTimeout(async () => {
             try {
-                // Priority 1: Use pre-rendered page images from server (EPUB import)
+                // Priorité 1 : Pages pré-rendues (EPUB import)
                 const pageImages = book.contentConfig?.pageImages;
                 
                 if (pageImages && pageImages.length > 0) {
+                    setLoadingProgress(50);
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    
+                    setLoadingProgress(100);
+                    setLoadingMessage("Terminé !");
+                    
                     const pages: Record<number, string> = {};
                     pageImages.forEach(pi => {
                         pages[pi.pageIndex] = pi.imageUrl;
                     });
                     setGeneratedPages(pages);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 250));
                     setIsGenerating(false);
                     return;
                 }
                 
+                // Priorité 2 : Rendu serveur (API /render-pages)
                 const bookPages = book.contentConfig?.pages;
                 
                 if (bookPages && bookPages.length > 0) {
                     try {
+                        setLoadingProgress(40);
+                        await new Promise(resolve => setTimeout(resolve, 150));
+                        
+                        setLoadingProgress(60);
+                        setLoadingMessage("Génération des pages...");
                         const response = await fetch(`/api/books/${book.id}/render-pages`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -132,12 +275,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             const result = await response.json();
                             
                             if (result.pages && result.pages.length > 0) {
+                                setLoadingProgress(100);
+                                setLoadingMessage("Terminé !");
+                                
                                 const pages: Record<number, string> = {};
                                 const cacheBust = Date.now();
                                 result.pages.forEach((p: { pageIndex: number; imageUrl: string }) => {
                                     pages[p.pageIndex] = `${p.imageUrl}?t=${cacheBust}`;
                                 });
                                 setGeneratedPages(pages);
+                                
+                                await new Promise(resolve => setTimeout(resolve, 250));
                                 setIsGenerating(false);
                                 return;
                             }
@@ -147,8 +295,23 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     }
                 }
                 
-                const pages = await generateBookPages(book, config, currentCombinationKey);
+                // Priorité 3 : Génération client (fallback)
+                setLoadingProgress(50);
+                setLoadingMessage("Assemblage des pages...");
+                const pages = await generateBookPages(book, config, currentCombinationKey, (pageProgress) => {
+                  // Map page progress (0-100) to overall progress (50-100)
+                  const overallProgress = 50 + (pageProgress * 0.50);
+                  setLoadingProgress(Math.min(100, overallProgress));
+                  if (overallProgress >= 95) {
+                    setLoadingMessage("Terminé !");
+                  } else {
+                    setLoadingMessage("Assemblage des pages...");
+                  }
+                });
+                setLoadingProgress(100);
+                setLoadingMessage("Terminé !");
                 setGeneratedPages(pages);
+                await new Promise(resolve => setTimeout(resolve, 250));
                 setIsGenerating(false);
             } catch (err) {
                 console.error("Failed to load pages", err);
@@ -157,7 +320,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         }, 100);
         return () => clearTimeout(timer);
     }
-  }, [book, currentCombinationKey]);
+  }, [book, currentCombinationKey, currentStory]);
 
   // --- DIMENSIONS & SCALE ---
   // Use EPUB dimensions if available, otherwise fall back to features or default
@@ -248,7 +411,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     // Add to cart functionality
     const itemData = {
       productId: book?.id,
-      bookTitle: story.title,
+      bookTitle: currentStory?.title || bookTitle || '',
       config,
       dedication,
       format: selectedFormat,
@@ -771,8 +934,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           )}
           <style>{`
             @keyframes float {
-              0%, 100% { transform: translateY(0px); }
-              50% { transform: translateY(-20px); }
+              0%, 100% { 
+                transform: translateY(0px) translateX(0px); 
+              }
+              50% { 
+                transform: translateY(-20px) translateX(10px); 
+              }
             }
           `}</style>
           {/* NAVBAR */}
@@ -808,31 +975,40 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   >
                     {/* Pages carousel container */}
                     <div className="relative w-full h-full">
-                      {/* Current page */}
-                      <div 
-                        className={`absolute inset-0 w-full h-full transition-transform duration-350 ease-out ${
-                          mobileSlideDirection === 'left' ? 'animate-slide-out-left' : 
-                          mobileSlideDirection === 'right' ? 'animate-slide-out-right' : ''
-                        }`}
-                        style={{ 
-                          transform: !isSliding && swipeOffset !== 0 ? `translateX(${-swipeOffset}px)` : undefined,
-                          transition: swipeOffset !== 0 ? 'none' : undefined
-                        }}
-                      >
-                        {getMobilePageContent(mobilePageIndex)}
+                      {/* Current page (grisée si génération en cours) */}
+                      <div className={isGenerating ? "opacity-30 blur-sm transition-all duration-500" : "opacity-100 transition-all duration-500"}>
+                        <div 
+                          className={`absolute inset-0 w-full h-full transition-transform duration-350 ease-out ${
+                            mobileSlideDirection === 'left' ? 'animate-slide-out-left' : 
+                            mobileSlideDirection === 'right' ? 'animate-slide-out-right' : ''
+                          }`}
+                          style={{ 
+                            transform: !isSliding && swipeOffset !== 0 ? `translateX(${-swipeOffset}px)` : undefined,
+                            transition: swipeOffset !== 0 ? 'none' : undefined
+                          }}
+                        >
+                          {getMobilePageContent(mobilePageIndex)}
+                        </div>
+                        
+                        {/* Next page (preview when sliding left) */}
+                        {mobileSlideDirection === 'left' && mobilePageIndex < totalMobilePages - 1 && (
+                          <div className="absolute inset-0 w-full h-full animate-slide-in-left">
+                            {getMobilePageContent(mobilePageIndex + 1)}
+                          </div>
+                        )}
+                        
+                        {/* Previous page (preview when sliding right) */}
+                        {mobileSlideDirection === 'right' && mobilePageIndex > 0 && (
+                          <div className="absolute inset-0 w-full h-full animate-slide-in-right">
+                            {getMobilePageContent(mobilePageIndex - 1)}
+                          </div>
+                        )}
                       </div>
                       
-                      {/* Next page (preview when sliding left) */}
-                      {mobileSlideDirection === 'left' && mobilePageIndex < totalMobilePages - 1 && (
-                        <div className="absolute inset-0 w-full h-full animate-slide-in-left">
-                          {getMobilePageContent(mobilePageIndex + 1)}
-                        </div>
-                      )}
-                      
-                      {/* Previous page (preview when sliding right) */}
-                      {mobileSlideDirection === 'right' && mobilePageIndex > 0 && (
-                        <div className="absolute inset-0 w-full h-full animate-slide-in-right">
-                          {getMobilePageContent(mobilePageIndex - 1)}
+                      {/* Animation de chargement */}
+                      {isGenerating && (
+                        <div className="absolute inset-0 flex items-center justify-center z-50">
+                          <LoadingAnimation progress={loadingProgress} message={loadingMessage} />
                         </div>
                       )}
                     </div>
@@ -883,23 +1059,34 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 <>
               {/* Stage */}
               <div className={`relative z-10 flex items-center justify-center w-full max-w-5xl animate-drop-in ${isModal ? '' : ''}`}>
-                {flipbookPages.length > 0 ? (
-                  <FlipbookViewer
-                    key={`flipbook-${flipbookPages.length}-${book?.id || 'default'}`}
-                    pages={flipbookPages}
-                    width={`${computedW}px`}
-                    height={`${computedH}px`}
-                    className="mx-auto"
-                    onPageTurn={(pageIndex) => setCurrentView(Math.floor(pageIndex / 2))}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full">
-                    <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="animate-spin text-cloud-blue" size={48} />
-                      <p className="text-stone-500 font-medium">Génération des pages...</p>
-                    </div>
+                <div className="relative">
+                  {/* FlipBook (toujours affiché) */}
+                  <div className={isGenerating ? "opacity-30 blur-sm pointer-events-none transition-all duration-500" : "opacity-100 transition-all duration-500"}>
+                    {flipbookPages.length > 0 ? (
+                      <FlipbookViewer
+                        key={`flipbook-${flipbookPages.length}-${book?.id || 'default'}`}
+                        pages={flipbookPages}
+                        width={`${computedW}px`}
+                        height={`${computedH}px`}
+                        className="mx-auto"
+                        onPageTurn={(pageIndex) => setCurrentView(Math.floor(pageIndex / 2))}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center w-full h-full" style={{ width: `${computedW}px`, height: `${computedH}px` }}>
+                        <div className="flex flex-col items-center gap-4">
+                          <BookOpen size={40} className="text-gray-200" />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                  
+                  {/* Animation de chargement superposée */}
+                  {isGenerating && (
+                    <div className="absolute inset-0 flex items-center justify-center z-50">
+                      <LoadingAnimation progress={loadingProgress} message={loadingMessage} />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Modify Link */}
@@ -1075,6 +1262,77 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
             .animate-slide-out-right { animation: slide-out-right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
             .animate-slide-in-left { animation: slide-in-left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
             .animate-slide-in-right { animation: slide-in-right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+            
+            /* Loading animation blobs */
+            @keyframes float {
+              0%, 100% { 
+                transform: translateY(0px) translateX(0px); 
+              }
+              50% { 
+                transform: translateY(-20px) translateX(10px); 
+              }
+            }
+            
+            @keyframes float-delayed {
+              0%, 100% { 
+                transform: translateY(0px) translateX(0px); 
+              }
+              50% { 
+                transform: translateY(20px) translateX(-10px); 
+              }
+            }
+            
+            @keyframes shimmer {
+              0% { 
+                transform: translateX(-100%); 
+              }
+              100% { 
+                transform: translateX(200%); 
+              }
+            }
+            
+            @keyframes slide-shine {
+              0% { 
+                transform: translateX(-100%); 
+              }
+              100% { 
+                transform: translateX(200%); 
+              }
+            }
+            
+            @keyframes book-flip {
+              0%, 100% { 
+                transform: rotateY(0deg) scale(1);
+              }
+              50% { 
+                transform: rotateY(20deg) scale(1.1);
+              }
+            }
+            
+            @keyframes bounce {
+              0%, 100% { 
+                transform: translateY(0);
+              }
+              50% { 
+                transform: translateY(-10px);
+              }
+            }
+            
+            .animate-float {
+              animation: float 6s ease-in-out infinite;
+            }
+            
+            .animate-float-delayed {
+              animation: float-delayed 6s ease-in-out infinite 3s;
+            }
+            
+            .animate-shimmer {
+              animation: shimmer 2s ease-in-out infinite;
+            }
+            
+            .animate-slide-shine {
+              animation: slide-shine 1.5s ease-in-out infinite;
+            }
           `}</style>
       </div>
   );

@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Hero from '../components/Hero';
 import Wizard from '../components/Wizard';
 import BookPreview from '../components/BookPreview';
-import LoadingScreen from '../components/LoadingScreen';
 import CartPage from '../pages/CartPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import CheckoutSuccessPage from '../pages/CheckoutSuccessPage';
 import CheckoutCancelPage from '../pages/CheckoutCancelPage';
 import { AppState, BookConfig, Story, Theme, Activity } from '../types';
-import { generateStoryText } from '../services/geminiService';
 import { Switch, Route, useLocation } from 'wouter';
 import StaticPage from '../pages/StaticPage';
 import CategoryPage from '../pages/CategoryPage';
@@ -59,19 +57,13 @@ const PublicApp: React.FC = () => {
     setInitialSelections(undefined);
   };
 
+  /**
+   * handleConfigComplete - Passe directement à READING
+   * BookPreview gère toute la génération (texte + pages) avec animation intégrée
+   */
   const handleConfigComplete = async (finalConfig: BookConfig, context?: { theme?: Theme, productId?: string }) => {
     setConfig(finalConfig);
-    setAppState('GENERATING');
-    
-    try {
-      const generatedStory = await generateStoryText(finalConfig, selectedBookTitle, context?.theme);
-      setStory(generatedStory);
-      setAppState('READING');
-    } catch (err) {
-      console.error("Story generation failed", err);
-      setError("Une erreur est survenue lors de la création du livre.");
-      setAppState('HOME');
-    }
+    setAppState('READING');
   };
 
   const handleReset = () => {
@@ -105,15 +97,15 @@ const PublicApp: React.FC = () => {
                     />
                   )}
 
-                  {appState === 'GENERATING' && <LoadingScreen />}
-
-                  {appState === 'READING' && story && config && (
+                  {appState === 'READING' && config && (
                     <BookPreview 
-                      story={story} 
+                      story={story}
                       config={config} 
                       onReset={handleReset}
-                      onStart={() => startCreation(config.theme, undefined, story.title, config.characters)}
+                      onStart={() => startCreation(config.theme, undefined, story?.title || selectedBookTitle, config.characters)}
                       editingCartItemId={editingCartItemId}
+                      bookTitle={selectedBookTitle}
+                      initialTheme={initialTheme}
                     />
                   )}
                 </Route>

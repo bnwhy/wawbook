@@ -33,7 +33,7 @@
   ],
   "texts": [
     {
-      "id": "text-1769277169280-1-_idContainer001",
+      "id": "text-1769518737060-1-_idContainer001",
       "type": "conditional",
       "label": "_idContainer001",
       "content": "Le château\nde la petiteDu petit\n{{TXTVAR_hero-child_name}}",
@@ -46,7 +46,7 @@
         "fontSize": "42pt",
         "fontWeight": "normal",
         "fontStyle": "normal",
-        "color": "#6f1d76",
+        "color": "#ffffff",
         "letterSpacing": "normal",
         "textDecoration": "none",
         "textTransform": "uppercase",
@@ -75,22 +75,26 @@
       },
       "cssSelector": "#_idContainer001",
       "combinationKey": "default",
-      "idmlFrameId": "u117",
-      "idmlFrameName": "u117",
+      "idmlFrameId": "u116",
+      "idmlFrameName": "u116",
       "appliedParagraphStyle": "ParagraphStyle/Titre livre",
       "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
       "conditionalSegments": [
         {
-          "text": "L",
-          "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]"
-        },
-        {
-          "text": "e châte",
-          "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]"
-        },
-        {
-          "text": "au\n",
-          "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]"
+          "text": "Le château\n",
+          "appliedCharacterStyle": "CharacterStyle/Style château",
+          "resolvedStyle": {
+            "fontFamily": "Sue Ellen Francisco",
+            "fontSize": "42pt",
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "color": "#ffffff",
+            "letterSpacing": "normal",
+            "textDecoration": "none",
+            "textTransform": "none",
+            "horizontalScale": 141,
+            "strokeColor": "#801a76"
+          }
         },
         {
           "text": "de la petite",
@@ -100,6 +104,18 @@
             "tabId": "hero-child",
             "variantId": "gender",
             "optionId": "girl"
+          },
+          "resolvedStyle": {
+            "fontFamily": "Sue Ellen Francisco",
+            "fontSize": "42pt",
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "color": "#6f1d76",
+            "letterSpacing": "normal",
+            "textDecoration": "none",
+            "textTransform": "none",
+            "horizontalScale": 141,
+            "strokeColor": "#801a76"
           }
         },
         {
@@ -110,6 +126,18 @@
             "tabId": "hero-child",
             "variantId": "gender",
             "optionId": "boy"
+          },
+          "resolvedStyle": {
+            "fontFamily": "Sue Ellen Francisco",
+            "fontSize": "42pt",
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "color": "#6f1d76",
+            "letterSpacing": "normal",
+            "textDecoration": "none",
+            "textTransform": "none",
+            "horizontalScale": 141,
+            "strokeColor": "#801a76"
           }
         },
         {
@@ -117,7 +145,19 @@
           "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
           "variables": [
             "TXTVAR_hero-child_name"
-          ]
+          ],
+          "resolvedStyle": {
+            "fontFamily": "Sue Ellen Francisco",
+            "fontSize": "42pt",
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "color": "#6f1d76",
+            "letterSpacing": "normal",
+            "textDecoration": "none",
+            "textTransform": "none",
+            "horizontalScale": 141,
+            "strokeColor": "#801a76"
+          }
         }
       ],
       "availableConditions": [
@@ -129,10 +169,10 @@
   "images": [],
   "imageElements": [
     {
-      "id": "img-1769277169280-1-sl5pk6ug",
+      "id": "img-1769518737060-1-w0drdkmj",
       "type": "static",
       "label": "_idGenObjectAttribute-1 _idGenObjectAttribute-2",
-      "url": "/assets/books/1769277169280/images/page1_commonbg.jpg",
+      "url": "/assets/books/1769518737060/images/page1_commonbg.jpg",
       "position": {
         "x": -0.001,
         "y": 0,

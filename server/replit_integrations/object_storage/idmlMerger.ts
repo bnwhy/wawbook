@@ -37,6 +37,186 @@ function resolveStyleId(
 }
 
 /**
+ * Résout le style complet d'un segment conditionnel
+ * Combine CharacterStyle, inline properties, et fallback sur ParagraphStyle
+ * 
+ * IMPORTANT : Un CharacterStyle peut ne PAS avoir toutes les propriétés définies.
+ * Dans ce cas, il doit hériter du ParagraphStyle (selon la doc IDML officielle).
+ */
+function resolveSegmentStyle(
+  segment: any,
+  characterStyles: Record<string, any>,
+  paragraphStyles: Record<string, any>,
+  colors: Record<string, string>,
+  globalParagraphStyleId?: string
+): any {
+  // #region agent log
+  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:ENTRY',message:'Function entry',data:{segmentText:segment.text?.substring(0,20),appliedCharStyle:segment.appliedCharacterStyle,hasInlineProps:!!segment.inlineCharProperties,inlineFillColor:segment.inlineCharProperties?.fillColor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+  // #endregion
+  
+  // 1. Résoudre le CharacterStyle du segment
+  const resolvedCharId = resolveStyleId(
+    characterStyles,
+    segment.appliedCharacterStyle,
+    "CharacterStyle/"
+  );
+  
+  let charStyle = resolvedCharId && characterStyles[resolvedCharId]
+    ? { ...characterStyles[resolvedCharId] }
+    : {};
+  
+  // #region agent log
+  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:AFTER_CHARSTYLE',message:'CharStyle resolved',data:{resolvedCharId,charStyleColor:charStyle.color,charStyleFontSize:charStyle.fontSize,charStyleFontFamily:charStyle.fontFamily},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3'})}).catch(()=>{});
+  // #endregion
+  
+  // 2. Résoudre le ParagraphStyle global pour l'héritage
+  let paraStyle: any = {};
+  if (globalParagraphStyleId) {
+    const resolvedParaId = resolveStyleId(
+      paragraphStyles,
+      globalParagraphStyleId,
+      "ParagraphStyle/"
+    );
+    
+    paraStyle = resolvedParaId && paragraphStyles[resolvedParaId]
+      ? paragraphStyles[resolvedParaId]
+      : {};
+  }
+  
+  // 3. Appliquer les propriétés inline du segment (priorité maximale)
+  if (segment.inlineCharProperties) {
+    const inline = segment.inlineCharProperties;
+    
+    if (inline.fontFamily) charStyle.fontFamily = inline.fontFamily;
+    if (inline.fontSize) charStyle.fontSize = inline.fontSize;
+    if (inline.fontWeight) charStyle.fontWeight = inline.fontWeight;
+    if (inline.fontStyle) charStyle.fontStyle = inline.fontStyle;
+    if (inline.letterSpacing !== undefined) charStyle.letterSpacing = inline.letterSpacing;
+    if (inline.horizontalScale !== undefined) charStyle.horizontalScale = inline.horizontalScale;
+    if (inline.verticalScale !== undefined) charStyle.verticalScale = inline.verticalScale;
+    if (inline.skew !== undefined) charStyle.skew = inline.skew;
+    
+    if (inline.fillColor) {
+      const colorHex = colors[inline.fillColor];
+      
+      // #region agent log
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:INLINE_COLOR',message:'Inline color resolution',data:{fillColorRef:inline.fillColor,colorHex,isPaper:colorHex==='#77ff88',availableColorKeys:Object.keys(colors).filter(k=>k.includes('u14')).slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4,H5'})}).catch(()=>{});
+      // #endregion
+      
+      if (colorHex) charStyle.color = colorHex;
+    }
+  }
+  
+  // 4. Héritage depuis le ParagraphStyle pour les propriétés manquantes
+  // CRITIQUE : C'est ICI que le bug se trouvait - les propriétés manquantes 
+  // du CharacterStyle doivent être héritées du ParagraphStyle
+  
+  // #region agent log
+  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:BEFORE_INHERIT',message:'Before inheritance',data:{charStyleColor:charStyle.color,hasExplicitColor:resolvedCharId&&characterStyles[resolvedCharId]&&characterStyles[resolvedCharId].color,isNoCharStyle:segment.appliedCharacterStyle?.includes('[No character style]'),paraColor:paraStyle.paraColor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H10'})}).catch(()=>{});
+  // #endregion
+  
+  if (!charStyle.fontFamily && paraStyle.fontFamily) {
+    charStyle.fontFamily = paraStyle.fontFamily;
+  }
+  
+  // BUGFIX: fontSize=12 est la valeur par défaut du parser, pas une valeur intentionnelle
+  // Si le CharacterStyle a fontSize=12 ET que le ParagraphStyle a un fontSize différent,
+  // c'est que le CharacterStyle n'a PAS de fontSize défini → hériter du ParagraphStyle
+  if ((!charStyle.fontSize || charStyle.fontSize === 12) && paraStyle.fontSize && paraStyle.fontSize !== 12) {
+    charStyle.fontSize = paraStyle.fontSize;
+  }
+  
+  if (!charStyle.fontWeight && paraStyle.fontWeight) {
+    charStyle.fontWeight = paraStyle.fontWeight;
+  }
+  if (!charStyle.fontStyle && paraStyle.fontStyle) {
+    charStyle.fontStyle = paraStyle.fontStyle;
+  }
+  
+  // BUGFIX: Hériter textTransform du ParagraphStyle si non défini
+  if (!charStyle.textTransform && paraStyle.paraTextTransform) {
+    charStyle.textTransform = paraStyle.paraTextTransform;
+  }
+  
+  // BUGFIX: Hériter horizontalScale du ParagraphStyle si non défini
+  if (!charStyle.horizontalScale && paraStyle.paraHorizontalScale) {
+    charStyle.horizontalScale = paraStyle.paraHorizontalScale;
+  }
+  
+  // BUGFIX: Hériter strokeColor/strokeWeight du ParagraphStyle si non défini
+  if (!charStyle.strokeColor && paraStyle.paraStrokeColor) {
+    charStyle.strokeColor = paraStyle.paraStrokeColor;
+  }
+  if (!charStyle.strokeWeight && paraStyle.paraStrokeWeight) {
+    charStyle.strokeWeight = paraStyle.paraStrokeWeight;
+  }
+  
+  // BUGFIX CRITIQUE: Gestion de l'héritage de couleur
+  // RÈGLE: On hérite du ParagraphStyle UNIQUEMENT si le CharacterStyle n'a PAS de couleur définie
+  // 
+  // CAS 1: [No character style] avec noir #000000 → c'est la couleur par défaut, hériter du ParagraphStyle
+  // CAS 2: Style personnalisé avec Paper (#ffffff) EXPLICITE → GARDER le blanc (c'est intentionnel)
+  // CAS 3: Pas de couleur définie → hériter du ParagraphStyle
+  //
+  // Comment différencier CAS 1 et CAS 2 ?
+  // → Si le style est "[No character style]", le noir/blanc est par défaut → hériter
+  // → Si le style est personnalisé ET a une fillColor définie dans l'IDML, GARDER cette couleur
+  
+  const isNoCharacterStyle = segment.appliedCharacterStyle?.includes('[No character style]');
+  
+  // Pour [No character style], toujours hériter du ParagraphStyle (noir par défaut n'est pas intentionnel)
+  if (isNoCharacterStyle && paraStyle.paraColor) {
+    charStyle.color = paraStyle.paraColor;
+    
+    // #region agent log
+    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:INHERIT_NO_CHAR_STYLE',message:'[No character style] inherits from ParagraphStyle',data:{wasColor:charStyle.color,newColor:paraStyle.paraColor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H9,H10'})}).catch(()=>{});
+    // #endregion
+  }
+  
+  // Pour les styles personnalisés, GARDER la couleur (même si c'est Paper/blanc)
+  // L'utilisateur a explicitement défini FillColor="Paper" dans InDesign
+  if (!charStyle.textTransform && paraStyle.paraTextTransform) {
+    charStyle.textTransform = paraStyle.paraTextTransform;
+  }
+  if (!charStyle.horizontalScale && paraStyle.paraHorizontalScale) {
+    charStyle.horizontalScale = paraStyle.paraHorizontalScale;
+  }
+  if (!charStyle.strokeColor && paraStyle.paraStrokeColor) {
+    charStyle.strokeColor = paraStyle.paraStrokeColor;
+  }
+  if (!charStyle.strokeWeight && paraStyle.paraStrokeWeight) {
+    charStyle.strokeWeight = paraStyle.paraStrokeWeight;
+  }
+  
+  // 5. Convertir en format CSS (comme buildCompleteStyle)
+  const cssStyle: Record<string, any> = {
+    fontFamily: charStyle.fontFamily || undefined,
+    fontSize: charStyle.fontSize ? `${charStyle.fontSize}pt` : undefined,
+    fontWeight: charStyle.fontWeight || 'normal',
+    fontStyle: charStyle.fontStyle || 'normal',
+    color: charStyle.color || '#000000',
+    letterSpacing: charStyle.letterSpacing ? `${charStyle.letterSpacing}em` : 'normal',
+    textDecoration: charStyle.textDecoration || 'none',
+    textTransform: charStyle.textTransform || 'none',
+    
+    // Transformations
+    horizontalScale: charStyle.horizontalScale,
+    verticalScale: charStyle.verticalScale,
+    skew: charStyle.skew,
+    
+    // Contours
+    strokeColor: charStyle.strokeColor,
+    strokeWeight: charStyle.strokeWeight
+  };
+  
+  // #region agent log
+  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:EXIT',message:'Function exit',data:{finalColor:cssStyle.color,finalFontSize:cssStyle.fontSize,finalTextTransform:cssStyle.textTransform,finalHorizontalScale:cssStyle.horizontalScale},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3'})}).catch(()=>{});
+  // #endregion
+  
+  return cssStyle;
+}
+
+/**
  * Fusionne les positions de texte EPUB avec le contenu et les styles IDML
  * 
  * Sources de données :
@@ -338,6 +518,77 @@ function createMergedText(
     localParaStyle = extractLocalParagraphStyle(idmlFrame.localParaProperties);
   }
   
+  // Priority 1.5: Si le texte a des segments conditionnels avec des styles,
+  // utiliser le style du PREMIER segment significatif pour le style GLOBAL du texte
+  if (idmlFrame.conditionalSegments && idmlFrame.conditionalSegments.length > 0) {
+    // Trouver le premier segment non-vide avec un style de caractère appliqué
+    const firstStyledSegment = idmlFrame.conditionalSegments.find(
+      seg => seg.text.trim() && 
+             seg.appliedCharacterStyle && 
+             seg.appliedCharacterStyle !== 'CharacterStyle/$ID/[No character style]'
+    );
+    
+    if (firstStyledSegment) {
+      console.log(`[createMergedText]   ✓ Using style from first styled segment: "${firstStyledSegment.text.substring(0, 20)}"`);
+      
+      // Résoudre le style complet de ce segment
+      const firstSegmentResolvedStyle = resolveSegmentStyle(
+        firstStyledSegment,
+        idmlData.characterStyles,
+        idmlData.paragraphStyles,
+        idmlData.colors,
+        paraStyleId
+      );
+      
+      // #region agent log
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:createMergedText:APPLY_FIRST_SEGMENT',message:'Applying first segment style to global',data:{segmentText:firstStyledSegment.text.substring(0,20),segmentColor:firstSegmentResolvedStyle.color,segmentFontSize:firstSegmentResolvedStyle.fontSize},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H11'})}).catch(()=>{});
+      // #endregion
+      
+      // Appliquer le style du segment au charStyle global
+      // Extraction des valeurs numériques depuis le format CSS
+      if (firstSegmentResolvedStyle.fontFamily) {
+        charStyle.fontFamily = firstSegmentResolvedStyle.fontFamily;
+      }
+      if (firstSegmentResolvedStyle.fontSize) {
+        const sizeMatch = firstSegmentResolvedStyle.fontSize.match(/^([\d.]+)pt$/);
+        if (sizeMatch) charStyle.fontSize = parseFloat(sizeMatch[1]);
+      }
+      if (firstSegmentResolvedStyle.fontWeight && firstSegmentResolvedStyle.fontWeight !== 'normal') {
+        charStyle.fontWeight = firstSegmentResolvedStyle.fontWeight;
+      }
+      if (firstSegmentResolvedStyle.fontStyle && firstSegmentResolvedStyle.fontStyle !== 'normal') {
+        charStyle.fontStyle = firstSegmentResolvedStyle.fontStyle;
+      }
+      if (firstSegmentResolvedStyle.color) {
+        charStyle.color = firstSegmentResolvedStyle.color;
+      }
+      if (firstSegmentResolvedStyle.letterSpacing && firstSegmentResolvedStyle.letterSpacing !== 'normal') {
+        const spacingMatch = firstSegmentResolvedStyle.letterSpacing.match(/^([\d.]+)em$/);
+        if (spacingMatch) charStyle.letterSpacing = parseFloat(spacingMatch[1]);
+      }
+      if (firstSegmentResolvedStyle.textTransform && firstSegmentResolvedStyle.textTransform !== 'none') {
+        charStyle.textTransform = firstSegmentResolvedStyle.textTransform;
+      }
+      if (firstSegmentResolvedStyle.horizontalScale) {
+        charStyle.horizontalScale = firstSegmentResolvedStyle.horizontalScale;
+      }
+      if (firstSegmentResolvedStyle.verticalScale) {
+        charStyle.verticalScale = firstSegmentResolvedStyle.verticalScale;
+      }
+      if (firstSegmentResolvedStyle.skew) {
+        charStyle.skew = firstSegmentResolvedStyle.skew;
+      }
+      if (firstSegmentResolvedStyle.strokeColor) {
+        charStyle.strokeColor = firstSegmentResolvedStyle.strokeColor;
+      }
+      if (firstSegmentResolvedStyle.strokeWeight) {
+        charStyle.strokeWeight = firstSegmentResolvedStyle.strokeWeight;
+      }
+      
+      console.log(`[createMergedText]   ✓ Global style updated with first segment: color=${charStyle.color}, fontSize=${charStyle.fontSize}`);
+    }
+  }
+  
   // Détecte si le texte est variable
   const isVariable = idmlFrame.variables.length > 0;
   
@@ -375,7 +626,24 @@ function createMergedText(
   
   // NOUVEAU: Ajouter les segments conditionnels si présents
   if (idmlFrame.conditionalSegments && idmlFrame.conditionalSegments.length > 0) {
-    result.conditionalSegments = idmlFrame.conditionalSegments;
+    // Enrichir chaque segment avec son style résolu
+    result.conditionalSegments = idmlFrame.conditionalSegments.map(segment => {
+      const resolvedStyle = resolveSegmentStyle(
+        segment,
+        idmlData.characterStyles,
+        idmlData.paragraphStyles,
+        idmlData.colors,
+        paraStyleId
+      );
+      
+      console.log(`[createMergedText]   Segment "${segment.text.substring(0, 20)}" - Style: ${segment.appliedCharacterStyle}`);
+      console.log(`[createMergedText]     Resolved: font=${resolvedStyle.fontFamily}, size=${resolvedStyle.fontSize}, color=${resolvedStyle.color}`);
+      
+      return {
+        ...segment,
+        resolvedStyle
+      };
+    });
     result.availableConditions = idmlFrame.availableConditions;
     
     // Marquer le type comme 'conditional' si des conditions sont présentes

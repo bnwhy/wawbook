@@ -718,17 +718,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
 
       // Update book with merged content (wizardConfig reste inchangé, pas de création automatique de tabs)
+      // BUGFIX: Remplacer complètement le contentConfig au lieu de le merger
+      // pour s'assurer que les nouveaux resolvedStyle des segments sont bien sauvegardés
       const updatedBook = {
         ...selectedBook,
-        contentConfig: {
-          ...selectedBook.contentConfig,
-          pages: result.contentConfig.pages || [],
-          cssContent: result.contentConfig.cssContent || '',
-          texts: result.contentConfig.texts || [],
-          imageElements: result.contentConfig.imageElements || [],
-        }
+        contentConfig: result.contentConfig  // Remplacer complètement, pas merger
       };
       
+      console.log('[AdminDashboard] Updating book with new contentConfig');
+      console.log('[AdminDashboard] Texts count:', result.contentConfig.texts?.length || 0);
+      console.log('[AdminDashboard] First text has segments:', !!result.contentConfig.texts?.[0]?.conditionalSegments);
+      console.log('[AdminDashboard] First segment has resolvedStyle:', !!result.contentConfig.texts?.[0]?.conditionalSegments?.[0]?.resolvedStyle);
       
       // Save to database
       await updateBook(updatedBook);
@@ -6691,30 +6691,66 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                             <div 
                                                                                 className="mb-2 p-2 bg-white rounded border border-slate-100 whitespace-pre-wrap"
                                                                                 style={{
-                                                                                    // Appliquer TOUS les styles extraits de l'IDML
-                                                                                    fontFamily: text.style?.fontFamily || 'inherit',
-                                                                                    fontSize: text.style?.fontSize || 'inherit',
-                                                                                    fontWeight: text.style?.fontWeight || 'normal',
-                                                                                    fontStyle: text.style?.fontStyle || 'normal',
-                                                                                    color: text.style?.color || '#000000',
+                                                                                    // Styles de paragraphe (layout)
                                                                                     textAlign: text.style?.textAlign as any || 'left',
                                                                                     lineHeight: text.style?.lineHeight || 'normal',
-                                                                                    letterSpacing: text.style?.letterSpacing || 'normal',
-                                                                                    textDecoration: text.style?.textDecoration || 'none',
-                                                                                    textTransform: text.style?.textTransform as any || 'none',
                                                                                     textIndent: text.style?.textIndent || '0',
-                                                                                    // Styles avancés
-                                                                                    fontStretch: text.style?.fontStretch as any,
-                                                                                    fontKerning: text.style?.fontKerning as any,
-                                                                                    fontVariantLigatures: text.style?.fontVariantLigatures as any,
-                                                                                    textDecorationColor: text.style?.textDecorationColor,
-                                                                                    textDecorationThickness: text.style?.textDecorationThickness,
-                                                                                    textUnderlineOffset: text.style?.textUnderlineOffset,
-                                                                                    direction: text.style?.direction as any,
-                                                                                    hyphens: text.style?.hyphens as any,
+                                                                                    fontFamily: text.style?.fontFamily || 'inherit',
                                                                                 }}
                                                                             >
-                                                                                {text.content?.length > 80 ? text.content.substring(0, 80) + '...' : text.content || '(vide)'}
+                                                                                {/* Si le texte a des segments conditionnels, afficher chaque segment avec son propre style */}
+                                                                                {text.conditionalSegments && text.conditionalSegments.length > 0 ? (
+                                                                                    text.conditionalSegments.map((segment: any, segIdx: number) => {
+                                                                                        // Priorité: resolvedStyle.textTransform > style global, mais si resolvedStyle.textTransform est 'none' ou undefined, utiliser le style global
+                                                                                        // Si resolvedStyle existe et a un textTransform défini (et différent de 'none'), l'utiliser
+                                                                                        // Sinon, utiliser le style global
+                                                                                        const textTransformValue = segment.resolvedStyle !== undefined && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
+                                                                                            ? segment.resolvedStyle.textTransform
+                                                                                            : (text.style?.textTransform || 'none');
+                                                                                        
+                                                                                        return (
+                                                                                        <span
+                                                                                            key={segIdx}
+                                                                                            style={{
+                                                                                                // Appliquer le style résolu de chaque segment
+                                                                                                fontFamily: segment.resolvedStyle?.fontFamily || text.style?.fontFamily || 'inherit',
+                                                                                                fontSize: segment.resolvedStyle?.fontSize || text.style?.fontSize || 'inherit',
+                                                                                                fontWeight: segment.resolvedStyle?.fontWeight || text.style?.fontWeight || 'normal',
+                                                                                                fontStyle: segment.resolvedStyle?.fontStyle || text.style?.fontStyle || 'normal',
+                                                                                                color: segment.resolvedStyle?.color || text.style?.color || '#000000',
+                                                                                                letterSpacing: segment.resolvedStyle?.letterSpacing || text.style?.letterSpacing || 'normal',
+                                                                                                textDecoration: segment.resolvedStyle?.textDecoration || text.style?.textDecoration || 'none',
+                                                                                                textTransform: textTransformValue as any,
+                                                                                                // Contour du texte (stroke)
+                                                                                                WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : (text.style?.webkitTextStroke || 'none'),
+                                                                                                WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor || text.style?.webkitTextStrokeColor,
+                                                                                                WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : (text.style?.webkitTextStrokeWidth || '1pt')) : text.style?.webkitTextStrokeWidth,
+                                                                                                // Transformations
+                                                                                                fontStretch: segment.resolvedStyle?.fontStretch as any || text.style?.fontStretch as any,
+                                                                                            }}
+                                                                                        >
+                                                                                            {segment.text}
+                                                                                        </span>
+                                                                                    )})
+                                                                                ) : (
+                                                                                    /* Pas de segments : afficher le texte avec le style global */
+                                                                                    <span style={{
+                                                                                        fontFamily: text.style?.fontFamily || 'inherit',
+                                                                                        fontSize: text.style?.fontSize || 'inherit',
+                                                                                        fontWeight: text.style?.fontWeight || 'normal',
+                                                                                        fontStyle: text.style?.fontStyle || 'normal',
+                                                                                        color: text.style?.color || '#000000',
+                                                                                        letterSpacing: text.style?.letterSpacing || 'normal',
+                                                                                        textDecoration: text.style?.textDecoration || 'none',
+                                                                                        textTransform: text.style?.textTransform as any || 'none',
+                                                                                        WebkitTextStroke: text.style?.webkitTextStroke,
+                                                                                        WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
+                                                                                        WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
+                                                                                        fontStretch: text.style?.fontStretch as any,
+                                                                                    }}>
+                                                                                        {text.content?.length > 80 ? text.content.substring(0, 80) + '...' : text.content || '(vide)'}
+                                                                                    </span>
+                                                                                )}
                                                                             </div>
                                                                             <div className="flex flex-wrap gap-2 mb-3">
                                                                                 {text.style?.fontFamily ? (
@@ -6731,12 +6767,47 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         {text.style.fontSize}
                                                                                     </span>
                                                                                 )}
-                                                                                {text.style?.color && (
-                                                                                    <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium flex items-center gap-1" title="Couleur">
+                                                                                {/* Couleur globale uniquement si pas de segments */}
+                                                                                {!text.conditionalSegments && text.style?.color && (
+                                                                                    <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium flex items-center gap-1" title="Couleur globale">
                                                                                         <span className="w-2 h-2 rounded-full border border-slate-300" style={{ backgroundColor: text.style.color }}></span>
                                                                                         {text.style.color}
                                                                                     </span>
                                                                                 )}
+                                                                                {/* Afficher le ParagraphStyle appliqué */}
+                                                                                {text.appliedParagraphStyle && (
+                                                                                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-medium" title={`ParagraphStyle: ${text.appliedParagraphStyle}`}>
+                                                                                        📄 {text.appliedParagraphStyle.replace('ParagraphStyle/', '')}
+                                                                                    </span>
+                                                                                )}
+                                                                                
+                                                                                {/* Afficher les CharacterStyles des segments */}
+                                                                                {text.conditionalSegments && text.conditionalSegments.length > 0 ? (() => {
+                                                                                    const charStyles = new Set<string>();
+                                                                                    text.conditionalSegments.forEach((seg: any) => {
+                                                                                        if (seg.appliedCharacterStyle && !seg.appliedCharacterStyle.includes('[No character style]')) {
+                                                                                            charStyles.add(seg.appliedCharacterStyle.replace('CharacterStyle/', ''));
+                                                                                        }
+                                                                                    });
+                                                                                    const uniqueCharStyles = Array.from(charStyles);
+                                                                                    
+                                                                                    if (uniqueCharStyles.length > 0) {
+                                                                                        return uniqueCharStyles.map((styleName, i) => (
+                                                                                            <span key={i} className="text-[10px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded font-medium" title={`CharacterStyle: ${styleName}`}>
+                                                                                                ✏️ {styleName}
+                                                                                            </span>
+                                                                                        ));
+                                                                                    }
+                                                                                    return null;
+                                                                                })() : (
+                                                                                    /* Texte sans segments : afficher le CharacterStyle global */
+                                                                                    text.appliedCharacterStyle && !text.appliedCharacterStyle.includes('[No character style]') && (
+                                                                                        <span className="text-[10px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded font-medium" title={`CharacterStyle: ${text.appliedCharacterStyle}`}>
+                                                                                            ✏️ {text.appliedCharacterStyle.replace('CharacterStyle/', '')}
+                                                                                        </span>
+                                                                                    )
+                                                                                )}
+                                                                                
                                                                                 {text.style?.idmlHorizontalScale && text.style.idmlHorizontalScale !== 100 && (
                                                                                     <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium" title="Espacement horizontal (HorizontalScale IDML)">
                                                                                         H: {text.style.idmlHorizontalScale}%
@@ -6780,6 +6851,46 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                     </span>
                                                                                 )}
                                                                             </div>
+                                                                            
+                                                                            {/* Section couleurs des segments */}
+                                                                            {text.conditionalSegments && text.conditionalSegments.length > 0 && (
+                                                                                <div className="mb-3 p-2 bg-purple-50/50 rounded border border-purple-200">
+                                                                                    <h5 className="text-[10px] font-semibold text-purple-700 mb-2">🎨 Couleurs par segment</h5>
+                                                                                    <div className="space-y-1">
+                                                                                        {text.conditionalSegments.map((seg: any, i: number) => (
+                                                                                            <div key={i} className="text-[10px] bg-white px-2 py-1.5 rounded border border-purple-200 flex items-center gap-2">
+                                                                                                <span className="font-mono text-[9px] text-purple-600 min-w-[100px] truncate" title={seg.text}>
+                                                                                                    "{seg.text?.trim() || '...'}"
+                                                                                                </span>
+                                                                                                <div className="flex items-center gap-2 flex-1">
+                                                                                                    {seg.resolvedStyle?.color && (
+                                                                                                        <span className="flex items-center gap-1">
+                                                                                                            <span className="text-[9px] text-slate-600 font-semibold">Fill:</span>
+                                                                                                            <span 
+                                                                                                                className="w-4 h-4 rounded border border-slate-400 inline-block" 
+                                                                                                                style={{ backgroundColor: seg.resolvedStyle.color }} 
+                                                                                                                title={`Remplissage: ${seg.resolvedStyle.color}`}
+                                                                                                            ></span>
+                                                                                                            <span className="text-[9px] text-slate-500 font-mono">{seg.resolvedStyle.color}</span>
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                    {seg.resolvedStyle?.strokeColor && (
+                                                                                                        <span className="flex items-center gap-1">
+                                                                                                            <span className="text-[9px] text-slate-600 font-semibold">Stroke:</span>
+                                                                                                            <span 
+                                                                                                                className="w-4 h-4 rounded border-2 inline-block" 
+                                                                                                                style={{ borderColor: seg.resolvedStyle.strokeColor, backgroundColor: 'white' }} 
+                                                                                                                title={`Contour: ${seg.resolvedStyle.strokeColor}`}
+                                                                                                            ></span>
+                                                                                                            <span className="text-[9px] text-slate-500 font-mono">{seg.resolvedStyle.strokeColor}</span>
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
                                                                             
                                                                             {/* Sections textes conditionnels et variables - NOUVEAU */}
                                                                             {text.conditionalSegments && text.conditionalSegments.length > 0 && (() => {

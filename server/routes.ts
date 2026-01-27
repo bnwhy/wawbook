@@ -522,99 +522,164 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             const style = txt.style || {};
             let content = txt.content || '';
             
-            // NOUVEAU: Résoudre les textes conditionnels si présents
+            // Helper function to check if a condition is active
+            const isConditionActive = (segment: any): boolean => {
+              if (!segment.condition) return true;
+              
+              if (segment.parsedCondition) {
+                const { tabId, variantId, optionId } = segment.parsedCondition;
+                const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
+                const tabSelections = characters?.[wizardTabId];
+                return tabSelections && tabSelections[variantId] === optionId;
+              }
+              
+              return true;
+            };
+            
+            // Helper function to resolve variables in text
+            const resolveVariablesInText = (text: string): string => {
+              let resolved = text;
+              
+              // Replace variables - support multiple formats
+              if (config.childName) {
+                resolved = resolved.replace(/\{\{child_name\}\}/gi, config.childName);
+                resolved = resolved.replace(/\{\{nom_enfant\}\}/gi, config.childName);
+                resolved = resolved.replace(/\{child_name\}/gi, config.childName);
+                resolved = resolved.replace(/\{nom_enfant\}/gi, config.childName);
+              }
+              
+              // Replace TXTVAR variables
+              resolved = resolved.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (match: string, tabId: string, variantId: string) => {
+                const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
+                const tabSelections = characters?.[wizardTabId];
+                if (tabSelections && tabSelections[variantId]) {
+                  return ' ' + tabSelections[variantId] + ' ';
+                }
+                return match;
+              });
+              
+              return resolved;
+            };
+            
+            // Helper function to build style for a segment
+            const buildSegmentStyle = (segmentStyle: any, globalStyle: any): string => {
+              const segStyle = segmentStyle || globalStyle;
+              
+              // Convert fontSize from points to pixels (factor 20)
+              let textFontSize = segStyle.fontSize || globalStyle.fontSize || '16pt';
+              if (textFontSize.includes('pt')) {
+                const ptValue = parseFloat(textFontSize);
+                textFontSize = `${ptValue * 20}px`;
+              }
+              
+              // Ensure font family is properly quoted
+              let rawFontFamily = segStyle.fontFamily || globalStyle.fontFamily || defaultFont;
+              rawFontFamily = rawFontFamily.replace(/^["']|["']$/g, '');
+              const textFontFamily = rawFontFamily.includes(' ') ? `'${rawFontFamily}'` : rawFontFamily;
+              
+              const fontWeight = segStyle.fontWeight || globalStyle.fontWeight || 'normal';
+              const fontStyle = segStyle.fontStyle || globalStyle.fontStyle || 'normal';
+              const textColor = segStyle.color || globalStyle.color || '#000000';
+              const letterSpacing = segStyle.letterSpacing || globalStyle.letterSpacing || 'normal';
+              const textDecoration = segStyle.textDecoration || globalStyle.textDecoration || 'none';
+              const fontStretch = segStyle.fontStretch || globalStyle.fontStretch || '';
+              
+              // Handle stroke (text outline)
+              const strokeColor = segStyle.strokeColor || globalStyle.strokeColor;
+              const strokeWeight = segStyle.strokeWeight || globalStyle.strokeWeight;
+              const strokeWidthPx = strokeColor
+                ? (strokeWeight ? `${strokeWeight * 20}px` : '20px')
+                : undefined;
+              
+              const strokeCss = strokeColor && strokeWidthPx
+                ? `-webkit-text-stroke-color:${strokeColor};-webkit-text-stroke-width:${strokeWidthPx};text-stroke-color:${strokeColor};text-stroke-width:${strokeWidthPx};`
+                : '';
+              
+              const fontStretchCss = fontStretch ? `font-stretch:${fontStretch};` : '';
+              
+              return `font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}${fontStretchCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};`;
+            };
+            
+            // NOUVEAU: Si segments conditionnels, rendre chaque segment avec son propre style
+            let segmentsHtml = '';
+            let globalTextTransform = style.textTransform || 'none';
+            
             if (txt.conditionalSegments && txt.conditionalSegments.length > 0) {
-              // Résoudre le texte conditionnel avec les sélections du wizard
-              // Format attendu: { tabId: { variantId: optionId } }
-              content = resolveConditionalText(txt.conditionalSegments, characters || {});
+              // Filtrer les segments actifs
+              const activeSegments = txt.conditionalSegments.filter((segment: any) => isConditionActive(segment));
+              
+              // Rendre chaque segment avec son propre style
+              segmentsHtml = activeSegments.map((segment: any) => {
+                let segmentText = segment.text || '';
+                
+                // Resolve variables in segment text
+                segmentText = resolveVariablesInText(segmentText);
+                
+                // Apply text transform from segment or global
+                // Priorité: resolvedStyle.textTransform (si défini et différent de 'none') > text.style.textTransform > 'none'
+                const hasResolvedStyle = segment.resolvedStyle !== undefined;
+                const segmentTextTransform = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
+                  ? segment.resolvedStyle.textTransform
+                  : globalTextTransform;
+                
+                // Apply text transform to the text content
+                if (segmentTextTransform === 'uppercase') {
+                  segmentText = segmentText.toUpperCase();
+                } else if (segmentTextTransform === 'lowercase') {
+                  segmentText = segmentText.toLowerCase();
+                }
+                
+                // Build style for this segment
+                const segmentStyleStr = buildSegmentStyle(segment.resolvedStyle, style);
+                
+                // Escape HTML
+                const escapedText = segmentText.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+                
+                // Note: text-transform est déjà appliqué en JavaScript, mais on l'ajoute aussi en CSS
+                // pour garantir la cohérence avec le rendu client
+                const textTransformCss = segmentTextTransform !== 'none' ? `text-transform:${segmentTextTransform};` : '';
+                
+                return `<span style="${segmentStyleStr}${textTransformCss}">${escapedText}</span>`;
+              }).join('');
+              
+              content = segmentsHtml;
+            } else {
+              // Pas de segments conditionnels : utiliser le contenu global
+              // Replace variables - support multiple formats
+              if (config.childName) {
+                content = content.replace(/\{\{child_name\}\}/gi, config.childName);
+                content = content.replace(/\{\{nom_enfant\}\}/gi, config.childName);
+                content = content.replace(/\{child_name\}/gi, config.childName);
+                content = content.replace(/\{nom_enfant\}/gi, config.childName);
+              }
+              
+              // Apply text transform
+              const textTransform = style.textTransform || 'none';
+              if (textTransform === 'uppercase') {
+                content = content.toUpperCase();
+              } else if (textTransform === 'lowercase') {
+                content = content.toLowerCase();
+              }
+              
+              // Escape HTML and convert line breaks
+              content = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
             }
             
-            // Replace variables - support multiple formats
-            if (config.childName) {
-              content = content.replace(/\{\{child_name\}\}/gi, config.childName);
-              content = content.replace(/\{\{nom_enfant\}\}/gi, config.childName);
-              content = content.replace(/\{child_name\}/gi, config.childName);
-              content = content.replace(/\{nom_enfant\}/gi, config.childName);
-            }
-            
-            // Apply text transform
-            const textTransform = style.textTransform || 'none';
-            if (textTransform === 'uppercase') {
-              content = content.toUpperCase();
-            } else if (textTransform === 'lowercase') {
-              content = content.toLowerCase();
-            }
-            
-            const textColor = style.color || '#000000';
-            
-            // BUGFIX: Convertir fontSize de points vers pixels comme l'EPUB
-            // L'EPUB InDesign utilise un facteur de 20px par point (840px pour 42pt)
-            // Cela garantit un rendu identique à l'EPUB
-            let textFontSize = style.fontSize || '16pt';
-            if (textFontSize.includes('pt')) {
-              const ptValue = parseFloat(textFontSize);
-              textFontSize = `${ptValue * 20}px`; // Facteur 20 comme l'EPUB InDesign
-            }
-            
-            // Ensure font family is properly quoted for CSS (handles fonts with spaces like "Minion Pro")
-            let rawFontFamily = style.fontFamily || defaultFont;
-            // Remove existing quotes if any
-            rawFontFamily = rawFontFamily.replace(/^["']|["']$/g, '');
-            // Use single quotes to avoid breaking the HTML style attribute (which uses double quotes)
-            const textFontFamily = rawFontFamily.includes(' ') ? `'${rawFontFamily}'` : rawFontFamily;
-            const fontWeight = style.fontWeight || 'normal';
-            const fontStyle = style.fontStyle || 'normal';
-            const letterSpacing = style.letterSpacing || 'normal';
-            const textDecoration = style.textDecoration || 'none';
+            // Build common container styles (paragraph layout)
             const lineHeight = style.lineHeight || '1.2';
             const textAlign = style.textAlign || 'left';
             const textAlignLast = style.textAlignLast || undefined;
             const textIndent = style.textIndent || '0';
-            const marginTop = style.marginTop || '0';
-            const marginBottom = style.marginBottom || '0';
-            
-            // BUGFIX: Extraire le stroke (contour du texte) depuis IDML
-            const strokeColor = style.strokeColor || undefined;
-            const strokeWeight = style.strokeWeight || undefined;
-            
-            // Convertir strokeWeight de points vers pixels (facteur 20)
-            // Si strokeColor défini mais pas strokeWeight, utiliser 1pt (20px) par défaut comme l'EPUB
-            const strokeWidthPx = strokeColor
-              ? (strokeWeight ? `${strokeWeight * 20}px` : '20px')
-              : undefined;
-            
-            // For proper text-align, we need to clean the content properly
-            // Trim all whitespace to ensure clean alignment
-            content = content.trim();
-            
-            // Escape HTML and convert line breaks
-            const escapedContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
             
             // Build the text-align-last CSS if defined
             const textAlignLastCss = textAlignLast ? `text-align-last:${textAlignLast};` : '';
             
             // BUGFIX: Reproduire exactement l'approche EPUB avec conteneur géant + scale
-            // L'EPUB utilise un conteneur 20x plus grand que la zone finale, puis scale(0.05)
-            // Cela permet au texte de 840px d'avoir assez d'espace
-            
-            const scaleFactor = 20; // Facteur 20 comme l'EPUB (42pt → 840px)
+            const scaleFactor = 20;
             const containerWidth = pos.width * scaleFactor;
             const containerHeight = pos.height * scaleFactor;
-            const finalFontSize = textFontSize;
-            
-            // Construire les propriétés de stroke (contour du texte)
-            const strokeCss = strokeColor && strokeWidthPx
-              ? `-webkit-text-stroke-color:${strokeColor};-webkit-text-stroke-width:${strokeWidthPx};text-stroke-color:${strokeColor};text-stroke-width:${strokeWidthPx};`
-              : '';
-            
-            // Conteneur avec dimensions géantes, puis scale pour revenir à la taille finale
-            // overflow:visible permet au texte de déborder naturellement (comme l'EPUB)
-            // BUGFIX: Ajouter font-stretch et scaleX() pour HorizontalScale
-            const fontStretchCss = style.fontStretch ? `font-stretch:${style.fontStretch};` : '';
-            
             
             // BUGFIX: Appliquer HorizontalScale via scaleX()
-            // Pour texte centré, compenser le décalage en ajustant left
             let transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor})`;
             let finalPosX = pos.x;
             const finalPosY = pos.y;
@@ -623,21 +688,21 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               const scaleXValue = style.idmlHorizontalScale / 100;
               transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor}) scaleX(${scaleXValue})`;
               
-              // Pour texte centré, compenser le décalage
-              // Le scaleX étire depuis transform-origin (0,0), donc décale vers la droite
-              // On doit reculer de la moitié de l'espace supplémentaire créé
               if (textAlign === 'center') {
-                const extraWidth = pos.width * (scaleXValue - 1); // 557.29 * 0.41 = ~228px
-                finalPosX = pos.x - (extraWidth / 2); // 36 - 114 = -78px
+                const extraWidth = pos.width * (scaleXValue - 1);
+                finalPosX = pos.x - (extraWidth / 2);
               }
             }
             
-            const containerStyle = `position:absolute;left:${finalPosX}px;top:${finalPosY}px;width:${containerWidth}px;height:${containerHeight}px;box-sizing:border-box;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};font-family:${textFontFamily};font-size:${finalFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}${fontStretchCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};text-transform:${textTransform};line-height:${lineHeight};margin:0;padding:0;transform:${transformValue};transform-origin:0 0;`;
+            // Add text-transform to container if defined globally (for non-segmented text or as fallback)
+            const containerTextTransform = globalTextTransform !== 'none' ? `text-transform:${globalTextTransform};` : '';
+            
+            const containerStyle = `position:absolute;left:${finalPosX}px;top:${finalPosY}px;width:${containerWidth}px;height:${containerHeight}px;box-sizing:border-box;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};line-height:${lineHeight};${containerTextTransform}margin:0;padding:0;transform:${transformValue};transform-origin:0 0;`;
             
             // Wrapper interne pour le texte avec text-align et text-indent
             const innerStyle = `width:100%;text-align:${textAlign};${textAlignLastCss}text-indent:${textIndent};margin:0;padding:0;`;
             
-            return `<div style="${containerStyle}"><div style="${innerStyle}">${escapedContent}</div></div>`;
+            return `<div style="${containerStyle}"><div style="${innerStyle}">${content}</div></div>`;
           }).join('\n');
           
           let html = `<!DOCTYPE html>

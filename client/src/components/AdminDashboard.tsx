@@ -6698,40 +6698,95 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                     fontFamily: text.style?.fontFamily || 'inherit',
                                                                                 }}
                                                                             >
-                                                                                {/* Si le texte a des segments conditionnels, afficher chaque segment avec son propre style */}
+                                                                                {/* Si le texte a des segments conditionnels, utiliser le contenu global pour préserver les espaces */}
                                                                                 {text.conditionalSegments && text.conditionalSegments.length > 0 ? (
-                                                                                    text.conditionalSegments.map((segment: any, segIdx: number) => {
-                                                                                        // Priorité: resolvedStyle.textTransform > style global, mais si resolvedStyle.textTransform est 'none' ou undefined, utiliser le style global
-                                                                                        // Si resolvedStyle existe et a un textTransform défini (et différent de 'none'), l'utiliser
-                                                                                        // Sinon, utiliser le style global
-                                                                                        const textTransformValue = segment.resolvedStyle !== undefined && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
-                                                                                            ? segment.resolvedStyle.textTransform
-                                                                                            : (text.style?.textTransform || 'none');
+                                                                                    (() => {
+                                                                                        // Utiliser le contenu global qui contient les espaces corrects
+                                                                                        // et construire le HTML avec les styles appliqués aux segments
+                                                                                        const globalContent = text.content || '';
+                                                                                        let htmlContent = '';
+                                                                                        let currentPos = 0;
+                                                                                        
+                                                                                        for (let segIdx = 0; segIdx < text.conditionalSegments.length; segIdx++) {
+                                                                                            const segment = text.conditionalSegments[segIdx];
+                                                                                            const segmentText = segment.text || '';
+                                                                                            
+                                                                                            // Trouver le segment dans le contenu global (en ignorant la casse pour text-transform)
+                                                                                            const segmentPos = globalContent.indexOf(segmentText, currentPos);
+                                                                                            
+                                                                                            if (segmentPos >= currentPos) {
+                                                                                                // Ajouter le texte avant le segment (espaces, retours à la ligne)
+                                                                                                const beforeText = globalContent.substring(currentPos, segmentPos);
+                                                                                                if (beforeText) {
+                                                                                                    htmlContent += beforeText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                                                                                }
+                                                                                                
+                                                                                                // Construire le style pour ce segment
+                                                                                                const hasResolvedStyle = segment.resolvedStyle !== undefined;
+                                                                                                const textTransformValue = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
+                                                                                                    ? segment.resolvedStyle.textTransform
+                                                                                                    : (text.style?.textTransform || 'none');
+                                                                                                
+                                                                                                const segmentStyle = hasResolvedStyle ? {
+                                                                                                    fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
+                                                                                                    fontSize: segment.resolvedStyle?.fontSize || 'inherit',
+                                                                                                    fontWeight: segment.resolvedStyle?.fontWeight || 'normal',
+                                                                                                    fontStyle: segment.resolvedStyle?.fontStyle || 'normal',
+                                                                                                    color: segment.resolvedStyle?.color || '#000000',
+                                                                                                    letterSpacing: segment.resolvedStyle?.letterSpacing || 'normal',
+                                                                                                    textDecoration: segment.resolvedStyle?.textDecoration || 'none',
+                                                                                                    textTransform: textTransformValue,
+                                                                                                    WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : 'none',
+                                                                                                    WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor,
+                                                                                                    WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : '1pt') : undefined,
+                                                                                                    fontStretch: segment.resolvedStyle?.fontStretch,
+                                                                                                } : {
+                                                                                                    fontFamily: text.style?.fontFamily || 'inherit',
+                                                                                                    fontSize: text.style?.fontSize || 'inherit',
+                                                                                                    fontWeight: text.style?.fontWeight || 'normal',
+                                                                                                    fontStyle: text.style?.fontStyle || 'normal',
+                                                                                                    color: text.style?.color || '#000000',
+                                                                                                    letterSpacing: text.style?.letterSpacing || 'normal',
+                                                                                                    textDecoration: text.style?.textDecoration || 'none',
+                                                                                                    textTransform: textTransformValue,
+                                                                                                    WebkitTextStroke: text.style?.webkitTextStroke || 'none',
+                                                                                                    WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
+                                                                                                    WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
+                                                                                                    fontStretch: text.style?.fontStretch,
+                                                                                                };
+                                                                                                
+                                                                                                // Convertir le style en CSS string
+                                                                                                const styleStr = Object.entries(segmentStyle)
+                                                                                                    .filter(([_, v]) => v !== undefined && v !== null && v !== 'inherit' && v !== 'normal' && v !== 'none')
+                                                                                                    .map(([k, v]) => {
+                                                                                                        const cssKey = k.replace(/([A-Z])/g, '-$1').toLowerCase();
+                                                                                                        return `${cssKey}:${v}`;
+                                                                                                    })
+                                                                                                    .join(';');
+                                                                                                
+                                                                                                // Ajouter le segment avec son style
+                                                                                                const escapedSegmentText = segmentText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
+                                                                                                htmlContent += `<span style="${styleStr}">${escapedSegmentText}</span>`;
+                                                                                                
+                                                                                                currentPos = segmentPos + segmentText.length;
+                                                                                            } else {
+                                                                                                // Fallback si le segment n'est pas trouvé
+                                                                                                const escapedSegmentText = segmentText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
+                                                                                                htmlContent += escapedSegmentText;
+                                                                                                currentPos += segmentText.length;
+                                                                                            }
+                                                                                        }
+                                                                                        
+                                                                                        // Ajouter le reste du contenu
+                                                                                        if (currentPos < globalContent.length) {
+                                                                                            const remainingText = globalContent.substring(currentPos);
+                                                                                            htmlContent += remainingText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                                                                        }
                                                                                         
                                                                                         return (
-                                                                                        <span
-                                                                                            key={segIdx}
-                                                                                            style={{
-                                                                                                // Appliquer le style résolu de chaque segment
-                                                                                                fontFamily: segment.resolvedStyle?.fontFamily || text.style?.fontFamily || 'inherit',
-                                                                                                fontSize: segment.resolvedStyle?.fontSize || text.style?.fontSize || 'inherit',
-                                                                                                fontWeight: segment.resolvedStyle?.fontWeight || text.style?.fontWeight || 'normal',
-                                                                                                fontStyle: segment.resolvedStyle?.fontStyle || text.style?.fontStyle || 'normal',
-                                                                                                color: segment.resolvedStyle?.color || text.style?.color || '#000000',
-                                                                                                letterSpacing: segment.resolvedStyle?.letterSpacing || text.style?.letterSpacing || 'normal',
-                                                                                                textDecoration: segment.resolvedStyle?.textDecoration || text.style?.textDecoration || 'none',
-                                                                                                textTransform: textTransformValue as any,
-                                                                                                // Contour du texte (stroke)
-                                                                                                WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : (text.style?.webkitTextStroke || 'none'),
-                                                                                                WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor || text.style?.webkitTextStrokeColor,
-                                                                                                WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : (text.style?.webkitTextStrokeWidth || '1pt')) : text.style?.webkitTextStrokeWidth,
-                                                                                                // Transformations
-                                                                                                fontStretch: segment.resolvedStyle?.fontStretch as any || text.style?.fontStretch as any,
-                                                                                            }}
-                                                                                        >
-                                                                                            {segment.text}
-                                                                                        </span>
-                                                                                    )})
+                                                                                            <span dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                                                                                        );
+                                                                                    })()
                                                                                 ) : (
                                                                                     /* Pas de segments : afficher le texte avec le style global */
                                                                                     <span style={{

@@ -737,6 +737,102 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                             <Loader2 className="animate-spin text-cloud-blue" />
                         </div>
                     )}
+                    {/* Texts */}
+                    <div className="absolute inset-0 z-10" style={{ marginLeft: '12px' }}>
+                        {coverTexts.map(text => {
+                            // Gérer les segments conditionnels si présents
+                            const hasConditionalSegments = text.conditionalSegments && text.conditionalSegments.length > 0;
+                            
+                            return (
+                                <div 
+                                    key={text.id}
+                                    className="absolute break-words whitespace-pre-wrap pointer-events-none"
+                                    style={{
+                                        left: `${text.position.x}%`,
+                                        top: `${text.position.y}%`,
+                                        width: `${text.position.width || 30}%`,
+                                        transform: `rotate(${text.position.rotation || 0}deg)`,
+                                        // Styles de paragraphe (layout) uniquement sur le conteneur
+                                        textAlign: text.style?.textAlign as any || 'left',
+                                        lineHeight: text.style?.lineHeight || 'normal',
+                                        textIndent: text.style?.textIndent || '0',
+                                    }}
+                                >
+                                    {hasConditionalSegments ? (
+                                        // Afficher chaque segment avec son propre style
+                                        text.conditionalSegments.map((segment: any, segIdx: number) => {
+                                            // Si resolvedStyle existe, utiliser ses propriétés en priorité
+                                            // Mais si textTransform est "none" ou undefined dans resolvedStyle, hériter du style global
+                                            const hasResolvedStyle = segment.resolvedStyle !== undefined;
+                                            
+                                            // Priorité: resolvedStyle.textTransform (si défini et différent de 'none') > text.style.textTransform > 'none'
+                                            const textTransformValue = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
+                                                ? segment.resolvedStyle.textTransform
+                                                : (text.style?.textTransform || 'none');
+                                            
+                                            // Si resolvedStyle existe, utiliser UNIQUEMENT ses propriétés (même si undefined)
+                                            // Ne pas fallback sur text.style pour éviter que tous les segments aient le même style
+                                            const style = hasResolvedStyle ? {
+                                                fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
+                                                fontSize: segment.resolvedStyle?.fontSize || 'inherit',
+                                                fontWeight: segment.resolvedStyle?.fontWeight || 'normal',
+                                                fontStyle: segment.resolvedStyle?.fontStyle || 'normal',
+                                                color: segment.resolvedStyle?.color || '#000000',
+                                                letterSpacing: segment.resolvedStyle?.letterSpacing || 'normal',
+                                                textDecoration: segment.resolvedStyle?.textDecoration || 'none',
+                                                textTransform: textTransformValue as any,
+                                                WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : 'none',
+                                                WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor,
+                                                WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : '1pt') : undefined,
+                                                fontStretch: segment.resolvedStyle?.fontStretch as any,
+                                            } : {
+                                                fontFamily: text.style?.fontFamily || 'inherit',
+                                                fontSize: text.style?.fontSize || 'inherit',
+                                                fontWeight: text.style?.fontWeight || 'normal',
+                                                fontStyle: text.style?.fontStyle || 'normal',
+                                                color: text.style?.color || '#000000',
+                                                letterSpacing: text.style?.letterSpacing || 'normal',
+                                                textDecoration: text.style?.textDecoration || 'none',
+                                                textTransform: textTransformValue as any,
+                                                WebkitTextStroke: text.style?.webkitTextStroke || 'none',
+                                                WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
+                                                WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
+                                                fontStretch: text.style?.fontStretch as any,
+                                            };
+                                            
+                                            return (
+                                                <span
+                                                    key={segIdx}
+                                                    style={style}
+                                                    dangerouslySetInnerHTML={{ __html: resolveTextVariable(segment.text || '').replace(/\n/g, '<br/>') }}
+                                                />
+                                            );
+                                        })
+                                    ) : (
+                                        // Pas de segments : afficher le texte avec le style global
+                                        <div 
+                                            className="w-full h-full" 
+                                            style={{
+                                                fontFamily: text.style?.fontFamily || 'inherit',
+                                                fontSize: text.style?.fontSize || 'inherit',
+                                                fontWeight: text.style?.fontWeight || 'normal',
+                                                fontStyle: text.style?.fontStyle || 'normal',
+                                                color: text.style?.color || '#000000',
+                                                letterSpacing: text.style?.letterSpacing || 'normal',
+                                                textDecoration: text.style?.textDecoration || 'none',
+                                                textTransform: text.style?.textTransform as any || 'none',
+                                                WebkitTextStroke: text.style?.webkitTextStroke,
+                                                WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
+                                                WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
+                                                fontStretch: text.style?.fontStretch as any,
+                                            }}
+                                            dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </>)
              ) : (
                 /* EMPTY COVER IF NOT CONFIGURED */
@@ -842,25 +938,105 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                })}
 
                                {/* Texts */}
-                               {backCoverTexts.map(text => (
-                                   <div 
-                                       key={text.id}
-                                       className="absolute z-20 text-slate-800 break-words whitespace-pre-wrap pointer-events-none"
-                                       style={{
-                                           left: `${text.position.x}%`,
-                                           top: `${text.position.y}%`,
-                                           width: `${text.position.width || 30}%`,
-                                           transform: `rotate(${text.position.rotation || 0}deg)`,
-                                           ...text.style
-                                       }}
-                                   >
+                               {backCoverTexts.map(text => {
+                                   // Gérer les segments conditionnels si présents
+                                   const hasConditionalSegments = text.conditionalSegments && text.conditionalSegments.length > 0;
+                                   
+                                   return (
                                        <div 
-                                           className="font-medium w-full h-full" 
-                                           style={{ color: text.style?.color }}
-                                           dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
-                                       />
-                                   </div>
-                               ))}
+                                           key={text.id}
+                                           className="absolute z-20 break-words whitespace-pre-wrap pointer-events-none"
+                                           style={{
+                                               left: `${text.position.x}%`,
+                                               top: `${text.position.y}%`,
+                                               width: `${text.position.width || 30}%`,
+                                               transform: `rotate(${text.position.rotation || 0}deg)`,
+                                               // Styles de paragraphe (layout) uniquement sur le conteneur
+                                               textAlign: text.style?.textAlign as any || 'left',
+                                               lineHeight: text.style?.lineHeight || 'normal',
+                                               textIndent: text.style?.textIndent || '0',
+                                           }}
+                                       >
+                                           {hasConditionalSegments ? (
+                                               // Afficher chaque segment avec son propre style
+                                               text.conditionalSegments.map((segment: any, segIdx: number) => {
+                                                   // Si resolvedStyle existe, utiliser ses propriétés en priorité
+                                                   // Mais si textTransform est "none" ou undefined dans resolvedStyle, hériter du style global
+                                                   const hasResolvedStyle = segment.resolvedStyle !== undefined;
+                                                   
+                                                   // Priorité: resolvedStyle.textTransform (si défini et différent de 'none') > text.style.textTransform > 'none'
+                                                   const textTransformValue = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
+                                                       ? segment.resolvedStyle.textTransform
+                                                       : (text.style?.textTransform || 'none');
+                                                   
+                                                   // Si resolvedStyle existe, utiliser UNIQUEMENT ses propriétés (même si undefined)
+                                                   // Ne pas fallback sur text.style pour éviter que tous les segments aient le même style
+                                                   // #region agent log
+                                                   fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:974',message:'Building style for segment',data:{hasResolvedStyle,segmentFontSize:segment.resolvedStyle?.fontSize,globalFontSize:text.style?.fontSize,segmentColor:segment.resolvedStyle?.color,globalColor:text.style?.color,segmentLetterSpacing:segment.resolvedStyle?.letterSpacing,globalLetterSpacing:text.style?.letterSpacing,segmentStrokeColor:segment.resolvedStyle?.strokeColor,globalStrokeColor:text.style?.webkitTextStrokeColor,segmentFontStretch:segment.resolvedStyle?.fontStretch,globalFontStretch:text.style?.fontStretch},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H4'})}).catch(()=>{});
+                                                   // #endregion
+                                                   const style = hasResolvedStyle ? {
+                                                       fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
+                                                       fontSize: segment.resolvedStyle?.fontSize || 'inherit',
+                                                       fontWeight: segment.resolvedStyle?.fontWeight || 'normal',
+                                                       fontStyle: segment.resolvedStyle?.fontStyle || 'normal',
+                                                       color: segment.resolvedStyle?.color || '#000000',
+                                                       letterSpacing: segment.resolvedStyle?.letterSpacing || 'normal',
+                                                       textDecoration: segment.resolvedStyle?.textDecoration || 'none',
+                                                       textTransform: textTransformValue as any,
+                                                       WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : 'none',
+                                                       WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor,
+                                                       WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : '1pt') : undefined,
+                                                       fontStretch: segment.resolvedStyle?.fontStretch as any,
+                                                   } : {
+                                                       fontFamily: text.style?.fontFamily || 'inherit',
+                                                       fontSize: text.style?.fontSize || 'inherit',
+                                                       fontWeight: text.style?.fontWeight || 'normal',
+                                                       fontStyle: text.style?.fontStyle || 'normal',
+                                                       color: text.style?.color || '#000000',
+                                                       letterSpacing: text.style?.letterSpacing || 'normal',
+                                                       textDecoration: text.style?.textDecoration || 'none',
+                                                       textTransform: textTransformValue as any,
+                                                       WebkitTextStroke: text.style?.webkitTextStroke || 'none',
+                                                       WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
+                                                       WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
+                                                       fontStretch: text.style?.fontStretch as any,
+                                                   };
+                                                   // #region agent log
+                                                   fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:1000',message:'Final style object',data:{finalFontSize:style.fontSize,finalColor:style.color,finalLetterSpacing:style.letterSpacing,finalWebkitTextStroke:style.WebkitTextStroke,finalWebkitTextStrokeColor:style.WebkitTextStrokeColor,finalWebkitTextStrokeWidth:style.WebkitTextStrokeWidth,finalFontStretch:style.fontStretch,finalTextTransform:style.textTransform},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H4'})}).catch(()=>{});
+                                                   // #endregion
+                                                   
+                                                   return (
+                                                       <span
+                                                           key={segIdx}
+                                                           style={style}
+                                                           dangerouslySetInnerHTML={{ __html: resolveTextVariable(segment.text || '').replace(/\n/g, '<br/>') }}
+                                                       />
+                                                   );
+                                               })
+                                           ) : (
+                                               // Pas de segments : afficher le texte avec le style global
+                                               <div 
+                                                   className="w-full h-full" 
+                                                   style={{
+                                                       fontFamily: text.style?.fontFamily || 'inherit',
+                                                       fontSize: text.style?.fontSize || 'inherit',
+                                                       fontWeight: text.style?.fontWeight || 'normal',
+                                                       fontStyle: text.style?.fontStyle || 'normal',
+                                                       color: text.style?.color || '#000000',
+                                                       letterSpacing: text.style?.letterSpacing || 'normal',
+                                                       textDecoration: text.style?.textDecoration || 'none',
+                                                       textTransform: text.style?.textTransform as any || 'none',
+                                                       WebkitTextStroke: text.style?.webkitTextStroke,
+                                                       WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
+                                                       WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
+                                                       fontStretch: text.style?.fontStretch as any,
+                                                   }}
+                                                   dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
+                                               />
+                                           )}
+                                       </div>
+                                   );
+                               })}
                             </div>
                         </>)
                      ) : showCleanBack ? (

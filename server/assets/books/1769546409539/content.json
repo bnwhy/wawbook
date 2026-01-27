@@ -33,11 +33,11 @@
   ],
   "texts": [
     {
-      "id": "text-1769518737060-1-_idContainer001",
+      "id": "text-1769546409539-1-_idContainer001",
       "type": "conditional",
       "label": "_idContainer001",
-      "content": "Le château\nde la petiteDu petit\n{{TXTVAR_hero-child_name}}",
-      "originalContent": "Le château\nde la petiteDu petit\n{TXTVAR_hero-child_name}",
+      "content": "Lechâteaude la petiteDu petit\n{{TXTVAR_hero-child_name}}",
+      "originalContent": "Lechâteaude la petiteDu petit\n{TXTVAR_hero-child_name}",
       "variables": [
         "TXTVAR_hero-child_name"
       ],
@@ -81,8 +81,49 @@
       "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
       "conditionalSegments": [
         {
-          "text": "Le château\n",
+          "text": "Le",
           "appliedCharacterStyle": "CharacterStyle/Style château",
+          "inlineCharProperties": {
+            "fillColor": "Color/u158"
+          },
+          "resolvedStyle": {
+            "fontFamily": "Sue Ellen Francisco",
+            "fontSize": "42pt",
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "color": "#ffffff",
+            "letterSpacing": "normal",
+            "textDecoration": "none",
+            "textTransform": "none",
+            "horizontalScale": 141,
+            "strokeColor": "#801a76"
+          }
+        },
+        {
+          "text": "château",
+          "appliedCharacterStyle": "CharacterStyle/Style château",
+          "inlineCharProperties": {
+            "fillColor": "Color/u159"
+          },
+          "resolvedStyle": {
+            "fontFamily": "Sue Ellen Francisco",
+            "fontSize": "42pt",
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "color": "#4420ff",
+            "letterSpacing": "normal",
+            "textDecoration": "none",
+            "textTransform": "none",
+            "horizontalScale": 141,
+            "strokeColor": "#801a76"
+          }
+        },
+        {
+          "text": "",
+          "appliedCharacterStyle": "CharacterStyle/Style château",
+          "inlineCharProperties": {
+            "fillColor": "Color/u158"
+          },
           "resolvedStyle": {
             "fontFamily": "Sue Ellen Francisco",
             "fontSize": "42pt",
@@ -169,10 +210,10 @@
   "images": [],
   "imageElements": [
     {
-      "id": "img-1769518737060-1-w0drdkmj",
+      "id": "img-1769546409539-1-uk2hi1vj",
       "type": "static",
       "label": "_idGenObjectAttribute-1 _idGenObjectAttribute-2",
-      "url": "/assets/books/1769518737060/images/page1_commonbg.jpg",
+      "url": "/assets/books/1769546409539/images/page1_commonbg.jpg",
       "position": {
         "x": -0.001,
         "y": 0,

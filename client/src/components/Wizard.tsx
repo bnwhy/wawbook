@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Wand2, Cloud, Check, ChevronRight, ArrowRight, Pencil } from 'lucide-react';
+import { ArrowLeft, Wand2, Cloud, Check, ChevronRight, ChevronLeft, ArrowRight, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { BookConfig, Gender, Theme, HairStyle, Outfit, Activity } from '../types';
 import { WizardVariant, WizardOption } from '../types/admin';
@@ -597,16 +597,6 @@ const Wizard: React.FC<WizardProps> = (props) => {
                 })}
              </div>
 
-             {/* FOOTER ACTIONS */}
-             {props.isEditing && (
-             <button 
-               onClick={onCancel}
-               className="text-gray-400 hover:text-gray-600 font-bold text-xl px-4 py-2 mr-auto hover:bg-gray-100 rounded-lg transition-colors"
-             >
-                 Retour au panier
-             </button>
-             )}
-
              </div>
              {/* END WIZARD FORM */}
           </div>
@@ -650,6 +640,18 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
         </div>
       </div>
+      
+      {/* BACK TO CART BUTTON */}
+      {props.isEditing && (
+        <div className="flex justify-center py-8">
+          <button 
+            onClick={onCancel}
+            className="text-cloud-blue font-bold text-sm hover:underline flex items-center gap-1 transition-colors hover:text-cloud-deep"
+          >
+            <ChevronLeft size={16} strokeWidth={3} /> Retour au panier
+          </button>
+        </div>
+      )}
       
       {/* GLOBAL FOOTER */}
       <Footer />

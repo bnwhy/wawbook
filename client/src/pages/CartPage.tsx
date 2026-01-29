@@ -5,6 +5,7 @@ import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, X } from 
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import PaymentBadges from '../components/PaymentBadges';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import BookPreview from '../components/BookPreview';
 import BookCover from '../components/BookCover';
@@ -234,7 +235,11 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                     <Lock size={18} /> Passer la commande
                 </button>
                 
-                <div className="mt-4">
+                <div className="mt-3 py-2">
+                    <PaymentBadges size="medium" />
+                </div>
+                
+                <div className="mt-2">
                     {!isPromoInputVisible ? (
                         <button 
                             onClick={() => setIsPromoInputVisible(true)}

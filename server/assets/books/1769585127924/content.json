@@ -33,11 +33,11 @@
   ],
   "texts": [
     {
-      "id": "text-1769546409539-1-_idContainer001",
+      "id": "text-1769585127924-1-_idContainer001",
       "type": "conditional",
       "label": "_idContainer001",
-      "content": "Lechâteaude la petiteDu petit\n{{TXTVAR_hero-child_name}}",
-      "originalContent": "Lechâteaude la petiteDu petit\n{TXTVAR_hero-child_name}",
+      "content": "Le château \nde la petite Du petit \n{{TXTVAR_hero-child_name}}",
+      "originalContent": "Le château \nde la petite Du petit \n{TXTVAR_hero-child_name}",
       "variables": [
         "TXTVAR_hero-child_name"
       ],
@@ -81,7 +81,7 @@
       "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
       "conditionalSegments": [
         {
-          "text": "Le",
+          "text": "Le ",
           "appliedCharacterStyle": "CharacterStyle/Style château",
           "inlineCharProperties": {
             "fillColor": "Color/u158"
@@ -119,7 +119,7 @@
           }
         },
         {
-          "text": "",
+          "text": " \n",
           "appliedCharacterStyle": "CharacterStyle/Style château",
           "inlineCharProperties": {
             "fillColor": "Color/u158"
@@ -138,7 +138,7 @@
           }
         },
         {
-          "text": "de la petite",
+          "text": "de la petite ",
           "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
           "condition": "TXTCOND_hero-child_gender-girl",
           "parsedCondition": {
@@ -160,7 +160,7 @@
           }
         },
         {
-          "text": "Du petit\n",
+          "text": "Du petit \n",
           "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
           "condition": "TXTCOND_hero-child_gender-boy",
           "parsedCondition": {
@@ -210,10 +210,10 @@
   "images": [],
   "imageElements": [
     {
-      "id": "img-1769546409539-1-uk2hi1vj",
+      "id": "img-1769585127924-1-aagrhsss",
       "type": "static",
       "label": "_idGenObjectAttribute-1 _idGenObjectAttribute-2",
-      "url": "/assets/books/1769546409539/images/page1_commonbg.jpg",
+      "url": "/assets/books/1769585127924/images/page1_commonbg.jpg",
       "position": {
         "x": -0.001,
         "y": 0,

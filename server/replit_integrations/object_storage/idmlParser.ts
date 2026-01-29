@@ -256,7 +256,7 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
     attributeNamePrefix: '@_',
     textNodeName: '#text',
     parseAttributeValue: false, // Keep as strings to avoid parsing issues
-    trimValues: true, // Retour à true (valeur originale)
+    trimValues: false, // BUGFIX: Désactivé pour préserver les espaces dans le Content (les espaces sont importants pour la mise en forme)
     removeNSPrefix: true, // Remove namespace prefixes (idPkg:, etc.)
     isArray: (tagName) => {
       // Force ces éléments à être toujours des arrays pour gérer les multiples occurrences
@@ -1373,6 +1373,8 @@ function extractTextFromCharRange(charRange: any): { text: string; variables: st
       }
     });
   } else if (content) {
+    // Content peut être une chaîne vide ou contenant juste des espaces
+    // trimValues: true supprime les espaces, mais on doit les préserver si c'est le seul contenu
     text += content;
     if (br) {
       const brArray = Array.isArray(br) ? br : [br];
@@ -1387,6 +1389,7 @@ function extractTextFromCharRange(charRange: any): { text: string; variables: st
       variables.push(varName.replace(/[{}]/g, ''));
     }
   } else if (charRange?.['#text']) {
+    // #text peut contenir des espaces entre les éléments XML
     text += charRange['#text'];
   }
   
@@ -1602,12 +1605,50 @@ function extractTextFromParagraphRanges(
         // Utiliser la fonction helper pour extraire le texte
         const { text: segmentText, variables: segmentVars } = extractTextFromCharRange(charRange);
         
+        // BUGFIX: Si le segment est vide, c'est probablement un espace entre deux segments
+        // Dans l'IDML, les espaces peuvent être dans des CharacterStyleRange séparés
+        // Le parseur XML avec trimValues: false préserve maintenant les espaces, mais on garde cette logique
+        // pour gérer les cas où les segments vides représentent des espaces
+        let finalSegmentText = segmentText;
+        
+        // Si le segment est vide (pas de Content, pas de TextVariable, pas de #text)
+        // ET qu'il y a un segment précédent
+        // ALORS c'est probablement un espace entre deux segments
+        // Note: Dans l'IDML, les espaces peuvent être dans des CharacterStyleRange séparés
+        // Même si le segment a un Br, il peut s'agir d'un espace si le segment suivant n'est pas un saut de ligne
+        if (!finalSegmentText && conditionalSegments.length > 0) {
+          // Vérifier si le segment précédent ne se termine pas par un espace ou un saut de ligne
+          const prevSegment = conditionalSegments[conditionalSegments.length - 1];
+          // Si le segment suivant existe et n'est pas vide, c'est probablement un espace
+          // (on ne peut pas vérifier le segment suivant ici, mais on peut supposer que si le segment précédent
+          // ne se termine pas par un espace/saut de ligne, alors c'est un espace)
+          if (prevSegment && !prevSegment.text.endsWith(' ') && !prevSegment.text.endsWith('\n')) {
+            // Si le segment a un Br mais qu'on est entre deux segments de texte, 
+            // c'est peut-être un espace mal interprété (dans certains cas IDML)
+            // Sinon, c'est juste un espace normal
+            if (charRange?.Br) {
+              // Dans certains cas, un Br dans un segment vide peut être un espace
+              // On ajoute un espace seulement si le segment précédent ne se termine pas par un saut de ligne
+              finalSegmentText = ' ';
+            } else {
+              // Segment vide sans Br = espace
+              finalSegmentText = ' ';
+            }
+          }
+        }
+        
+        // Si le segment est vide mais qu'il y a un nœud texte (#text), c'est probablement un espace
+        if (!finalSegmentText && charRange?.['#text']) {
+          // Le #text peut contenir l'espace qui a été trimmé
+          finalSegmentText = charRange['#text'];
+        }
+        
         // Ajouter au contenu complet (pour rétrocompatibilité)
-        fullContent += segmentText;
+        fullContent += finalSegmentText;
         
         // NOUVEAU: Créer un segment conditionnel (même si vide, pour préserver les espaces)
         const segment: ConditionalTextSegment = {
-          text: segmentText,
+          text: finalSegmentText,
           appliedCharacterStyle: appliedCharStyle
         };
         

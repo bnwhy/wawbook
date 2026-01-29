@@ -1283,8 +1283,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12">
                    {/* COL 1 */}
                    <div>
-                       <h3 className="font-display font-black text-xl text-cloud-dark mb-2">1. Ajouter une dédicace</h3>
-                       <p className="text-cloud-dark/60 text-sm font-medium mb-2">Pour un cadeau encore plus unique. Nous imprimerons votre dédicace sur la première page du livre.</p>
+                       <h3 className="font-display font-black text-xl text-cloud-dark mb-2">1. Ajouter votre touche personnelle</h3>
+                       <p className="text-cloud-dark/60 text-sm font-medium mb-2">Un message imprimé sur la première page pour un souvenir unique.</p>
                        <textarea 
                           className="w-full p-3 border-2 border-cloud-dark/10 rounded-xl font-medium text-cloud-dark focus:border-cloud-blue focus:ring-0 outline-none transition-colors bg-white resize-none text-sm"
                           rows={4}
@@ -1300,8 +1300,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
                    {/* COL 2 */}
                    <div>
-                       <h3 className="font-display font-black text-xl text-cloud-dark mb-2">2. Choisir le format</h3>
-                       <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Quel type de couverture souhaitez-vous ?</p>
+                       <h3 className="font-display font-black text-xl text-cloud-dark mb-6">2. Le format de votre livre</h3>
                        
                        <div className="space-y-4">
                            {/* Hardcover Option */}
@@ -1318,8 +1317,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                </div>
                                <div className="flex flex-col flex-1">
                                    <span className="font-bold text-cloud-dark text-sm">Couverture rigide</span>
-                                   <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-1">Le plus populaire</span>
-                                   <p className="text-[11px] text-cloud-dark/60 leading-tight mb-2">Souvenir élégant et durable ; parfait pour des souvenirs mémorables.</p>
+                                   <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-2">Notre préféré</span>
                                    <span className="font-black text-cloud-dark">€44.99</span>
                                </div>
                                {selectedFormat === 'hardcover' && (
@@ -1343,8 +1341,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                </div>
                                <div className="flex flex-col flex-1">
                                    <span className="font-bold text-cloud-dark text-sm">Couverture souple</span>
-                                   <span className="text-[10px] text-transparent font-black uppercase tracking-wider mb-1 select-none">Standard</span>
-                                   <p className="text-[11px] text-cloud-dark/60 leading-tight mb-2">Léger et flexible, idéal pour la lecture quotidienne.</p>
+                                   <span className="text-[10px] text-transparent font-black uppercase tracking-wider mb-2 select-none">Standard</span>
                                    <span className="font-black text-cloud-dark">€ 34,99</span>
                                </div>
                                {selectedFormat === 'softcover' && (
@@ -1358,8 +1355,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
                    {/* COL 3 */}
                    <div>
-                       <h3 className="font-display font-black text-xl text-cloud-dark mb-2">3. Commande complète</h3>
-                       <p className="text-cloud-dark/60 text-sm font-medium mb-6 min-h-[40px]">Veuillez vérifier votre sélection pour continuer</p>
+                       <h3 className="font-display font-black text-xl text-cloud-dark mb-6">3. Finaliser votre commande</h3>
                        
                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-6">
                             <div className="flex justify-between items-center mb-2 text-sm">

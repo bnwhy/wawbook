@@ -14,9 +14,16 @@ const CheckoutSuccessPage = () => {
   const [orderData, setOrderData] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(true);
+  const processedRef = React.useRef(false);
 
   useEffect(() => {
     const processOrder = async () => {
+      // Protection contre la double exécution (React StrictMode)
+      if (processedRef.current) {
+        return;
+      }
+      processedRef.current = true;
+      
       const pendingOrder = localStorage.getItem('pendingOrder');
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');

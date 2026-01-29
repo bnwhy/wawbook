@@ -1525,7 +1525,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // SETTINGS STATE - loaded from API
   const [settings, setSettings] = useState({
     general: { storeName: '', supportEmail: '', currency: 'EUR', language: 'fr' },
-    payment: { stripeEnabled: false, stripeKey: '', paypalEnabled: false },
+    payment: { 
+      stripeEnabled: false, 
+      stripeKey: '', 
+      paypalEnabled: false,
+      acceptedPaymentMethods: ['visa', 'mastercard', 'amex', 'applepay', 'googlepay'] as string[]
+    },
     shipping: { freeShippingThreshold: 50, standardRate: 4.90, expressRate: 9.90 },
     notifications: { orderConfirmation: true, shippingUpdate: true }
   });
@@ -2517,6 +2522,89 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <p className="text-sm text-slate-500">Accepter les paiements via PayPal.</p>
                              </div>
                           </div>
+
+                          <div className="w-full h-px bg-gray-100"></div>
+
+                          <div className="flex-1">
+                             <h4 className="font-bold text-slate-700 mb-3">Badges des moyens de paiement affichés</h4>
+                             <p className="text-sm text-slate-500 mb-4">Sélectionnez les badges à afficher sur les pages de paiement.</p>
+                             
+                             <div className="space-y-3">
+                                <div className="text-xs font-bold text-slate-500 uppercase">Cartes bancaires</div>
+                                <div className="grid grid-cols-2 gap-3">
+                                   {[
+                                      { id: 'visa', label: 'Visa' },
+                                      { id: 'mastercard', label: 'Mastercard' },
+                                      { id: 'amex', label: 'American Express' },
+                                      { id: 'discover', label: 'Discover' }
+                                   ].map(method => (
+                                      <label key={method.id} className="flex items-center gap-2 cursor-pointer">
+                                         <input 
+                                            type="checkbox" 
+                                            checked={settings.payment.acceptedPaymentMethods?.includes(method.id) || false}
+                                            onChange={(e) => {
+                                               const methods = settings.payment.acceptedPaymentMethods || [];
+                                               const newMethods = e.target.checked 
+                                                  ? [...methods, method.id]
+                                                  : methods.filter(m => m !== method.id);
+                                               setSettings({...settings, payment: {...settings.payment, acceptedPaymentMethods: newMethods}});
+                                            }}
+                                            className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                         />
+                                         <span className="text-sm text-slate-700">{method.label}</span>
+                                      </label>
+                                   ))}
+                                </div>
+
+                                <div className="text-xs font-bold text-slate-500 uppercase mt-4">Portefeuilles digitaux</div>
+                                <div className="grid grid-cols-2 gap-3">
+                                   {[
+                                      { id: 'applepay', label: 'Apple Pay' },
+                                      { id: 'googlepay', label: 'Google Pay' }
+                                   ].map(method => (
+                                      <label key={method.id} className="flex items-center gap-2 cursor-pointer">
+                                         <input 
+                                            type="checkbox" 
+                                            checked={settings.payment.acceptedPaymentMethods?.includes(method.id) || false}
+                                            onChange={(e) => {
+                                               const methods = settings.payment.acceptedPaymentMethods || [];
+                                               const newMethods = e.target.checked 
+                                                  ? [...methods, method.id]
+                                                  : methods.filter(m => m !== method.id);
+                                               setSettings({...settings, payment: {...settings.payment, acceptedPaymentMethods: newMethods}});
+                                            }}
+                                            className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                         />
+                                         <span className="text-sm text-slate-700">{method.label}</span>
+                                      </label>
+                                   ))}
+                                </div>
+
+                                <div className="text-xs font-bold text-slate-500 uppercase mt-4">Autres moyens</div>
+                                <div className="grid grid-cols-2 gap-3">
+                                   {[
+                                      { id: 'paypal', label: 'PayPal' },
+                                      { id: 'klarna', label: 'Klarna' }
+                                   ].map(method => (
+                                      <label key={method.id} className="flex items-center gap-2 cursor-pointer">
+                                         <input 
+                                            type="checkbox" 
+                                            checked={settings.payment.acceptedPaymentMethods?.includes(method.id) || false}
+                                            onChange={(e) => {
+                                               const methods = settings.payment.acceptedPaymentMethods || [];
+                                               const newMethods = e.target.checked 
+                                                  ? [...methods, method.id]
+                                                  : methods.filter(m => m !== method.id);
+                                               setSettings({...settings, payment: {...settings.payment, acceptedPaymentMethods: newMethods}});
+                                            }}
+                                            className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                         />
+                                         <span className="text-sm text-slate-700">{method.label}</span>
+                                      </label>
+                                   ))}
+                                </div>
+                             </div>
+                          </div>
                        </div>
                     </div>
 
@@ -3375,7 +3463,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                </div>
                                                <p className="text-sm text-slate-500 mb-1">Quantité: {item.quantity}</p>
                                                <pre className="text-xs text-slate-600 bg-slate-50 p-2 rounded max-w-md overflow-x-auto whitespace-pre-wrap">
-                                                  {JSON.stringify(item.configuration, null, 2)}
+                                                  {JSON.stringify(item.configuration || (item as any).config, null, 2)}
                                                </pre>
                                             </div>
                                          </div>
@@ -6698,95 +6786,65 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                     fontFamily: text.style?.fontFamily || 'inherit',
                                                                                 }}
                                                                             >
-                                                                                {/* Si le texte a des segments conditionnels, utiliser le contenu global pour préserver les espaces */}
+                                                                                {/* Si le texte a des segments conditionnels, afficher chaque segment avec son propre style */}
                                                                                 {text.conditionalSegments && text.conditionalSegments.length > 0 ? (
-                                                                                    (() => {
-                                                                                        // Utiliser le contenu global qui contient les espaces corrects
-                                                                                        // et construire le HTML avec les styles appliqués aux segments
-                                                                                        const globalContent = text.content || '';
-                                                                                        let htmlContent = '';
-                                                                                        let currentPos = 0;
+                                                                                    text.conditionalSegments.map((segment: any, segIdx: number) => {
+                                                                                        // Si resolvedStyle existe, utiliser ses propriétés en priorité
+                                                                                        // Mais si textTransform est "none" ou undefined dans resolvedStyle, hériter du style global
+                                                                                        const hasResolvedStyle = segment.resolvedStyle !== undefined;
                                                                                         
-                                                                                        for (let segIdx = 0; segIdx < text.conditionalSegments.length; segIdx++) {
-                                                                                            const segment = text.conditionalSegments[segIdx];
-                                                                                            const segmentText = segment.text || '';
-                                                                                            
-                                                                                            // Trouver le segment dans le contenu global (en ignorant la casse pour text-transform)
-                                                                                            const segmentPos = globalContent.indexOf(segmentText, currentPos);
-                                                                                            
-                                                                                            if (segmentPos >= currentPos) {
-                                                                                                // Ajouter le texte avant le segment (espaces, retours à la ligne)
-                                                                                                const beforeText = globalContent.substring(currentPos, segmentPos);
-                                                                                                if (beforeText) {
-                                                                                                    htmlContent += beforeText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                                                                                }
-                                                                                                
-                                                                                                // Construire le style pour ce segment
-                                                                                                const hasResolvedStyle = segment.resolvedStyle !== undefined;
-                                                                                                const textTransformValue = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
-                                                                                                    ? segment.resolvedStyle.textTransform
-                                                                                                    : (text.style?.textTransform || 'none');
-                                                                                                
-                                                                                                const segmentStyle = hasResolvedStyle ? {
-                                                                                                    fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
-                                                                                                    fontSize: segment.resolvedStyle?.fontSize || 'inherit',
-                                                                                                    fontWeight: segment.resolvedStyle?.fontWeight || 'normal',
-                                                                                                    fontStyle: segment.resolvedStyle?.fontStyle || 'normal',
-                                                                                                    color: segment.resolvedStyle?.color || '#000000',
-                                                                                                    letterSpacing: segment.resolvedStyle?.letterSpacing || 'normal',
-                                                                                                    textDecoration: segment.resolvedStyle?.textDecoration || 'none',
-                                                                                                    textTransform: textTransformValue,
-                                                                                                    WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : 'none',
-                                                                                                    WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor,
-                                                                                                    WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : '1pt') : undefined,
-                                                                                                    fontStretch: segment.resolvedStyle?.fontStretch,
-                                                                                                } : {
-                                                                                                    fontFamily: text.style?.fontFamily || 'inherit',
-                                                                                                    fontSize: text.style?.fontSize || 'inherit',
-                                                                                                    fontWeight: text.style?.fontWeight || 'normal',
-                                                                                                    fontStyle: text.style?.fontStyle || 'normal',
-                                                                                                    color: text.style?.color || '#000000',
-                                                                                                    letterSpacing: text.style?.letterSpacing || 'normal',
-                                                                                                    textDecoration: text.style?.textDecoration || 'none',
-                                                                                                    textTransform: textTransformValue,
-                                                                                                    WebkitTextStroke: text.style?.webkitTextStroke || 'none',
-                                                                                                    WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
-                                                                                                    WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
-                                                                                                    fontStretch: text.style?.fontStretch,
-                                                                                                };
-                                                                                                
-                                                                                                // Convertir le style en CSS string
-                                                                                                const styleStr = Object.entries(segmentStyle)
-                                                                                                    .filter(([_, v]) => v !== undefined && v !== null && v !== 'inherit' && v !== 'normal' && v !== 'none')
-                                                                                                    .map(([k, v]) => {
-                                                                                                        const cssKey = k.replace(/([A-Z])/g, '-$1').toLowerCase();
-                                                                                                        return `${cssKey}:${v}`;
-                                                                                                    })
-                                                                                                    .join(';');
-                                                                                                
-                                                                                                // Ajouter le segment avec son style
-                                                                                                const escapedSegmentText = segmentText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
-                                                                                                htmlContent += `<span style="${styleStr}">${escapedSegmentText}</span>`;
-                                                                                                
-                                                                                                currentPos = segmentPos + segmentText.length;
-                                                                                            } else {
-                                                                                                // Fallback si le segment n'est pas trouvé
-                                                                                                const escapedSegmentText = segmentText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
-                                                                                                htmlContent += escapedSegmentText;
-                                                                                                currentPos += segmentText.length;
-                                                                                            }
-                                                                                        }
+                                                                                        // Priorité: resolvedStyle.textTransform (si défini et différent de 'none') > text.style.textTransform > 'none'
+                                                                                        const textTransformValue = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
+                                                                                            ? segment.resolvedStyle.textTransform
+                                                                                            : (text.style?.textTransform || 'none');
                                                                                         
-                                                                                        // Ajouter le reste du contenu
-                                                                                        if (currentPos < globalContent.length) {
-                                                                                            const remainingText = globalContent.substring(currentPos);
-                                                                                            htmlContent += remainingText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                                                                        }
+                                                                                        // Si resolvedStyle existe, utiliser UNIQUEMENT ses propriétés (même si undefined)
+                                                                                        // Ne pas fallback sur text.style pour éviter que tous les segments aient le même style
+                                                                                        // #region agent log
+                                                                                        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:6715',message:'Building style for segment (ADMIN)',data:{hasResolvedStyle,segmentFontSize:segment.resolvedStyle?.fontSize,globalFontSize:text.style?.fontSize,segmentColor:segment.resolvedStyle?.color,globalColor:text.style?.color,segmentLetterSpacing:segment.resolvedStyle?.letterSpacing,globalLetterSpacing:text.style?.letterSpacing,segmentStrokeColor:segment.resolvedStyle?.strokeColor,globalStrokeColor:text.style?.webkitTextStrokeColor,segmentFontStretch:segment.resolvedStyle?.fontStretch,globalFontStretch:text.style?.fontStretch},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H4'})}).catch(()=>{});
+                                                                                        // #endregion
+                                                                                        const style = hasResolvedStyle ? {
+                                                                                            fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
+                                                                                            fontSize: segment.resolvedStyle?.fontSize || 'inherit',
+                                                                                            fontWeight: segment.resolvedStyle?.fontWeight || 'normal',
+                                                                                            fontStyle: segment.resolvedStyle?.fontStyle || 'normal',
+                                                                                            color: segment.resolvedStyle?.color || '#000000',
+                                                                                            letterSpacing: segment.resolvedStyle?.letterSpacing || 'normal',
+                                                                                            textDecoration: segment.resolvedStyle?.textDecoration || 'none',
+                                                                                            textTransform: textTransformValue as any,
+                                                                                            WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : 'none',
+                                                                                            WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor,
+                                                                                            WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : '1pt') : undefined,
+                                                                                            fontStretch: segment.resolvedStyle?.fontStretch as any,
+                                                                                        } : {
+                                                                                            fontFamily: text.style?.fontFamily || 'inherit',
+                                                                                            fontSize: text.style?.fontSize || 'inherit',
+                                                                                            fontWeight: text.style?.fontWeight || 'normal',
+                                                                                            fontStyle: text.style?.fontStyle || 'normal',
+                                                                                            color: text.style?.color || '#000000',
+                                                                                            letterSpacing: text.style?.letterSpacing || 'normal',
+                                                                                            textDecoration: text.style?.textDecoration || 'none',
+                                                                                            textTransform: textTransformValue as any,
+                                                                                            WebkitTextStroke: text.style?.webkitTextStroke || 'none',
+                                                                                            WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
+                                                                                            WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
+                                                                                            fontStretch: text.style?.fontStretch as any,
+                                                                                        };
+                                                                                        // #region agent log
+                                                                                        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:6741',message:'Final style object (ADMIN)',data:{finalFontSize:style.fontSize,finalColor:style.color,finalLetterSpacing:style.letterSpacing,finalWebkitTextStroke:style.WebkitTextStroke,finalWebkitTextStrokeColor:style.WebkitTextStrokeColor,finalWebkitTextStrokeWidth:style.WebkitTextStrokeWidth,finalFontStretch:style.fontStretch,finalTextTransform:style.textTransform},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H4'})}).catch(()=>{});
+                                                                                        // #endregion
+                                                                                        
+                                                                                        // Utiliser le texte du segment tel qu'extrait de l'IDML (préserve les espaces dans le segment)
+                                                                                        const segmentText = segment.text || '';
                                                                                         
                                                                                         return (
-                                                                                            <span dangerouslySetInnerHTML={{ __html: htmlContent }} />
-                                                                                        );
-                                                                                    })()
+                                                                                        <span
+                                                                                            key={segIdx}
+                                                                                            style={style}
+                                                                                        >
+                                                                                            {segmentText}
+                                                                                        </span>
+                                                                                    )})
                                                                                 ) : (
                                                                                     /* Pas de segments : afficher le texte avec le style global */
                                                                                     <span style={{

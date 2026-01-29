@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDo
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import PaymentBadges from '../components/PaymentBadges';
 import { ShippingMethod } from '../types/ecommerce';
 import { ALL_COUNTRIES } from '../data/countries';
 import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
@@ -393,6 +394,11 @@ const CheckoutPage = () => {
                                 <Lock size={16} className="mt-0.5 flex-shrink-0" />
                                 <p>Vous allez être redirigé vers la page de paiement sécurisée Stripe. Toutes les transactions sont cryptées.</p>
                             </div>
+
+                            <div className="text-center space-y-3 pt-2">
+                                <p className="text-xs text-stone-500 font-medium">Modes de paiement acceptés</p>
+                                <PaymentBadges size="medium" />
+                            </div>
                         </form>
                     )}
                 </div>
@@ -449,8 +455,11 @@ const CheckoutPage = () => {
                             </button>
                         )}
                         
-                        <div className="mt-4 flex items-center gap-2 text-xs text-stone-500 justify-center">
-                            <ShieldCheck size={14} /> Paiement 100% sécurisé
+                        <div className="mt-4 space-y-3">
+                            <div className="flex items-center gap-2 text-xs text-stone-500 justify-center">
+                                <ShieldCheck size={14} /> Paiement 100% sécurisé
+                            </div>
+                            <PaymentBadges size="small" />
                         </div>
                     </div>
                 </div>

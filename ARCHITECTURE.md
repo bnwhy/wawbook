@@ -51,9 +51,13 @@ NuageBook est une plateforme e-commerce full-stack pour des livres personnalisé
 - **fast-xml-parser** : 5.3.3 - Parsing XML IDML
 - **ag-psd** : 29.0.0 - Parsing fichiers PSD
 
-**Sécurité**
+**Sécurité et Authentification**
 - **express-rate-limit** : 7.1.5 - Rate limiting
-- **Passport** : 0.7.0 avec passport-local 1.0.0 - Authentication
+- **Passport** : 0.7.0 - Framework d'authentification
+- **passport-local** : 1.0.0 - Stratégie email/password
+- **bcryptjs** : Latest - Hash passwords (10 rounds)
+- **express-session** : 1.18.1 - Gestion sessions
+- **connect-pg-simple** : 10.0.0 - Session store PostgreSQL
 
 **Utilitaires**
 - **compression** : 1.7.4 - Compression gzip
@@ -154,25 +158,33 @@ NuageBook est une plateforme e-commerce full-stack pour des livres personnalisé
 │   │   └── utils/        # Utilitaires
 │
 ├── server/               # Application Express
-│   ├── config/           # Configuration (env)
+│   ├── config/           # Configuration
+│   │   ├── env.ts        # Variables environnement
+│   │   └── passport.ts   # Configuration Passport.js (NEW)
 │   ├── middleware/       # Middlewares Express
+│   │   ├── auth.ts       # requireAuth, optionalAuth (NEW)
 │   │   ├── error-handler.ts
 │   │   ├── rate-limit.ts
 │   │   └── validation.ts
 │   ├── routes/           # Routes modulaires
+│   │   ├── auth.routes.ts    # Authentification (NEW)
 │   │   ├── books.routes.ts
-│   │   ├── customers.routes.ts
-│   │   ├── orders.routes.ts
+│   │   ├── customers.routes.ts  # + routes /me (NEW)
+│   │   ├── orders.routes.ts     # + route /my-orders (NEW)
 │   │   ├── checkout.routes.ts
 │   │   ├── health.routes.ts
 │   │   └── index.ts
+│   ├── scripts/          # Scripts utilitaires
+│   │   └── clean-old-customers.ts  # Migration données (NEW)
+│   ├── types/            # Types TypeScript
+│   │   └── express.d.ts  # Extension req.user (NEW)
 │   ├── utils/            # Utilitaires
 │   │   ├── errors.ts     # Classes d'erreurs
 │   │   ├── logger.ts     # Logger structuré
 │   │   └── path-validator.ts
 │   ├── db.ts             # Configuration DB
-│   ├── storage.ts        # Couche d'accès aux données
-│   └── index.ts          # Point d'entrée
+│   ├── storage.ts        # Couche d'accès aux données (password exclusion)
+│   └── index.ts          # Point d'entrée (session middleware)
 │
 ├── shared/               # Code partagé
 │   └── schema.ts         # Schémas Drizzle et Zod
@@ -398,7 +410,30 @@ const EcommerceContext = React.createContext<EcommerceContextType>();
 - settings: Settings
 ```
 
-**2. TanStack Query (Server State Cache)**
+**2. AuthContext (Authentification Client - NOUVEAU)**
+
+```typescript
+// Context d'authentification global
+const AuthContext = React.createContext<AuthContextType>();
+
+interface AuthContextType {
+  user: Customer | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (data: SignupData) => Promise<void>;
+  logout: () => Promise<void>;
+  setPassword: (email: string, password: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
+}
+
+// État persisté via sessions PostgreSQL (connect-pg-simple)
+// Pas de stockage local - session serveur uniquement
+```
+
+**3. TanStack Query (Server State Cache)**
 
 ```typescript
 // Queries
@@ -443,11 +478,33 @@ User Action
 - `GET /health/ready` - Readiness probe
 - `GET /health/live` - Liveness probe
 
-### API
+### API Publique
 - `GET /api/books` - Liste des livres
-- `POST /api/books/:id/render-pages` - Rendu des pages
+- `GET /api/books/:id` - Détail livre
 - `POST /api/checkout/create-session` - Créer session Stripe
 - `POST /api/checkout/verify-payment` - Vérifier paiement
+
+### API Authentification (NOUVEAU v1.1)
+- `POST /api/auth/signup` - Inscription client
+- `POST /api/auth/login` - Connexion
+- `POST /api/auth/logout` - Déconnexion
+- `GET /api/auth/me` - Session actuelle
+- `POST /api/auth/set-password` - Créer password post-achat
+- `POST /api/auth/forgot-password` - Demander reset
+- `POST /api/auth/reset-password` - Reset avec token
+
+### API Client Protégée (NOUVEAU v1.1)
+- `GET /api/customers/me` - Profil client connecté
+- `PATCH /api/customers/me` - Mettre à jour profil
+- `GET /api/orders/my-orders` - Commandes du client
+
+### API Admin
+- `POST /api/books` - Créer livre
+- `PATCH /api/books/:id` - Modifier livre
+- `POST /api/books/import-storyboard` - Import EPUB/IDML
+- `POST /api/books/:id/render-pages` - Rendu serveur
+- `GET /api/orders` - Liste toutes commandes
+- `GET /api/customers` - Liste tous clients
 
 ## Flux Métier Détaillés
 
@@ -726,11 +783,174 @@ __tests__/
 Toutes validées au démarrage via `server/config/env.ts`:
 
 ```typescript
+// Requis
 NODE_ENV=development|production|test
 PORT=5000
 DATABASE_URL=postgresql://...
+SESSION_SECRET=string (min 32 chars) // NOUVEAU - Obligatoire pour auth
+
+// Optionnel
 STRIPE_SECRET_KEY=sk_...
+STRIPE_PUBLISHABLE_KEY=pk_...
 LOG_LEVEL=debug|info|warn|error
+REPLIT_DOMAINS=...
+STRIPE_SYNC_BACKFILL=true|false
+```
+
+**⚠️ Nouveauté v1.1:** `SESSION_SECRET` est maintenant obligatoire avec une valeur par défaut en développement. En production, définir une valeur forte générée aléatoirement.
+
+## Système d'Authentification Client (v1.1)
+
+### Vue d'ensemble
+
+Système complet d'authentification basé sur **Passport.js + express-session** avec sessions PostgreSQL.
+
+**📖 Documentation complète:** [AUTHENTICATION_SYSTEM.md](AUTHENTICATION_SYSTEM.md)
+
+### Architecture
+
+```mermaid
+graph LR
+    Client[React Client]
+    AuthContext[AuthContext]
+    API[Express API]
+    Passport[Passport.js]
+    SessionStore[PostgreSQL Sessions]
+    DB[(Database)]
+    
+    Client --> AuthContext
+    AuthContext -->|fetch /api/auth/*| API
+    API --> Passport
+    Passport --> SessionStore
+    SessionStore --> DB
+    Passport -->|verify credentials| DB
+```
+
+### Stack Authentification
+
+- **Passport.js** - Framework d'authentification modulaire
+- **LocalStrategy** - Authentification email/password
+- **bcryptjs** - Hash passwords (10 rounds, salt automatique)
+- **express-session** - Gestion sessions HTTP
+- **connect-pg-simple** - Stockage sessions PostgreSQL
+- **crypto** - Génération tokens reset password
+
+### Schéma Base de Données
+
+```typescript
+// Table customers - Nouveaux champs v1.1
+{
+  id: varchar (PK)
+  email: text (unique)
+  firstName: text
+  lastName: text
+  phone: text (nullable)
+  address: jsonb (nullable)
+  totalSpent: decimal
+  orderCount: integer
+  notes: text (nullable)
+  createdAt: timestamp
+  
+  // NOUVEAU - Authentification
+  password: text (nullable)               // Hash bcrypt
+  resetPasswordToken: text (nullable)     // Token temporaire
+  resetPasswordExpires: timestamp (nullable) // Expiration 1h
+}
+
+// Table session (créée automatiquement)
+{
+  sid: varchar (PK)
+  sess: json
+  expire: timestamp
+}
+```
+
+### Routes d'Authentification
+
+| Route | Méthode | Protection | Description |
+|-------|---------|-----------|-------------|
+| `/api/auth/signup` | POST | Publique | Inscription nouveau client |
+| `/api/auth/login` | POST | Publique + Rate limit | Connexion email/password |
+| `/api/auth/logout` | POST | - | Déconnexion + destroy session |
+| `/api/auth/me` | GET | - | Récupérer utilisateur connecté |
+| `/api/auth/set-password` | POST | Publique + Rate limit | Définir password post-achat |
+| `/api/auth/forgot-password` | POST | Publique + Rate limit | Demander reset (email) |
+| `/api/auth/reset-password` | POST | Publique + Rate limit | Reset avec token |
+
+### Middleware d'Authentification
+
+```typescript
+// server/middleware/auth.ts
+
+// Protège une route - retourne 401 si non authentifié
+export function requireAuth(req, res, next)
+
+// Optionnel - attache req.user si connecté
+export function optionalAuth(req, res, next)
+```
+
+### Sécurité
+
+**Passwords:**
+- Jamais stockés en clair (hash bcrypt)
+- Jamais retournés via API (exclus des selects)
+- Validation minimum 8 caractères
+
+**Sessions:**
+- Stockées en PostgreSQL (pas de mémoire)
+- Cookie httpOnly + sameSite: lax
+- Expiration 30 jours
+- Secure en production uniquement
+
+**Reset Password:**
+- Token aléatoire 32 bytes (crypto.randomBytes)
+- Expiration 1 heure
+- Message générique (ne révèle pas si email existe)
+
+**Rate Limiting:**
+- Toutes les routes auth utilisent `strictLimiter`
+- Protection contre brute force
+
+### Meilleures Pratiques E-commerce Appliquées
+
+**Basé sur recherche 2025-2026:**
+
+1. **Guest Checkout** ✅
+   - 19% des acheteurs abandonnent si compte obligatoire
+   - Solution: Checkout sans compte maintenu
+
+2. **Post-Purchase Account Creation** ✅
+   - Meilleure conversion que pré-achat
+   - Solution: Formulaire sur CheckoutSuccessPage
+
+3. **Communication de Valeur** ✅
+   - 57% des sites n'expliquent pas les bénéfices
+   - Solution: Messages clairs ("Suivez vos commandes", "Checkout plus rapide")
+
+4. **Self-Service** ✅
+   - 7% ne reviennent jamais après mauvaise UX
+   - Solution: Interface simple et intuitive
+
+### Parcours Client Type
+
+```
+Visiteur non connecté
+  ↓
+Parcourt catalogue → Personnalise livre → Ajoute au panier
+  ↓
+Checkout GUEST (sans compte) ← Peut se connecter si compte existe
+  ↓
+Paiement Stripe
+  ↓
+Page Confirmation
+  ↓
+[BEST PRACTICE] Proposition: "Créer un compte" (email déjà connu)
+  ↓
+Définit password en 1 clic
+  ↓
+CLIENT AUTHENTIFIÉ
+  ↓
+Prochains achats: Checkout pré-rempli + historique commandes
 ```
 
 ## Flux de Données EPUB/IDML

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight, ShoppingCart } from 'lucide-react';
+import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight, ShoppingCart, User, LogOut, Package } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useMenus } from '../context/MenuContext';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 interface NavigationProps {
   onStart: () => void;
@@ -38,11 +39,18 @@ const CloudLogo = () => (
 const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
   const { mainMenu } = useMenus();
   const { itemCount } = useCart();
+  const { isAuthenticated, user, logout } = useAuth();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItem, setExpandedMobileItem] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [location, setLocation] = useLocation();
+
+  const handleLogout = async () => {
+    await logout();
+    setUserMenuOpen(false);
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -159,16 +167,67 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           })}
         </div>
 
-        {/* Desktop Cart Button */}
-        <Link href="/cart" className="flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
-             <ShoppingCart size={20} />
-             <span>Panier</span>
-             {itemCount > 0 && (
-              <span className="w-5 h-5 bg-white text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
-                {itemCount}
-              </span>
-             )}
-        </Link>
+        {/* Desktop User Menu & Cart */}
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-cloud-lightest transition-colors"
+              >
+                <div className="w-8 h-8 bg-cloud-blue text-white rounded-full flex items-center justify-center font-bold text-sm">
+                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                </div>
+                <span className="font-bold text-cloud-dark text-sm">{user?.firstName}</span>
+                <ChevronDown size={16} className={`transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-stone-200 py-2 z-50">
+                  <Link href="/account">
+                    <a onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-cloud-lightest transition-colors text-stone-700 hover:text-cloud-blue">
+                      <User size={18} />
+                      <span className="font-medium">Mon compte</span>
+                    </a>
+                  </Link>
+                  <Link href="/account/orders">
+                    <a onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-cloud-lightest transition-colors text-stone-700 hover:text-cloud-blue">
+                      <Package size={18} />
+                      <span className="font-medium">Mes commandes</span>
+                    </a>
+                  </Link>
+                  <div className="border-t border-stone-200 my-2"></div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-red-600 hover:text-red-700"
+                  >
+                    <LogOut size={18} />
+                    <span className="font-medium">Déconnexion</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link href="/login" className="px-4 py-2 rounded-full font-bold text-cloud-dark hover:text-cloud-blue hover:bg-cloud-lightest transition-all">
+                Connexion
+              </Link>
+              <Link href="/signup" className="px-4 py-2 rounded-full font-bold text-white bg-cloud-blue hover:bg-cloud-deep transition-all">
+                Inscription
+              </Link>
+            </>
+          )}
+
+          <Link href="/cart" className="flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
+               <ShoppingCart size={20} />
+               <span>Panier</span>
+               {itemCount > 0 && (
+                <span className="w-5 h-5 bg-white text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+                  {itemCount}
+                </span>
+               )}
+          </Link>
+        </div>
       </div>
 
       {/* Mobile Navigation - Menu left, Logo center, Cart right */}

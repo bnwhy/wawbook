@@ -283,7 +283,170 @@ FormData:
 
 ---
 
-### 2.4 Prévisualisation Livre
+### 2.4 Comptes Clients et Authentification (NOUVEAU v1.1)
+
+#### Description
+Système complet d'authentification permettant aux clients de créer un compte, se connecter, gérer leur profil et suivre leurs commandes.
+
+#### Vision Stratégique
+
+**Basé sur recherche e-commerce 2025-2026:**
+- 19% des acheteurs abandonnent si compte obligatoire → **Guest checkout maintenu**
+- 64% de conversion pour clients avec compte vs 20-30% guest → **Encourager création post-achat**
+- 57% des sites n'expliquent pas les bénéfices → **Communication claire de la valeur**
+- 7% ne reviennent jamais après mauvaise UX compte → **Priorité sur simplicité**
+
+#### Parcours Client
+
+**Scénario 1: Premier achat (Guest)**
+```
+Visiteur → Personnalise → Checkout SANS compte → Paiement
+  ↓ (Page confirmation)
+Proposition: "Créer un compte pour suivre vos commandes"
+  ↓ (1 clic: définir password)
+Client authentifié → Prochains achats pré-remplis
+```
+
+**Scénario 2: Inscription avant achat**
+```
+Visiteur → Inscription (/signup) → Client authentifié
+  ↓
+Personnalise → Checkout (pré-rempli) → Paiement
+  ↓
+Accès direct espace client
+```
+
+**Scénario 3: Client existant**
+```
+Client → Connexion (/login) → Checkout pré-rempli
+  ↓
+Historique commandes visible dans /account
+```
+
+#### Fonctionnalités Authentification
+
+**Inscription (/signup)**
+- Formulaire: email, password, prénom, nom, téléphone (optionnel)
+- Validation: password min 8 caractères
+- Auto-login après inscription
+- Redirection vers `/account`
+
+**Connexion (/login)**
+- Formulaire: email + password
+- Lien "Mot de passe oublié"
+- Support query param `?redirect=/checkout` pour retour
+- Messages d'erreur clairs
+
+**Mot de passe oublié (/forgot-password)**
+- Formulaire avec email uniquement
+- Génération token sécurisé (32 bytes, expiration 1h)
+- Email avec lien (TODO: intégration email)
+- Message générique (sécurité: ne révèle pas si email existe)
+
+**Réinitialisation (/reset-password?token=xxx)**
+- Formulaire: nouveau password + confirmation
+- Validation token serveur
+- Auto-login après reset
+
+**Création post-achat (Best Practice)**
+- Formulaire sur CheckoutSuccessPage
+- Email déjà connu (du checkout)
+- Juste demander password
+- Messages: "Suivez vos commandes", "Checkout plus rapide"
+- Bouton "Non merci" pour ignorer
+
+#### Espace Client (/account)
+
+**Dashboard Principal**
+- Carte résumé profil avec avatar initiales
+- Carte commandes avec compteur
+- Dernières commandes (5 récentes)
+- Bouton déconnexion
+
+**Profil (/account/profile)**
+- Édition: prénom, nom, téléphone
+- Email non modifiable (affiché, grisé)
+- Section future: changement email
+- Section future: changement password
+
+**Mes Commandes (/account/orders)**
+- Liste complète des commandes
+- Tri par date (plus récent en premier)
+- Badges statut colorés:
+  - En attente (gris)
+  - En préparation (orange)
+  - Expédié (bleu)
+  - Livré (vert)
+  - Annulé (rouge)
+- Clic → Détail commande
+
+**Détail Commande (/account/orders/:id)**
+- Numéro commande, date, statut
+- Liste articles avec miniatures
+- Adresse de livraison utilisée
+- Numéro de suivi si disponible
+- Statut paiement
+- Total payé
+
+#### Intégration Checkout
+
+**Comportement si connecté:**
+- Formulaire pré-rempli avec données profil
+- Message "Connecté en tant que email@example.com"
+- Commande automatiquement liée au compte
+- Pas de proposition création post-achat
+
+**Comportement si guest:**
+- Formulaire vide
+- Lien "Déjà un compte ? Se connecter"
+- Après paiement → Proposition création compte
+- Commande liée si compte créé
+
+#### Exigences Techniques
+
+**Backend:**
+- Passport.js avec LocalStrategy (email/password)
+- Sessions PostgreSQL (connect-pg-simple)
+- bcrypt pour hash passwords (10 rounds)
+- Rate limiting sur routes auth (strictLimiter)
+- Middleware requireAuth pour routes protégées
+- Password exclus de tous les API responses
+
+**Frontend:**
+- AuthContext global (React Context)
+- ProtectedRoute component
+- Intégration seamless avec checkout existant
+- Toast notifications (sonner)
+
+**Sécurité:**
+- Cookie httpOnly + sameSite: lax
+- Session 30 jours
+- Token reset 1h expiration
+- Validation Zod côté serveur
+- Messages génériques (ne révèle pas existence email)
+
+#### User Stories
+
+- US-4.1: En tant que client, je veux créer un compte après mon achat pour suivre ma commande sans friction
+- US-4.2: En tant que client, je veux me connecter pour que mes informations soient pré-remplies au checkout
+- US-4.3: En tant que client, je veux voir l'historique de toutes mes commandes dans un espace dédié
+- US-4.4: En tant que client, je veux réinitialiser mon mot de passe si je l'oublie
+- US-4.5: En tant que client, je veux modifier mes informations personnelles facilement
+- US-4.6: En tant que visiteur, je veux pouvoir acheter sans créer de compte (guest checkout)
+
+#### Métriques de Succès
+
+| Métrique | Objectif |
+|----------|----------|
+| Taux création compte post-achat | > 40% |
+| Taux connexion au checkout | > 60% (clients existants) |
+| Taux abandon checkout guest vs auth | Guest < Auth + 5% |
+| Temps moyen création compte | < 30 secondes |
+| Support tickets auth | < 2% des utilisateurs |
+
+---
+
+### 2.6 Panier et Checkout
 
 #### Description
 Visualisation interactive du livre personnalisé avant achat, adaptée desktop et mobile.
@@ -392,158 +555,7 @@ Visualisation interactive du livre personnalisé avant achat, adaptée desktop e
 
 ---
 
-### 2.5 Panier et Checkout
-
-#### Description
-Système complet de gestion panier et paiement sécurisé avec Stripe.
-
-#### Gestion Panier
-
-**Fonctionnalités :**
-- Ajout livre personnalisé avec configuration
-- Modification quantité
-- Modification format (hardcover/softcover)
-- Modification dédicace
-- Suppression item
-- Calcul total automatique
-- Persistance localStorage
-
-**Structure Item Panier :**
-```json
-{
-  "id": "cart-item-uuid",
-  "bookId": "book-123",
-  "title": "Mon Aventure Magique",
-  "coverImage": "url",
-  "price": 29.90,
-  "quantity": 1,
-  "format": "hardcover",
-  "config": {
-    "childName": "Emma",
-    "age": 5,
-    "selections": {...},
-    "dedication": "Pour ma fille adorée"
-  },
-  "generatedPages": {...}
-}
-```
-
-#### Checkout Flow
-
-**Étape 1 : Informations Client**
-- Email (obligatoire, validation)
-- Nom complet
-- Téléphone (optionnel)
-
-**Étape 2 : Adresse Livraison**
-- Adresse ligne 1 & 2
-- Code postal
-- Ville
-- Pays (liste complète)
-- Validation format selon pays
-
-**Étape 3 : Options Livraison**
-- Calcul automatique selon zone
-- Affichage délais estimés
-- Prix par option
-- Sélection méthode
-
-**Étape 4 : Paiement Stripe**
-- Redirection Stripe Checkout
-- Paiement sécurisé
-- Support CB, Google Pay, Apple Pay
-- Webhooks pour confirmation
-
-#### Intégration Stripe
-
-**Session Checkout :**
-```javascript
-POST /api/checkout/create-session
-{
-  items: [...],
-  shippingOption: {...},
-  customerEmail: "...",
-  customerName: "...",
-  shippingAddress: {...},
-  orderId: "..."
-}
-```
-
-**Vérification Paiement :**
-```javascript
-POST /api/checkout/verify-payment
-{
-  sessionId: "...",
-  orderId: "..."
-}
-```
-
-**Webhooks Stripe :**
-- `checkout.session.completed` → Mise à jour commande
-- `payment_intent.succeeded` → Confirmation paiement
-- `payment_intent.failed` → Notification échec
-- Synchronisation automatique via `stripe-replit-sync`
-
-#### Gestion Commandes
-
-**Création Commande :**
-- Génération ID unique
-- Stockage items + config + adresse
-- Statut initial : "pending"
-- Lien vers session Stripe
-
-**Suivi Commande :**
-- Statuts : pending, paid, processing, shipped, delivered, cancelled
-- Emails automatiques à chaque étape
-- Numéro tracking (si disponible)
-- Historique changements
-
-**Export pour Impression :**
-- Export PDF haute résolution (via Playwright)
-- Export JSON avec toutes les données
-- Téléchargement fichiers sources
-- Envoi automatique à imprimeur
-
-#### Zones d'Expédition
-
-**Configuration :**
-```json
-{
-  "id": "zone-europe",
-  "name": "Europe",
-  "countries": ["FR", "BE", "DE", ...],
-  "rates": [
-    {
-      "name": "Standard",
-      "price": 4.90,
-      "deliveryDays": "5-7"
-    },
-    {
-      "name": "Express",
-      "price": 9.90,
-      "deliveryDays": "2-3"
-    }
-  ]
-}
-```
-
-#### Exigences techniques
-- Context API pour state panier
-- localStorage pour persistance
-- Stripe Elements pour UI paiement
-- Webhooks signature verification
-- Rate limiting sur endpoints sensibles
-
-#### User Stories
-- US-5.1 : En tant qu'utilisateur, je veux ajouter plusieurs livres à mon panier
-- US-5.2 : En tant qu'utilisateur, je veux modifier la dédicace depuis le panier
-- US-5.3 : En tant qu'utilisateur, je veux payer de façon sécurisée avec ma carte
-- US-5.4 : En tant qu'utilisateur, je veux recevoir une confirmation par email
-- US-5.5 : En tant qu'utilisateur, je veux suivre l'état de ma commande
-
----
-
-### 2.6 Administration
+### 2.7 Administration
 
 #### Description
 Interface complète d'administration pour gérer la plateforme.
@@ -993,13 +1005,25 @@ Les fonctionnalités suivantes ne sont **PAS** incluses dans la version 1.0 :
 - ✅ Admin dashboard
 - ✅ Gestion commandes basique
 
-### Phase 2 : v1.5 (Q2 2026)
-- 🔄 Comptes utilisateurs
-- 🔄 Historique commandes
+### Phase 2 : v1.1 (Q1 2026) ✅ COMPLÉTÉ
+- ✅ Comptes utilisateurs avec authentification complète
+- ✅ Historique commandes dans espace client
+- ✅ Création de compte post-achat (best practice)
+- ✅ Mot de passe oublié / réinitialisation
+- ✅ Checkout intelligent avec pré-remplissage
+- ✅ Profil client éditable
 - 🔄 Wishlist
 - 🔄 Avis clients
 - 🔄 Codes promo
 - 🔄 Export PDF utilisateur
+
+### Phase 3 : v1.5 (Q2 2026)
+- 📋 Email transactionnel (confirmation, reset password)
+- 📋 Adresses multiples (carnet d'adresses)
+- 📋 Protection routes admin (middleware requireAdmin)
+- 📋 Wishlist
+- 📋 Avis clients
+- 📋 Codes promo
 
 ### Phase 3 : v2.0 (Q3 2026)
 - 📋 Multi-langue (EN, ES, DE)

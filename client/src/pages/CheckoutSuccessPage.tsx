@@ -2,18 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
-import { CheckCircle, Loader2, ShoppingCart, User, Truck, CreditCard, Check } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { CheckCircle, Loader2, ShoppingCart, User, Truck, CreditCard, Check, Lock } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { formatPrice } from '../utils/formatPrice';
+import { toast } from 'sonner';
 
 const CheckoutSuccessPage = () => {
   const [, setLocation] = useLocation();
   const { clearCart } = useCart();
   const { createOrder } = useEcommerce();
+  const { isAuthenticated, setPassword } = useAuth();
   const [orderData, setOrderData] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(true);
+  const [showAccountCreation, setShowAccountCreation] = useState(false);
+  const [password, setPasswordInput] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [accountCreated, setAccountCreated] = useState(false);
   const processedRef = React.useRef(false);
 
   useEffect(() => {
@@ -58,6 +66,11 @@ const CheckoutSuccessPage = () => {
 
           clearCart();
           localStorage.removeItem('pendingOrder');
+
+          // Show account creation if not authenticated
+          if (!isAuthenticated) {
+            setShowAccountCreation(true);
+          }
         } catch (error) {
           console.error('Error processing order:', error);
         }
@@ -66,7 +79,33 @@ const CheckoutSuccessPage = () => {
     };
 
     processOrder();
-  }, []);
+  }, [isAuthenticated]);
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast.error('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (password.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    setIsCreatingAccount(true);
+
+    try {
+      await setPassword(orderData.formData.email, password);
+      setAccountCreated(true);
+      setShowAccountCreation(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors de la création du compte');
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
 
   if (isProcessing) {
     return (
@@ -172,12 +211,90 @@ const CheckoutSuccessPage = () => {
             <span className="font-black text-brand-coral" data-testid="text-total">{formatPrice(orderData.grandTotal)}</span>
           </div>
         </div>
+        {/* Post-purchase account creation */}
+        {showAccountCreation && !accountCreated && (
+          <div className="bg-cloud-lightest/50 rounded-xl p-6 max-w-md w-full mb-6">
+            <h3 className="font-bold text-lg text-stone-900 mb-2 flex items-center gap-2">
+              <Lock size={20} className="text-cloud-blue" />
+              Créer un compte pour suivre vos commandes
+            </h3>
+            <p className="text-sm text-stone-600 mb-4">
+              Retrouvez facilement vos livres personnalisés et passez commande plus rapidement.
+            </p>
+            <form onSubmit={handleCreateAccount} className="space-y-3">
+              <div>
+                <label htmlFor="password" className="block text-sm font-bold text-stone-700 mb-1">
+                  Choisir un mot de passe
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm"
+                  placeholder="Minimum 8 caractères"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-bold text-stone-700 mb-1">
+                  Confirmer le mot de passe
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm"
+                  placeholder="Répéter le mot de passe"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={isCreatingAccount}
+                  className="flex-1 bg-cloud-blue text-white font-bold py-2 px-4 rounded-lg hover:bg-cloud-deep transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                >
+                  {isCreatingAccount ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Création...
+                    </>
+                  ) : (
+                    'Créer mon compte'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAccountCreation(false)}
+                  className="px-4 py-2 text-stone-600 hover:text-stone-900 font-medium text-sm"
+                >
+                  Non merci
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {accountCreated && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 max-w-md w-full mb-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+              <div>
+                <div className="font-bold text-green-900">Compte créé !</div>
+                <div className="text-sm text-green-700">Vous êtes maintenant connecté</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button 
-          onClick={() => setLocation('/')}
+          onClick={() => setLocation(accountCreated ? '/account' : '/')}
           className="bg-cloud-blue text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-cloud-deep transition-colors"
           data-testid="button-home"
         >
-          Retour à l'accueil
+          {accountCreated ? 'Voir mon compte' : 'Retour à l\'accueil'}
         </button>
         </div>
       </main>

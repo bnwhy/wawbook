@@ -53,6 +53,7 @@ export interface IStorage {
   getAllCustomers(): Promise<Customer[]>;
   getCustomer(id: string): Promise<Customer | undefined>;
   getCustomerByEmail(email: string): Promise<Customer | undefined>;
+  getCustomerByEmailWithPassword(email: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: string): Promise<void>;
@@ -133,16 +134,36 @@ export class DbStorage implements IStorage {
   }
 
   // ===== CUSTOMERS =====
+  // Safe fields - exclude sensitive auth data
+  private safeCustomerFields = {
+    id: customers.id,
+    firstName: customers.firstName,
+    lastName: customers.lastName,
+    email: customers.email,
+    phone: customers.phone,
+    address: customers.address,
+    totalSpent: customers.totalSpent,
+    orderCount: customers.orderCount,
+    notes: customers.notes,
+    createdAt: customers.createdAt,
+  };
+
   async getAllCustomers(): Promise<Customer[]> {
-    return await db.select().from(customers);
+    return await db.select(this.safeCustomerFields).from(customers) as any;
   }
 
   async getCustomer(id: string): Promise<Customer | undefined> {
-    const result = await db.select().from(customers).where(eq(customers.id, id));
-    return result[0];
+    const result = await db.select(this.safeCustomerFields).from(customers).where(eq(customers.id, id));
+    return result[0] as any;
   }
 
   async getCustomerByEmail(email: string): Promise<Customer | undefined> {
+    const result = await db.select(this.safeCustomerFields).from(customers).where(eq(customers.email, email));
+    return result[0] as any;
+  }
+
+  // For authentication only - returns customer WITH password
+  async getCustomerByEmailWithPassword(email: string): Promise<Customer | undefined> {
     const result = await db.select().from(customers).where(eq(customers.email, email));
     return result[0];
   }

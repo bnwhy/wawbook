@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
+import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle, ShoppingCart, User, Check } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import PaymentBadges from '../components/PaymentBadges';
@@ -13,6 +14,7 @@ import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
 const CheckoutPage = () => {
   const { items, total, clearCart } = useCart();
   const { createOrder, shippingZones } = useEcommerce();
+  const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,18 +22,35 @@ const CheckoutPage = () => {
 
   const [billingMode, setBillingMode] = useState<'same' | 'different'>('same');
 
-  // Form states
+  // Form states - pre-fill with user data if authenticated
   const [formData, setFormData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    address: '',
+    email: user?.email || '',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    address: user?.address?.street || '',
     apartment: '',
-    city: '',
-    zip: '',
-    country: 'France',
-    phone: '',
+    city: user?.address?.city || '',
+    zip: user?.address?.zipCode || '',
+    country: user?.address?.country || 'France',
+    phone: user?.phone || '',
   });
+
+  // Update form when user data changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone || prev.phone,
+        address: user.address?.street || prev.address,
+        city: user.address?.city || prev.city,
+        zip: user.address?.zipCode || prev.zip,
+        country: user.address?.country || prev.country,
+      }));
+    }
+  }, [user]);
 
   // Shipping State
   const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<string | null>(null);
@@ -260,7 +279,16 @@ const CheckoutPage = () => {
                                     <div className="flex justify-between items-center">
                                         <h2 className="font-bold text-lg text-stone-800">Contact</h2>
                                         <div className="text-sm text-stone-600">
-                                            Déjà un compte ? <a href="#" className="text-cloud-blue hover:underline">Se connecter</a>
+                                            {isAuthenticated ? (
+                                                <span>Connecté en tant que <strong>{user?.email}</strong></span>
+                                            ) : (
+                                                <>
+                                                    Déjà un compte ? {' '}
+                                                    <Link href="/login?redirect=/checkout" className="text-cloud-blue hover:underline">
+                                                        Se connecter
+                                                    </Link>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     <input required name="email" value={formData.email} onChange={handleInputChange} type="email" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow" placeholder="Email" />

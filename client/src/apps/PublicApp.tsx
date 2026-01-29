@@ -12,11 +12,21 @@ import StaticPage from '../pages/StaticPage';
 import CategoryPage from '../pages/CategoryPage';
 import CataloguePage from '../pages/CataloguePage';
 import NotFound from '../pages/NotFound';
+import { AuthProvider } from '../context/AuthContext';
 import { BooksProvider } from '../context/BooksContext';
 import { MenuProvider } from '../context/MenuContext';
 import { CartProvider } from '../context/CartContext';
 import { EcommerceProvider } from '../context/EcommerceContext';
 import ScrollToTop from '../components/ScrollToTop';
+import ProtectedRoute from '../components/ProtectedRoute';
+import LoginPage from '../pages/LoginPage';
+import SignupPage from '../pages/SignupPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
+import AccountPage from '../pages/AccountPage';
+import AccountProfilePage from '../pages/AccountProfilePage';
+import AccountOrdersPage from '../pages/AccountOrdersPage';
+import AccountOrderDetailPage from '../pages/AccountOrderDetailPage';
 
 const PublicApp: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('HOME');
@@ -75,15 +85,44 @@ const PublicApp: React.FC = () => {
   };
 
   return (
-    <BooksProvider>
-      <MenuProvider>
-        <CartProvider>
-          <EcommerceProvider>
-            <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
-              <ScrollToTop />
-              <Switch>
-                <Route path="/">
-                  {appState === 'HOME' && <Hero onStart={startCreation} />}
+    <AuthProvider>
+      <BooksProvider>
+        <MenuProvider>
+          <CartProvider>
+            <EcommerceProvider>
+              <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
+                <ScrollToTop />
+                <Switch>
+                  {/* Auth routes */}
+                  <Route path="/login" component={LoginPage} />
+                  <Route path="/signup" component={SignupPage} />
+                  <Route path="/forgot-password" component={ForgotPasswordPage} />
+                  <Route path="/reset-password" component={ResetPasswordPage} />
+
+                  {/* Account routes (protected) */}
+                  <Route path="/account">
+                    <ProtectedRoute>
+                      <AccountPage />
+                    </ProtectedRoute>
+                  </Route>
+                  <Route path="/account/profile">
+                    <ProtectedRoute>
+                      <AccountProfilePage />
+                    </ProtectedRoute>
+                  </Route>
+                  <Route path="/account/orders">
+                    <ProtectedRoute>
+                      <AccountOrdersPage />
+                    </ProtectedRoute>
+                  </Route>
+                  <Route path="/account/orders/:orderId">
+                    <ProtectedRoute>
+                      <AccountOrderDetailPage />
+                    </ProtectedRoute>
+                  </Route>
+
+                  <Route path="/">
+                    {appState === 'HOME' && <Hero onStart={startCreation} />}
                   
                   {appState === 'CREATE' && (
                     <Wizard 
@@ -176,11 +215,12 @@ const PublicApp: React.FC = () => {
                   </button>
                 </div>
               )}
-            </div>
-          </EcommerceProvider>
-        </CartProvider>
-      </MenuProvider>
-    </BooksProvider>
+              </div>
+            </EcommerceProvider>
+          </CartProvider>
+        </MenuProvider>
+      </BooksProvider>
+    </AuthProvider>
   );
 };
 

@@ -2294,20 +2294,29 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  const ordersChange = previousOrdersCount > 0 ? ((recentOrdersCount - previousOrdersCount) / previousOrdersCount * 100) : 0;
                  const avgChange = previousAverage > 0 ? ((recentAverage - previousAverage) / previousAverage * 100) : 0;
                  
+                 // Totaux globaux (tous les ordres)
+                 const totalSales = orders.reduce((acc, order) => acc + Number(order.totalAmount), 0);
+                 const totalOrders = orders.length;
+                 const avgOrder = totalOrders > 0 ? totalSales / totalOrders : 0;
+                 
                  return (
                  <div className="space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
                              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Ventes Totales</h3>
-                             {previousTotal > 0 && (
+                             {previousTotal > 0 ? (
                                 <div className={`${salesChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
                                    {salesChange >= 0 ? '+' : ''}{salesChange.toFixed(1)}%
                                 </div>
-                             )}
+                             ) : recentTotal > 0 ? (
+                                <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">
+                                   Nouveau
+                                </div>
+                             ) : null}
                           </div>
                           <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {recentTotal.toFixed(2)} €
+                             {totalSales.toFixed(2)} €
                           </div>
                           <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
                        </div>
@@ -2315,14 +2324,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
                              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Commandes</h3>
-                             {previousOrdersCount > 0 && (
+                             {previousOrdersCount > 0 ? (
                                 <div className={`${ordersChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
                                    {ordersChange >= 0 ? '+' : ''}{ordersChange.toFixed(1)}%
                                 </div>
-                             )}
+                             ) : recentOrdersCount > 0 ? (
+                                <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">
+                                   Nouveau
+                                </div>
+                             ) : null}
                           </div>
                           <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {recentOrdersCount}
+                             {totalOrders}
                           </div>
                           <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
                        </div>
@@ -2330,14 +2343,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
                              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Panier Moyen</h3>
-                             {previousAverage > 0 && (
+                             {previousAverage > 0 ? (
                                 <div className={`${avgChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
                                    {avgChange >= 0 ? '+' : ''}{avgChange.toFixed(1)}%
                                 </div>
-                             )}
+                             ) : recentAverage > 0 ? (
+                                <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">
+                                   Nouveau
+                                </div>
+                             ) : null}
                           </div>
                           <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {recentAverage.toFixed(2)} €
+                             {avgOrder.toFixed(2)} €
                           </div>
                           <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
                        </div>

@@ -11,7 +11,11 @@ import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { env } from "./config/env";
 import compression from "compression";
 import { apiLimiter } from "./middleware/rate-limit";
-import { storage } from "./storage";
+import { storage, pool } from "./storage";
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import passport from 'passport';
+import { configurePassport } from "./config/passport";
 
 const app = express();
 const httpServer = createServer(app);
@@ -144,6 +148,35 @@ app.use(compression({
 
 // Rate limiting pour les API
 app.use('/api', apiLimiter);
+
+// Session configuration
+const PgSession = connectPgSimple(session);
+
+app.use(
+  session({
+    store: new PgSession({
+      pool: pool,
+      tableName: 'session', // connect-pg-simple default table name
+      createTableIfMissing: true,
+    }),
+    secret: env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    },
+  })
+);
+
+// Passport configuration
+app.use(passport.initialize());
+app.use(passport.session());
+configurePassport();
+
+logger.info('Session and authentication middleware configured');
 
 export function log(message: string, source = "express") {
   logger.info({ source }, message);

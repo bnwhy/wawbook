@@ -3,6 +3,7 @@ import express from "express";
 import type { Server } from "http";
 import * as path from "path";
 import { registerObjectStorageRoutes } from "../replit_integrations/object_storage";
+import authRouter from "./auth.routes";
 import booksRouter from "./books.routes";
 import customersRouter from "./customers.routes";
 import ordersRouter from "./orders.routes";
@@ -30,6 +31,7 @@ export async function registerRoutes(
   app.use("/health", healthRouter);
 
   // API routes
+  app.use("/api/auth", authRouter);
   app.use("/api/books", booksRouter);
   app.use("/api/customers", customersRouter);
   app.use("/api/orders", ordersRouter);

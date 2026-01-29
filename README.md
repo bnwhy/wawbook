@@ -13,12 +13,15 @@ NuageBook est une plateforme e-commerce full-stack permettant de créer, personn
 - **🎨 Wizard Personnalisation** - Interface multi-étapes généré dynamiquement
 - **👤 Personnalisation Avatar** - Genre, teint, cheveux, yeux, tenues
 - **📖 Preview Flipbook** - Visualisation interactive avec effet page tournante
-- **🛒 Panier & Checkout** - Intégration Stripe complète
+- **🛒 Panier & Checkout** - Intégration Stripe complète avec guest checkout
+- **🔐 Comptes Clients** - Authentification complète, espace client, historique commandes
 - **📦 Import EPUB/IDML** - Transformation templates InDesign → livres personnalisables
 - **🎯 Génération Automatique** - Wizard créé depuis noms fichiers images
 - **👨‍💼 Admin Dashboard** - Gestion complète livres, commandes, clients
 
 ## 📚 Documentation
+
+**🗂️ INDEX COMPLET:** Voir **[DOCS_INDEX.md](DOCS_INDEX.md)** pour naviguer dans toute la documentation
 
 ### Documentation Produit
 - **[PRD.md](PRD.md)** - Product Requirements Document complet
@@ -41,6 +44,23 @@ NuageBook est une plateforme e-commerce full-stack permettant de créer, personn
   - Modèle de données ERD
 
 ### Guides Spécialisés
+
+- **[AUTHENTICATION_SYSTEM.md](AUTHENTICATION_SYSTEM.md)** - Système d'authentification ⭐ NOUVEAU
+  - Comptes clients et sessions
+  - Meilleures pratiques e-commerce
+  - Guide de test complet
+  - Routes API et sécurité
+
+- **[QUICKSTART_AUTH.md](QUICKSTART_AUTH.md)** - Guide démarrage rapide auth ⭐ NOUVEAU
+  - Setup en 5 minutes
+  - Patterns de code
+  - Debugging
+
+- **[CHANGELOG_AUTH_v1.1.md](CHANGELOG_AUTH_v1.1.md)** - Changelog v1.1 ⭐ NOUVEAU
+  - Détails implémentation
+  - Fichiers modifiés
+  - Flux utilisateur
+
 - **[GUIDE_EPUB_IDML.md](GUIDE_EPUB_IDML.md)** - Guide import storyboards
   - Règle d'or : EPUB = positions, IDML = texte + styles
   - Architecture fusion détaillée
@@ -249,6 +269,9 @@ PORT=5001
 # Database
 DATABASE_URL=postgresql://user:pass@host/db
 
+# Session (REQUIS pour authentification)
+SESSION_SECRET=votre_secret_aleatoire_32_caracteres_minimum
+
 # Stripe
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
@@ -256,6 +279,11 @@ STRIPE_PUBLISHABLE_KEY=pk_test_...
 # Optional
 LOG_LEVEL=debug
 STRIPE_SYNC_BACKFILL=false
+```
+
+**⚠️ Important :** `SESSION_SECRET` est **obligatoire** pour le système d'authentification. Générer un secret fort :
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 **Validation :** Toutes les variables sont validées au démarrage via Zod. Voir [`server/config/env.ts`](server/config/env.ts)
@@ -289,12 +317,27 @@ STRIPE_SYNC_BACKFILL=false
 - `POST /api/checkout/create-session` - Créer session Stripe
 - `POST /api/checkout/verify-payment` - Vérifier paiement
 
+### Authentification Client
+- `POST /api/auth/signup` - Inscription client
+- `POST /api/auth/login` - Connexion
+- `POST /api/auth/logout` - Déconnexion
+- `GET /api/auth/me` - Session actuelle
+- `POST /api/auth/set-password` - Définir password (post-achat)
+- `POST /api/auth/forgot-password` - Demander reset password
+- `POST /api/auth/reset-password` - Reset avec token
+
+### Espace Client (protégé)
+- `GET /api/customers/me` - Profil du client connecté
+- `PATCH /api/customers/me` - Mettre à jour profil
+- `GET /api/orders/my-orders` - Commandes du client
+
 ### Admin
 - `POST /api/books` - Créer livre
 - `PATCH /api/books/:id` - Modifier livre
 - `POST /api/books/import-storyboard` - Import EPUB/IDML
 - `POST /api/books/:id/render-pages` - Rendu serveur
 - `GET /api/orders` - Liste commandes
+- `GET /api/customers` - Liste clients
 
 ### Health
 - `GET /health` - Status complet
@@ -338,11 +381,23 @@ MIT License - voir [LICENSE](LICENSE)
 | [PRD.md](PRD.md) | Vision produit, fonctionnalités, user stories |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture technique complète |
 | [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md) | Diagrammes visuels Mermaid |
+| [AUTHENTICATION_SYSTEM.md](AUTHENTICATION_SYSTEM.md) | Système d'authentification client (Nouveau) |
 | [GUIDE_EPUB_IDML.md](GUIDE_EPUB_IDML.md) | Guide import storyboards InDesign |
 | [RULES.md](RULES.md) | Règles du projet |
 
 ---
 
-**Version :** 1.0  
-**Dernière mise à jour :** Janvier 2026  
+**Version :** 1.1.0  
+**Dernière mise à jour :** 29 Janvier 2026  
 **Status :** 🟢 Production Ready
+
+**🎉 Nouveautés v1.1 - [Release Notes](RELEASE_NOTES_v1.1.md):**
+- ✅ Système complet d'authentification client (Passport.js + bcrypt)
+- ✅ Espace client avec historique commandes (4 pages)
+- ✅ Création de compte post-achat (best practice e-commerce 2025)
+- ✅ Mot de passe oublié / réinitialisation sécurisée
+- ✅ Checkout intelligent avec pré-remplissage automatique
+- ✅ Sessions PostgreSQL (30 jours, httpOnly cookies)
+- ✅ 8 nouveaux documents de référence (2,660 lignes)
+
+**📚 Documentation Auth:** Voir [DOCS_INDEX.md](DOCS_INDEX.md) section "Authentification"

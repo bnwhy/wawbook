@@ -198,12 +198,20 @@ export const customers = pgTable("customers", {
   orderCount: integer("order_count").default(0).notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // Authentication fields
+  password: text("password"), // nullable - guests n'ont pas de password
+  resetPasswordToken: text("reset_password_token"),
+  resetPasswordExpires: timestamp("reset_password_expires"),
 });
 
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   createdAt: true,
   totalSpent: true,
   orderCount: true,
+  // Exclude auth fields from standard insert - handled separately
+  password: true,
+  resetPasswordToken: true,
+  resetPasswordExpires: true,
 });
 
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;

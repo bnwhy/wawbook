@@ -133,6 +133,16 @@ app.use(
   }),
 );
 
+// #region agent log
+app.use((err: any, req: any, res: any, next: any) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    logger.error({ location: 'index:jsonParseError', err: err.message, body: req.body, hypothesisId: 'H4' }, 'JSON parse error');
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  next(err);
+});
+// #endregion
+
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 // Compression des réponses

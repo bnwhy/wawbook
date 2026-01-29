@@ -1,9 +1,12 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { storage } from '../storage';
 import type { Customer } from '@shared/schema';
 import { logger } from '../utils/logger';
+import { env } from './env';
 
 export function configurePassport() {
   // Local Strategy for email/password authentication
@@ -45,6 +48,55 @@ export function configurePassport() {
       }
     )
   );
+
+  // Google OAuth Strategy (only if credentials are provided)
+  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: env.GOOGLE_CLIENT_ID,
+          clientSecret: env.GOOGLE_CLIENT_SECRET,
+          callbackURL: '/api/auth/google/callback',
+        },
+        async (accessToken, refreshToken, profile, done) => {
+          try {
+            const email = profile.emails?.[0]?.value;
+            
+            if (!email) {
+              return done(new Error('No email provided by Google'), false);
+            }
+
+            // Check if customer already exists
+            let customer = await storage.getCustomerByEmail(email);
+
+            if (!customer) {
+              // Create new customer from Google profile
+              customer = await storage.createCustomer({
+                id: crypto.randomUUID(),
+                email,
+                firstName: profile.name?.givenName || '',
+                lastName: profile.name?.familyName || '',
+                phone: null,
+                address: null,
+                notes: 'Created via Google OAuth',
+              });
+              logger.info({ customerId: customer.id, email }, 'New customer created via Google OAuth');
+            } else {
+              logger.info({ customerId: customer.id, email }, 'Existing customer logged in via Google OAuth');
+            }
+
+            return done(null, customer);
+          } catch (error) {
+            logger.error({ err: error }, 'Google OAuth authentication error');
+            return done(error as Error, false);
+          }
+        }
+      )
+    );
+    logger.info('Google OAuth strategy configured');
+  } else {
+    logger.info('Google OAuth not configured (missing credentials)');
+  }
 
   // Serialize user to session (store only customer ID)
   passport.serializeUser((user: Express.User, done) => {

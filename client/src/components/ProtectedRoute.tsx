@@ -9,8 +9,8 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
-  const currentPath = window.location.pathname;
+  const [location, setLocation] = useLocation();
+  const currentPath = location.split('?')[0]; // Remove query params if any
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

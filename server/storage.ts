@@ -9,6 +9,7 @@ import type {
   InsertBook,
   Customer,
   InsertCustomer,
+  UpdateCustomerAuth,
   Order,
   InsertOrder,
   ShippingZone,
@@ -54,8 +55,10 @@ export interface IStorage {
   getCustomer(id: string): Promise<Customer | undefined>;
   getCustomerByEmail(email: string): Promise<Customer | undefined>;
   getCustomerByEmailWithPassword(email: string): Promise<Customer | undefined>;
+  getCustomerByResetToken(token: string): Promise<Customer | undefined>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  updateCustomerAuth(id: string, authData: UpdateCustomerAuth): Promise<Customer | undefined>;
   deleteCustomer(id: string): Promise<void>;
 
   // Orders
@@ -168,6 +171,12 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
+  // For password reset - returns customer WITH reset token
+  async getCustomerByResetToken(token: string): Promise<Customer | undefined> {
+    const result = await db.select().from(customers).where(eq(customers.resetPasswordToken, token));
+    return result[0];
+  }
+
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
     const result = await db.insert(customers).values(customer).returning();
     return result[0];
@@ -175,6 +184,11 @@ export class DbStorage implements IStorage {
 
   async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer | undefined> {
     const result = await db.update(customers).set(customer).where(eq(customers.id, id)).returning();
+    return result[0];
+  }
+
+  async updateCustomerAuth(id: string, authData: UpdateCustomerAuth): Promise<Customer | undefined> {
+    const result = await db.update(customers).set(authData).where(eq(customers.id, id)).returning();
     return result[0];
   }
 

@@ -76,3 +76,22 @@ export const renderLimiter = rateLimit({
     });
   },
 });
+
+/**
+ * Rate limiter pour les opérations d'authentification normales (me, logout)
+ * 30 requêtes par IP toutes les 15 minutes
+ */
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // max 30 requêtes
+  message: 'Too many auth requests, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    logger.warn({ ip: req.ip, path: req.path }, 'Auth rate limit exceeded');
+    res.status(429).json({
+      status: 'error',
+      message: 'Too many requests, please try again later'
+    });
+  },
+});

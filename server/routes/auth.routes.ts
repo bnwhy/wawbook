@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { storage } from "../storage";
 import { ValidationError } from "../utils/errors";
 import { logger } from "../utils/logger";
-import { strictLimiter } from "../middleware/rate-limit";
+import { strictLimiter, authLimiter } from "../middleware/rate-limit";
 import { z } from "zod";
 
 const router = express.Router();
@@ -69,16 +69,15 @@ router.post("/signup", strictLimiter, async (req, res, next) => {
     });
 
     // Update with password (separate call to bypass insertCustomerSchema)
-    await storage.updateCustomer(customer.id, { password: hashedPassword } as any);
+    await storage.updateCustomerAuth(customer.id, { password: hashedPassword });
 
     // Auto-login after signup
     req.login(customer, (err) => {
       if (err) {
-        logger.error({ err, customerId: customer.id }, 'Auto-login after signup failed');
         return next(err);
       }
       
-      logger.info({ customerId: customer.id }, 'Customer signed up successfully');
+      logger.info({ customerId: customer.id }, 'Customer signed up and logged in successfully');
       res.status(201).json(customer);
     });
   } catch (error) {
@@ -114,7 +113,7 @@ router.post("/login", strictLimiter, (req, res, next) => {
 });
 
 // POST /api/auth/logout - Logout
-router.post("/logout", (req, res, next) => {
+router.post("/logout", authLimiter, (req, res, next) => {
   const userId = req.user?.id;
   
   req.logout((err) => {
@@ -134,7 +133,7 @@ router.post("/logout", (req, res, next) => {
 });
 
 // GET /api/auth/me - Get current user
-router.get("/me", (req, res) => {
+router.get("/me", authLimiter, (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Non authentifié" });
   }
@@ -166,7 +165,7 @@ router.post("/set-password", strictLimiter, async (req, res, next) => {
 
     // Hash and set password
     const hashedPassword = await bcrypt.hash(password, 10);
-    await storage.updateCustomer(customer.id, { password: hashedPassword } as any);
+    await storage.updateCustomerAuth(customer.id, { password: hashedPassword });
 
     // Auto-login
     req.login(customer, (err) => {
@@ -203,20 +202,14 @@ router.post("/forgot-password", strictLimiter, async (req, res, next) => {
       const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
       // Save token
-      await storage.updateCustomer(customer.id, {
+      await storage.updateCustomerAuth(customer.id, {
         resetPasswordToken: resetToken,
         resetPasswordExpires: resetExpires,
-      } as any);
+      });
 
       // TODO: Send email with reset link
-      // For now, just log the link
-      const resetLink = `${req.protocol}://${req.get('host')}/reset-password?token=${resetToken}`;
-      logger.info({ customerId: customer.id, resetLink }, 'Password reset requested');
-      
-      console.log('\n=== PASSWORD RESET LINK ===');
-      console.log(`Email: ${email}`);
-      console.log(`Reset link: ${resetLink}`);
-      console.log('===========================\n');
+      // For now, just log that a reset was requested (link should be sent via email)
+      logger.info({ customerId: customer.id }, 'Password reset requested');
     }
 
     // Always return success
@@ -237,22 +230,13 @@ router.post("/reset-password", strictLimiter, async (req, res, next) => {
     const { token, password } = validation.data;
 
     // Find customer with valid token
-    const customers = await storage.getAllCustomers();
-    let customerWithToken: any = null;
+    const customerWithToken = await storage.getCustomerByResetToken(token);
 
-    for (const customer of customers) {
-      const fullCustomer = await storage.getCustomerByEmailWithPassword(customer.email);
-      if (
-        fullCustomer?.resetPasswordToken === token &&
-        fullCustomer.resetPasswordExpires &&
-        new Date(fullCustomer.resetPasswordExpires) > new Date()
-      ) {
-        customerWithToken = fullCustomer;
-        break;
-      }
-    }
-
-    if (!customerWithToken) {
+    if (
+      !customerWithToken ||
+      !customerWithToken.resetPasswordExpires ||
+      new Date(customerWithToken.resetPasswordExpires) <= new Date()
+    ) {
       throw new ValidationError("Token invalide ou expiré");
     }
 
@@ -260,11 +244,11 @@ router.post("/reset-password", strictLimiter, async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Update password and clear token
-    await storage.updateCustomer(customerWithToken.id, {
+    await storage.updateCustomerAuth(customerWithToken.id, {
       password: hashedPassword,
       resetPasswordToken: null,
       resetPasswordExpires: null,
-    } as any);
+    });
 
     // Get safe customer for login
     const safeCustomer = await storage.getCustomer(customerWithToken.id);
@@ -286,5 +270,27 @@ router.post("/reset-password", strictLimiter, async (req, res, next) => {
     next(error);
   }
 });
+
+// GET /api/auth/google - Initiate Google OAuth
+router.get('/google', 
+  passport.authenticate('google', {
+    scope: ['profile', 'email']
+  })
+);
+
+// GET /api/auth/google/callback - Google OAuth callback
+router.get('/google/callback',
+  passport.authenticate('google', { 
+    failureRedirect: '/login',
+    failureMessage: true
+  }),
+  (req, res) => {
+    // Success - redirect to account or original destination
+    const redirect = (req.session as any).returnTo || '/account';
+    delete (req.session as any).returnTo;
+    logger.info({ customerId: req.user?.id }, 'Google OAuth successful, redirecting');
+    res.redirect(redirect);
+  }
+);
 
 export default router;

@@ -172,9 +172,9 @@ app.use(
 );
 
 // Passport configuration
+configurePassport();
 app.use(passport.initialize());
 app.use(passport.session());
-configurePassport();
 
 logger.info('Session and authentication middleware configured');
 

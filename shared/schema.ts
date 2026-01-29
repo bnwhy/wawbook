@@ -214,7 +214,15 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({
   resetPasswordExpires: true,
 });
 
+// Schema for updating authentication fields
+export const updateCustomerAuthSchema = z.object({
+  password: z.string().optional(),
+  resetPasswordToken: z.string().nullable().optional(),
+  resetPasswordExpires: z.date().nullable().optional(),
+});
+
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type UpdateCustomerAuth = z.infer<typeof updateCustomerAuthSchema>;
 export type Customer = typeof customers.$inferSelect;
 
 // ===== ORDERS =====

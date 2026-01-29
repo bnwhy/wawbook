@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, Link } from 'wouter';
+import { UserPlus, Mail, Lock, Phone, Loader2, Package, Zap, BookOpen, Cloud } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { UserPlus, Mail, Lock, Phone, Loader2 } from 'lucide-react';
 
 const SignupPage = () => {
   const { signup } = useAuth();
@@ -66,18 +66,90 @@ const SignupPage = () => {
     }
   };
 
+  const handleGoogleSignup = () => {
+    window.location.href = '/api/auth/google?returnTo=/account';
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col bg-brand-cream">
       <Navigation onStart={() => setLocation('/')} />
-      <main className="flex-1 flex items-center justify-center p-6 pt-32 pb-20">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-stone-200">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-cloud-blue/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <UserPlus className="w-8 h-8 text-cloud-blue" />
+      
+      <main className="flex-1 flex pt-20">
+        {/* Left Side - Branding */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cloud-blue to-cloud-deep p-12 flex-col justify-center relative overflow-hidden">
+        {/* Decorative clouds */}
+        <div className="absolute top-10 left-10 opacity-20">
+          <Cloud className="w-32 h-32 text-white" />
+        </div>
+        <div className="absolute bottom-20 right-10 opacity-10">
+          <Cloud className="w-48 h-48 text-white" />
+        </div>
+        
+        <div className="relative z-10 max-w-md">
+          <h2 className="font-display font-black text-4xl text-white mb-4">
+            Rejoignez le club<br />NuageBook
+          </h2>
+          <p className="text-white/90 text-lg mb-8">
+            Le club de ceux qui créent des histoires magiques et personnalisées
+          </p>
+          
+          <div className="space-y-4 mb-12">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Package className="w-5 h-5 text-white" />
               </div>
+              <div>
+                <h3 className="font-bold text-white mb-1">Suivez vos commandes</h3>
+                <p className="text-white/80 text-sm">Suivi en temps réel de toutes vos créations</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white mb-1">Checkout ultra-rapide</h3>
+                <p className="text-white/80 text-sm">Passez commande en 2 clics seulement</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white mb-1">Bibliothèque personnelle</h3>
+                <p className="text-white/80 text-sm">Retrouvez tous vos livres personnalisés</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Social Proof */}
+          <div className="flex gap-8">
+            <div>
+              <div className="font-black text-4xl text-white">1M+</div>
+              <div className="text-white/70 text-sm">Livres créés</div>
+            </div>
+            <div>
+              <div className="font-black text-4xl text-white">4.9/5</div>
+              <div className="text-white/70 text-sm">Satisfaction</div>
+            </div>
+            <div>
+              <div className="font-black text-4xl text-white">50K+</div>
+              <div className="text-white/70 text-sm">Clients heureux</div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        {/* Right Side - Form */}
+        <div className="w-full lg:w-1/2 flex flex-col bg-brand-cream">
+          <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
+          <div className="w-full max-w-md py-8">
+            <div className="mb-8">
               <h1 className="font-display font-black text-3xl text-stone-900 mb-2">
-                Créer un compte
+                Je m'inscris !
               </h1>
               <p className="text-stone-600">
                 Rejoignez-nous et profitez de tous les avantages
@@ -89,6 +161,27 @@ const SignupPage = () => {
                 {error}
               </div>
             )}
+
+            {/* Google OAuth Button */}
+            <button
+              type="button"
+              onClick={handleGoogleSignup}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-stone-300 rounded-lg hover:border-stone-400 hover:bg-stone-50 transition-colors font-medium"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Continuer avec Google
+            </button>
+
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px bg-stone-200"></div>
+              <span className="text-stone-500 text-sm">ou</span>
+              <div className="flex-1 h-px bg-stone-200"></div>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -231,7 +324,7 @@ const SignupPage = () => {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-stone-200 text-center text-sm">
+            <div className="mt-6 text-center text-sm">
               <p className="text-stone-600">
                 Déjà un compte ?{' '}
                 <Link href="/login" className="text-cloud-blue hover:underline font-bold">
@@ -240,8 +333,10 @@ const SignupPage = () => {
               </p>
             </div>
           </div>
+          </div>
         </div>
       </main>
+      
       <Footer />
     </div>
   );

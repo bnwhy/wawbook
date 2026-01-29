@@ -17,6 +17,10 @@ const envSchema = z.object({
   // Session
   SESSION_SECRET: z.string().default('dev-secret-change-in-production'),
   
+  // Google OAuth (optional)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  
   // Stripe (optional pour le développement)
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),

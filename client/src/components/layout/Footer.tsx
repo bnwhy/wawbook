@@ -1,7 +1,9 @@
+import React from "react";
 import { Facebook, Instagram, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
+import PaymentBadges from "../PaymentBadges";
 
 export function Footer() {
   return (
@@ -72,7 +74,15 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 border-t-2 border-dashed border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400 font-medium">
+        {/* Payment Badges Section */}
+        <div className="pt-8 border-t-2 border-dashed border-gray-100 flex flex-col items-center gap-6 mb-6">
+          <div className="text-center">
+            <p className="text-gray-400 text-sm font-medium mb-4 uppercase tracking-wider">Paiements sécurisés</p>
+            <PaymentBadges size="small" />
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400 font-medium">
           <p>&copy; {new Date().getFullYear()} WawBook. Fait avec ❤️ et de la poussière d'étoiles.</p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-primary">Confidentialité</a>

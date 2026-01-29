@@ -5,6 +5,7 @@ import Navigation from './Navigation';
 import Banner from './Banner';
 import { useBooks } from '../context/BooksContext';
 import { formatPrice } from '../utils/formatPrice';
+import PaymentBadges from './PaymentBadges';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity, bookTitle?: string) => void;
@@ -86,7 +87,7 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
          <span>Plus d'informations</span>
          <ChevronDown size={14} className="group-open/info:rotate-180 transition-transform" />
       </summary>
-      <div className="mt-2 text-[10px] text-cloud-dark/60 space-y-2 pb-2 border-t border-dashed border-gray-100 pt-2 leading-relaxed animate-fade-in cursor-text">
+      <div className="mt-2 text-[10px] text-cloud-dark/60 space-y-2 pb-2 border-t border-dashed border-gray-200 pt-2 leading-relaxed animate-fade-in cursor-text">
          {features.languages && features.languages.length > 0 && (
            <div>
              <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>
@@ -202,7 +203,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                 <div 
                   key={idx}
                   onClick={() => onStart(undefined, undefined, card.name)}
-                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
                   <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
@@ -259,7 +260,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                 <div 
                   key={idx}
                   onClick={() => onStart(card.theme, undefined, card.name)}
-                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
                   <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
@@ -316,7 +317,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   <div 
                     key={idx} 
                     onClick={() => onStart(undefined, activity.id as any, activity.name)}
-                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
                   >
                     {/* Image Container */}
                     <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
@@ -369,7 +370,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   <div 
                     key={idx} 
                     onClick={() => onStart(undefined, undefined, occasion.name)}
-                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer hover:-translate-y-1"
+                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
                   >
                     {/* Image Container */}
                     <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
@@ -563,8 +564,16 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                  </ul>
               </div>
            </div>
-           <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10 text-center text-cloud-light/40 font-bold text-sm">
-              © 2024 NuageBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
+           <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10">
+              <div className="flex flex-col items-center gap-6">
+                <div className="text-center">
+                  <p className="text-cloud-light/60 text-sm font-medium mb-4">Paiements sécurisés</p>
+                  <PaymentBadges size="small" />
+                </div>
+                <div className="text-center text-cloud-light/40 font-bold text-sm">
+                  © 2024 NuageBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
+                </div>
+              </div>
            </div>
         </footer>
      </div>

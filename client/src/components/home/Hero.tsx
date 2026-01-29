@@ -51,7 +51,7 @@ export function Hero({ onStart }: { onStart: () => void }) {
               </div>
               
               <div className="mt-10 flex items-center justify-center md:justify-start gap-3">
-                 <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 rotate-1">
+                 <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 rotate-1">
                     <div className="flex -space-x-3">
                       {[1, 2, 3].map((i) => (
                         <div key={i} className="w-10 h-10 rounded-full border-4 border-white overflow-hidden bg-gray-100">

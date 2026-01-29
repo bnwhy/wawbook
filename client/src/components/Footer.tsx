@@ -1,6 +1,7 @@
 import React from 'react';
 import { Cloud, Heart } from 'lucide-react';
 import { Link } from 'wouter';
+import PaymentBadges from './PaymentBadges';
 
 interface FooterProps {
   // No props needed
@@ -51,8 +52,17 @@ const Footer: React.FC<FooterProps> = () => {
           </ul>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10 text-center text-cloud-light/40 font-bold text-sm">
-        © 2024 NuageBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
+      
+      <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10">
+        <div className="flex flex-col items-center gap-6">
+          <div className="text-center">
+            <p className="text-cloud-light/60 text-sm font-medium mb-4">Paiements sécurisés</p>
+            <PaymentBadges size="small" />
+          </div>
+          <div className="text-center text-cloud-light/40 font-bold text-sm">
+            © 2024 NuageBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
+          </div>
+        </div>
       </div>
     </footer>
   );

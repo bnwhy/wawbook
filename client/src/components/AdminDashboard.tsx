@@ -2262,16 +2262,52 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
            <main className="flex-1 overflow-y-auto p-8">
               
               {/* --- VIEW: HOME (DASHBOARD) --- */}
-              {activeTab === 'home' && (
+              {activeTab === 'home' && (() => {
+                 const now = new Date();
+                 const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                 const previous30Days = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+                 
+                 // Commandes des 30 derniers jours
+                 const recentOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= last30Days;
+                 });
+                 
+                 // Commandes des 30 jours précédents
+                 const previousOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= previous30Days && orderDate < last30Days;
+                 });
+                 
+                 // Calcul des totaux récents
+                 const recentTotal = recentOrders.reduce((acc, order) => acc + Number(order.totalAmount), 0);
+                 const recentOrdersCount = recentOrders.length;
+                 const recentAverage = recentOrdersCount > 0 ? recentTotal / recentOrdersCount : 0;
+                 
+                 // Calcul des totaux précédents
+                 const previousTotal = previousOrders.reduce((acc, order) => acc + Number(order.totalAmount), 0);
+                 const previousOrdersCount = previousOrders.length;
+                 const previousAverage = previousOrdersCount > 0 ? previousTotal / previousOrdersCount : 0;
+                 
+                 // Calcul des variations en %
+                 const salesChange = previousTotal > 0 ? ((recentTotal - previousTotal) / previousTotal * 100) : 0;
+                 const ordersChange = previousOrdersCount > 0 ? ((recentOrdersCount - previousOrdersCount) / previousOrdersCount * 100) : 0;
+                 const avgChange = previousAverage > 0 ? ((recentAverage - previousAverage) / previousAverage * 100) : 0;
+                 
+                 return (
                  <div className="space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
                              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Ventes Totales</h3>
-                             <div className="text-green-500 bg-green-50 px-2 py-1 rounded text-xs font-bold">+12%</div>
+                             {previousTotal > 0 && (
+                                <div className={`${salesChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
+                                   {salesChange >= 0 ? '+' : ''}{salesChange.toFixed(1)}%
+                                </div>
+                             )}
                           </div>
                           <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {orders.reduce((acc, order) => acc + Number(order.totalAmount), 0).toFixed(2)} €
+                             {recentTotal.toFixed(2)} €
                           </div>
                           <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
                        </div>
@@ -2279,10 +2315,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
                              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Commandes</h3>
-                             <div className="text-green-500 bg-green-50 px-2 py-1 rounded text-xs font-bold">+5%</div>
+                             {previousOrdersCount > 0 && (
+                                <div className={`${ordersChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
+                                   {ordersChange >= 0 ? '+' : ''}{ordersChange.toFixed(1)}%
+                                </div>
+                             )}
                           </div>
                           <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {orders.length}
+                             {recentOrdersCount}
                           </div>
                           <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
                        </div>
@@ -2290,10 +2330,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
                              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Panier Moyen</h3>
-                             <div className="text-red-500 bg-red-50 px-2 py-1 rounded text-xs font-bold">-2%</div>
+                             {previousAverage > 0 && (
+                                <div className={`${avgChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
+                                   {avgChange >= 0 ? '+' : ''}{avgChange.toFixed(1)}%
+                                </div>
+                             )}
                           </div>
                           <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {orders.length > 0 ? (orders.reduce((acc, order) => acc + Number(order.totalAmount), 0) / orders.length).toFixed(2) : '0.00'} €
+                             {recentAverage.toFixed(2)} €
                           </div>
                           <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
                        </div>
@@ -2384,7 +2428,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </div>
                     </div>
                  </div>
-              )}
+                 );
+              })()}
 
               {/* --- VIEW: ANALYTICS --- */}
               {activeTab === 'analytics' && (

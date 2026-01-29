@@ -92,7 +92,7 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
               const book = books.find(b => b.id === item.productId || b.name === item.bookTitle);
               
               return (
-              <div key={item.id} className="bg-white rounded-xl p-6 shadow-sm border border-stone-100 flex flex-col md:flex-row gap-6 relative">
+              <div key={item.id} className="bg-white rounded-xl p-6 shadow-sm border border-stone-200 flex flex-col md:flex-row gap-6 relative">
                 
                 {/* Remove Button (Top Right) */}
                 <button 
@@ -202,7 +202,7 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
           
           {/* Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-stone-100 sticky top-32">
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-stone-200 sticky top-32">
                 <h3 className="font-display font-black text-xl text-cloud-dark mb-6 leading-tight">Récapitulatif de la<br/>commande</h3>
                 
                 <div className="space-y-4 mb-6">
@@ -230,13 +230,12 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                 <button 
                     onClick={() => setLocation('/checkout')}
                     className="w-full bg-cloud-deep text-white font-bold text-lg py-3 px-4 rounded-lg shadow-md hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2"
-                    style={{ backgroundColor: 'rgba(12, 74, 110, 1)' }}
                 >
                     <Lock size={18} /> Passer la commande
                 </button>
                 
                 <div className="mt-3 py-2">
-                    <PaymentBadges size="medium" />
+                    <PaymentBadges size="small" />
                 </div>
                 
                 <div className="mt-2">

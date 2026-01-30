@@ -272,59 +272,25 @@ router.post("/reset-password", strictLimiter, async (req, res, next) => {
 });
 
 // GET /api/auth/google - Initiate Google OAuth
-router.get('/google', (req, res, next) => {
-  // #region agent log
-  logger.info({ location: 'auth.routes:google:start', query: req.query, hypothesisId: 'H1,H5' }, 'Google OAuth initiation');
-  // #endregion
+router.get('/google', 
   passport.authenticate('google', {
     scope: ['profile', 'email']
-  })(req, res, next);
-});
+  })
+);
 
 // GET /api/auth/google/callback - Google OAuth callback
-router.get('/google/callback', (req, res, next) => {
-  // #region agent log
-  logger.info({ location: 'auth.routes:callback:start', query: req.query, body: req.body, hypothesisId: 'H2,H5' }, 'Google callback received');
-  // #endregion
-  
+router.get('/google/callback',
   passport.authenticate('google', { 
     failureRedirect: '/login',
     failureMessage: true
-  }, (err, user, info) => {
-    // #region agent log
-    logger.info({ location: 'auth.routes:callback:afterAuth', err: err?.message, hasUser: !!user, info, hypothesisId: 'H2,H5' }, 'After passport authenticate');
-    // #endregion
-    
-    if (err) {
-      // #region agent log
-      logger.error({ location: 'auth.routes:callback:error', err, hypothesisId: 'H2,H5' }, 'Google auth error');
-      // #endregion
-      return next(err);
-    }
-    
-    if (!user) {
-      // #region agent log
-      logger.warn({ location: 'auth.routes:callback:noUser', info, hypothesisId: 'H2,H5' }, 'No user from Google auth');
-      // #endregion
-      return res.redirect('/login');
-    }
-    
-    req.login(user, (loginErr) => {
-      if (loginErr) {
-        // #region agent log
-        logger.error({ location: 'auth.routes:callback:loginError', err: loginErr, hypothesisId: 'H3' }, 'Login error after Google auth');
-        // #endregion
-        return next(loginErr);
-      }
-      
-      const redirect = (req.session as any).returnTo || '/account';
-      delete (req.session as any).returnTo;
-      // #region agent log
-      logger.info({ location: 'auth.routes:callback:success', customerId: user.id, redirect, hypothesisId: 'H5' }, 'Google OAuth successful, redirecting');
-      // #endregion
-      res.redirect(redirect);
-    });
-  })(req, res, next);
-});
+  }),
+  (req, res) => {
+    // Success - redirect to account or original destination
+    const redirect = (req.session as any).returnTo || '/account';
+    delete (req.session as any).returnTo;
+    logger.info({ customerId: req.user?.id }, 'Google OAuth successful, redirecting');
+    res.redirect(redirect);
+  }
+);
 
 export default router;

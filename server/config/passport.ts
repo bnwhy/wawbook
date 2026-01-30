@@ -59,30 +59,15 @@ export function configurePassport() {
           callbackURL: '/api/auth/google/callback',
         },
         async (accessToken, refreshToken, profile, done) => {
-          // #region agent log
-          logger.info({ location: 'passport:googleStrategy:start', profileId: profile.id, emails: profile.emails, hypothesisId: 'H2' }, 'Google strategy callback');
-          // #endregion
-          
           try {
             const email = profile.emails?.[0]?.value;
             
-            // #region agent log
-            logger.info({ location: 'passport:googleStrategy:emailExtracted', email, hypothesisId: 'H2' }, 'Email extracted from profile');
-            // #endregion
-            
             if (!email) {
-              // #region agent log
-              logger.error({ location: 'passport:googleStrategy:noEmail', profile, hypothesisId: 'H2' }, 'No email in Google profile');
-              // #endregion
               return done(new Error('No email provided by Google'), false);
             }
 
             // Check if customer already exists
             let customer = await storage.getCustomerByEmail(email);
-
-            // #region agent log
-            logger.info({ location: 'passport:googleStrategy:customerCheck', hasCustomer: !!customer, email, hypothesisId: 'H2' }, 'Customer lookup result');
-            // #endregion
 
             if (!customer) {
               // Create new customer from Google profile
@@ -95,23 +80,14 @@ export function configurePassport() {
                 address: null,
                 notes: 'Created via Google OAuth',
               });
-              // #region agent log
-              logger.info({ location: 'passport:googleStrategy:customerCreated', customerId: customer.id, email, hypothesisId: 'H2' }, 'New customer created via Google OAuth');
-              // #endregion
+              logger.info({ customerId: customer.id, email }, 'New customer created via Google OAuth');
             } else {
-              // #region agent log
-              logger.info({ location: 'passport:googleStrategy:existingCustomer', customerId: customer.id, email, hypothesisId: 'H2' }, 'Existing customer logged in via Google OAuth');
-              // #endregion
+              logger.info({ customerId: customer.id, email }, 'Existing customer logged in via Google OAuth');
             }
 
-            // #region agent log
-            logger.info({ location: 'passport:googleStrategy:success', customerId: customer.id, hypothesisId: 'H2' }, 'Google strategy returning customer');
-            // #endregion
             return done(null, customer);
           } catch (error) {
-            // #region agent log
-            logger.error({ location: 'passport:googleStrategy:error', err: error, hypothesisId: 'H2' }, 'Google OAuth authentication error');
-            // #endregion
+            logger.error({ err: error }, 'Google OAuth authentication error');
             return done(error as Error, false);
           }
         }
@@ -124,33 +100,19 @@ export function configurePassport() {
 
   // Serialize user to session (store only customer ID)
   passport.serializeUser((user: Express.User, done) => {
-    // #region agent log
-    logger.info({ location: 'passport:serializeUser', userId: user.id, hypothesisId: 'H3' }, 'Serializing user to session');
-    // #endregion
     done(null, user.id);
   });
 
   // Deserialize user from session (retrieve full customer data)
   passport.deserializeUser(async (id: string, done) => {
-    // #region agent log
-    logger.info({ location: 'passport:deserializeUser:start', userId: id, hypothesisId: 'H3' }, 'Deserializing user from session');
-    // #endregion
-    
     try {
       const customer = await storage.getCustomer(id);
-      
-      // #region agent log
-      logger.info({ location: 'passport:deserializeUser:result', userId: id, hasCustomer: !!customer, hypothesisId: 'H3' }, 'Customer lookup result');
-      // #endregion
-      
       if (!customer) {
         return done(null, false);
       }
       done(null, customer);
     } catch (error) {
-      // #region agent log
-      logger.error({ location: 'passport:deserializeUser:error', err: error, customerId: id, hypothesisId: 'H3' }, 'Deserialize user error');
-      // #endregion
+      logger.error({ err: error, customerId: id }, 'Deserialize user error');
       done(error);
     }
   });

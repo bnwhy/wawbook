@@ -208,14 +208,10 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
               )}
             </div>
           ) : (
-            <>
-              <Link href="/login" className="px-4 py-2 rounded-full font-bold text-cloud-dark hover:text-cloud-blue hover:bg-cloud-lightest transition-all">
-                Connexion
-              </Link>
-              <Link href="/signup" className="px-4 py-2 rounded-full font-bold text-white bg-cloud-blue hover:bg-cloud-deep transition-all">
-                Inscription
-              </Link>
-            </>
+            <Link href="/login" className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-cloud-dark hover:text-cloud-blue hover:bg-cloud-lightest transition-all">
+              <User size={20} />
+              Connexion
+            </Link>
           )}
 
           <Link href="/cart" className="flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">

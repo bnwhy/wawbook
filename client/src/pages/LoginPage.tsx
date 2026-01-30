@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'wouter';
 import { Link } from 'wouter';
-import { Lock, Mail, Loader2, Package, Zap, BookOpen, Cloud, Star, CheckCircle } from 'lucide-react';
+import { Lock, Mail, Loader2, Package, Zap, BookOpen, Cloud } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 
@@ -34,7 +34,6 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Store return path before redirecting to Google
     window.location.href = `/api/auth/google?returnTo=${encodeURIComponent(redirectPath)}`;
   };
 
@@ -57,38 +56,33 @@ const LoginPage = () => {
         {/* Left Side - Branding */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cloud-lightest to-cloud-lighter p-12 flex-col justify-center items-center relative">
           <div className="max-w-lg w-full text-center">
-            <h2 className="font-display font-black text-5xl md:text-6xl text-cloud-dark mb-8 leading-tight">
-              Bienvenue<br />au <span className="text-cloud-blue relative inline-block">
-                club
-                <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun opacity-100" viewBox="0 0 100 10" preserveAspectRatio="none">
-                  <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <h2 className="font-display font-black text-4xl md:text-5xl text-cloud-dark leading-tight">
+                Bienvenue<br />au <span className="text-cloud-blue relative inline-block">
+                  club
+                  <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun opacity-100" viewBox="0 0 100 10" preserveAspectRatio="none">
+                    <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
+                  </svg>
+                </span>
+              </h2>
+              
+              {/* Logo du site à côté */}
+              <div className="relative w-24 h-24 flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
+                  <g className="animate-[spin_10s_linear_infinite] origin-[75px_35px]">
+                    <path d="M75 10 L75 20 M75 50 L75 60 M55 35 L45 35 M105 35 L95 35 M61 21 L68 28 M82 42 L89 49 M89 21 L82 28 M61 49 L68 42" stroke="#FCD34D" strokeWidth="4" strokeLinecap="round" />
+                  </g>
+                  <circle cx="75" cy="35" r="18" fill="#FCD34D" />
+                  <path d="M20 70 C 10 70, 10 50, 30 50 C 30 30, 60 30, 60 50 C 70 40, 90 40, 90 60 C 90 80, 70 80, 60 80 L 30 80 C 10 80, 10 70, 20 70" fill="#60A5FA" stroke="#3B82F6" strokeWidth="2" />
+                  <g transform="translate(0, 2)">
+                    <circle cx="45" cy="65" r="3" fill="white" />
+                    <circle cx="65" cy="65" r="3" fill="white" />
+                    <path d="M50 72 Q 55 78, 60 72" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                    <circle cx="42" cy="70" r="3" fill="#FF9999" opacity="0.6" />
+                    <circle cx="68" cy="70" r="3" fill="#FF9999" opacity="0.6" />
+                  </g>
                 </svg>
-              </span>
-            </h2>
-            
-            {/* Logo du site centré */}
-            <div className="relative w-24 h-24 flex items-center justify-center mx-auto mb-10">
-              <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
-                {/* Sun rays */}
-                <g className="animate-[spin_10s_linear_infinite] origin-[75px_35px]">
-                  <path d="M75 10 L75 20 M75 50 L75 60 M55 35 L45 35 M105 35 L95 35 M61 21 L68 28 M82 42 L89 49 M89 21 L82 28 M61 49 L68 42" stroke="#FCD34D" strokeWidth="4" strokeLinecap="round" />
-                </g>
-                {/* Sun body */}
-                <circle cx="75" cy="35" r="18" fill="#FCD34D" />
-                
-                {/* Fluffy Cloud */}
-                <path d="M20 70 C 10 70, 10 50, 30 50 C 30 30, 60 30, 60 50 C 70 40, 90 40, 90 60 C 90 80, 70 80, 60 80 L 30 80 C 10 80, 10 70, 20 70" fill="#60A5FA" stroke="#3B82F6" strokeWidth="2" />
-                
-                {/* Cute Face */}
-                <g transform="translate(0, 2)">
-                  <circle cx="45" cy="65" r="3" fill="white" />
-                  <circle cx="65" cy="65" r="3" fill="white" />
-                  <path d="M50 72 Q 55 78, 60 72" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                  {/* Cheeks */}
-                  <circle cx="42" cy="70" r="3" fill="#FF9999" opacity="0.6" />
-                  <circle cx="68" cy="70" r="3" fill="#FF9999" opacity="0.6" />
-                </g>
-              </svg>
+              </div>
             </div>
             
             <p className="text-xl md:text-2xl text-cloud-dark/70 font-medium mb-12 leading-relaxed max-w-2xl mx-auto">
@@ -127,7 +121,6 @@ const LoginPage = () => {
               </div>
             </div>
             
-            {/* Social Proof */}
             <div className="flex gap-10 justify-center">
               <div className="text-center">
                 <div className="font-black text-5xl text-cloud-blue">1M+</div>
@@ -150,7 +143,7 @@ const LoginPage = () => {
           <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
             <div className="w-full max-w-md">
               <div className="mb-10 text-center">
-                <h1 className="font-display font-black text-4xl lg:text-5xl text-stone-900 mb-3">
+                <h1 className="font-display font-black text-3xl lg:text-4xl text-stone-900 mb-3">
                   Me connecter
                 </h1>
                 <p className="text-stone-600 text-lg">

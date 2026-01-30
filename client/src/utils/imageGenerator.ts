@@ -535,11 +535,14 @@ export const generateBookPages = async (
   }
   
   // Add cover (0) and back cover (999) only if they have content
-  if (book.contentConfig?.images?.some(img => img.position?.pageIndex === 0) ||
+  // Check both img.pageIndex (for background images) and img.position.pageIndex (for imageElements)
+  if (book.contentConfig?.images?.some(img => (img as any).pageIndex === 0) ||
+      book.contentConfig?.imageElements?.some(img => img.position?.pageIndex === 0) ||
       book.contentConfig?.texts?.some(txt => txt.position?.pageIndex === 0)) {
     relevantPages.add(0);
   }
-  if (book.contentConfig?.images?.some(img => img.position?.pageIndex === 999) ||
+  if (book.contentConfig?.images?.some(img => (img as any).pageIndex === 999) ||
+      book.contentConfig?.imageElements?.some(img => img.position?.pageIndex === 999) ||
       book.contentConfig?.texts?.some(txt => txt.position?.pageIndex === 999)) {
     relevantPages.add(999);
   }

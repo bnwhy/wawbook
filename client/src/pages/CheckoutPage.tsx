@@ -20,6 +20,9 @@ const CheckoutPage = () => {
   const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string>('');
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [loginError, setLoginError] = useState('');
 
   const [billingMode, setBillingMode] = useState<'same' | 'different'>('same');
 
@@ -219,51 +222,51 @@ const CheckoutPage = () => {
           <Navigation onStart={() => setLocation('/')} />
           <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
             {/* Checkout Wizard Stepper */}
-            <div className="mb-10 md:mb-16">
-              <div className="flex items-center justify-center px-2">
-                <div className="flex items-center w-full max-w-sm md:max-w-md">
+            <div className="mb-12">
+              <div className="flex items-center justify-center">
+                <div className="flex items-center w-full max-w-2xl">
                   {/* Step 1: Panier - Completed */}
                   <div 
-                    className="flex flex-col items-center cursor-pointer group z-10"
+                    className="flex flex-col items-center cursor-pointer group z-10 flex-1"
                     onClick={() => setLocation('/cart')}
                   >
-                    <div className="w-12 h-12 md:w-14 md:h-14 bg-accent-sun rounded-full flex items-center justify-center shadow-md transform group-hover:scale-110 transition-transform">
-                      <ShoppingCart className="text-white w-5 h-5 md:w-6 md:h-6" />
+                    <div className="w-16 h-16 bg-accent-sun rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all">
+                      <ShoppingCart size={28} className="text-white" strokeWidth={2.5} />
                     </div>
-                    <span className="text-xs md:text-sm font-bold text-cloud-dark mt-1 md:mt-2">Panier</span>
+                    <span className="text-sm font-bold text-cloud-dark mt-3">Panier</span>
                   </div>
 
-                  {/* Line 1: Panier → Adresse (always colored) */}
-                  <div className="flex-1 h-1 bg-accent-melon mx-1"></div>
+                  {/* Line 1: Panier → Livraison */}
+                  <div className="flex-1 h-1 bg-accent-melon -mx-8"></div>
 
-                  {/* Step 2: Adresse/Livraison */}
+                  {/* Step 2: Livraison */}
                   <div 
-                    className={`flex flex-col items-center z-10 ${step === 'payment' ? 'cursor-pointer group' : ''}`}
+                    className={`flex flex-col items-center z-10 flex-1 ${step === 'payment' ? 'cursor-pointer group' : ''}`}
                     onClick={() => step === 'payment' && setStep('details')}
                   >
-                    <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-md transform transition-transform ${
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transform transition-all ${
                       step === 'details' 
-                        ? 'bg-accent-melon ring-2 ring-accent-melon/40' 
-                        : 'bg-accent-melon group-hover:scale-110'
+                        ? 'bg-accent-melon ring-4 ring-accent-melon/30 scale-110' 
+                        : 'bg-accent-melon group-hover:scale-105'
                     }`}>
-                      <Truck className="text-white w-5 h-5 md:w-6 md:h-6" />
+                      <Truck size={28} className="text-white" strokeWidth={2.5} />
                     </div>
-                    <span className={`text-xs md:text-sm font-bold mt-1 md:mt-2 ${step === 'details' ? 'text-accent-melon' : 'text-cloud-dark'}`}>Livraison</span>
+                    <span className={`text-sm font-bold mt-3 ${step === 'details' ? 'text-accent-melon' : 'text-cloud-dark'}`}>Livraison</span>
                   </div>
 
-                  {/* Line 2: Adresse → Paiement (colored if on payment step) */}
-                  <div className={`flex-1 h-1 mx-1 transition-colors ${step === 'payment' ? 'bg-cloud-deep' : 'bg-stone-200'}`}></div>
+                  {/* Line 2: Livraison → Paiement */}
+                  <div className={`flex-1 h-1 -mx-8 transition-colors ${step === 'payment' ? 'bg-cloud-deep' : 'bg-stone-300'}`}></div>
 
                   {/* Step 3: Paiement */}
-                  <div className="flex flex-col items-center z-10">
-                    <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-md transform transition-transform ${
+                  <div className="flex flex-col items-center z-10 flex-1">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transform transition-all ${
                       step === 'payment' 
-                        ? 'bg-cloud-deep ring-2 ring-cloud-deep/40' 
-                        : 'bg-stone-200'
+                        ? 'bg-cloud-deep ring-4 ring-cloud-deep/30 scale-110' 
+                        : 'bg-stone-300'
                     }`}>
-                      <CreditCard className={`w-5 h-5 md:w-6 md:h-6 ${step === 'payment' ? 'text-white' : 'text-stone-400'}`} />
+                      <CreditCard size={28} className={`${step === 'payment' ? 'text-white' : 'text-stone-500'}`} strokeWidth={2.5} />
                     </div>
-                    <span className={`text-xs md:text-sm font-bold mt-1 md:mt-2 ${step === 'payment' ? 'text-cloud-deep' : 'text-stone-400'}`}>Paiement</span>
+                    <span className={`text-sm font-bold mt-3 ${step === 'payment' ? 'text-cloud-deep' : 'text-stone-500'}`}>Paiement</span>
                   </div>
                 </div>
               </div>
@@ -285,13 +288,66 @@ const CheckoutPage = () => {
                                             ) : (
                                                 <>
                                                     Déjà un compte ? {' '}
-                                                    <Link href="/login?redirect=/checkout" className="text-cloud-blue hover:underline">
-                                                        Se connecter
-                                                    </Link>
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => setShowLoginForm(!showLoginForm)} 
+                                                        className="text-cloud-blue hover:underline font-medium"
+                                                    >
+                                                        {showLoginForm ? 'Annuler' : 'Se connecter'}
+                                                    </button>
                                                 </>
                                             )}
                                         </div>
                                     </div>
+                                    
+                                    {!isAuthenticated && showLoginForm && (
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                                            <p className="text-sm font-medium text-stone-700">Connectez-vous pour préremplir vos informations</p>
+                                            {loginError && (
+                                                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
+                                                    {loginError}
+                                                </div>
+                                            )}
+                                            <input 
+                                                type="email" 
+                                                value={loginData.email} 
+                                                onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                                                className="w-full p-2 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm" 
+                                                placeholder="Email" 
+                                            />
+                                            <input 
+                                                type="password" 
+                                                value={loginData.password} 
+                                                onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                                                className="w-full p-2 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm" 
+                                                placeholder="Mot de passe" 
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    setLoginError('');
+                                                    try {
+                                                        const response = await fetch('/api/auth/login', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify(loginData),
+                                                        });
+                                                        if (response.ok) {
+                                                            window.location.reload();
+                                                        } else {
+                                                            setLoginError('Email ou mot de passe incorrect');
+                                                        }
+                                                    } catch (err) {
+                                                        setLoginError('Erreur de connexion');
+                                                    }
+                                                }}
+                                                className="w-full bg-cloud-blue text-white py-2 rounded-lg font-medium hover:bg-cloud-deep transition-colors"
+                                            >
+                                                Se connecter
+                                            </button>
+                                        </div>
+                                    )}
+                                    
                                     <input required name="email" value={formData.email} onChange={handleInputChange} type="email" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow" placeholder="Email" />
                                     <div className="flex items-center gap-2">
                                         <input type="checkbox" id="newsletter" className="rounded border-stone-300 text-cloud-blue focus:ring-cloud-blue" />
@@ -429,11 +485,8 @@ const CheckoutPage = () => {
                         <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
                             {items.map(item => (
                                 <div key={item.id} className="flex gap-3">
-                                    <div className="w-12 h-16 bg-white rounded border border-stone-200 flex-shrink-0 overflow-hidden relative">
-                                        {item.coverImage && <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${item.coverImage})` }}></div>}
-                                    </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-stone-800 text-sm truncate">{item.bookTitle}</h4>
+                                        <h4 className="font-bold text-stone-800 text-sm">{item.bookTitle}</h4>
                                         <p className="text-xs text-stone-500">{item.format === 'hardcover' ? 'Rigide' : 'Souple'} x {item.quantity}</p>
                                     </div>
                                     <div className="font-bold text-stone-800 text-sm">

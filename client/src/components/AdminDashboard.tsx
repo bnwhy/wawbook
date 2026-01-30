@@ -182,10 +182,12 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, wizard
 interface SortableBookItemProps {
   id: string;
   book: any;
+  badge?: string;
+  onBadgeChange: (badge: string) => void;
   onRemove: () => void;
 }
 
-const SortableBookItem: React.FC<SortableBookItemProps> = ({ id, book, onRemove }) => {
+const SortableBookItem: React.FC<SortableBookItemProps> = ({ id, book, onRemove, badge, onBadgeChange }) => {
   const {
     attributes,
     listeners,
@@ -194,6 +196,8 @@ const SortableBookItem: React.FC<SortableBookItemProps> = ({ id, book, onRemove 
     transition,
     isDragging
   } = useSortable({ id });
+  
+  const [isEditingBadge, setIsEditingBadge] = React.useState(false);
 
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
@@ -203,31 +207,52 @@ const SortableBookItem: React.FC<SortableBookItemProps> = ({ id, book, onRemove 
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners}
-      className="relative group bg-white rounded-lg border border-gray-200 p-2 cursor-grab active:cursor-grabbing hover:border-purple-300 hover:shadow-md transition-all"
-    >
-      <div className="absolute top-1 left-1 bg-purple-100 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
-        <Menu size={12} className="text-purple-600" />
-      </div>
-      <img
-        src={book.coverImage}
-        alt={book.name}
-        className="w-full aspect-square object-cover rounded mb-1 pointer-events-none"
-      />
-      <div className="text-xs font-medium text-slate-700 truncate pointer-events-none">{book.name}</div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+    <div ref={setNodeRef} style={style} className="relative group bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div 
+        {...attributes} 
+        {...listeners}
+        className="p-2 cursor-grab active:cursor-grabbing hover:border-purple-300 transition-all"
       >
-        <X size={12} />
-      </button>
+        <div className="absolute top-1 left-1 bg-purple-100 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+          <Menu size={12} className="text-purple-600" />
+        </div>
+        <img
+          src={book.coverImage}
+          alt={book.name}
+          className="w-full aspect-square object-cover rounded mb-1 pointer-events-none"
+        />
+        <div className="text-xs font-medium text-slate-700 truncate pointer-events-none">{book.name}</div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+        >
+          <X size={12} />
+        </button>
+      </div>
+      <div className="border-t border-gray-100 px-2 py-1 bg-gray-50">
+        <select
+          value={badge || ''}
+          onChange={(e) => {
+            e.stopPropagation();
+            onBadgeChange(e.target.value);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full text-xs px-1 py-0.5 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white cursor-pointer hover:border-purple-300 transition-colors"
+        >
+          <option value="">Sans badge</option>
+          <option value="Best-seller">⭐ Best-seller</option>
+          <option value="Nouveau">✨ Nouveau</option>
+          <option value="Promotion">🔥 Promotion</option>
+          <option value="Tendance">📈 Tendance</option>
+          <option value="Coup de coeur">❤️ Coup de coeur</option>
+          <option value="Célébration">🎁 Célébration</option>
+          <option value="Exclusif">💎 Exclusif</option>
+          <option value="Populaire">🌟 Populaire</option>
+        </select>
+      </div>
     </div>
   );
 };
@@ -3040,23 +3065,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-600 focus:ring-2 focus:ring-purple-500 outline-none"
                                               placeholder="Sous-titre (optionnel)"
                                            />
-                                           <div className="flex items-center gap-2">
-                                              <label className="text-sm text-slate-600">Type de badge:</label>
-                                              <select
-                                                 value={section.badgeType || 'star'}
-                                                 onChange={(e) => {
-                                                    const newSections = [...homepageConfig.sections];
-                                                    newSections[sectionIdx] = { ...section, badgeType: e.target.value as any };
-                                                    updateHomepageConfig({ ...homepageConfig, sections: newSections });
-                                                 }}
-                                                 className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
-                                              >
-                                                 <option value="star">⭐ Best-seller</option>
-                                                 <option value="heart">❤️ Nouveau</option>
-                                                 <option value="gift">🎁 Célébration</option>
-                                                 <option value="new">✨ Nouveau</option>
-                                              </select>
-                                           </div>
                                         </div>
                                      </div>
 
@@ -3091,11 +3099,26 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           key={bookId}
                                                           id={bookId}
                                                           book={book}
-                                                          onRemove={() => {
+                                                          badge={section.bookBadges?.[bookId]}
+                                                          onBadgeChange={(badge) => {
                                                              const newSections = [...homepageConfig.sections];
                                                              newSections[sectionIdx] = {
                                                                 ...section,
-                                                                bookIds: section.bookIds.filter(id => id !== bookId)
+                                                                bookBadges: {
+                                                                   ...section.bookBadges,
+                                                                   [bookId]: badge
+                                                                }
+                                                             };
+                                                             updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                          }}
+                                                          onRemove={() => {
+                                                             const newSections = [...homepageConfig.sections];
+                                                             const newBookBadges = { ...section.bookBadges };
+                                                             delete newBookBadges[bookId];
+                                                             newSections[sectionIdx] = {
+                                                                ...section,
+                                                                bookIds: section.bookIds.filter(id => id !== bookId),
+                                                                bookBadges: newBookBadges
                                                              };
                                                              updateHomepageConfig({ ...homepageConfig, sections: newSections });
                                                           }}

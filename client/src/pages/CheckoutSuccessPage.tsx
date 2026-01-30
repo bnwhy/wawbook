@@ -157,42 +157,6 @@ const CheckoutSuccessPage = () => {
     <div className="min-h-screen flex flex-col bg-stone-50">
       <Navigation onStart={() => setLocation('/')} />
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
-        {/* Checkout Wizard Stepper - All Completed */}
-        <div className="mb-10">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center w-full max-w-md">
-              {/* Step 1: Panier - Completed */}
-              <div className="flex flex-col items-center z-10">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-md">
-                  <Check size={20} className="text-white" />
-                </div>
-                <span className="text-xs font-bold text-green-600 mt-2">Panier</span>
-              </div>
-
-              {/* Line 1 - Completed */}
-              <div className="flex-1 h-1 bg-green-500 mx-1"></div>
-
-              {/* Step 2: Livraison - Completed */}
-              <div className="flex flex-col items-center z-10">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-md">
-                  <Check size={20} className="text-white" />
-                </div>
-                <span className="text-xs font-bold text-green-600 mt-2">Livraison</span>
-              </div>
-
-              {/* Line 2 - Completed */}
-              <div className="flex-1 h-1 bg-green-500 mx-1"></div>
-
-              {/* Step 3: Paiement - Completed */}
-              <div className="flex flex-col items-center z-10">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-md ring-2 ring-green-200">
-                  <Check size={20} className="text-white" />
-                </div>
-                <span className="text-xs font-bold text-green-600 mt-2">Paiement</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div className="flex flex-col items-center text-center">
           <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-bounce">

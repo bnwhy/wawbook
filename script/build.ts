@@ -1,6 +1,28 @@
-import { build as esbuild } from "esbuild";
+import { build as esbuild, Plugin } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
+
+// Plugin to completely ignore dev-only modules in production
+const ignoreDevModules: Plugin = {
+  name: "ignore-dev-modules",
+  setup(build) {
+    // Match ./vite imports from server/index.ts
+    build.onResolve({ filter: /^\.\/vite$/ }, (args) => {
+      return {
+        path: args.path,
+        namespace: "ignore-dev",
+      };
+    });
+
+    // Return empty module for ignored paths
+    build.onLoad({ filter: /.*/, namespace: "ignore-dev" }, () => {
+      return {
+        contents: "export const setupVite = () => { throw new Error('Vite should not be used in production'); };",
+        loader: "js",
+      };
+    });
+  },
+};
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -8,6 +30,7 @@ const allowlist = [
   "@google/generative-ai",
   "@neondatabase/serverless",
   "axios",
+  "bcryptjs",
   "connect-pg-simple",
   "cors",
   "date-fns",
@@ -16,6 +39,7 @@ const allowlist = [
   "express",
   "express-rate-limit",
   "express-session",
+  "google-auth-library",
   "jsonwebtoken",
   "memorystore",
   "multer",
@@ -23,7 +47,12 @@ const allowlist = [
   "nodemailer",
   "openai",
   "passport",
+  "passport-apple",
+  "passport-google-oauth20",
   "passport-local",
+  "pino",
+  "pino-pretty",
+  "sharp",
   "stripe",
   "uuid",
   "ws",
@@ -46,6 +75,15 @@ async function buildAll() {
   ];
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
+  // Add vite-related modules to externals to prevent bundling dev-only code
+  const devExternals = [
+    "vite",
+    "vite-plugin-runtime-error-modal",
+    "@vitejs/plugin-react",
+    "./vite",
+    "./vite.js",
+  ];
+
   await esbuild({
     entryPoints: ["server/index.ts"],
     platform: "node",
@@ -56,7 +94,8 @@ async function buildAll() {
       "process.env.NODE_ENV": '"production"',
     },
     minify: true,
-    external: externals,
+    external: [...externals, ...devExternals],
+    plugins: [ignoreDevModules],
     logLevel: "info",
   });
 }

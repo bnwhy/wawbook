@@ -53,3 +53,8 @@ integrations = ["javascript_object_storage:2.0.0", "stripe:2.0.0"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2"
+
+[userenv]
+
+[userenv.production]
+NODE_ENV = "production"

@@ -103,22 +103,17 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                 </button>
 
                 {/* Book Thumbnail */}
-                <div className="w-24 h-24 md:w-28 md:h-28 rounded-lg shadow-md flex-shrink-0 relative overflow-hidden self-center md:self-start border border-stone-200">
-                    {book && item.config ? (
-                        <BookCover 
-                            book={book} 
-                            config={item.config} 
-                            className="w-full h-full"
+                <div className="w-48 h-48 md:w-56 md:h-56 rounded-lg shadow-md flex-shrink-0 relative overflow-hidden self-center md:self-start border border-stone-200">
+                    {item.coverImage ? (
+                        <img 
+                            src={item.coverImage} 
+                            alt={item.bookTitle}
+                            className="w-full h-full object-cover"
                         />
                     ) : (
-                        // Fallback for legacy items or missing data
-                        item.coverImage ? (
-                            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${item.coverImage})` }}></div>
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white text-xs text-center p-2 font-bold bg-cloud-light">
-                                {item.bookTitle}
-                            </div>
-                        )
+                        <div className="w-full h-full flex items-center justify-center text-white text-xs text-center p-2 font-bold bg-cloud-light">
+                            {item.bookTitle}
+                        </div>
                     )}
                 </div>
                 

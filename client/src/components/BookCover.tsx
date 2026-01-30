@@ -79,10 +79,10 @@ const BookCover: React.FC<BookCoverProps> = ({ book, config, className }) => {
   };
 
   // Find configured cover elements if available
-  const coverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [];
-  const coverImages = book?.contentConfig?.imageElements?.filter(i => i.position.pageIndex === 0) || [];
+  const coverTexts = book?.contentConfig?.texts?.filter(t => t.position?.pageIndex === 0) || [];
+  const coverImages = book?.contentConfig?.imageElements?.filter(i => i.position?.pageIndex === 0) || [];
   // Also check for background image specifically for page 0
-  const coverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
+  const coverBg = book?.contentConfig?.images?.find(i => (i as any).pageIndex === 0 && ((i as any).combinationKey === currentCombinationKey || (i as any).combinationKey === 'default'));
 
   // Check if we have a custom cover configuration from Admin
   const hasCustomCover = coverTexts.length > 0 || coverImages.length > 0 || !!coverBg;

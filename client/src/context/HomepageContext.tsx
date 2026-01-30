@@ -30,7 +30,7 @@ const generateDefaultConfig = (books: any[]): HomepageConfig => {
         subtitle: 'Des histoires pour célébrer ceux qu\'on aime',
         isVisible: true,
         bookIds: visibleBooks.filter(b => b.category === 'family').map(b => b.id),
-        badgeType: 'heart'
+        bookBadges: {}
       },
       {
         id: 'theme',
@@ -38,7 +38,7 @@ const generateDefaultConfig = (books: any[]): HomepageConfig => {
         subtitle: 'Choisissez le monde préféré de votre enfant',
         isVisible: true,
         bookIds: visibleBooks.filter(b => b.category === 'theme').map(b => b.id),
-        badgeType: 'star'
+        bookBadges: {}
       },
       {
         id: 'activity',
@@ -46,7 +46,7 @@ const generateDefaultConfig = (books: any[]): HomepageConfig => {
         subtitle: 'Une histoire qui commence avec ce qu\'ils aiment',
         isVisible: true,
         bookIds: visibleBooks.filter(b => b.category === 'activity').map(b => b.id),
-        badgeType: 'new'
+        bookBadges: {}
       },
       {
         id: 'occasion',
@@ -54,7 +54,7 @@ const generateDefaultConfig = (books: any[]): HomepageConfig => {
         subtitle: 'Le cadeau idéal pour marquer les grands moments',
         isVisible: true,
         bookIds: visibleBooks.filter(b => b.category === 'occasion').map(b => b.id),
-        badgeType: 'gift'
+        bookBadges: {}
       }
     ],
     showHowItWorks: true,

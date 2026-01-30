@@ -226,13 +226,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto justify-center">
                   {section.books.map((card, idx) => {
-                    // Déterminer l'icône du badge
-                    const BadgeIcon = section.badgeType === 'heart' ? Heart :
-                                     section.badgeType === 'gift' ? Gift :
-                                     section.badgeType === 'new' ? Sparkles : Star;
-                    const badgeText = section.badgeType === 'heart' ? 'Nouveau' :
-                                     section.badgeType === 'gift' ? 'Célébration' :
-                                     section.badgeType === 'new' ? 'Nouveau' : 'Best-seller';
+                    const customBadge = section.bookBadges?.[card.id];
+                    const badgeToShow = customBadge || card.badgeText;
                     
                     return (
                 <div 
@@ -253,15 +248,16 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                           <BookOpen size={48} />
                         </div>
                       )}
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
-                          <BadgeIcon size={12} className="text-accent-melon fill-current" />
-                          {badgeText}
-                      </div>
+                      {badgeToShow && (
+                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
+                          <Star size={12} className="text-accent-sun fill-current" />
+                          {badgeToShow}
+                        </div>
+                      )}
                   </div>
 
                   {/* Content */}
                   <div className="p-5 flex flex-col flex-grow">
-                     <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
                      <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
                      <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
                         {card.description}

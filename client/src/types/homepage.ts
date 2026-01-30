@@ -4,7 +4,7 @@ export interface HomepageSection {
   subtitle?: string;
   isVisible: boolean;
   bookIds: string[]; // IDs des livres dans l'ordre d'affichage
-  badgeType?: 'star' | 'heart' | 'gift' | 'new'; // Badge affiché sur les cartes
+  bookBadges?: Record<string, string>; // bookId -> badge text personnalisé
 }
 
 export interface HeroConfig {

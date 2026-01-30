@@ -23,6 +23,7 @@ import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
 import Footer from './Footer';
 import { formatPrice } from '../utils/formatPrice';
+import html2canvas from 'html2canvas';
 
 const hardcoverIcon = null;
 const softcoverIcon = null;
@@ -408,6 +409,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   }, [book]);
 
   const handleAddToCart = () => {
+    const capturedCoverImage = generatedPages[1] || generatedPages[2] || book?.coverImage;
+    
     // Add to cart functionality
     const itemData = {
       productId: book?.id,
@@ -417,7 +420,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       format: selectedFormat,
       price: selectedFormat === 'hardcover' ? 44.99 : 34.99,
       quantity: 1,
-      coverImage: book?.coverImage
+      coverImage: capturedCoverImage
     };
 
     if (editingCartItemId) {
@@ -596,7 +599,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     const altText = actualPageNum === 0 ? 'Cover' : actualPageNum === 999 ? 'Back Cover' : `Page ${actualPageNum}`;
     
     return (
-      <div className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
+      <div data-page-index={actualPageNum} className="w-full h-full relative overflow-hidden bg-white rounded-lg shadow-xl">
         <img src={generatedPages[actualPageNum]} className="w-full h-full object-contain" alt={altText} />
       </div>
     );
@@ -709,7 +712,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       return {
         left: <div className="w-full h-full bg-transparent" />, // Empty space left of cover
         right: (
-          <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-l-8 border-gray-100 bg-white text-slate-900`}>
+          <div data-page-index="0" className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-l-8 border-gray-100 bg-white text-slate-900`}>
              {/* Spine / Binding Effect */}
              <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-200 to-white border-r border-black/5 z-30"></div>
              <div className="absolute left-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>

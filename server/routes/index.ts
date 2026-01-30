@@ -13,6 +13,7 @@ import printersRouter from "./printers.routes";
 import menusRouter from "./menus.routes";
 import settingsRouter from "./settings.routes";
 import healthRouter from "./health.routes";
+import adminRouter from "./admin.routes";
 import { logger } from "../utils/logger";
 
 export async function registerRoutes(
@@ -40,6 +41,7 @@ export async function registerRoutes(
   app.use("/api/printers", printersRouter);
   app.use("/api/menus", menusRouter);
   app.use("/api/settings", settingsRouter);
+  app.use("/api/admin", adminRouter);
 
   // Register object storage routes for file uploads
   registerObjectStorageRoutes(app);

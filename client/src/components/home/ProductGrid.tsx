@@ -50,7 +50,7 @@ export function ProductGrid() {
               transition={{ delay: index * 0.1, duration: 0.5 }}
             >
               <Card className="h-full border-4 shadow-none hover:shadow-xl transition-all duration-300 overflow-hidden group rounded-[2rem] bg-secondary/20 border-secondary/40">
-                <div className="relative aspect-[4/3] overflow-hidden p-6 flex items-center justify-center bg-gray-100">
+                <div className="relative aspect-square overflow-hidden p-6 flex items-center justify-center bg-gray-100">
                   {book.coverImage ? (
                     <img 
                       src={book.coverImage} 

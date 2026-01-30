@@ -293,4 +293,32 @@ router.get('/google/callback',
   }
 );
 
+// GET /api/auth/apple - Initiate Apple Sign In
+router.get('/apple',
+  (req, res, next) => {
+    // Store returnTo in session
+    const returnTo = req.query.returnTo as string;
+    if (returnTo) {
+      (req.session as any).returnTo = returnTo;
+    }
+    next();
+  },
+  passport.authenticate('apple')
+);
+
+// POST /api/auth/apple/callback - Apple Sign In callback
+router.post('/apple/callback',
+  passport.authenticate('apple', {
+    failureRedirect: '/login',
+    failureMessage: true
+  }),
+  (req, res) => {
+    // Success - redirect to account or original destination
+    const redirect = (req.session as any).returnTo || '/account';
+    delete (req.session as any).returnTo;
+    logger.info({ customerId: req.user?.id }, 'Apple Sign In successful, redirecting');
+    res.redirect(redirect);
+  }
+);
+
 export default router;

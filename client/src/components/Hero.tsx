@@ -4,6 +4,7 @@ import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
 import Banner from './Banner';
 import { useBooks } from '../context/BooksContext';
+import { useHomepage } from '../context/HomepageContext';
 import { formatPrice } from '../utils/formatPrice';
 import PaymentBadges from './PaymentBadges';
 
@@ -120,14 +121,32 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
 };
 
 const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
-  const { books } = useBooks(); // Use the context to get the books
+  const { books } = useBooks();
+  const { homepageConfig, isLoading } = useHomepage();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // Si la config n'est pas encore chargée, utiliser un fallback temporaire
+  if (isLoading || !homepageConfig) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="text-cloud-blue">Chargement...</div>
+    </div>;
+  }
+
   const visibleBooks = books.filter(b => !b.isHidden);
-  const themeCards = visibleBooks.filter(b => b.category === 'theme');
-  const activityCards = visibleBooks.filter(b => b.category === 'activity');
-  const familyCards = visibleBooks.filter(b => b.category === 'family');
-  const occasionCards = visibleBooks.filter(b => b.category === 'occasion');
+  
+  // Créer un map des livres par ID pour un accès rapide
+  const booksById = Object.fromEntries(visibleBooks.map(b => [b.id, b]));
+  
+  // Récupérer les sections visibles avec leurs livres
+  const visibleSections = homepageConfig.sections
+    .filter(section => section.isVisible && section.bookIds.length > 0)
+    .map(section => ({
+      ...section,
+      books: section.bookIds
+        .map(id => booksById[id])
+        .filter(book => book !== undefined) // Filtrer les livres qui n'existent plus
+    }))
+    .filter(section => section.books.length > 0); // Ne garder que les sections avec des livres
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -152,26 +171,27 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
           <div className="text-center max-w-4xl mx-auto relative z-10">
              <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white text-cloud-blue text-sm font-bold uppercase tracking-wider mb-8 shadow-cloud animate-fade-in-up border border-cloud-light">
-                <Star size={16} className="text-accent-sun" fill="currentColor" /> La magie de la lecture
+                <Star size={16} className="text-accent-sun" fill="currentColor" /> {homepageConfig.hero.badgeText}
              </div>
              
              <h1 className="text-5xl md:text-8xl font-display font-black text-cloud-dark mb-8 leading-[0.9] text-balance tracking-tight drop-shadow-sm" style={{ fontSize: '50px' }}>
-               Des livres <span className="text-cloud-blue relative inline-block">
-                 personnalisés
+               {homepageConfig.hero.title.split(' ').slice(0, 2).join(' ')} <span className="text-cloud-blue relative inline-block">
+                 {homepageConfig.hero.title.split(' ')[2] || 'personnalisés'}
                  <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun opacity-100" viewBox="0 0 100 10" preserveAspectRatio="none">
                    <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
                  </svg>
-               </span> pour petits et grands
+               </span> {homepageConfig.hero.title.split(' ').slice(3).join(' ')}
              </h1>
              
-             <p className="text-xl md:text-2xl text-cloud-dark/70 font-medium mb-12 leading-relaxed text-balance max-w-2xl mx-auto">Choisissez un univers, créez son avatar, et hop ! 
-             Une histoire magique s'écrit sous vos yeux.</p>
+             <p className="text-xl md:text-2xl text-cloud-dark/70 font-medium mb-12 leading-relaxed text-balance max-w-2xl mx-auto">
+               {homepageConfig.hero.subtitle}
+             </p>
              
              <button 
                onClick={() => onStart()}
                className="inline-flex items-center gap-3 px-10 py-6 bg-cloud-blue text-white rounded-full text-2xl font-display font-black hover:bg-cloud-deep hover:scale-105 transition-all shadow-cloud-hover group"
              >
-               Commencer l'aventure <ArrowRight size={28} className="group-hover:translate-x-2 transition-transform" />
+               {homepageConfig.hero.buttonText} <ArrowRight size={28} className="group-hover:translate-x-2 transition-transform" />
              </button>
              
              <div className="mt-10 flex flex-wrap justify-center gap-8 text-sm font-bold text-cloud-dark/50">
@@ -188,25 +208,40 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
               </svg>
            </div>
         </div>
-        {/* --- STOREFRONT SECTION (Themes & Activities) --- */}
+        {/* --- STOREFRONT SECTION (Dynamic Sections) --- */}
         <section id="themes" className="py-24 px-6 bg-white relative z-10">
           <div className="max-w-7xl mx-auto">
             
-            {/* FAMILY COLLECTION */}
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>Notre collection pour la famille</h2>
-              <p className="text-xl text-cloud-dark/60 font-medium">Des histoires pour célébrer ceux qu'on aime</p>
-            </div>
+            {/* DYNAMIC SECTIONS */}
+            {visibleSections.map((section, sectionIdx) => (
+              <div key={section.id} className={sectionIdx > 0 ? 'mt-24' : ''}>
+                <div className="text-center mb-16">
+                  <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>
+                    {section.title}
+                  </h2>
+                  {section.subtitle && (
+                    <p className="text-xl text-cloud-dark/60 font-medium">{section.subtitle}</p>
+                  )}
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-7xl mx-auto justify-center">
-              {familyCards.map((card, idx) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto justify-center">
+                  {section.books.map((card, idx) => {
+                    // Déterminer l'icône du badge
+                    const BadgeIcon = section.badgeType === 'heart' ? Heart :
+                                     section.badgeType === 'gift' ? Gift :
+                                     section.badgeType === 'new' ? Sparkles : Star;
+                    const badgeText = section.badgeType === 'heart' ? 'Nouveau' :
+                                     section.badgeType === 'gift' ? 'Célébration' :
+                                     section.badgeType === 'new' ? 'Nouveau' : 'Best-seller';
+                    
+                    return (
                 <div 
                   key={idx}
                   onClick={() => onStart(undefined, undefined, card.name)}
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
-                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
+                  <div className="aspect-square relative overflow-hidden bg-gray-50">
                       {card.coverImage ? (
                         <img 
                           src={card.coverImage} 
@@ -219,8 +254,8 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                         </div>
                       )}
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
-                          <Heart size={12} className="text-accent-melon fill-current" />
-                          Nouveau
+                          <BadgeIcon size={12} className="text-accent-melon fill-current" />
+                          {badgeText}
                       </div>
                   </div>
 
@@ -246,175 +281,11 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                      </div>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* THEMES */}
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>Nos Univers Magiques</h2>
-              <p className="text-xl text-cloud-dark/60 font-medium">Choisissez le monde préféré de votre enfant</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24 max-w-7xl mx-auto">
-              {themeCards.map((card, idx) => (
-                <div 
-                  key={idx}
-                  onClick={() => onStart(card.theme, undefined, card.name)}
-                  className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
-                >
-                  {/* Image Container */}
-                  <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
-                      {card.coverImage ? (
-                        <img 
-                          src={card.coverImage} 
-                          alt={card.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300">
-                          <BookOpen size={48} />
-                        </div>
-                      )}
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
-                          <Star size={12} className="text-accent-sun fill-current" />
-                          Best-seller
-                      </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-5 flex flex-col flex-grow">
-                     <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{card.badgeText}</div>
-                     <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
-                     <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
-                        {card.description}
-                     </p>
-                     
-                     <BookCardInfo features={card.features} />
-                     
-                     <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && formatPrice(card.oldPrice)}</span>
-                            <span className="text-xl font-black text-accent-melon">{formatPrice(card.price)}</span>
-                        </div>
-                        <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
-                            <PenTool size={14} />
-                            Créer
-                        </button>
-                     </div>
-                  </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-
-            {/* ACTIVITIES */}
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>Ou choisissez par Passion</h2>
-              <p className="text-xl text-cloud-dark/60 font-medium">Une histoire qui commence avec ce qu'ils aiment</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-               {activityCards.map((activity, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => onStart(undefined, activity.id as any, activity.name)}
-                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
-                  >
-                    {/* Image Container */}
-                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
-                        {activity.coverImage ? (
-                          <img 
-                            src={activity.coverImage} 
-                            alt={activity.name}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300">
-                            <BookOpen size={48} />
-                          </div>
-                        )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-5 flex flex-col flex-grow">
-                       <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{activity.badgeText}</div>
-                       <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{activity.name}</h3>
-                       <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
-                          {activity.description}
-                       </p>
-                       
-                       <BookCardInfo features={activity.features} />
-                       
-                       <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                          <div className="flex flex-col">
-                              <span className="text-xs text-gray-400 font-bold line-through">{activity.oldPrice && formatPrice(activity.oldPrice)}</span>
-                              <span className="text-xl font-black text-accent-melon">{formatPrice(activity.price)}</span>
-                          </div>
-                          <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
-                              <PenTool size={14} />
-                              Créer
-                          </button>
-                       </div>
-                    </div>
-                  </div>
-               ))}
-            </div>
-
-            {/* OCCASIONS */}
-            <div className="text-center mb-16 mt-24">
-              <h2 className="text-3xl md:text-4xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>Pour toutes les occasions</h2>
-              <p className="text-xl text-cloud-dark/60 font-medium">Le cadeau idéal pour marquer les grands moments</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-               {occasionCards.map((occasion, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => onStart(undefined, undefined, occasion.name)}
-                    className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
-                  >
-                    {/* Image Container */}
-                    <div className="aspect-[3/4] relative overflow-hidden bg-gray-50">
-                        {occasion.coverImage ? (
-                          <img 
-                            src={occasion.coverImage} 
-                            alt={occasion.name}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300">
-                            <BookOpen size={48} />
-                          </div>
-                        )}
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
-                            <Gift size={12} className="text-accent-melon fill-current" />
-                            Célébration
-                        </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-5 flex flex-col flex-grow">
-                       <div className="text-xs font-bold text-cloud-blue uppercase tracking-wider mb-1">{occasion.badgeText}</div>
-                       <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{occasion.name}</h3>
-                       <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
-                          {occasion.description}
-                       </p>
-                       
-                       <BookCardInfo features={occasion.features} />
-                       
-                       <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                          <div className="flex flex-col">
-                              <span className="text-xs text-gray-400 font-bold line-through">{occasion.oldPrice && formatPrice(occasion.oldPrice)}</span>
-                              <span className="text-xl font-black text-accent-melon">{formatPrice(occasion.price)}</span>
-                          </div>
-                          <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
-                              <PenTool size={14} />
-                              Créer
-                          </button>
-                       </div>
-                    </div>
-                  </div>
-               ))}
-            </div>
+              </div>
+            ))}
 
           </div>
         </section>

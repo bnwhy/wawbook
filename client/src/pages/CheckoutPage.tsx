@@ -10,6 +10,7 @@ import PaymentBadges from '../components/PaymentBadges';
 import { ShippingMethod } from '../types/ecommerce';
 import { ALL_COUNTRIES } from '../data/countries';
 import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
+import { formatDate } from '../utils/formatDate';
 
 const CheckoutPage = () => {
   const { items, total, clearCart } = useCart();
@@ -193,7 +194,7 @@ const CheckoutPage = () => {
             </div>
             <div className="flex justify-between mb-2">
                 <span className="text-stone-500">Date</span>
-                <span className="font-bold">{new Date().toLocaleDateString()}</span>
+                <span className="font-bold">{formatDate(new Date())}</span>
             </div>
             <div className="border-t border-stone-200 my-4"></div>
             <div className="flex justify-between">

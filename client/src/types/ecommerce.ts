@@ -17,6 +17,7 @@ export interface Customer {
   totalSpent: number;
   orderCount: number;
   notes?: string;
+  hasAccount?: boolean; // Indicates if customer has an authenticated account
 }
 
 export interface OrderItem {

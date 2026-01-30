@@ -18,9 +18,9 @@ const NotFound: React.FC = () => {
         </p>
         <button 
           onClick={() => setLocation('/')}
-          className="px-6 py-3 bg-brand-coral text-white rounded-full font-bold hover:bg-red-500 transition-colors flex items-center gap-2 shadow-lg shadow-brand-coral/20"
+          className="px-8 py-4 bg-cloud-blue text-white rounded-full font-bold hover:bg-cloud-deep transition-colors flex items-center gap-2 shadow-xl shadow-cloud-blue/30 border-2 border-cloud-blue hover:border-cloud-deep relative z-10 text-lg"
         >
-          <Home size={18} />
+          <Home size={20} />
           Retour à l'accueil
         </button>
       </div>

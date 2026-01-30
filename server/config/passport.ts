@@ -1,6 +1,7 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import AppleStrategy from 'passport-apple';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { storage } from '../storage';
@@ -96,6 +97,62 @@ export function configurePassport() {
     logger.info('Google OAuth strategy configured');
   } else {
     logger.info('Google OAuth not configured (missing credentials)');
+  }
+
+  // Apple Sign In Strategy (only if credentials are provided)
+  if (env.APPLE_CLIENT_ID && env.APPLE_TEAM_ID && env.APPLE_KEY_ID && env.APPLE_PRIVATE_KEY) {
+    passport.use(
+      new AppleStrategy(
+        {
+          clientID: env.APPLE_CLIENT_ID,
+          teamID: env.APPLE_TEAM_ID,
+          keyID: env.APPLE_KEY_ID,
+          privateKeyString: env.APPLE_PRIVATE_KEY,
+          callbackURL: '/api/auth/apple/callback',
+          passReqToCallback: false,
+        },
+        async (accessToken: string, refreshToken: string, idToken: any, profile: any, done: any) => {
+          try {
+            const email = idToken.email || profile.email;
+            
+            if (!email) {
+              return done(new Error('No email provided by Apple'), false);
+            }
+
+            // Check if customer already exists
+            let customer = await storage.getCustomerByEmail(email);
+
+            if (!customer) {
+              // Create new customer from Apple profile
+              // Apple only provides name on first sign-in
+              const firstName = profile.name?.firstName || '';
+              const lastName = profile.name?.lastName || '';
+              
+              customer = await storage.createCustomer({
+                id: crypto.randomUUID(),
+                email,
+                firstName,
+                lastName,
+                phone: null,
+                address: null,
+                notes: 'Created via Apple Sign In',
+              });
+              logger.info({ customerId: customer.id, email }, 'New customer created via Apple Sign In');
+            } else {
+              logger.info({ customerId: customer.id, email }, 'Existing customer logged in via Apple Sign In');
+            }
+
+            return done(null, customer);
+          } catch (error) {
+            logger.error({ err: error }, 'Apple Sign In authentication error');
+            return done(error as Error, false);
+          }
+        }
+      )
+    );
+    logger.info('Apple Sign In strategy configured');
+  } else {
+    logger.info('Apple Sign In not configured (missing credentials)');
   }
 
   // Serialize user to session (store only customer ID)

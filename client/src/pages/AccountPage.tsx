@@ -5,6 +5,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { User, Package, LogOut, ChevronRight, Loader2 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice';
+import { formatDate } from '../utils/formatDate';
 
 interface Order {
   id: string;
@@ -174,11 +175,7 @@ const AccountPage = () => {
                           Commande #{order.id}
                         </div>
                         <div className="text-sm text-stone-500">
-                          {new Date(order.createdAt).toLocaleDateString('fr-FR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
+                          {formatDate(order.createdAt)}
                         </div>
                       </div>
                       <div className="text-right">

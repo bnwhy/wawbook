@@ -17,6 +17,7 @@ import { BooksProvider } from '../context/BooksContext';
 import { MenuProvider } from '../context/MenuContext';
 import { CartProvider } from '../context/CartContext';
 import { EcommerceProvider } from '../context/EcommerceContext';
+import { HomepageProvider } from '../context/HomepageContext';
 import ScrollToTop from '../components/ScrollToTop';
 import ProtectedRoute from '../components/ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
@@ -27,6 +28,8 @@ import AccountPage from '../pages/AccountPage';
 import AccountProfilePage from '../pages/AccountProfilePage';
 import AccountOrdersPage from '../pages/AccountOrdersPage';
 import AccountOrderDetailPage from '../pages/AccountOrderDetailPage';
+import TermsPage from '../pages/TermsPage';
+import PrivacyPage from '../pages/PrivacyPage';
 
 const PublicApp: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('HOME');
@@ -87,10 +90,11 @@ const PublicApp: React.FC = () => {
   return (
     <AuthProvider>
       <BooksProvider>
-        <MenuProvider>
-          <CartProvider>
-            <EcommerceProvider>
-              <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
+        <HomepageProvider>
+          <MenuProvider>
+            <CartProvider>
+              <EcommerceProvider>
+                <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
                 <ScrollToTop />
                 <Switch>
                   {/* Auth routes */}
@@ -203,6 +207,9 @@ const PublicApp: React.FC = () => {
                   {(params) => <StaticPage title={decodeURIComponent(params.topic)} category="Aide" />}
                 </Route>
 
+                <Route path="/terms" component={TermsPage} />
+                <Route path="/privacy" component={PrivacyPage} />
+
                 <Route component={NotFound} />
               </Switch>
 
@@ -215,10 +222,11 @@ const PublicApp: React.FC = () => {
                   </button>
                 </div>
               )}
-              </div>
-            </EcommerceProvider>
-          </CartProvider>
-        </MenuProvider>
+                </div>
+              </EcommerceProvider>
+            </CartProvider>
+          </MenuProvider>
+        </HomepageProvider>
       </BooksProvider>
     </AuthProvider>
   );

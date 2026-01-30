@@ -42,6 +42,30 @@ async function initDefaultSettings() {
   }
 }
 
+async function initOrderSequence() {
+  try {
+    logger.info('Initializing order number sequence...');
+    
+    // Check if sequence exists
+    const checkResult = await pool.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM pg_class 
+        WHERE relname = 'order_number_seq' AND relkind = 'S'
+      ) as exists
+    `);
+    
+    if (!checkResult.rows[0].exists) {
+      // Create sequence if it doesn't exist
+      await pool.query('CREATE SEQUENCE order_number_seq START WITH 1');
+      logger.info('Created order_number_seq sequence');
+    } else {
+      logger.info('order_number_seq sequence already exists');
+    }
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to initialize order sequence');
+  }
+}
+
 async function initStripe() {
   const databaseUrl = env.DATABASE_URL;
   if (!databaseUrl) {
@@ -94,6 +118,7 @@ async function initStripe() {
 }
 
 initDefaultSettings();
+initOrderSequence();
 initStripe();
 
 app.post(

@@ -4,6 +4,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { Package, ArrowLeft, Loader2, MapPin, Truck } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice';
+import { formatDate } from '../utils/formatDate';
 
 interface Order {
   id: string;
@@ -130,11 +131,7 @@ const AccountOrderDetailPage = () => {
                 Commande #{order.id}
               </h1>
               <p className="text-stone-600">
-                Passée le {new Date(order.createdAt).toLocaleDateString('fr-FR', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                Passée le {formatDate(order.createdAt)}
               </p>
             </div>
             <span className={`text-sm font-bold px-4 py-2 rounded-full ${getStatusColor(order.status)}`}>

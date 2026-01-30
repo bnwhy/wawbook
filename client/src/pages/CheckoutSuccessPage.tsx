@@ -7,12 +7,13 @@ import { CheckCircle, Loader2, ShoppingCart, User, Truck, CreditCard, Check, Loc
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { formatPrice } from '../utils/formatPrice';
+import { formatDate } from '../utils/formatDate';
 import { toast } from 'sonner';
 
 const CheckoutSuccessPage = () => {
   const [, setLocation] = useLocation();
   const { clearCart } = useCart();
-  const { createOrder } = useEcommerce();
+  const { createOrder, isLoading: ecommerceLoading } = useEcommerce();
   const { isAuthenticated, setPassword } = useAuth();
   const [orderData, setOrderData] = useState<any>(null);
   const [orderNumber, setOrderNumber] = useState<string>('');
@@ -30,6 +31,12 @@ const CheckoutSuccessPage = () => {
       if (processedRef.current) {
         return;
       }
+      
+      // Wait for ecommerce data to be loaded before processing
+      if (ecommerceLoading) {
+        return;
+      }
+      
       processedRef.current = true;
       
       const pendingOrder = localStorage.getItem('pendingOrder');
@@ -79,7 +86,7 @@ const CheckoutSuccessPage = () => {
     };
 
     processOrder();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, ecommerceLoading]);
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,7 +210,7 @@ const CheckoutSuccessPage = () => {
           </div>
           <div className="flex justify-between mb-2">
             <span className="text-stone-500">Date</span>
-            <span className="font-bold">{new Date().toLocaleDateString()}</span>
+            <span className="font-bold">{formatDate(new Date())}</span>
           </div>
           <div className="border-t border-stone-100 my-4"></div>
           <div className="flex justify-between">

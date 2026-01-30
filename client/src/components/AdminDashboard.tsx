@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera, CreditCard, CloudDownload, Loader2 } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera, CreditCard, CloudDownload, Loader2, Sparkles, ShieldCheck, Compass, Gift } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType, PageDimension } from '../types/admin';
@@ -8,9 +8,11 @@ import { ShippingZone, ShippingMethod } from '../types/ecommerce';
 import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
+import { useHomepage } from '../context/HomepageContext';
+import { HomepageSection } from '../types/homepage';
 import { MenuItem, MenuColumn } from '../types/menu';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { SortableItem } from './SortableItem';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -18,6 +20,7 @@ import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
 import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
+import { formatDate, formatDateTime } from '../utils/formatDate';
 
 
 const slugify = (text: string) => {
@@ -175,10 +178,65 @@ const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, wizard
   );
 };
 
+// Sortable Book Item for drag & drop
+interface SortableBookItemProps {
+  id: string;
+  book: any;
+  onRemove: () => void;
+}
+
+const SortableBookItem: React.FC<SortableBookItemProps> = ({ id, book, onRemove }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id });
+
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners}
+      className="relative group bg-white rounded-lg border border-gray-200 p-2 cursor-grab active:cursor-grabbing hover:border-purple-300 hover:shadow-md transition-all"
+    >
+      <div className="absolute top-1 left-1 bg-purple-100 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+        <Menu size={12} className="text-purple-600" />
+      </div>
+      <img
+        src={book.coverImage}
+        alt={book.name}
+        className="w-full aspect-square object-cover rounded mb-1 pointer-events-none"
+      />
+      <div className="text-xs font-medium text-slate-700 truncate pointer-events-none">{book.name}</div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+      >
+        <X size={12} />
+      </button>
+    </div>
+  );
+};
+
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
+  const { homepageConfig, updateHomepageConfig, isLoading: homepageLoading } = useHomepage();
   const { 
     customers, 
     orders, 
@@ -197,7 +255,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     addCustomer 
   } = useEcommerce();
   
-  const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping'>('home');
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping' | 'homepage'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -240,17 +306,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
     setSortConfig({ key, direction });
   };
-
-    const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   const handleDragEnd = (event: DragEndEvent, menuIdx: number, colIdx?: number) => {
     const { active, over } = event;
@@ -2084,14 +2139,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <span>Livres</span>
              </button>
 
-             <button 
-               onClick={() => { setActiveTab('menus'); setSelectedBookId(null); setIsEditing(false); }}
-               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'menus' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
-             >
-                <Menu size={18} />
-                <span>Menus & Navigation</span>
-             </button>
-
              <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Logistique</div>
 
              <button 
@@ -2111,6 +2158,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
              </button>
              
              <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Boutique</div>
+
+             <button 
+               onClick={() => { setActiveTab('homepage'); setSelectedBookId(null); setIsEditing(false); }}
+               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'homepage' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+             >
+                <Globe size={18} />
+                <span>Page d'accueil</span>
+             </button>
+
+             <button 
+               onClick={() => { setActiveTab('menus'); setSelectedBookId(null); setIsEditing(false); }}
+               className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'menus' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+             >
+                <Menu size={18} />
+                <span>Menus & Navigation</span>
+             </button>
 
              <button 
                onClick={() => { setActiveTab('analytics'); setSelectedBookId(null); setIsEditing(false); }}
@@ -2236,15 +2299,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                      {selectedBook?.name}
                    </>
                  ) : (
-                    activeTab === 'home' ? 'Tableau de bord' :
-                    activeTab === 'books' ? 'Produits' :
-                    activeTab === 'orders' ? 'Commandes' :
-                    activeTab === 'customers' ? 'Clients' :
-                    activeTab === 'menus' ? 'Menus' :
-                    activeTab === 'shipping' ? 'Expédition' :
-                    activeTab === 'printers' ? 'Imprimeurs' :
-                    activeTab === 'settings' ? 'Paramètres' : 
-                    activeTab === 'analytics' ? 'Analyses' : 'Admin'
+                   activeTab === 'home' ? 'Tableau de bord' :
+                   activeTab === 'books' ? 'Produits' :
+                   activeTab === 'orders' ? 'Commandes' :
+                   activeTab === 'customers' ? 'Clients' :
+                   activeTab === 'menus' ? 'Menus' :
+                   activeTab === 'homepage' ? 'Page d\'accueil' :
+                   activeTab === 'shipping' ? 'Expédition' :
+                   activeTab === 'printers' ? 'Imprimeurs' :
+                   activeTab === 'settings' ? 'Paramètres' : 
+                   activeTab === 'analytics' ? 'Analyses' : 'Admin'
                  )}
               </h1>
               <div className="flex items-center gap-4">
@@ -2767,39 +2831,316 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        <div className="p-6 border-b border-red-100 flex justify-between items-center bg-red-50/50">
                           <div>
                              <h3 className="font-bold text-red-800 text-lg">Zone de Danger</h3>
-                             <p className="text-sm text-red-500">Gestion des données locales</p>
+                             <p className="text-sm text-red-500">Nettoyage de la base de données</p>
                           </div>
                        </div>
                        <div className="p-6">
-                          <p className="text-sm text-slate-600 mb-4">
-                             Cette application utilise le stockage local de votre navigateur (LocalStorage) pour sauvegarder vos données (Livres, Commandes, Clients, Réglages). 
-                             Si vous souhaitez réinitialiser l'application à son état d'origine (données de démonstration), vous pouvez effacer les données locales ci-dessous.
+                          <p className="text-sm text-slate-600 mb-6">
+                             ⚠️ <strong>Attention :</strong> Ces actions suppriment définitivement les données de la base de données PostgreSQL. 
+                             Cette opération est <strong>irréversible</strong>.
                           </p>
-                          <button 
-                             onClick={() => {
-                                if (confirm('Attention : Toutes vos modifications seront perdues. Voulez-vous vraiment réinitialiser toutes les données ?')) {
-                                   localStorage.clear();
-                                   window.location.reload();
-                                }
-                             }}
-                             className="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-red-50 transition-colors shadow-sm"
-                          >
-                             <Trash2 size={16} /> Réinitialiser toutes les données
-                          </button>
-                          <button 
-                             onClick={() => {
-                                if (confirm('Attention : Tous vos livres seront supprimés et réinitialisés aux valeurs par défaut. Voulez-vous continuer ?')) {
-                                   localStorage.removeItem('admin_books');
-                                   window.location.reload();
-                                }
-                             }}
-                             className="bg-white border border-orange-200 text-orange-600 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-orange-50 transition-colors shadow-sm mt-3"
-                          >
-                             <Book size={16} /> Réinitialiser uniquement les livres
-                          </button>
+                          
+                          <div className="space-y-3">
+                             <button 
+                                onClick={async () => {
+                                   if (confirm('⚠️ DANGER : Toutes les données seront supprimées définitivement (livres, commandes, clients, zones d\'expédition). Voulez-vous vraiment continuer ?')) {
+                                      try {
+                                         const response = await fetch('/api/admin/reset/all', { method: 'DELETE' });
+                                         if (response.ok) {
+                                            toast.success('Toutes les données ont été supprimées');
+                                            window.location.reload();
+                                         } else {
+                                            toast.error('Erreur lors de la suppression');
+                                         }
+                                      } catch (error) {
+                                         toast.error('Erreur de connexion');
+                                      }
+                                   }
+                                }}
+                                className="w-full bg-white border-2 border-red-500 text-red-600 px-4 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-50 transition-colors shadow-sm"
+                             >
+                                <Trash2 size={16} /> Supprimer TOUTES les données
+                             </button>
+
+                             <button 
+                                onClick={async () => {
+                                   if (confirm('Tous les livres seront supprimés de la base de données. Voulez-vous continuer ?')) {
+                                      try {
+                                         const response = await fetch('/api/admin/reset/books', { method: 'DELETE' });
+                                         if (response.ok) {
+                                            toast.success('Tous les livres ont été supprimés');
+                                            window.location.reload();
+                                         } else {
+                                            toast.error('Erreur lors de la suppression');
+                                         }
+                                      } catch (error) {
+                                         toast.error('Erreur de connexion');
+                                      }
+                                   }
+                                }}
+                                className="w-full bg-white border border-orange-300 text-orange-600 px-4 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-orange-50 transition-colors"
+                             >
+                                <Book size={16} /> Supprimer tous les livres
+                             </button>
+
+                             <button 
+                                onClick={async () => {
+                                   if (confirm('Toutes les commandes seront supprimées de la base de données. Voulez-vous continuer ?')) {
+                                      try {
+                                         const response = await fetch('/api/admin/reset/orders', { method: 'DELETE' });
+                                         if (response.ok) {
+                                            toast.success('Toutes les commandes ont été supprimées');
+                                            window.location.reload();
+                                         } else {
+                                            toast.error('Erreur lors de la suppression');
+                                         }
+                                      } catch (error) {
+                                         toast.error('Erreur de connexion');
+                                      }
+                                   }
+                                }}
+                                className="w-full bg-white border border-blue-300 text-blue-600 px-4 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors"
+                             >
+                                <Package size={16} /> Supprimer toutes les commandes
+                             </button>
+
+                             <button 
+                                onClick={async () => {
+                                   if (confirm('Tous les clients seront supprimés de la base de données. Voulez-vous continuer ?')) {
+                                      try {
+                                         const response = await fetch('/api/admin/reset/customers', { method: 'DELETE' });
+                                         if (response.ok) {
+                                            toast.success('Tous les clients ont été supprimés');
+                                            window.location.reload();
+                                         } else {
+                                            toast.error('Erreur lors de la suppression');
+                                         }
+                                      } catch (error) {
+                                         toast.error('Erreur de connexion');
+                                      }
+                                   }
+                                }}
+                                className="w-full bg-white border border-purple-300 text-purple-600 px-4 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-purple-50 transition-colors"
+                             >
+                                <Users size={16} /> Supprimer tous les clients
+                             </button>
+                          </div>
                        </div>
                     </div>
                  </div>
+              )}
+
+              {/* --- VIEW: HOMEPAGE MANAGEMENT --- */}
+              {activeTab === 'homepage' && (
+                <div className="space-y-6">
+                   <div className="mb-6 flex items-center justify-between">
+                      <div>
+                         <h2 className="text-2xl font-bold text-slate-800 mb-2">Gestion de la page d'accueil</h2>
+                         <p className="text-slate-500">Personnalisez le contenu et l'apparence de votre page d'accueil.</p>
+                      </div>
+                      <button 
+                         onClick={() => {
+                            if (homepageConfig) {
+                              updateHomepageConfig(homepageConfig);
+                            }
+                         }}
+                         disabled={homepageLoading}
+                         className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                      >
+                         <Save size={18} />
+                         Sauvegarder
+                      </button>
+                   </div>
+
+                   {homepageLoading || !homepageConfig ? (
+                      <div className="flex items-center justify-center py-12">
+                         <Loader2 className="animate-spin text-indigo-600" size={32} />
+                      </div>
+                   ) : (
+                      <>
+                         {/* Sections Management */}
+                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                               <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                  <Layers size={20} className="text-purple-600" />
+                                  Sections de livres
+                               </h3>
+                               <button
+                                  onClick={() => {
+                                     const newSection: HomepageSection = {
+                                        id: `section-${Date.now()}`,
+                                        title: 'Nouvelle section',
+                                        subtitle: '',
+                                        isVisible: true,
+                                        bookIds: [],
+                                        badgeType: 'star'
+                                     };
+                                     updateHomepageConfig({
+                                        ...homepageConfig,
+                                        sections: [...homepageConfig.sections, newSection]
+                                     });
+                                  }}
+                                  className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                               >
+                                  <Plus size={16} />
+                                  Nouvelle section
+                               </button>
+                            </div>
+
+                            <div className="space-y-4">
+                               {homepageConfig.sections.map((section, sectionIdx) => (
+                                  <div key={section.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                     <div className="flex items-start justify-between mb-4">
+                                        <div className="flex-1 space-y-3">
+                                           <div className="flex items-center gap-3">
+                                              <input
+                                                 type="text"
+                                                 value={section.title}
+                                                 onChange={(e) => {
+                                                    const newSections = [...homepageConfig.sections];
+                                                    newSections[sectionIdx] = { ...section, title: e.target.value };
+                                                    updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                 }}
+                                                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none"
+                                                 placeholder="Titre de la section"
+                                              />
+                                              <label className="flex items-center gap-2 cursor-pointer">
+                                                 <input
+                                                    type="checkbox"
+                                                    checked={section.isVisible}
+                                                    onChange={(e) => {
+                                                       const newSections = [...homepageConfig.sections];
+                                                       newSections[sectionIdx] = { ...section, isVisible: e.target.checked };
+                                                       updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                    }}
+                                                    className="w-4 h-4"
+                                                 />
+                                                 <span className="text-sm text-slate-600">Visible</span>
+                                              </label>
+                                              <button
+                                                 onClick={() => {
+                                                    if (confirm('Supprimer cette section ?')) {
+                                                       const newSections = homepageConfig.sections.filter((_, idx) => idx !== sectionIdx);
+                                                       updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                    }
+                                                 }}
+                                                 className="text-red-600 hover:text-red-700 p-2"
+                                              >
+                                                 <Trash2 size={18} />
+                                              </button>
+                                           </div>
+                                           <input
+                                              type="text"
+                                              value={section.subtitle || ''}
+                                              onChange={(e) => {
+                                                 const newSections = [...homepageConfig.sections];
+                                                 newSections[sectionIdx] = { ...section, subtitle: e.target.value };
+                                                 updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                              }}
+                                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-600 focus:ring-2 focus:ring-purple-500 outline-none"
+                                              placeholder="Sous-titre (optionnel)"
+                                           />
+                                           <div className="flex items-center gap-2">
+                                              <label className="text-sm text-slate-600">Type de badge:</label>
+                                              <select
+                                                 value={section.badgeType || 'star'}
+                                                 onChange={(e) => {
+                                                    const newSections = [...homepageConfig.sections];
+                                                    newSections[sectionIdx] = { ...section, badgeType: e.target.value as any };
+                                                    updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                 }}
+                                                 className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                                              >
+                                                 <option value="star">⭐ Best-seller</option>
+                                                 <option value="heart">❤️ Nouveau</option>
+                                                 <option value="gift">🎁 Célébration</option>
+                                                 <option value="new">✨ Nouveau</option>
+                                              </select>
+                                           </div>
+                                        </div>
+                                     </div>
+
+                                     {/* Books in this section */}
+                                     <div className="mt-4 pt-4 border-t border-gray-300">
+                                        <div className="text-sm font-medium text-slate-700 mb-2">
+                                           Livres affichés ({section.bookIds.length})
+                                           <span className="text-xs text-slate-500 ml-2 font-normal">Glissez pour réorganiser</span>
+                                        </div>
+                                        <DndContext
+                                           sensors={sensors}
+                                           collisionDetection={closestCenter}
+                                           onDragEnd={(event: DragEndEvent) => {
+                                              const { active, over } = event;
+                                              if (over && active.id !== over.id) {
+                                                 const oldIndex = section.bookIds.indexOf(active.id as string);
+                                                 const newIndex = section.bookIds.indexOf(over.id as string);
+                                                 const newBookIds = arrayMove(section.bookIds, oldIndex, newIndex);
+                                                 const newSections = [...homepageConfig.sections];
+                                                 newSections[sectionIdx] = { ...section, bookIds: newBookIds };
+                                                 updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                              }
+                                           }}
+                                        >
+                                           <SortableContext items={section.bookIds} strategy={rectSortingStrategy}>
+                                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                 {section.bookIds.map((bookId) => {
+                                                    const book = books.find(b => b.id === bookId);
+                                                    if (!book) return null;
+                                                    return (
+                                                       <SortableBookItem
+                                                          key={bookId}
+                                                          id={bookId}
+                                                          book={book}
+                                                          onRemove={() => {
+                                                             const newSections = [...homepageConfig.sections];
+                                                             newSections[sectionIdx] = {
+                                                                ...section,
+                                                                bookIds: section.bookIds.filter(id => id !== bookId)
+                                                             };
+                                                             updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                          }}
+                                                       />
+                                                    );
+                                                 })}
+                                              </div>
+                                           </SortableContext>
+                                        </DndContext>
+                                        <details className="mt-3">
+                                           <summary className="cursor-pointer text-sm font-medium text-purple-600 hover:text-purple-700">
+                                              + Ajouter des livres à cette section
+                                           </summary>
+                                           <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-2 bg-white rounded border border-gray-200">
+                                              {books.filter(b => !b.isHidden && !section.bookIds.includes(b.id)).map((book) => (
+                                                 <div
+                                                    key={book.id}
+                                                    onClick={() => {
+                                                       const newSections = [...homepageConfig.sections];
+                                                       newSections[sectionIdx] = {
+                                                          ...section,
+                                                          bookIds: [...section.bookIds, book.id]
+                                                       };
+                                                       updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                    }}
+                                                    className="cursor-pointer hover:bg-purple-50 rounded-lg border border-gray-200 p-2 transition-colors"
+                                                 >
+                                                    <img
+                                                       src={book.coverImage}
+                                                       alt={book.name}
+                                                       className="w-full aspect-square object-cover rounded mb-1"
+                                                    />
+                                                    <div className="text-xs font-medium text-slate-700 truncate">{book.name}</div>
+                                                 </div>
+                                              ))}
+                                           </div>
+                                        </details>
+                                     </div>
+                                  </div>
+                               ))}
+                            </div>
+                         </div>
+                      </>
+                   )}
+                </div>
               )}
 
               {/* --- VIEW: ALL BOOKS --- */}
@@ -3087,7 +3428,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                            </td>
                                            <td className="px-4 py-3 font-bold text-slate-900 group-hover:underline">#{order.id}</td>
                                            <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
-                                              {new Date(order.createdAt).toLocaleDateString()}
+                                              {formatDate(order.createdAt)}
                                               <span className="text-slate-400 ml-1 text-[10px]">{new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                            </td>
                                            <td className="px-4 py-3">
@@ -3249,7 +3590,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                         <td className="px-6 py-4 text-slate-500">{c.email}</td>
                                                                         <td className="px-6 py-4 text-slate-500">{c.address?.city || '-'}</td>
                                                                         <td className="px-6 py-4 text-right text-slate-400 text-xs">
-                                                                            {new Date(c.createdAt).toLocaleDateString()}
+                                                                            {formatDate(c.createdAt)}
                                                                         </td>
                                                                     </tr>
                                                                 ))}
@@ -3482,7 +3823,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           <h2 className="text-2xl font-bold text-slate-800">Commande {selectedOrderId}</h2>
                           <div className="text-sm text-slate-500">
                              {orders.find(o => o.id === selectedOrderId)?.createdAt 
-                                ? new Date(orders.find(o => o.id === selectedOrderId)!.createdAt).toLocaleDateString() + ' à ' + new Date(orders.find(o => o.id === selectedOrderId)!.createdAt).toLocaleTimeString()
+                                ? formatDateTime(orders.find(o => o.id === selectedOrderId)!.createdAt)
                                 : ''}
                           </div>
                        </div>
@@ -3565,27 +3906,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                 {/* Production & Files */}
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                   <div className="flex justify-between items-center mb-4">
+                                   <div className="mb-4">
                                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
                                          <Printer size={18} className="text-indigo-600" />
                                          Production & Fichiers
                                       </h3>
-                                      <button 
-                                         onClick={() => {
-                                             toast.promise(
-                                                 new Promise((resolve) => setTimeout(resolve, 2000)),
-                                                 {
-                                                     loading: 'Régénération des fichiers en cours...',
-                                                     success: 'Fichiers régénérés avec succès !',
-                                                     error: 'Erreur lors de la régénération'
-                                                 }
-                                             );
-                                         }}
-                                         className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2"
-                                      >
-                                         <RotateCcw size={14} />
-                                         Régénérer
-                                      </button>
                                    </div>
                                    <div className="space-y-3">
                                       {/* Cover File */}
@@ -3816,7 +4141,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                            {log.author || 'Système'}
                                                         </span>
                                                         <span className="text-[10px] text-slate-400">
-                                                           {new Date(log.date).toLocaleString()}
+                                                           {formatDateTime(log.date)}
                                                         </span>
                                                      </div>
                                                      <p className="text-slate-600 text-sm mt-0.5">{log.message}</p>
@@ -4205,6 +4530,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           <thead className="bg-slate-50 border-b border-gray-200 text-slate-500 font-medium">
                              <tr>
                                 <th className="px-6 py-4">Nom</th>
+                                <th className="px-6 py-4">Type</th>
                                 <th className="px-6 py-4">Contact</th>
                                 <th className="px-6 py-4">Ville</th>
                                 <th className="px-6 py-4 text-center">Commandes</th>
@@ -4212,11 +4538,22 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
-                             {customers.map(customer => (
+                             {[...customers].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(customer => (
                                 <tr key={customer.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setSelectedCustomerId(customer.id)}>
                                    <td className="px-6 py-4">
                                       <div className="font-bold text-slate-900">{customer.firstName} {customer.lastName}</div>
-                                      <div className="text-xs text-slate-400">Inscrit le {new Date(customer.createdAt).toLocaleDateString()}</div>
+                                      <div className="text-xs text-slate-400">Inscrit le {formatDate(customer.createdAt)}</div>
+                                   </td>
+                                   <td className="px-6 py-4">
+                                      {(customer as any).hasAccount ? (
+                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                                          Compte
+                                        </span>
+                                      ) : (
+                                        <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs font-bold rounded-full">
+                                          Guest
+                                        </span>
+                                      )}
                                    </td>
                                    <td className="px-6 py-4">
                                       <div className="text-slate-600">{customer.email}</div>
@@ -4288,7 +4625,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               {customer.firstName.charAt(0)}
                                            </div>
                                            <h3 className="text-xl font-bold text-slate-900">{customer.firstName} {customer.lastName}</h3>
-                                           <p className="text-slate-500 text-sm mb-4">Client depuis {new Date(customer.createdAt).toLocaleDateString()}</p>
+                                           <p className="text-slate-500 text-sm mb-4">Client depuis {formatDate(customer.createdAt)}</p>
                                            
                                            <div className="border-t border-gray-100 pt-4 text-left space-y-3">
                                               <div>
@@ -4458,7 +4795,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             <div className="flex justify-between items-start mb-2">
                                                <div>
                                                   <div className="font-bold text-slate-900">{order.id}</div>
-                                                  <div className="text-xs text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</div>
+                                                  <div className="text-xs text-slate-500">{formatDate(order.createdAt)}</div>
                                                </div>
                                                <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
                                                   order.status === 'delivered' ? 'bg-green-100 text-green-700' :

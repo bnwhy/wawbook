@@ -14,7 +14,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
       className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer hover:-translate-y-1 border border-gray-100 flex flex-col h-full"
       onClick={onClick}
     >
-      <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+      <div className="aspect-square bg-slate-100 relative overflow-hidden">
         {book.coverImage ? (
           <img 
             src={book.coverImage} 

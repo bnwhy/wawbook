@@ -47,8 +47,8 @@ const Footer: React.FC<FooterProps> = () => {
         <div>
           <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Légal</h4>
           <ul className="space-y-4 font-medium text-cloud-light/60">
-            <li className="hover:text-white cursor-pointer transition-colors">Confidentialité</li>
-            <li className="hover:text-white cursor-pointer transition-colors">CGU</li>
+            <li><Link href="/privacy" className="hover:text-white transition-colors block">Confidentialité</Link></li>
+            <li><Link href="/terms" className="hover:text-white transition-colors block">CGU</Link></li>
           </ul>
         </div>
       </div>

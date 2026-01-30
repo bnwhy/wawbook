@@ -152,7 +152,19 @@ export class DbStorage implements IStorage {
   };
 
   async getAllCustomers(): Promise<Customer[]> {
-    return await db.select(this.safeCustomerFields).from(customers) as any;
+    const results = await db.select({
+      ...this.safeCustomerFields,
+      hasPassword: customers.password,
+    }).from(customers);
+    
+    // Transform to add hasAccount boolean (without exposing password)
+    return results.map(c => {
+      const { hasPassword, ...rest } = c as any;
+      return {
+        ...rest,
+        hasAccount: !!hasPassword,
+      };
+    }) as any;
   }
 
   async getCustomer(id: string): Promise<Customer | undefined> {

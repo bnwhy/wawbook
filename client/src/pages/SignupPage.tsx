@@ -73,21 +73,21 @@ const SignupPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-brand-cream relative overflow-hidden">
       {/* Floating Clouds Background */}
-      <div className="absolute top-32 left-10 text-white opacity-60 animate-float pointer-events-none z-0">
+      <div className="absolute top-32 left-10 text-cloud-lighter opacity-80 animate-float pointer-events-none z-0">
         <Cloud size={100} fill="currentColor" />
       </div>
-      <div className="absolute top-52 right-20 text-white opacity-40 animate-float-delayed pointer-events-none z-0">
+      <div className="absolute top-52 right-20 text-cloud-light opacity-60 animate-float-delayed pointer-events-none z-0">
         <Cloud size={80} fill="currentColor" />
       </div>
-      <div className="absolute bottom-20 left-1/4 text-white opacity-50 animate-float pointer-events-none z-0">
+      <div className="absolute bottom-20 left-1/4 text-cloud-sky opacity-70 animate-float pointer-events-none z-0">
         <Cloud size={120} fill="currentColor" />
       </div>
       
       <Navigation onStart={() => setLocation('/')} />
       
-      <main className="flex-1 flex pt-20 relative z-10">
+      <main className="flex-1 flex relative z-10 min-h-[calc(100vh-80px)]">
         {/* Left Side - Branding */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cloud-lightest to-cloud-lighter p-12 flex-col justify-center items-center relative">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cloud-lightest to-cloud-lighter p-12 pt-32 flex-col justify-center items-center relative">
           <div className="max-w-lg w-full text-center">
             <div className="flex items-center justify-center gap-4 mb-8">
               <h2 className="font-display font-black text-4xl md:text-5xl text-cloud-dark leading-tight">
@@ -173,7 +173,7 @@ const SignupPage = () => {
 
         {/* Right Side - Form */}
         <div className="w-full lg:w-1/2 flex flex-col bg-white">
-          <div className="flex-1 flex items-center justify-center p-6 lg:p-12 overflow-y-auto">
+          <div className="flex-1 flex items-center justify-center p-6 pt-32 lg:p-12 lg:pt-32 overflow-y-auto">
             <div className="w-full max-w-md py-8">
               <div className="mb-10 text-center">
                 <h1 className="font-display font-black text-3xl lg:text-4xl text-stone-900 mb-3">

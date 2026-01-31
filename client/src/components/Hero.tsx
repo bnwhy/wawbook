@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit, Settings, Gift } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit, Settings, Gift, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
 import Banner from './Banner';
+import BookCover3D from './BookCover3D';
 import { useBooks } from '../context/BooksContext';
 import { useHomepage } from '../context/HomepageContext';
 import { formatPrice } from '../utils/formatPrice';
@@ -124,21 +125,15 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   const { books } = useBooks();
   const { homepageConfig, isLoading } = useHomepage();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  // Si la config n'est pas encore chargée, utiliser un fallback temporaire
-  if (isLoading || !homepageConfig) {
-    return <div className="min-h-screen flex items-center justify-center">
-      <div className="text-cloud-blue">Chargement...</div>
-    </div>;
-  }
+  const [carouselIndexes, setCarouselIndexes] = useState<Record<string, number>>({});
 
   const visibleBooks = books.filter(b => !b.isHidden);
   
   // Créer un map des livres par ID pour un accès rapide
   const booksById = Object.fromEntries(visibleBooks.map(b => [b.id, b]));
   
-  // Récupérer les sections visibles avec leurs livres
-  const visibleSections = homepageConfig.sections
+  // Récupérer les sections visibles avec leurs livres (utiliser tableau vide si config pas chargée)
+  const visibleSections = (homepageConfig?.sections || [])
     .filter(section => section.isVisible && section.bookIds.length > 0)
     .map(section => ({
       ...section,
@@ -155,6 +150,30 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
+  
+  // Auto-carousel pour les images multiples
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCarouselIndexes(prev => {
+        const newIndexes = { ...prev };
+        visibleBooks.forEach(book => {
+          const allImages = [book.coverImage, ...(book.galleryImages || [])].filter(Boolean);
+          if (allImages.length > 1) {
+            newIndexes[book.id] = ((prev[book.id] || 0) + 1) % allImages.length;
+          }
+        });
+        return newIndexes;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [visibleBooks]);
+
+  // Si la config n'est pas encore chargée, afficher un loader
+  if (isLoading || !homepageConfig) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="text-cloud-blue">Chargement...</div>
+    </div>;
+  }
 
   return (
      <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
@@ -187,13 +206,6 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                {homepageConfig.hero.subtitle}
              </p>
              
-             <button 
-               onClick={() => onStart()}
-               className="inline-flex items-center gap-3 px-10 py-6 bg-cloud-blue text-white rounded-full text-2xl font-display font-black hover:bg-cloud-deep hover:scale-105 transition-all shadow-cloud-hover group"
-             >
-               {homepageConfig.hero.buttonText} <ArrowRight size={28} className="group-hover:translate-x-2 transition-transform" />
-             </button>
-             
              <div className="mt-10 flex flex-wrap justify-center gap-8 text-sm font-bold text-cloud-dark/50">
                 <span className="flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full"><CheckCircle size={20} className="text-accent-mint" /> 100% Personnalisé</span>
                 <span className="flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full"><CheckCircle size={20} className="text-accent-mint" /> Magie Instantanée</span>
@@ -224,10 +236,13 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto justify-center">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto justify-center">
                   {section.books.map((card, idx) => {
                     const customBadge = section.bookBadges?.[card.id];
                     const badgeToShow = customBadge || card.badgeText;
+                    const allImages = [card.coverImage, ...(card.galleryImages || [])].filter(Boolean);
+                    const hasMultipleImages = allImages.length > 1;
+                    const currentImageIndex = carouselIndexes[card.id] || 0;
                     
                     return (
                 <div 
@@ -236,20 +251,61 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
-                  <div className="aspect-square relative overflow-hidden bg-gray-50">
-                      {card.coverImage ? (
-                        <img 
-                          src={card.coverImage} 
-                          alt={card.name}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
+                  <div className="aspect-square relative overflow-visible flex items-center justify-center p-2" style={{ background: card.thumbnailBackground || 'linear-gradient(135deg, #fef1f7 0%, #faf5ff 100%)' }}
+                    // #region agent log
+                    ref={(el) => {
+                      if (el && card.coverImage) {
+                        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Hero.tsx:233',message:'Container rendered',data:{cardName:card.name,coverImage:card.coverImage,computedStyle:window.getComputedStyle(el).overflow},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+                      }
+                    }}
+                    // #endregion
+                  >
+                      {allImages.length > 0 ? (
+                        <div className="w-[90%] h-[90%] relative">
+                          {/* Image courante avec transition */}
+                          {allImages.map((imgUrl, imgIdx) => (
+                            <div 
+                              key={imgIdx}
+                              className={`absolute inset-0 transition-opacity duration-500 ${imgIdx === currentImageIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                            >
+                              {imgIdx === 0 ? (
+                                <BookCover3D 
+                                  imageUrl={imgUrl} 
+                                  alt={card.name}
+                                />
+                              ) : (
+                                <img 
+                                  src={imgUrl} 
+                                  alt={`${card.name} - Image ${imgIdx + 1}`}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              )}
+                            </div>
+                          ))}
+                          
+                          {/* Indicateurs de pagination */}
+                          {hasMultipleImages && (
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                              {allImages.map((_, dotIdx) => (
+                                <button
+                                  key={dotIdx}
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setCarouselIndexes(prev => ({...prev, [card.id]: dotIdx}));
+                                  }}
+                                  className={`w-1.5 h-1.5 rounded-full transition-all ${dotIdx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'}`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ) : (
-                        <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300">
-                          <BookOpen size={48} />
+                        <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
+                          <BookOpen size={48} className="text-gray-300" />
                         </div>
                       )}
                       {badgeToShow && (
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1">
+                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-cloud-dark shadow-sm flex items-center gap-1 z-10">
                           <Star size={12} className="text-accent-sun fill-current" />
                           {badgeToShow}
                         </div>

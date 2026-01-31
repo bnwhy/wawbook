@@ -216,3 +216,75 @@
   box-shadow: inset -5px 0 15px rgba(0, 0, 0, 0.3) !important;
   transition: box-shadow 0.15s ease-out !important;
 }
+
+/* ========================================
+   Book Cover 3D Effect
+   Effet 3D pour les miniatures de livres
+   ======================================== */
+
+.book-cover-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+}
+
+.book-cover-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border-radius: 0 2px 2px 0; /* 0 à gauche, 2px à droite */
+  padding: 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.book-cover-wrapper:hover {
+  transform: translateY(-4px);
+}
+
+.book-cover-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0 2px 2px 0; /* 0 à gauche, 2px à droite */
+  box-sizing: border-box;
+  position: relative;
+  z-index: 5;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.12),
+    0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Effet overlay de brillance - bord gauche réduit 50% */
+.book-cover-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0 2px 2px 0; /* Même arrondi que l'image */
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.1) 1%,
+    rgba(255, 255, 255, 0.1) 2%,
+    rgba(0, 0, 0, 0.05) 4%,
+    transparent 6%,
+    transparent 95%
+  );
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Effet supplémentaire au hover */
+.book-cover-wrapper:hover .book-cover-image {
+  box-shadow: 
+    0 12px 28px rgba(0, 0, 0, 0.2),
+    6px 0 14px rgba(0, 0, 0, 0.12);
+}
+
+/* Tranche supprimée */

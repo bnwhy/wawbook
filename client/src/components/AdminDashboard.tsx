@@ -5697,7 +5697,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </div>
 
                        <div className="col-span-2">
-                          <label className="block text-sm font-bold text-slate-700 mb-2">Image de couverture</label>
+                          <label className="block text-sm font-bold text-slate-700 mb-2">Image de couverture (avec effet 3D)</label>
                           <div className="flex items-center gap-4">
                              <div className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group cursor-pointer">
                                 {selectedBook.coverImage ? (
@@ -5743,6 +5743,57 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              </div>
                           </div>
                        </div>
+                       
+                       <div className="col-span-2">
+                          <label className="block text-sm font-bold text-slate-700 mb-2">Images supplémentaires (Carrousel)</label>
+                          <div className="space-y-3">
+                             <div className="flex flex-wrap gap-3">
+                                {(selectedBook.galleryImages || []).map((imgUrl, idx) => (
+                                   <div key={idx} className="w-20 h-28 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group">
+                                      <img src={imgUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                      <button 
+                                         onClick={() => {
+                                            const newGallery = [...(selectedBook.galleryImages || [])];
+                                            newGallery.splice(idx, 1);
+                                            handleSaveBook({...selectedBook, galleryImages: newGallery});
+                                         }}
+                                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      >
+                                         <X size={12} />
+                                      </button>
+                                   </div>
+                                ))}
+                                <div className="w-20 h-28 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-brand-coral hover:bg-brand-coral/5 transition-colors relative group">
+                                   <Plus size={24} className="text-gray-400 group-hover:text-brand-coral" />
+                                   <input 
+                                      type="file" 
+                                      accept="image/*"
+                                      multiple
+                                      className="absolute inset-0 opacity-0 cursor-pointer"
+                                      onChange={async (e) => {
+                                         const files = Array.from(e.target.files || []);
+                                         if (files.length > 0) {
+                                            try {
+                                               toast.loading(`Upload de ${files.length} image(s)...`, { id: 'gallery-upload' });
+                                               const uploadPromises = files.map((file, i) => 
+                                                  uploadFileToStorage(file, `gallery_${selectedBook.id}_${Date.now()}_${i}`)
+                                               );
+                                               const urls = await Promise.all(uploadPromises);
+                                               const currentGallery = selectedBook.galleryImages || [];
+                                               handleSaveBook({...selectedBook, galleryImages: [...currentGallery, ...urls]});
+                                               toast.success(`${files.length} image(s) uploadée(s)!`, { id: 'gallery-upload' });
+                                            } catch (error) {
+                                               console.error('Gallery upload error:', error);
+                                               toast.error('Erreur lors de l\'upload', { id: 'gallery-upload' });
+                                            }
+                                         }
+                                      }}
+                                   />
+                                </div>
+                             </div>
+                             <p className="text-xs text-gray-500">Ces images apparaîtront dans un carrousel après la couverture (sans effet 3D)</p>
+                          </div>
+                       </div>
 
                        <div className="col-span-2">
                           <label className="block text-sm font-bold text-slate-700 mb-2">Description</label>
@@ -5770,6 +5821,29 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none"
                             placeholder="ex: PROMO2024"
                           />
+                       </div>
+                       
+                       <div className="col-span-2">
+                          <label className="block text-sm font-bold text-slate-700 mb-2">Fond de la Miniature (Optionnel)</label>
+                          <div className="flex gap-3">
+                            <div className="flex-1">
+                              <input 
+                                type="text" 
+                                value={selectedBook.thumbnailBackground || ''}
+                                onChange={(e) => handleSaveBook({...selectedBook, thumbnailBackground: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none"
+                                placeholder="ex: #fef1f7 ou linear-gradient(...)"
+                              />
+                            </div>
+                            <input 
+                              type="color" 
+                              value={selectedBook.thumbnailBackground?.startsWith('#') ? selectedBook.thumbnailBackground : '#fef1f7'}
+                              onChange={(e) => handleSaveBook({...selectedBook, thumbnailBackground: e.target.value})}
+                              className="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                              title="Choisir une couleur"
+                            />
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">Utilisez le sélecteur de couleur ou entrez un dégradé CSS (ex: linear-gradient(135deg, #fef1f7 0%, #faf5ff 100%))</p>
                        </div>
 
                        <div className="col-span-2 flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">

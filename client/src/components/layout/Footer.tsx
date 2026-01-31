@@ -11,12 +11,12 @@ export function Footer() {
       <div className="container mx-auto px-4">
         
         {/* Newsletter Box */}
-        <div className="bg-secondary/30 rounded-[2.5rem] p-8 md:p-12 mb-16 flex flex-col md:flex-row items-center justify-between gap-8 border-4 border-white shadow-lg">
+        <div className="bg-secondary/30 rounded-[2.5rem] p-8 md:p-12 mb-16 flex flex-col md:flex-row items-center md:items-start justify-between gap-8 border-4 border-white shadow-lg">
            <div className="text-center md:text-left">
               <h3 className="font-serif text-3xl text-secondary-foreground mb-2">Rejoins le Club Waw ! 🎈</h3>
               <p className="text-gray-600 font-medium">Des coloriages gratuits et des promos magiques.</p>
            </div>
-           <div className="flex w-full md:w-auto gap-3">
+           <div className="flex w-full md:w-auto gap-3 md:mt-1">
               <Input placeholder="Ton email..." className="bg-white border-none h-14 rounded-2xl text-lg px-6 shadow-sm w-full md:w-80" />
               <Button className="h-14 rounded-2xl px-8 bg-secondary text-secondary-foreground font-bold hover:bg-secondary/80 text-lg shadow-sm">
                 Hop !

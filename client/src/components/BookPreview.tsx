@@ -256,7 +256,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                         await new Promise(resolve => setTimeout(resolve, 150));
                         
                         setLoadingProgress(60);
-                        setLoadingMessage("Génération des pages...");
+                        setLoadingMessage("Chargement du livre...");
                         const response = await fetch(`/api/books/${book.id}/render-pages`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -974,9 +974,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                                    
                                                    // Si resolvedStyle existe, utiliser UNIQUEMENT ses propriétés (même si undefined)
                                                    // Ne pas fallback sur text.style pour éviter que tous les segments aient le même style
-                                                   // #region agent log
-                                                   fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:974',message:'Building style for segment',data:{hasResolvedStyle,segmentFontSize:segment.resolvedStyle?.fontSize,globalFontSize:text.style?.fontSize,segmentColor:segment.resolvedStyle?.color,globalColor:text.style?.color,segmentLetterSpacing:segment.resolvedStyle?.letterSpacing,globalLetterSpacing:text.style?.letterSpacing,segmentStrokeColor:segment.resolvedStyle?.strokeColor,globalStrokeColor:text.style?.webkitTextStrokeColor,segmentFontStretch:segment.resolvedStyle?.fontStretch,globalFontStretch:text.style?.fontStretch},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H4'})}).catch(()=>{});
-                                                   // #endregion
                                                    const style = hasResolvedStyle ? {
                                                        fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
                                                        fontSize: segment.resolvedStyle?.fontSize || 'inherit',
@@ -1004,9 +1001,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                                        WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
                                                        fontStretch: text.style?.fontStretch as any,
                                                    };
-                                                   // #region agent log
-                                                   fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:1000',message:'Final style object',data:{finalFontSize:style.fontSize,finalColor:style.color,finalLetterSpacing:style.letterSpacing,finalWebkitTextStroke:style.WebkitTextStroke,finalWebkitTextStrokeColor:style.WebkitTextStrokeColor,finalWebkitTextStrokeWidth:style.WebkitTextStrokeWidth,finalFontStretch:style.fontStretch,finalTextTransform:style.textTransform},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H4'})}).catch(()=>{});
-                                                   // #endregion
                                                    
                                                    return (
                                                        <span

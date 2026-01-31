@@ -226,7 +226,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
         </div>
       </div>
 
-      {/* Mobile Navigation - Menu left, Logo center, Cart right */}
+      {/* Mobile Navigation - Menu left, Logo center, User & Cart right */}
       <div className="lg:hidden flex items-center justify-between px-4">
         {/* Left: Menu Button */}
         <button 
@@ -247,15 +247,62 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
           </span>
         </div>
 
-        {/* Right: Cart Icon */}
-        <Link href="/cart" className="relative p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors">
-             <ShoppingCart size={24} />
-             {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-sun text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
-                {itemCount}
-              </span>
-             )}
-        </Link>
+        {/* Right: User & Cart Icons */}
+        <div className="flex items-center gap-1">
+          {isAuthenticated ? (
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors"
+              >
+                <div className="w-7 h-7 bg-cloud-blue text-white rounded-full flex items-center justify-center font-bold text-xs">
+                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                </div>
+              </button>
+
+              {userMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-stone-200 py-2 z-50">
+                    <Link href="/account">
+                      <a onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-cloud-lightest transition-colors text-stone-700 hover:text-cloud-blue">
+                        <User size={18} />
+                        <span className="font-medium">Mon compte</span>
+                      </a>
+                    </Link>
+                    <Link href="/account/orders">
+                      <a onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-cloud-lightest transition-colors text-stone-700 hover:text-cloud-blue">
+                        <Package size={18} />
+                        <span className="font-medium">Mes commandes</span>
+                      </a>
+                    </Link>
+                    <div className="border-t border-stone-200 my-2"></div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-red-600 hover:text-red-700"
+                    >
+                      <LogOut size={18} />
+                      <span className="font-medium">Déconnexion</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <Link href="/login" className="p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors">
+              <User size={24} />
+            </Link>
+          )}
+
+          <Link href="/cart" className="relative p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors">
+               <ShoppingCart size={24} />
+               {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-sun text-yellow-900 text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+                  {itemCount}
+                </span>
+               )}
+          </Link>
+        </div>
       </div>
       </nav>
 

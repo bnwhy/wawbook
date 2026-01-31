@@ -47,40 +47,42 @@ const LoginPage = () => {
       
       <main className="flex-1 flex relative min-h-[calc(100vh-80px)]">
         {/* Left Side - Branding */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cloud-lightest to-cloud-lighter p-12 pt-32 flex-col justify-center items-center relative">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cloud-lightest to-cloud-lighter p-12 pt-32 flex-col justify-center items-center relative overflow-hidden">
+          {/* Top Wave Divider */}
+          <div className="absolute top-0 left-0 w-full overflow-hidden leading-[0] rotate-180">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-[calc(100%+1.3px)] h-[50px] fill-white/30">
+              <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+            </svg>
+          </div>
+          
+          {/* Bottom Wave Divider */}
+          <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-[calc(100%+1.3px)] h-[50px] fill-white/30">
+              <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+            </svg>
+          </div>
           <div className="max-w-lg w-full text-center">
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <h2 className="font-display font-black text-4xl md:text-5xl text-cloud-dark leading-tight">
-                Bienvenue<br />au <span className="text-cloud-blue relative inline-block">
-                  club
-                  <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun opacity-100" viewBox="0 0 100 10" preserveAspectRatio="none">
-                    <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
-                  </svg>
-                </span>
-              </h2>
-              
-              {/* Logo du site à côté */}
-              <div className="relative w-24 h-24 flex items-center justify-center flex-shrink-0">
-                <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-lg">
-                  <g className="animate-[spin_10s_linear_infinite] origin-[75px_35px]">
-                    <path d="M75 10 L75 20 M75 50 L75 60 M55 35 L45 35 M105 35 L95 35 M61 21 L68 28 M82 42 L89 49 M89 21 L82 28 M61 49 L68 42" stroke="#FCD34D" strokeWidth="4" strokeLinecap="round" />
-                  </g>
-                  <circle cx="75" cy="35" r="18" fill="#FCD34D" />
-                  <path d="M20 70 C 10 70, 10 50, 30 50 C 30 30, 60 30, 60 50 C 70 40, 90 40, 90 60 C 90 80, 70 80, 60 80 L 30 80 C 10 80, 10 70, 20 70" fill="#60A5FA" stroke="#3B82F6" strokeWidth="2" />
-                  <g transform="translate(0, 2)">
-                    <circle cx="45" cy="65" r="3" fill="white" />
-                    <circle cx="65" cy="65" r="3" fill="white" />
-                    <path d="M50 72 Q 55 78, 60 72" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                    <circle cx="42" cy="70" r="3" fill="#FF9999" opacity="0.6" />
-                    <circle cx="68" cy="70" r="3" fill="#FF9999" opacity="0.6" />
-                  </g>
+            <h2 className="font-display font-black text-4xl md:text-5xl text-cloud-dark leading-tight mb-6">
+              Bienvenue<br />au nuage<span className="text-cloud-blue relative inline-block">club
+                <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun opacity-100" viewBox="0 0 100 10" preserveAspectRatio="none">
+                  <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
                 </svg>
-              </div>
-            </div>
+              </span>
+            </h2>
             
-            <p className="text-xl md:text-2xl text-cloud-dark/70 font-medium mb-12 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-cloud-dark/70 font-medium mb-8 leading-relaxed max-w-2xl mx-auto">
               Le club de ceux qui créent des histoires magiques et personnalisées
             </p>
+            
+            {/* Social Proof - Remonté */}
+            <div className="flex flex-wrap justify-center gap-4 mb-10">
+              <span className="flex items-center gap-2 bg-white/60 px-5 py-2.5 rounded-full text-sm font-bold text-cloud-dark/70 shadow-sm border border-accent-mint/20">
+                <Package size={18} className="text-accent-mint" /> 1M+ Livres créés
+              </span>
+              <span className="flex items-center gap-2 bg-white/60 px-5 py-2.5 rounded-full text-sm font-bold text-cloud-dark/70 shadow-sm border border-accent-mint/20">
+                <BookOpen size={18} className="text-accent-mint" /> 4.9/5 Satisfaction
+              </span>
+            </div>
             
             <div className="space-y-6 mb-14 text-left max-w-md mx-auto">
               <div className="flex items-center gap-4">
@@ -103,14 +105,38 @@ const LoginPage = () => {
                 </div>
               </div>
             </div>
-            
-            <div className="flex flex-wrap justify-center gap-4">
-              <span className="flex items-center gap-2 bg-white/60 px-5 py-2.5 rounded-full text-sm font-bold text-cloud-dark/70 shadow-sm border border-accent-mint/20">
-                <Package size={18} className="text-accent-mint" /> 1M+ Livres créés
-              </span>
-              <span className="flex items-center gap-2 bg-white/60 px-5 py-2.5 rounded-full text-sm font-bold text-cloud-dark/70 shadow-sm border border-accent-mint/20">
-                <BookOpen size={18} className="text-accent-mint" /> 4.9/5 Satisfaction
-              </span>
+
+            {/* Nuages flottants subtils */}
+            <div className="relative h-32 mb-10 flex items-center justify-center">
+              <style>{`
+                @keyframes float {
+                  0%, 100% { transform: translateY(0px); }
+                  50% { transform: translateY(-12px); }
+                }
+                @keyframes float-delayed {
+                  0%, 100% { transform: translateY(0px); }
+                  50% { transform: translateY(-15px); }
+                }
+                @keyframes float-slow {
+                  0%, 100% { transform: translateY(0px); }
+                  50% { transform: translateY(-8px); }
+                }
+              `}</style>
+              
+              {/* Nuage gauche */}
+              <div className="absolute left-8 opacity-20 blur-[0.5px]" style={{ animation: 'float 6s ease-in-out infinite' }}>
+                <Cloud size={60} fill="white" strokeWidth={0} />
+              </div>
+              
+              {/* Nuage central */}
+              <div className="opacity-30 blur-[0.5px]" style={{ animation: 'float-delayed 7s ease-in-out infinite' }}>
+                <Cloud size={80} fill="white" strokeWidth={0} />
+              </div>
+              
+              {/* Nuage droit */}
+              <div className="absolute right-8 opacity-20 blur-[0.5px]" style={{ animation: 'float-slow 8s ease-in-out infinite' }}>
+                <Cloud size={55} fill="white" strokeWidth={0} />
+              </div>
             </div>
           </div>
         </div>
@@ -141,7 +167,7 @@ const LoginPage = () => {
                   onClick={handleGoogleLogin}
                   className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-stone-300 rounded-lg hover:border-stone-400 hover:bg-stone-50 transition-colors font-medium"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -153,9 +179,9 @@ const LoginPage = () => {
                 <button
                   type="button"
                   onClick={handleAppleLogin}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-stone-900 bg-stone-900 rounded-lg hover:bg-stone-800 transition-colors font-medium text-white"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-stone-300 rounded-lg hover:border-stone-400 hover:bg-stone-50 transition-colors font-medium"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="black">
                     <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
                   </svg>
                   Continuer avec Apple

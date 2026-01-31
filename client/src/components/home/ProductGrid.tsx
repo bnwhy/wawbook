@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useBooks } from "../../context/BooksContext";
 import { BookOpen } from "lucide-react";
 import { formatPrice } from "../../utils/formatPrice";
+import BookCover3D from "../BookCover3D";
 
 export function ProductGrid() {
   const { books } = useBooks();
@@ -50,13 +51,14 @@ export function ProductGrid() {
               transition={{ delay: index * 0.1, duration: 0.5 }}
             >
               <Card className="h-full border-4 shadow-none hover:shadow-xl transition-all duration-300 overflow-hidden group rounded-[2rem] bg-secondary/20 border-secondary/40">
-                <div className="relative aspect-square overflow-hidden p-6 flex items-center justify-center bg-gray-100">
+                <div className="relative aspect-square overflow-visible p-6 flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
                   {book.coverImage ? (
-                    <img 
-                      src={book.coverImage} 
-                      alt={book.name}
-                      className="w-3/4 h-auto shadow-lg rounded-lg transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500"
-                    />
+                    <div className="w-3/4">
+                      <BookCover3D 
+                        imageUrl={book.coverImage} 
+                        alt={book.name}
+                      />
+                    </div>
                   ) : (
                     <div className="w-3/4 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
                       <BookOpen className="w-12 h-12 text-gray-400" />

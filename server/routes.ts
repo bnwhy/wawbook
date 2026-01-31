@@ -264,6 +264,66 @@ export async function registerRoutes(
 
       const renderedPages: Array<{ pageIndex: number; imageUrl: string }> = [];
       
+      // Check if pages already exist in bucket before regenerating
+      const { objectStorageClient } = await import('./replit_integrations/object_storage/objectStorage');
+      const bucketName = 'replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2';
+      const bucket = objectStorageClient.bucket(bucketName);
+      
+      // Generate stable hash for this combination
+      const crypto = await import('node:crypto');
+      
+      // CRITICAL: Include ALL personalization data in the hash, not just combinationKey
+      // This ensures each unique book (name, age, dedication, etc.) gets its own stored pages
+      const fullPersonalizationData = {
+        childName: config.childName || '',
+        age: config.age || '',
+        dedication: config.dedication || '',
+        gender: config.gender || '',
+        characters: characters || {},
+        combinationKey: combinationKey || 'default',
+      };
+      
+      const fullDataString = JSON.stringify(fullPersonalizationData);
+      const keyHash = crypto.createHash('md5').update(fullDataString).digest('hex').substring(0, 16);
+      
+      // Check if all pages already exist
+      let allPagesExist = true;
+      const existingPages: Array<{ pageIndex: number; imageUrl: string }> = [];
+      
+      for (const pageData of pages) {
+        try {
+          const [files] = await bucket.getFiles({
+            prefix: `public/previews/${book.id}/${keyHash}/page-${pageData.pageIndex}-`
+          });
+          
+          if (files.length > 0) {
+            // Sort by timestamp (newest first) and take the most recent
+            const sortedFiles = files.sort((a, b) => {
+              const aMatch = a.name.match(/page-\d+-(\d+)\.jpg$/);
+              const bMatch = b.name.match(/page-\d+-(\d+)\.jpg$/);
+              const aTime = aMatch ? parseInt(aMatch[1]) : 0;
+              const bTime = bMatch ? parseInt(bMatch[1]) : 0;
+              return bTime - aTime;
+            });
+            
+            const mostRecentFile = sortedFiles[0];
+            const imageUrl = `/objects/${bucketName}/${mostRecentFile.name}`;
+            existingPages.push({ pageIndex: pageData.pageIndex, imageUrl });
+          } else {
+            allPagesExist = false;
+            break;
+          }
+        } catch (err) {
+          allPagesExist = false;
+          break;
+        }
+      }
+      
+      // If all pages exist, return them immediately without regenerating
+      if (allPagesExist && existingPages.length === pages.length) {
+        return res.json({ pages: existingPages });
+      }
+      
       // SOLUTION 2: Use system-installed fonts for Chromium headless
       // Note: Fonts must be pre-installed in ~/.fonts (e.g., Andika from SIL)
       // We don't copy from book fonts as they may be corrupted
@@ -767,21 +827,10 @@ ${textsHtml}
           const screenshot = await browserPage.screenshot({ type: 'jpeg', quality: 85 });
           await browserPage.close();
 
-          // Upload to bucket
-          const { objectStorageClient } = await import('./replit_integrations/object_storage/objectStorage');
-          const bucketName = 'replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2';
-          
-          // Generate a stable hash from combinationKey for the file path
-          // This ensures different combinations get different files, preventing cache issues
-                const crypto = await import('node:crypto');
-                const keyHash = combinationKey !== 'default'
-                  ? crypto.createHash('md5').update(combinationKey).digest('hex').substring(0, 16)
-                  : 'default';
-                // Add timestamp to force cache invalidation
-                const timestamp = Date.now();
-                const objectPath = `public/previews/${book.id}/${keyHash}/page-${pageData.pageIndex}-${timestamp}.jpg`;
-          
-          const bucket = objectStorageClient.bucket(bucketName);
+          // Upload to bucket (reuse bucket/keyHash from earlier check)
+          // Add timestamp to make unique filename
+          const timestamp = Date.now();
+          const objectPath = `public/previews/${book.id}/${keyHash}/page-${pageData.pageIndex}-${timestamp}.jpg`;
           
           // Delete all old versions of this page (files matching pattern page-{pageIndex}-*.jpg)
           try {

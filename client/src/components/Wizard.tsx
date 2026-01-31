@@ -639,6 +639,17 @@ const Wizard: React.FC<WizardProps> = (props) => {
           </div>
 
         </div>
+
+        {/* MOBILE CREATE BOOK BUTTON */}
+        <div className="lg:hidden flex justify-center px-4 pb-8 pt-4 relative z-10 w-full">
+          <button 
+            onClick={handleComplete}
+            className="w-full max-w-md bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 px-8 py-4 rounded-2xl font-display font-black text-lg shadow-lg hover:scale-105 transition-transform active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Wand2 size={24} />
+            {props.isEditing ? "Mettre à jour" : "Créer le livre"}
+          </button>
+        </div>
       </div>
       
       {/* BACK TO CART BUTTON */}

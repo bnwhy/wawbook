@@ -7,12 +7,14 @@ export interface BookProduct {
   price: number;
   promoCode?: string;
   coverImage: string;
+  galleryImages?: string[]; // Images additionnelles pour le carrousel
   theme: Theme;
   category: 'family' | 'theme' | 'activity' | 'occasion';
   badgeText?: string;
   associatedPaths?: string[]; // List of paths where this book should appear
   oldPrice?: number;
   isHidden?: boolean;
+  thumbnailBackground?: string; // Fond pastel pour la miniature (ex: linear-gradient(...))
   features?: {
     languages?: { code: string; label: string; }[];
     customization?: string[];

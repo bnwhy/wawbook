@@ -2,6 +2,7 @@ import React from 'react';
 import { BookOpen, Star } from 'lucide-react';
 import { BookProduct } from '../types/admin';
 import { formatPrice } from '../utils/formatPrice';
+import BookCover3D from './BookCover3D';
 
 interface BookCardProps {
   book: BookProduct;
@@ -14,24 +15,22 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
       className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group cursor-pointer hover:-translate-y-1 border border-gray-100 flex flex-col h-full"
       onClick={onClick}
     >
-      <div className="aspect-square bg-slate-100 relative overflow-hidden">
+      <div className="aspect-square relative overflow-visible flex items-center justify-center p-2" style={{ background: book.thumbnailBackground || 'linear-gradient(135deg, #fef1f7 0%, #faf5ff 100%)' }}>
         {book.coverImage ? (
-          <img 
-            src={book.coverImage} 
-            alt={book.name} 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-          />
+          <div className="w-[90%] h-[90%]">
+            <BookCover3D 
+              imageUrl={book.coverImage} 
+              alt={book.name}
+            />
+          </div>
         ) : (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 group-hover:scale-105 transition-transform duration-700" />
-            <div className="absolute inset-0 flex items-center justify-center text-slate-300">
-              <BookOpen size={48} className="opacity-50" />
-            </div>
-          </>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg">
+            <BookOpen size={48} className="text-slate-300 opacity-50" />
+          </div>
         )}
         
         {book.badgeText && (
-          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-2 py-1 rounded-full text-xs font-bold text-brand-coral shadow-sm flex items-center gap-1">
+          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-2 py-1 rounded-full text-xs font-bold text-brand-coral shadow-sm flex items-center gap-1 z-10">
             <Star size={10} fill="currentColor" />
             {book.badgeText}
           </div>

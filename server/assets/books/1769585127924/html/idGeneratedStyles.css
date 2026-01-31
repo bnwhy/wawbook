@@ -25,6 +25,30 @@ p.ParaOverride-1 {
 span.CharOverride-1 {
 	-webkit-text-stroke-color:#801a76;
 	-webkit-text-stroke-width:20px;
+	color:#ffffff;
+	font-family:"Sue Ellen Francisco ", sans-serif;
+	font-size:840px;
+	font-style:normal;
+	font-weight:normal;
+	text-stroke-color:#801a76;
+	text-stroke-width:20px;
+	text-transform:uppercase;
+}
+span.CharOverride-2 {
+	-webkit-text-stroke-color:#801a76;
+	-webkit-text-stroke-width:20px;
+	color:#4420ff;
+	font-family:"Sue Ellen Francisco ", sans-serif;
+	font-size:840px;
+	font-style:normal;
+	font-weight:normal;
+	text-stroke-color:#801a76;
+	text-stroke-width:20px;
+	text-transform:uppercase;
+}
+span.CharOverride-3 {
+	-webkit-text-stroke-color:#801a76;
+	-webkit-text-stroke-width:20px;
 	color:#6f1d76;
 	font-family:"Sue Ellen Francisco ", sans-serif;
 	font-size:840px;
@@ -55,6 +79,28 @@ span.CharOverride-1 {
 	transform:translate(36.000px,31.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
 	transform-origin:0% 0%;
 	width:557.29px;
+}
+#_idContainer002 {
+	-webkit-transform:translate(25.511px,21.929px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	-webkit-transform-origin:0% 0%;
+	height:421.75px;
+	left:0px;
+	position:absolute;
+	top:0px;
+	transform:translate(25.511px,21.929px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	transform-origin:0% 0%;
+	width:582.05px;
+}
+#_idContainer003 {
+	-webkit-transform:translate(25.511px,457.519px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	-webkit-transform-origin:0% 0%;
+	height:141.59px;
+	left:0px;
+	position:absolute;
+	top:0px;
+	transform:translate(25.511px,457.519px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);
+	transform-origin:0% 0%;
+	width:582.05px;
 }
 img._idGenObjectAttribute-1 {
 	height:100.00%;

@@ -39,6 +39,9 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }));
 
     useEffect(() => {
+      // #region agent log
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FlipbookViewer.tsx:42',message:'useEffect triggered',data:{pagesLength:pages.length,pagesKey,hasPrevFlipbook:!!flipbookRef.current},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'K'})}).catch(()=>{});
+      // #endregion
       if (!containerRef.current || pages.length === 0) return;
       
       const flipbookEl = containerRef.current.querySelector('.c-flipbook') as HTMLElement;
@@ -51,6 +54,9 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
 
       const timer = setTimeout(() => {
         try {
+          // #region agent log
+          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FlipbookViewer.tsx:57',message:'Creating new FlipBook instance',data:{pagesCount:pages.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'K'})}).catch(()=>{});
+          // #endregion
           flipbookRef.current = new FlipBook(flipbookEl, {
             canClose: true,
             initialCall: true,
@@ -91,11 +97,17 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
 
     return (
       <div ref={containerRef} className={`flex flex-col items-center z-50 ${className}`} key={pagesKey}>
+        <style>{`
+          .c-flipbook::after,
+          .c-flipbook::before {
+            display: none !important;
+          }
+        `}</style>
         <div className="c-flipbook" style={{ width, height, position: 'relative', zIndex: 50 }}>
           {pages.map((pageUrl, index) => (
             <div 
               key={`page-${index}-${pageUrl.substring(0, 30)}`} 
-              className="c-flipbook__page rounded-none border border-gray-300"
+              className="c-flipbook__page border border-gray-300"
               style={{ 
                 borderRadius: 0
               }}

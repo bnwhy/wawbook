@@ -278,6 +278,7 @@ export async function registerRoutes(
         childName: config.childName || '',
         age: config.age || '',
         dedication: config.dedication || '',
+        author: config.author || '',
         gender: config.gender || '',
         characters: characters || {},
         combinationKey: combinationKey || 'default',
@@ -598,6 +599,9 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             
             // Helper function to resolve variables in text
             const resolveVariablesInText = (text: string): string => {
+              // #region agent log
+              const originalText = text;
+              // #endregion
               let resolved = text;
               
               // Replace variables - support multiple formats
@@ -608,7 +612,29 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 resolved = resolved.replace(/\{nom_enfant\}/gi, config.childName);
               }
               
-              // Replace TXTVAR variables
+              // Replace dedication variable
+              if (config.dedication) {
+                resolved = resolved.replace(/\{\{dedication\}\}/gi, config.dedication);
+                resolved = resolved.replace(/\{dedication\}/gi, config.dedication);
+              }
+              
+              // Replace author variable
+              if (config.author) {
+                resolved = resolved.replace(/\{\{author\}\}/gi, config.author);
+                resolved = resolved.replace(/\{author\}/gi, config.author);
+              }
+              
+              // Replace TXTVAR system variables (dedication, author)
+              if (config.dedication) {
+                resolved = resolved.replace(/\{\{TXTVAR_dedication\}\}/gi, config.dedication);
+                resolved = resolved.replace(/\{TXTVAR_dedication\}/gi, config.dedication);
+              }
+              if (config.author) {
+                resolved = resolved.replace(/\{\{TXTVAR_author\}\}/gi, config.author);
+                resolved = resolved.replace(/\{TXTVAR_author\}/gi, config.author);
+              }
+              
+              // Replace TXTVAR wizard variables (tabId_variantId)
               resolved = resolved.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (match: string, tabId: string, variantId: string) => {
                 const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
                 const tabSelections = characters?.[wizardTabId];
@@ -617,6 +643,13 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 }
                 return match;
               });
+              
+              // #region agent log
+              if (originalText.includes('TXTVAR_dedication') || originalText.includes('TXTVAR_author')) {
+                const fs = require('fs');
+                fs.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:639',message:'Variable resolution',data:{originalText,resolvedText:resolved,hasDedication:!!config.dedication,hasAuthor:!!config.author,dedication:config.dedication,author:config.author},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'M'}) + '\n');
+              }
+              // #endregion
               
               return resolved;
             };

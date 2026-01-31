@@ -129,8 +129,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [isFlipping, setIsFlipping] = useState(false);
   const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
   const [dedication, setDedication] = useState(config.dedication || '');
+  const [author, setAuthor] = useState(config.author || '');
+  const [initialDedication, setInitialDedication] = useState(config.dedication || '');
+  const [initialAuthor, setInitialAuthor] = useState(config.author || '');
   const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
   const [generatedPages, setGeneratedPages] = useState<Record<number, string>>({});
+  const [flipbookKey, setFlipbookKey] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("Chargement...");
@@ -160,6 +164,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         const k = key.trim();
         if (k === 'childName') return config.childName || "l'enfant";
         if (k === 'dedication') return config.dedication || '';
+        if (k === 'author') return config.author || '';
         if (k === 'age') return config.age?.toString() || '';
         if (k === 'heroName') return config.childName || 'Héros';
         if (k === 'gender') return config.gender === Gender.Girl ? 'Fille' : 'Garçon';
@@ -407,6 +412,69 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
          }
     });
   }, [book]);
+
+  // #region agent log
+  const handleApplyChanges = async () => {
+    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:416',message:'handleApplyChanges called',data:{dedication,author,initialDedication,initialAuthor,hasChanges:dedication!==initialDedication||author!==initialAuthor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+    
+    if (!book) return;
+    
+    // Update config with new values
+    config.dedication = dedication;
+    config.author = author;
+    
+    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:424',message:'Config updated',data:{bookId:book.id,dedication,author},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+    
+    try {
+      // Call API to regenerate page 1
+      const response = await fetch(`/api/books/${book.id}/render-pages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config: {
+            childName: config.childName,
+            age: config.age,
+            dedication: config.dedication,
+            author: config.author,
+            gender: config.gender,
+          },
+          characters: config.characters,
+          combinationKey: currentCombinationKey,
+        }),
+      });
+      
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:445',message:'API response received',data:{ok:response.ok,status:response.status},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:451',message:'Pages regenerated',data:{pagesCount:result.pages?.length,pages:result.pages},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+        
+        if (result.pages && result.pages.length > 0) {
+          // Update generatedPages with new page 1
+          const cacheBust = Date.now();
+          const updatedPages = { ...generatedPages };
+          result.pages.forEach((p: { pageIndex: number; imageUrl: string }) => {
+            updatedPages[p.pageIndex] = `${p.imageUrl}?t=${cacheBust}`;
+          });
+          setGeneratedPages(updatedPages);
+          
+          // Update initial values
+          setInitialDedication(dedication);
+          setInitialAuthor(author);
+          
+          // Force flipbook remount by changing key
+          setFlipbookKey(prev => prev + 1);
+          
+          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:469',message:'State updated successfully',data:{updatedPagesCount:Object.keys(updatedPages).length,newFlipbookKey:flipbookKey+1},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
+        }
+      }
+    } catch (err) {
+      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:473',message:'Error in handleApplyChanges',data:{error:String(err)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+      console.error('Failed to regenerate pages:', err);
+    }
+  };
+  // #endregion
 
   const handleAddToCart = () => {
     const capturedCoverImage = generatedPages[1] || generatedPages[2] || book?.coverImage;
@@ -1073,6 +1141,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   // Convert generatedPages to array for FlipbookViewer
   const flipbookPages = useMemo(() => {
+    // #region agent log
+    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:1142',message:'flipbookPages useMemo recalculated',data:{generatedPagesKeys:Object.keys(generatedPages)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
     const pages: string[] = [];
     
     // Get all page indices that exist in generatedPages, sorted
@@ -1237,7 +1308,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   <div className={isGenerating ? "opacity-30 blur-sm pointer-events-none transition-all duration-500" : "opacity-100 transition-all duration-500"}>
                     {flipbookPages.length > 0 ? (
                       <FlipbookViewer
-                        key={`flipbook-${flipbookPages.length}-${book?.id || 'default'}`}
+                        key={`flipbook-${flipbookPages.length}-${book?.id || 'default'}-${flipbookKey}`}
                         pages={flipbookPages}
                         width={`${computedW}px`}
                         height={`${computedH}px`}
@@ -1280,7 +1351,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-8 lg:gap-12">
                    {/* COL 1 */}
                    <div>
-                       <h3 className="font-display font-black text-xl text-cloud-dark mb-2">1. Ajouter votre touche personnelle</h3>
+                       <h3 className="font-display font-black text-xl text-cloud-dark mb-2">1. Ajouter votre touche personnelle <span className="text-gray-400 text-sm font-normal">(optionnel)</span></h3>
                        <p className="text-cloud-dark/60 text-sm font-medium mb-2">Un message imprimé sur la première page pour un souvenir unique.</p>
                        <textarea 
                           className="w-full p-3 border-2 border-cloud-dark/10 rounded-xl font-medium text-cloud-dark focus:border-cloud-blue focus:ring-0 outline-none transition-colors bg-white resize-none text-sm"
@@ -1293,6 +1364,32 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                        <div className="text-right text-xs text-gray-400 mb-4 mt-1 font-medium">
                            {dedication.length}/600
                        </div>
+
+                       <p className="text-cloud-dark/60 text-sm font-medium mb-2">Nom de l'auteur de cette histoire.</p>
+                       <input 
+                          type="text"
+                          className="w-full p-3 border-2 border-cloud-dark/10 rounded-xl font-medium text-cloud-dark focus:border-cloud-blue focus:ring-0 outline-none transition-colors bg-white text-sm"
+                          placeholder="Nom de l'auteur..."
+                          value={author}
+                          onChange={(e) => setAuthor(e.target.value)}
+                          maxLength={20}
+                       />
+                       <div className="text-right text-xs text-gray-400 mb-4 mt-1 font-medium">
+                           {author.length}/20
+                       </div>
+
+                       {/* Bouton commun - toujours visible, bleu si modification */}
+                       <button 
+                           onClick={handleApplyChanges}
+                           className={`w-full mt-2 py-3 px-4 font-bold text-sm rounded-xl transition-colors ${
+                               dedication !== initialDedication || author !== initialAuthor
+                                   ? 'bg-cloud-blue text-white hover:bg-cloud-deep cursor-pointer'
+                                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                           }`}
+                           disabled={dedication === initialDedication && author === initialAuthor}
+                       >
+                           Appliquer les modifications
+                       </button>
                    </div>
 
                    {/* COL 2 */}

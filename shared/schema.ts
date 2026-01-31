@@ -162,6 +162,8 @@ export const books = pgTable("books", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   promoCode: text("promo_code"),
   coverImage: text("cover_image").notNull(),
+  galleryImages: jsonb("gallery_images").$type<string[]>(),
+  thumbnailBackground: text("thumbnail_background"),
   theme: text("theme").notNull(),
   category: text("category").notNull(), // 'family' | 'theme' | 'activity' | 'occasion'
   badgeText: text("badge_text"),

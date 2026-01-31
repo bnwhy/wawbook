@@ -1855,6 +1855,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const handleSaveAndExit = (updatedBook: BookProduct) => {
+    // #region agent log
+    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:1858',message:'Saving book',data:{bookId:updatedBook.id,bookName:updatedBook.name,galleryImages:updatedBook.galleryImages,galleryLength:updatedBook.galleryImages?.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H_SAVE'})}).catch(()=>{});
+    // #endregion
     updateBook(updatedBook);
     setDraftBook(null); // Clear draft to resync with new context
     setIsEditing(false);
@@ -5697,73 +5700,74 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </div>
 
                        <div className="col-span-2">
-                          <label className="block text-sm font-bold text-slate-700 mb-2">Image de couverture (avec effet 3D)</label>
-                          <div className="flex items-center gap-4">
-                             <div className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group cursor-pointer">
-                                {selectedBook.coverImage ? (
-                                   <img src={selectedBook.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                                ) : (
-                                   <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                      <ImageIcon size={24} />
-                                   </div>
-                                )}
-                                <input 
-                                   type="file" 
-                                   accept="image/*"
-                                   className="absolute inset-0 opacity-0 cursor-pointer"
-                                   onChange={async (e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                         try {
-                                            toast.loading('Upload de la couverture...', { id: 'cover-upload' });
-                                            const objectPath = await uploadFileToStorage(file, `cover_${selectedBook.id}`);
-                                            handleSaveBook({...selectedBook, coverImage: objectPath});
-                                            toast.success('Couverture uploadée!', { id: 'cover-upload' });
-                                         } catch (error) {
-                                            console.error('Cover upload error:', error);
-                                            toast.error('Erreur lors de l\'upload', { id: 'cover-upload' });
-                                         }
-                                      }
-                                   }}
-                                />
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                   <PenTool className="text-white" size={20} />
-                                </div>
-                             </div>
-                             <div className="flex-1">
-                                <p className="text-xs text-gray-500 mb-2">Format recommandé: 800x1200px (Portrait)</p>
-                                {selectedBook.coverImage && (
-                                   <button 
-                                      onClick={() => handleSaveBook({...selectedBook, coverImage: ''})}
-                                      className="text-xs text-red-500 hover:text-red-600 font-bold"
-                                   >
-                                      Supprimer l'image
-                                   </button>
-                                )}
-                             </div>
-                          </div>
-                       </div>
-                       
-                       <div className="col-span-2">
-                          <label className="block text-sm font-bold text-slate-700 mb-2">Images supplémentaires (Carrousel)</label>
+                          <label className="block text-sm font-bold text-slate-700 mb-2">Images du carrousel (Miniature)</label>
                           <div className="space-y-3">
                              <div className="flex flex-wrap gap-3">
-                                {(selectedBook.galleryImages || []).map((imgUrl, idx) => (
-                                   <div key={idx} className="w-20 h-28 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group">
-                                      <img src={imgUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                
+                                {/* Toutes les images */}
+                                {(selectedBook.galleryImages || []).map((img, idx) => (
+                                   <div 
+                                      key={idx} 
+                                      draggable
+                                      onDragStart={(e) => {
+                                         e.dataTransfer.effectAllowed = 'move';
+                                         e.dataTransfer.setData('text/plain', idx.toString());
+                                      }}
+                                      onDragOver={(e) => {
+                                         e.preventDefault();
+                                         e.dataTransfer.dropEffect = 'move';
+                                      }}
+                                      onDrop={(e) => {
+                                         e.preventDefault();
+                                         const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                                         if (fromIdx !== idx) {
+                                            const newGallery = [...(selectedBook.galleryImages || [])];
+                                            const [moved] = newGallery.splice(fromIdx, 1);
+                                            newGallery.splice(idx, 0, moved);
+                                            handleSaveBook({...selectedBook, galleryImages: newGallery, coverImage: typeof newGallery[0] === 'string' ? newGallery[0] : newGallery[0].url});
+                                         }
+                                      }}
+                                      className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group cursor-move hover:border-cloud-blue transition-colors"
+                                   >
+                                      <img src={typeof img === 'string' ? img : img.url} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
                                       <button 
                                          onClick={() => {
                                             const newGallery = [...(selectedBook.galleryImages || [])];
                                             newGallery.splice(idx, 1);
-                                            handleSaveBook({...selectedBook, galleryImages: newGallery});
+                                            // Mettre à jour coverImage si on supprime la 1ère
+                                            const updates = idx === 0 && newGallery.length > 0
+                                              ? { galleryImages: newGallery, coverImage: typeof newGallery[0] === 'string' ? newGallery[0] : newGallery[0].url }
+                                              : { galleryImages: newGallery };
+                                            handleSaveBook({...selectedBook, ...updates});
                                          }}
-                                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                       >
                                          <X size={12} />
                                       </button>
+                                      {/* Toggle effet 3D */}
+                                      <button
+                                         onClick={() => {
+                                            const newGallery = [...(selectedBook.galleryImages || [])];
+                                            if (typeof newGallery[idx] === 'string') {
+                                               newGallery[idx] = { url: newGallery[idx] as string, use3DEffect: true };
+                                            } else {
+                                               newGallery[idx] = { ...newGallery[idx] as any, use3DEffect: !(newGallery[idx] as any).use3DEffect };
+                                            }
+                                            handleSaveBook({...selectedBook, galleryImages: newGallery});
+                                         }}
+                                         className={`absolute bottom-1 left-1 right-1 text-white text-[9px] font-bold text-center py-0.5 rounded ${(typeof img === 'object' && img.use3DEffect) ? 'bg-cloud-blue' : 'bg-gray-400'}`}
+                                      >
+                                         {(typeof img === 'object' && img.use3DEffect) ? '3D ON' : '3D OFF'}
+                                      </button>
+                                      {/* Numéro dynamique */}
+                                      <div className="absolute top-0 left-0 right-0 bg-black/30 text-white text-[9px] font-bold text-center py-0.5">
+                                         {idx + 1}
+                                      </div>
                                    </div>
                                 ))}
-                                <div className="w-20 h-28 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-brand-coral hover:bg-brand-coral/5 transition-colors relative group">
+                                
+                                {/* Bouton ajouter */}
+                                <div className="w-24 h-32 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-brand-coral hover:bg-brand-coral/5 transition-colors relative group">
                                    <Plus size={24} className="text-gray-400 group-hover:text-brand-coral" />
                                    <input 
                                       type="file" 
@@ -5780,7 +5784,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                );
                                                const urls = await Promise.all(uploadPromises);
                                                const currentGallery = selectedBook.galleryImages || [];
-                                               handleSaveBook({...selectedBook, galleryImages: [...currentGallery, ...urls]});
+                                               const newImages = urls.map(url => ({ url, use3DEffect: currentGallery.length === 0 })); // 1ère image = 3D par défaut
+                                               const updatedGallery = [...currentGallery, ...newImages];
+                                               // Si c'est la 1ère image, mettre aussi coverImage pour rétrocompat
+                                               const updates = updatedGallery.length === newImages.length && newImages.length > 0
+                                                 ? { galleryImages: updatedGallery, coverImage: newImages[0].url }
+                                                 : { galleryImages: updatedGallery };
+                                               handleSaveBook({...selectedBook, ...updates});
                                                toast.success(`${files.length} image(s) uploadée(s)!`, { id: 'gallery-upload' });
                                             } catch (error) {
                                                console.error('Gallery upload error:', error);
@@ -5791,7 +5801,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    />
                                 </div>
                              </div>
-                             <p className="text-xs text-gray-500">Ces images apparaîtront dans un carrousel après la couverture (sans effet 3D)</p>
+                             <p className="text-xs text-gray-500">Cliquez "3D ON/OFF" pour activer/désactiver l'effet 3D sur chaque image. La 1ère image est affichée en couverture.</p>
                           </div>
                        </div>
 

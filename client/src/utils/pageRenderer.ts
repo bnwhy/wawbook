@@ -68,6 +68,7 @@ const resolveVariables = (html: string, config: BookConfig, characters?: Record<
     if (k === 'childName' || k === 'name') return config.childName || "l'enfant";
     if (k === 'age') return config.age?.toString() || '';
     if (k === 'dedication') return config.dedication || '';
+    if (k === 'author') return config.author || '';
     if (k === 'heroName') return config.childName || 'Héros';
     if (k === 'gender') return config.gender === Gender.Girl ? 'Fille' : 'Garçon';
 

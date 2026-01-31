@@ -1,13 +1,18 @@
 import { Theme } from '../types';
 
+export interface GalleryImage {
+  url: string;
+  use3DEffect: boolean;
+}
+
 export interface BookProduct {
   id: string;
   name: string;
   description: string;
   price: number;
   promoCode?: string;
-  coverImage: string;
-  galleryImages?: string[]; // Images additionnelles pour le carrousel
+  coverImage: string; // Deprecated - utiliser galleryImages[0]
+  galleryImages?: GalleryImage[]; // Toutes les images avec option effet 3D
   theme: Theme;
   category: 'family' | 'theme' | 'activity' | 'occasion';
   badgeText?: string;

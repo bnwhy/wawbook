@@ -312,6 +312,16 @@ function renderConditionalSegments(
 
     // Résoudre les variables dans le texte
     let text = segment.text || '';
+    
+    // First resolve TXTVAR system variables (dedication, author)
+    if (config.dedication) {
+      text = text.replace(/\{TXTVAR_dedication\}/gi, config.dedication);
+    }
+    if (config.author) {
+      text = text.replace(/\{TXTVAR_author\}/gi, config.author);
+    }
+    
+    // Then resolve TXTVAR wizard variables (tabId_variantId)
     text = text.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (match: string, tabId: string, variantId: string) => {
       const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
       const tabSelections = wizardSelections[wizardTabId];
@@ -501,6 +511,7 @@ export const generateBookPages = async (
           if (k === 'childName') return config.childName || 'Enfant';
           if (k === 'age') return config.age?.toString() || '';
           if (k === 'dedication') return config.dedication || '';
+          if (k === 'author') return config.author || '';
           if (k === 'heroName') return config.childName || 'Héros';
           if (k === 'gender') return config.gender || 'Garçon';
           
@@ -516,6 +527,7 @@ export const generateBookPages = async (
       content = content.replace(/\[childName\]/gi, config.childName || 'Enfant');
       content = content.replace(/\[age\]/gi, config.age?.toString() || '');
       content = content.replace(/\[dedication\]/gi, config.dedication || '');
+      content = content.replace(/\[author\]/gi, config.author || '');
       
       return content;
   };

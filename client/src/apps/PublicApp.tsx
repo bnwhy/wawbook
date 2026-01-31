@@ -94,7 +94,7 @@ const PublicApp: React.FC = () => {
           <MenuProvider>
             <CartProvider>
               <EcommerceProvider>
-                <div className="font-sans text-slate-900 bg-brand-cream min-h-screen">
+                <div className="font-sans text-slate-900 min-h-screen" style={{ background: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)' }}>
                 <ScrollToTop />
                 <Switch>
                   {/* Auth routes */}

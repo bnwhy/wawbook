@@ -66,7 +66,9 @@ router.patch("/:id", async (req, res, next) => {
     
     logger.debug({ 
       bookId: req.params.id, 
-      imageElementsCount: body.contentConfig?.imageElements?.length 
+      imageElementsCount: body.contentConfig?.imageElements?.length,
+      galleryImages: body.galleryImages,
+      thumbnailBackground: body.thumbnailBackground
     }, 'Updating book');
     
     if (body.contentConfig?.imageElements?.length > 0) {

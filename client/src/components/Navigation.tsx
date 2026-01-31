@@ -214,7 +214,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
             </Link>
           )}
 
-          <Link href="/cart" className="flex px-5 py-2.5 bg-gradient-to-r from-accent-sun to-yellow-400 text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
+          <Link href="/cart" className="flex px-5 py-2.5 bg-accent-sun text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
                <ShoppingCart size={20} />
                <span>Panier</span>
                {itemCount > 0 && (

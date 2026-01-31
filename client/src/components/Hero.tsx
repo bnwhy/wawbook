@@ -157,9 +157,15 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
       setCarouselIndexes(prev => {
         const newIndexes = { ...prev };
         visibleBooks.forEach(book => {
-          const allImages = [book.coverImage, ...(book.galleryImages || [])].filter(Boolean);
-          if (allImages.length > 1) {
-            newIndexes[book.id] = ((prev[book.id] || 0) + 1) % allImages.length;
+          const carouselImages = [
+            { url: book.coverImage, use3DEffect: true },
+            ...(book.galleryImages || []).map(img => 
+              typeof img === 'string' ? { url: img, use3DEffect: false } : img
+            )
+          ].filter(img => img.url);
+          
+          if (carouselImages.length > 1) {
+            newIndexes[book.id] = ((prev[book.id] || 0) + 1) % carouselImages.length;
           }
         });
         return newIndexes;
@@ -240,9 +246,20 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   {section.books.map((card, idx) => {
                     const customBadge = section.bookBadges?.[card.id];
                     const badgeToShow = customBadge || card.badgeText;
-                    const allImages = [card.coverImage, ...(card.galleryImages || [])].filter(Boolean);
-                    const hasMultipleImages = allImages.length > 1;
-                    const currentImageIndex = carouselIndexes[card.id] || 0;
+                    
+                    // Utiliser galleryImages si présent, sinon fallback sur coverImage
+                    const carouselImages = (card.galleryImages && card.galleryImages.length > 0)
+                      ? card.galleryImages.map(img => typeof img === 'string' ? { url: img, use3DEffect: false } : img).filter(img => img && img.url && img.url.trim() !== '')
+                      : card.coverImage ? [{ url: card.coverImage, use3DEffect: true }] : [];
+                    
+                    const hasMultipleImages = carouselImages.length > 1;
+                    let currentImageIndex = carouselIndexes[card.id] || 0;
+                    // Protection : si l'index dépasse la longueur, revenir à 0
+                    if (currentImageIndex >= carouselImages.length) {
+                      currentImageIndex = 0;
+                      setCarouselIndexes(prev => ({...prev, [card.id]: 0}));
+                    }
+                    const currentImage = carouselImages[currentImageIndex];
                     
                     return (
                 <div 
@@ -252,67 +269,43 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                 >
                   {/* Image Container */}
                   <div className="aspect-square relative overflow-visible flex items-center justify-center p-2" style={{ background: card.thumbnailBackground || 'linear-gradient(135deg, #fef1f7 0%, #faf5ff 100%)' }}>
-                      {allImages.length > 0 ? (
+                      {carouselImages.length > 0 && currentImage ? (
                         <div className="w-[90%] h-[90%] relative">
                           {/* Image courante avec transition */}
-                          {allImages.map((imgUrl, imgIdx) => (
+                          {carouselImages.map((img, imgIdx) => (
                             <div 
                               key={imgIdx}
                               className={`absolute inset-0 transition-opacity duration-500 ${imgIdx === currentImageIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                             >
-                              {imgIdx === 0 ? (
+                              {img.use3DEffect ? (
                                 <BookCover3D 
-                                  imageUrl={imgUrl} 
+                                  imageUrl={img.url} 
                                   alt={card.name}
                                 />
                               ) : (
                                 <img 
-                                  src={imgUrl} 
+                                  src={img.url} 
                                   alt={`${card.name} - Image ${imgIdx + 1}`}
-                                  className="w-full h-full object-cover rounded-lg"
+                                  className="w-full h-full object-cover rounded-lg shadow-lg"
                                 />
                               )}
                             </div>
                           ))}
                           
-                          {/* Navigation - Flèches */}
+                          {/* Indicateurs de pagination - en bas de la carte */}
                           {hasMultipleImages && (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const newIndex = currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1;
-                                  setCarouselIndexes(prev => ({...prev, [card.id]: newIndex}));
-                                }}
-                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-20"
-                              >
-                                <ChevronLeft size={16} strokeWidth={3} />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const newIndex = (currentImageIndex + 1) % allImages.length;
-                                  setCarouselIndexes(prev => ({...prev, [card.id]: newIndex}));
-                                }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-20"
-                              >
-                                <ChevronRight size={16} strokeWidth={3} />
-                              </button>
-                              
-                              {/* Indicateurs de pagination */}
-                              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                                {allImages.map((_, dotIdx) => (
-                                  <button
-                                    key={dotIdx}
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      setCarouselIndexes(prev => ({...prev, [card.id]: dotIdx}));
-                                    }}
-                                    className={`w-1.5 h-1.5 rounded-full transition-all ${dotIdx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'}`}
-                                  />
-                                ))}
-                              </div>
-                            </>
+                            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                              {carouselImages.map((_, dotIdx) => (
+                                <button
+                                  key={dotIdx}
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setCarouselIndexes(prev => ({...prev, [card.id]: dotIdx}));
+                                  }}
+                                  className={`w-1.5 h-1.5 rounded-full transition-all ${dotIdx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'}`}
+                                />
+                              ))}
+                            </div>
                           )}
                         </div>
                       ) : (

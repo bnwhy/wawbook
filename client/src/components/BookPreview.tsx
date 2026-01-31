@@ -413,20 +413,15 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     });
   }, [book]);
 
-  // #region agent log
   const handleApplyChanges = async () => {
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:416',message:'handleApplyChanges called',data:{dedication,author,initialDedication,initialAuthor,hasChanges:dedication!==initialDedication||author!==initialAuthor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-    
     if (!book) return;
     
     // Update config with new values
     config.dedication = dedication;
     config.author = author;
     
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:424',message:'Config updated',data:{bookId:book.id,dedication,author},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
-    
     try {
-      // Call API to regenerate page 1
+      // Call API to regenerate pages
       const response = await fetch(`/api/books/${book.id}/render-pages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -443,15 +438,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         }),
       });
       
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:445',message:'API response received',data:{ok:response.ok,status:response.status},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
-      
       if (response.ok) {
         const result = await response.json();
         
-        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:451',message:'Pages regenerated',data:{pagesCount:result.pages?.length,pages:result.pages},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
-        
         if (result.pages && result.pages.length > 0) {
-          // Update generatedPages with new page 1
+          // Update generatedPages
           const cacheBust = Date.now();
           const updatedPages = { ...generatedPages };
           result.pages.forEach((p: { pageIndex: number; imageUrl: string }) => {
@@ -465,16 +456,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           
           // Force flipbook remount by changing key
           setFlipbookKey(prev => prev + 1);
-          
-          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:469',message:'State updated successfully',data:{updatedPagesCount:Object.keys(updatedPages).length,newFlipbookKey:flipbookKey+1},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'E'})}).catch(()=>{});
         }
       }
     } catch (err) {
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:473',message:'Error in handleApplyChanges',data:{error:String(err)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
       console.error('Failed to regenerate pages:', err);
     }
   };
-  // #endregion
 
   const handleAddToCart = () => {
     const capturedCoverImage = generatedPages[1] || generatedPages[2] || book?.coverImage;
@@ -1141,9 +1128,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
   // Convert generatedPages to array for FlipbookViewer
   const flipbookPages = useMemo(() => {
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BookPreview.tsx:1142',message:'flipbookPages useMemo recalculated',data:{generatedPagesKeys:Object.keys(generatedPages)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
     const pages: string[] = [];
     
     // Get all page indices that exist in generatedPages, sorted

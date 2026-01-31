@@ -39,9 +39,6 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     }));
 
     useEffect(() => {
-      // #region agent log
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FlipbookViewer.tsx:42',message:'useEffect triggered',data:{pagesLength:pages.length,pagesKey,hasPrevFlipbook:!!flipbookRef.current},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'K'})}).catch(()=>{});
-      // #endregion
       if (!containerRef.current || pages.length === 0) return;
       
       const flipbookEl = containerRef.current.querySelector('.c-flipbook') as HTMLElement;
@@ -54,9 +51,6 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
 
       const timer = setTimeout(() => {
         try {
-          // #region agent log
-          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FlipbookViewer.tsx:57',message:'Creating new FlipBook instance',data:{pagesCount:pages.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'K'})}).catch(()=>{});
-          // #endregion
           flipbookRef.current = new FlipBook(flipbookEl, {
             canClose: true,
             initialCall: true,

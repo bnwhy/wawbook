@@ -599,9 +599,6 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             
             // Helper function to resolve variables in text
             const resolveVariablesInText = (text: string): string => {
-              // #region agent log
-              const originalText = text;
-              // #endregion
               let resolved = text;
               
               // Replace variables - support multiple formats
@@ -643,13 +640,6 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 }
                 return match;
               });
-              
-              // #region agent log
-              if (originalText.includes('TXTVAR_dedication') || originalText.includes('TXTVAR_author')) {
-                const fs = require('fs');
-                fs.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:639',message:'Variable resolution',data:{originalText,resolvedText:resolved,hasDedication:!!config.dedication,hasAuthor:!!config.author,dedication:config.dedication,author:config.author},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'M'}) + '\n');
-              }
-              // #endregion
               
               return resolved;
             };
@@ -738,13 +728,8 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               content = segmentsHtml;
             } else {
               // Pas de segments conditionnels : utiliser le contenu global
-              // Replace variables - support multiple formats
-              if (config.childName) {
-                content = content.replace(/\{\{child_name\}\}/gi, config.childName);
-                content = content.replace(/\{\{nom_enfant\}\}/gi, config.childName);
-                content = content.replace(/\{child_name\}/gi, config.childName);
-                content = content.replace(/\{nom_enfant\}/gi, config.childName);
-              }
+              // Resolve all variables using resolveVariablesInText
+              content = resolveVariablesInText(content);
               
               // Apply text transform
               const textTransform = style.textTransform || 'none';

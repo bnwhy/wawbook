@@ -1424,10 +1424,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
 
     // Add standard/global variables ONLY if strictly necessary and standard for all books
-    // For now, we only include "dedication" which is a system-level variable not always in wizard
-    const standardVars = [
-        { id: 'dedication', label: 'Dédicace' }
-    ];
+    // Use previewFields if configured, otherwise fallback to default "dedication"
+    const standardVars: { id: string; label: string }[] = [];
+    if (selectedBook?.wizardConfig?.previewFields) {
+        selectedBook.wizardConfig.previewFields
+            .filter(field => field.enabled)
+            .forEach(field => {
+                standardVars.push({ id: field.id, label: field.label });
+            });
+    }
+    // Fallback si previewFields n'existe pas ou est vide
+    if (standardVars.length === 0) {
+        standardVars.push({ id: 'dedication', label: 'Dédicace' });
+    }
 
     standardVars.forEach(stdVar => {
         const key = `{{${stdVar.id}}}`;
@@ -1889,6 +1898,51 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         newSet.add(variantId);
     }
     setExpandedVariantIds(newSet);
+  };
+
+  // Handlers for preview fields
+  const handleTogglePreviewField = (fieldId: string) => {
+    if (!selectedBook) return;
+    
+    // Initialize previewFields if it doesn't exist
+    const currentFields = selectedBook.wizardConfig.previewFields || [
+      { id: 'dedication', label: 'Dédicace', enabled: false, textElementId: '' },
+      { id: 'author', label: 'Auteur', enabled: false, textElementId: '' }
+    ];
+    
+    const updatedFields = currentFields.map(field => 
+      field.id === fieldId ? { ...field, enabled: !field.enabled } : field
+    );
+    
+    handleSaveBook({
+      ...selectedBook,
+      wizardConfig: {
+        ...selectedBook.wizardConfig,
+        previewFields: updatedFields
+      }
+    });
+  };
+
+  const handleUpdatePreviewFieldMapping = (fieldId: string, textElementId: string) => {
+    if (!selectedBook) return;
+    
+    // Initialize previewFields if it doesn't exist
+    const currentFields = selectedBook.wizardConfig.previewFields || [
+      { id: 'dedication', label: 'Dédicace', enabled: false, textElementId: '' },
+      { id: 'author', label: 'Auteur', enabled: false, textElementId: '' }
+    ];
+    
+    const updatedFields = currentFields.map(field => 
+      field.id === fieldId ? { ...field, textElementId } : field
+    );
+    
+    handleSaveBook({
+      ...selectedBook,
+      wizardConfig: {
+        ...selectedBook.wizardConfig,
+        previewFields: updatedFields
+      }
+    });
   };
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -6697,6 +6751,156 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           )}
                        </div>
                     </div>
+
+                    {/* Preview Fields Section */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                       <div className="flex justify-between items-center mb-6">
+                          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                             <Eye size={24} className="text-purple-600" />
+                             Preview - Champs Spéciaux
+                          </h2>
+                       </div>
+
+                       <div className="space-y-4">
+                          {(() => {
+                             // Initialize previewFields with default values if not present
+                             const previewFields = selectedBook.wizardConfig.previewFields || [
+                                { id: 'dedication', label: 'Dédicace', enabled: false, textElementId: '' },
+                                { id: 'author', label: 'Auteur', enabled: false, textElementId: '' }
+                             ];
+
+                             return previewFields.map((field) => {
+                                // Detect text elements that contain this variable
+                                const variableKey = `{TXTVAR_${field.id}}`;
+                                const mappedTexts = selectedBook.contentConfig.texts?.filter(text => 
+                                   text.content && text.content.includes(variableKey)
+                                ) || [];
+
+                                return (
+                                   <div key={field.id} className="border border-gray-200 rounded-lg bg-gray-50 p-4">
+                                      <div className="flex items-center gap-4">
+                                         {/* Toggle Checkbox */}
+                                         <label className="flex items-center cursor-pointer">
+                                            <input
+                                               type="checkbox"
+                                               checked={field.enabled}
+                                               onChange={() => handleTogglePreviewField(field.id)}
+                                               className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                            />
+                                         </label>
+
+                                         {/* Field Label */}
+                                         <div className="flex-1">
+                                            <div className="font-bold text-slate-700 text-sm">{field.label}</div>
+                                            <div className="flex items-center gap-2 mt-1">
+                                               <span className="text-[10px] text-gray-400 uppercase font-bold">Variable:</span>
+                                               <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded text-[10px] font-mono">
+                                                  {variableKey}
+                                               </span>
+                                            </div>
+                                         </div>
+                                      </div>
+
+                                      {/* Detected Mappings */}
+                                      {mappedTexts.length > 0 && (
+                                         <div className="mt-3 pl-9">
+                                            <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">
+                                               Détecté dans {mappedTexts.length} élément{mappedTexts.length > 1 ? 's' : ''} :
+                                            </div>
+                                            <div className="space-y-1">
+                                               {mappedTexts.map((text, idx) => (
+                                                  <div key={idx} className="flex items-center gap-2 text-xs bg-white border border-purple-200 rounded px-2 py-1">
+                                                     <span className="font-mono text-purple-600 font-bold">{text.id}</span>
+                                                     <span className="text-gray-400">→</span>
+                                                     <span className="text-gray-600 truncate flex-1">
+                                                        {text.content?.substring(0, 50)}{text.content && text.content.length > 50 ? '...' : ''}
+                                                     </span>
+                                                  </div>
+                                               ))}
+                                            </div>
+                                         </div>
+                                      )}
+                                   </div>
+                                );
+                             });
+                          })()}
+                       </div>
+
+                       <div className="mt-4 p-3 bg-purple-50 border border-purple-100 rounded-lg">
+                          <p className="text-xs text-purple-700">
+                             <strong>💡 Info:</strong> Ces champs permettent de définir des variables système (dédicace, auteur) 
+                             qui peuvent être utilisées dans les textes du livre. Activez-les pour les rendre disponibles 
+                             dans l'éditeur de texte.
+                          </p>
+                       </div>
+                    </div>
+
+                    {/* Variables de texte détectées */}
+                    {(() => {
+                       // Collecter toutes les variables de preview détectées dans les textes
+                       const previewVariables: Array<{
+                          varName: string;
+                          textId: string;
+                          textContent: string;
+                          pageIndex?: number;
+                       }> = [];
+
+                       selectedBook.contentConfig.texts?.forEach(text => {
+                          ['dedication', 'author'].forEach(fieldId => {
+                             const varName = `{TXTVAR_${fieldId}}`;
+                             if (text.content && text.content.includes(varName)) {
+                                previewVariables.push({
+                                   varName,
+                                   textId: text.id,
+                                   textContent: text.content,
+                                   pageIndex: text.position?.pageIndex
+                                });
+                             }
+                          });
+                       });
+
+                       if (previewVariables.length === 0) return null;
+
+                       return (
+                          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
+                                <FileText size={24} className="text-purple-600" />
+                                Variables de texte ({previewVariables.length})
+                             </h2>
+
+                             <div className="space-y-3">
+                                {previewVariables.map((variable, idx) => (
+                                   <div key={idx} className="bg-white rounded border border-purple-100 p-3 text-xs">
+                                      <div className="flex items-start gap-2 mb-2">
+                                         <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
+                                            #{idx + 1}
+                                         </span>
+                                         <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                               <span className="text-slate-400 font-medium">📝</span>
+                                               <span className="font-mono text-purple-600 font-bold">{variable.varName}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-[10px] text-slate-500 ml-5">
+                                               <span className="text-purple-500">→</span>
+                                               <span className="font-mono">{variable.textId}</span>
+                                               {variable.pageIndex !== undefined && (
+                                                  <>
+                                                     <span className="text-slate-300">|</span>
+                                                     <span>Page {variable.pageIndex + 1}</span>
+                                                  </>
+                                               )}
+                                            </div>
+                                         </div>
+                                      </div>
+                                      <div className="ml-7 mt-2 text-slate-700 font-mono bg-slate-50 px-2 py-1 rounded text-[10px]" style={{ whiteSpace: 'pre-wrap' }}>
+                                         "{variable.textContent.substring(0, 100)}{variable.textContent.length > 100 ? '...' : ''}"
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+                          </div>
+                       );
+                    })()}
                  </div>
               )}
 

@@ -42,8 +42,16 @@ export const wizardTabSchema = z.object({
   variants: z.array(wizardVariantSchema),
 });
 
+export const previewFieldSchema = z.object({
+  id: z.string(),           // 'dedication' ou 'author'
+  label: z.string(),        // 'Dédicace' ou 'Auteur'
+  enabled: z.boolean(),     // Activer/désactiver le champ
+  textElementId: z.string().optional(), // ID pour mapper avec contentConfig.texts[].id
+});
+
 export const wizardConfigSchema = z.object({
   tabs: z.array(wizardTabSchema),
+  previewFields: z.array(previewFieldSchema).optional(), // Nouveau champ
 });
 
 export const textStyleSchema = z.object({

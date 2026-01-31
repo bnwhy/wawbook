@@ -251,15 +251,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                   className="group flex flex-col bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 h-full cursor-pointer hover:-translate-y-1"
                 >
                   {/* Image Container */}
-                  <div className="aspect-square relative overflow-visible flex items-center justify-center p-2" style={{ background: card.thumbnailBackground || 'linear-gradient(135deg, #fef1f7 0%, #faf5ff 100%)' }}
-                    // #region agent log
-                    ref={(el) => {
-                      if (el && card.coverImage) {
-                        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Hero.tsx:233',message:'Container rendered',data:{cardName:card.name,coverImage:card.coverImage,computedStyle:window.getComputedStyle(el).overflow},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-                      }
-                    }}
-                    // #endregion
-                  >
+                  <div className="aspect-square relative overflow-visible flex items-center justify-center p-2" style={{ background: card.thumbnailBackground || 'linear-gradient(135deg, #fef1f7 0%, #faf5ff 100%)' }}>
                       {allImages.length > 0 ? (
                         <div className="w-[90%] h-[90%] relative">
                           {/* Image courante avec transition */}
@@ -283,20 +275,44 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                             </div>
                           ))}
                           
-                          {/* Indicateurs de pagination */}
+                          {/* Navigation - Flèches */}
                           {hasMultipleImages && (
-                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                              {allImages.map((_, dotIdx) => (
-                                <button
-                                  key={dotIdx}
-                                  onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    setCarouselIndexes(prev => ({...prev, [card.id]: dotIdx}));
-                                  }}
-                                  className={`w-1.5 h-1.5 rounded-full transition-all ${dotIdx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'}`}
-                                />
-                              ))}
-                            </div>
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newIndex = currentImageIndex === 0 ? allImages.length - 1 : currentImageIndex - 1;
+                                  setCarouselIndexes(prev => ({...prev, [card.id]: newIndex}));
+                                }}
+                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-20"
+                              >
+                                <ChevronLeft size={16} strokeWidth={3} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newIndex = (currentImageIndex + 1) % allImages.length;
+                                  setCarouselIndexes(prev => ({...prev, [card.id]: newIndex}));
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-20"
+                              >
+                                <ChevronRight size={16} strokeWidth={3} />
+                              </button>
+                              
+                              {/* Indicateurs de pagination */}
+                              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                {allImages.map((_, dotIdx) => (
+                                  <button
+                                    key={dotIdx}
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      setCarouselIndexes(prev => ({...prev, [card.id]: dotIdx}));
+                                    }}
+                                    className={`w-1.5 h-1.5 rounded-full transition-all ${dotIdx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'}`}
+                                  />
+                                ))}
+                              </div>
+                            </>
                           )}
                         </div>
                       ) : (

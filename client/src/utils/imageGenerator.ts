@@ -1,6 +1,9 @@
 import { BookProduct, ContentConfiguration, ImageElement, TextElement, ImageVariant, ImageCondition } from '../types/admin';
 import { BookConfig } from '../types';
 
+// Import du module de text-fitting (auto-ajustement de taille de police)
+import { calculateTextFitScale, calculateSegmentsFitScale } from './textFitter';
+
 // Import des fonctions de résolution de texte conditionnel
 // @ts-ignore - Import depuis le serveur
 import { resolveConditionalText } from '../../../server/replit_integrations/object_storage/utils/conditionalTextResolver';
@@ -215,7 +218,8 @@ function renderConditionalSegments(
   y: number,
   w: number,
   h: number,
-  rotation: number
+  rotation: number,
+  config?: BookConfig // Ajouté pour le text-fitting
 ) {
   if (!layer.conditionalSegments || layer.conditionalSegments.length === 0) {
     return;
@@ -245,9 +249,34 @@ function renderConditionalSegments(
     return true;
   });
 
+  // === TEXT FITTING : Calcul du facteur d'échelle pour que le texte tienne ===
+  // Fonction de résolution des variables pour le fitting
+  const resolveSegmentVariables = (text: string): string => {
+    let resolved = text;
+    // Résoudre TXTVAR system variables
+    resolved = resolved.replace(/\{TXTVAR_dedication\}/gi, config?.dedication || '');
+    resolved = resolved.replace(/\{TXTVAR_author\}/gi, config?.author || '');
+    // Résoudre TXTVAR wizard variables
+    resolved = resolved.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (_match: string, tabId: string, variantId: string) => {
+      const heroPrefix = 'hero-';
+      const wizardTabId = tabId.startsWith(heroPrefix) ? tabId.substring(heroPrefix.length) : tabId;
+      const tabSelections = wizardSelections[wizardTabId];
+      if (tabSelections && tabSelections[variantId]) {
+        return ' ' + tabSelections[variantId] + ' ';
+      }
+      return '';
+    });
+    return resolved;
+  };
+  
+  // Calculer le facteur de réduction uniforme pour tous les segments
+  const textFitScaleFactor = h > 0 
+    ? calculateSegmentsFitScale(ctx, activeSegments, w, h, layer.style || {}, resolveSegmentVariables)
+    : 1.0;  // === FIN TEXT FITTING ===
+
   // Configuration commune (du style global du layer comme fallback)
   const globalStyle = layer.style || {};
-  const globalFontSize = parseFloat(globalStyle.fontSize || '16') * 4;
+  const globalFontSize = parseFloat(globalStyle.fontSize || '16') * 4 * textFitScaleFactor;
   const globalLineHeight = globalFontSize * (parseFloat(globalStyle.lineHeight || '1.2'));
   
   // Parse textIndent from global style
@@ -275,20 +304,9 @@ function renderConditionalSegments(
   let isFirstLineOfPara = true;
 
   for (const segment of activeSegments) {
-    const segmentStyle = segment.resolvedStyle || globalStyle;
-    
-    // #region agent log
-    console.log(`[renderConditionalSegments] Segment: "${segment.text?.substring(0,20)}"`, {
-      hasResolvedStyle: !!segment.resolvedStyle,
-      segmentColor: segmentStyle.color,
-      segmentFontSize: segmentStyle.fontSize,
-      usingGlobalStyle: !segment.resolvedStyle
-    });
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:277',message:'Rendering segment',data:{segmentText:segment.text?.substring(0,20),hasResolvedStyle:!!segment.resolvedStyle,segmentColor:segmentStyle.color,segmentFontSize:segmentStyle.fontSize,usingGlobalStyle:!segment.resolvedStyle},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H8,H9,H10'})}).catch(()=>{});
-    // #endregion
-    
-    // Extraire les propriétés de style du segment
-    const fontSize = parseFloat(segmentStyle.fontSize?.toString() || '16') * 4;
+    const segmentStyle = segment.resolvedStyle || globalStyle;    
+    // Extraire les propriétés de style du segment (avec text-fitting scale appliqué)
+    const fontSize = parseFloat(segmentStyle.fontSize?.toString() || '16') * 4 * textFitScaleFactor;
     const fontFamily = segmentStyle.fontFamily || 'serif';
     const fontWeight = segmentStyle.fontWeight || 'normal';
     const fontStyle = segmentStyle.fontStyle || 'normal';
@@ -314,21 +332,20 @@ function renderConditionalSegments(
     let text = segment.text || '';
     
     // First resolve TXTVAR system variables (dedication, author)
-    if (config.dedication) {
-      text = text.replace(/\{TXTVAR_dedication\}/gi, config.dedication);
-    }
-    if (config.author) {
-      text = text.replace(/\{TXTVAR_author\}/gi, config.author);
-    }
+    // IMPORTANT: Si vide, remplacer par chaîne vide (ne pas afficher {TXTVAR_...})
+    text = text.replace(/\{TXTVAR_dedication\}/gi, config.dedication || '');
+    text = text.replace(/\{TXTVAR_author\}/gi, config.author || '');
     
     // Then resolve TXTVAR wizard variables (tabId_variantId)
+    // IMPORTANT: Si la variable n est pas resolue, remplacer par chaine vide
     text = text.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (match: string, tabId: string, variantId: string) => {
-      const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
+      const heroPrefix = 'hero-';
+      const wizardTabId = tabId.startsWith(heroPrefix) ? tabId.substring(heroPrefix.length) : tabId;
       const tabSelections = wizardSelections[wizardTabId];
       if (tabSelections && tabSelections[variantId]) {
-        return ' ' + tabSelections[variantId] + ' '; // Espaces autour (workaround IDML)
+        return ' ' + tabSelections[variantId] + ' ';
       }
-      return match;
+      return '';
     });
 
     // Appliquer text-transform
@@ -584,10 +601,6 @@ export const generateBookPages = async (
       }
       
       // 2. Draw Image Elements (Layers)
-      // #region agent log
-      const allPageImages = book.contentConfig?.imageElements?.filter(el => el.position.pageIndex === pageIndex) || [];
-      setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:280',message:'All images for page before filter',data:{pageIndex,count:allPageImages.length,images:allPageImages.map(i=>({id:i.id,label:i.label,url:i.url?.substring(0,50),combinationKey:i.combinationKey,conditions:i.conditions,position:i.position}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{}),0);
-      // #endregion
       const imageLayers = book.contentConfig?.imageElements?.filter(
           el => {
             // Must be on the correct page
@@ -600,11 +613,7 @@ export const generateBookPages = async (
                               el.combinationKey === 'all';
             
             // Check conditions match (if conditions exist, they must all be satisfied)
-            const conditionsMatch = matchesImageConditions(el.conditions, config.characters || {}, book);
-            // #region agent log
-            setTimeout(()=>fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:292',message:'Image filter evaluation',data:{pageIndex,imageId:el.id,label:el.label,url:el.url?.substring(0,50),hasConditions:!!(el.conditions&&el.conditions.length>0),conditions:el.conditions,combinationKey:el.combinationKey,keyMatches,conditionsMatch,willInclude:el.conditions&&el.conditions.length>0?conditionsMatch:keyMatches},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{}),0);
-            // #endregion
-            
+            const conditionsMatch = matchesImageConditions(el.conditions, config.characters || {}, book);            
             // Image is included if either:
             // - No conditions AND key matches, OR
             // - Conditions exist AND all are satisfied (key check is secondary)
@@ -651,25 +660,8 @@ export const generateBookPages = async (
           // Déterminer si on doit utiliser le rendu par segments ou le rendu classique
           const hasConditionalSegmentsWithStyles = layer.conditionalSegments && 
                                                    layer.conditionalSegments.length > 0 &&
-                                                   layer.conditionalSegments.some((seg: any) => seg.resolvedStyle);
-          
-          // #region agent log
-          console.log(`[imageGenerator] Layer ${layer.id}:`, {
-            hasSegments: !!layer.conditionalSegments,
-            segmentsCount: layer.conditionalSegments?.length || 0,
-            hasResolvedStyle: hasConditionalSegmentsWithStyles,
-            firstSegmentHasResolvedStyle: layer.conditionalSegments?.[0]?.resolvedStyle ? 'YES' : 'NO',
-            firstSegmentColor: layer.conditionalSegments?.[0]?.resolvedStyle?.color
-          });
-          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:606',message:'Checking layer for segment rendering',data:{layerId:layer.id,hasSegments:!!layer.conditionalSegments,segmentsCount:layer.conditionalSegments?.length||0,hasResolvedStyle:hasConditionalSegmentsWithStyles,firstSegmentHasResolvedStyle:layer.conditionalSegments?.[0]?.resolvedStyle?'YES':'NO'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H6,H8,H10'})}).catch(()=>{});
-          // #endregion
-          
-          if (hasConditionalSegmentsWithStyles) {
-              // #region agent log
-              console.log(`[imageGenerator] ✓ Using segment-by-segment rendering for ${layer.id}`);
-              fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:610',message:'Using segment-by-segment rendering',data:{layerId:layer.id,segmentsCount:layer.conditionalSegments.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H8,H10'})}).catch(()=>{});
-              // #endregion
-              
+                                                   layer.conditionalSegments.some((seg: any) => seg.resolvedStyle);          
+          if (hasConditionalSegmentsWithStyles) {              
               // Rendu segment-par-segment avec styles spécifiques
               const x = (layer.position.x || 0) / 100 * width;
               const y = (layer.position.y || 0) / 100 * height;
@@ -677,14 +669,9 @@ export const generateBookPages = async (
               const h = (layer.position.height || 30) / 100 * height;
               const rotation = layer.position.rotation || 0;
               
-              renderConditionalSegments(ctx, layer, config.characters || {}, x, y, w, h, rotation);
+              renderConditionalSegments(ctx, layer, config.characters || {}, x, y, w, h, rotation, config);
               continue; // Passer au layer suivant
-          }
-          
-          // #region agent log
-          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'imageGenerator.ts:623',message:'Using classic rendering (no segments)',data:{layerId:layer.id,globalColor:layer.style?.color},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H8,H10'})}).catch(()=>{});
-          // #endregion
-          
+          }          
           // Rendu classique (code existant)
           let text = resolveText(layer.content);
           
@@ -700,13 +687,13 @@ export const generateBookPages = async (
           }
           
           // Extract style properties
-          const fontSize = parseFloat((layer.style?.fontSize as string) || '16') * 4;
+          const originalFontSize = parseFloat((layer.style?.fontSize as string) || '16') * 4;
+          let fontSize = originalFontSize; // Sera ajusté par le text-fitting si nécessaire
           const fontFamily = (layer.style?.fontFamily as string) || 'serif';
           const fontWeight = (layer.style?.fontWeight as string) || 'normal';
           const fontStyle = (layer.style?.fontStyle as string) || 'normal'; // italic/oblique
           const color = (layer.style?.color as string) || '#000000';
-          const textTransform = (layer.style?.textTransform as string) || 'none';
-          const canvasAlign = mapTextAlignToCanvas(
+          const textTransform = (layer.style?.textTransform as string) || 'none';          const canvasAlign = mapTextAlignToCanvas(
             layer.style?.textAlign as string,
             layer.style?.textAlignLast as string,
             layer.style?.idmlJustification as string
@@ -731,7 +718,7 @@ export const generateBookPages = async (
               }
             }
           }
-          const lineHeight = fontSize * lineHeightMultiplier;
+          let lineHeight = fontSize * lineHeightMultiplier;
           
           // Parse textIndent (ex: "12pt" or "0")
           let textIndent = 0;
@@ -761,6 +748,29 @@ export const generateBookPages = async (
           } else if (textTransform === 'lowercase') {
             text = text.toLowerCase();
           }
+          
+          // === TEXT FITTING : Ajuster la taille de police pour que le texte tienne ===
+          if (h > 0 && text.trim()) {
+            const fitResult = calculateTextFitScale(ctx, text, w, h, {
+              originalFontSize: originalFontSize,
+              fontFamily,
+              fontWeight,
+              fontStyle,
+              lineHeightMultiplier,
+              letterSpacing,
+              textIndent
+            });
+            
+            // Appliquer le scale si nécessaire
+            if (fitResult.scale < 1) {
+              fontSize = fitResult.fittedFontSize;
+              // Recalculer lineHeight et letterSpacing avec la nouvelle taille
+              lineHeight = fontSize * lineHeightMultiplier;
+              if (layer.style?.letterSpacing && (layer.style.letterSpacing as string).endsWith('em')) {
+                letterSpacing = parseFloat(layer.style.letterSpacing as string) * fontSize;
+              }            }
+          }
+          // === FIN TEXT FITTING ===
           
           // Configure canvas context
           ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;

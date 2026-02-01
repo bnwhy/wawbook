@@ -592,10 +592,21 @@ function createMergedText(
   // Détecte si le texte est variable
   const isVariable = idmlFrame.variables.length > 0;
   
-  // Traite le contenu : remplace {var} par {{var}} pour le moteur de template
+  // Traite le contenu : TOUJOURS traiter les accolades pour éviter le doublement automatique
+  // Variables TXTVAR (preview) : garder simples accolades {TXTVAR_...}
+  // Autres variables : utiliser doubles accolades {{var}} pour le moteur de template
   let processedContent = idmlFrame.content;
-  if (isVariable) {
-    processedContent = idmlFrame.content.replace(/\{([^}]+)\}/g, '{{$1}}');
+  
+  // Toujours traiter le contenu s'il contient des accolades
+  if (processedContent.includes('{')) {
+    processedContent = processedContent.replace(/\{([^}]+)\}/g, (match, varName) => {
+      // Si c'est une variable TXTVAR (preview fields), garder les simples accolades
+      if (varName.startsWith('TXTVAR_')) {
+        return match; // Garder {TXTVAR_...}
+      }
+      // Sinon, doubler les accolades pour le moteur de template
+      return `{{${varName}}}`;
+    });
   }
   
   // Construit l'objet de style complet

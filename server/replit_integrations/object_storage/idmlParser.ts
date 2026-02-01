@@ -1284,13 +1284,18 @@ function extractStoryContent(storyData: any): {
     
     if (!extracted.content) return null;
     
-    // Detect variables
+    // Detect variables (both single and double braces)
     const variables: string[] = [];
-    const varMatches = extracted.content.match(/\{([^}]+)\}/g);
+    const varMatches = extracted.content.match(/\{\{?([^}]+)\}?\}/g);
     if (varMatches) {
       varMatches.forEach(m => {
-        variables.push(m.replace(/[{}]/g, ''));
+        variables.push(m.replace(/\{+|\}+/g, ''));
       });
+    }
+    
+    // Normalize content: convert double braces {{...}} to single braces {...} for TXTVAR variables
+    if (extracted.content) {
+      extracted.content = extracted.content.replace(/\{\{(TXTVAR_[^}]+)\}\}/g, '{$1}');
     }
     
     const result: {

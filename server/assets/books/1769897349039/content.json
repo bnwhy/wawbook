@@ -33,10 +33,10 @@
   ],
   "texts": [
     {
-      "id": "text-1769585127924-1-_idContainer001",
+      "id": "text-1769897349039-1-_idContainer001",
       "type": "conditional",
       "label": "_idContainer001",
-      "content": "Le château \nde la petite Du petit \n{{TXTVAR_hero-child_name}}",
+      "content": "Le château \nde la petite Du petit \n{TXTVAR_hero-child_name}",
       "originalContent": "Le château \nde la petite Du petit \n{TXTVAR_hero-child_name}",
       "variables": [
         "TXTVAR_hero-child_name"
@@ -75,8 +75,8 @@
       },
       "cssSelector": "#_idContainer001",
       "combinationKey": "default",
-      "idmlFrameId": "u11a",
-      "idmlFrameName": "u11a",
+      "idmlFrameId": "u11e",
+      "idmlFrameName": "u11e",
       "appliedParagraphStyle": "ParagraphStyle/Titre livre",
       "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]",
       "conditionalSegments": [
@@ -207,10 +207,10 @@
       ]
     },
     {
-      "id": "text-1769585127924-2-_idContainer002",
+      "id": "text-1769897349039-2-_idContainer002",
       "type": "variable",
       "label": "_idContainer002",
-      "content": "{{TXTVAR_dedication}}",
+      "content": "{TXTVAR_dedication}",
       "originalContent": "{TXTVAR_dedication}",
       "variables": [
         "TXTVAR_dedication"
@@ -249,16 +249,16 @@
       },
       "cssSelector": "#_idContainer002",
       "combinationKey": "default",
-      "idmlFrameId": "u159",
-      "idmlFrameName": "u159",
-      "appliedParagraphStyle": "ParagraphStyle/$ID/NormalParagraphStyle",
+      "idmlFrameId": "u13b",
+      "idmlFrameName": "u13b",
+      "appliedParagraphStyle": "ParagraphStyle/Titre livre",
       "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]"
     },
     {
-      "id": "text-1769585127924-2-_idContainer003",
+      "id": "text-1769897349039-2-_idContainer003",
       "type": "variable",
       "label": "_idContainer003",
-      "content": "{{TXTVAR_author}}",
+      "content": "{TXTVAR_author}",
       "originalContent": "{TXTVAR_author}",
       "variables": [
         "TXTVAR_author"
@@ -297,19 +297,19 @@
       },
       "cssSelector": "#_idContainer003",
       "combinationKey": "default",
-      "idmlFrameId": "u173",
-      "idmlFrameName": "u173",
-      "appliedParagraphStyle": "ParagraphStyle/$ID/NormalParagraphStyle",
+      "idmlFrameId": "u151",
+      "idmlFrameName": "u151",
+      "appliedParagraphStyle": "ParagraphStyle/Titre livre",
       "appliedCharacterStyle": "CharacterStyle/$ID/[No character style]"
     }
   ],
   "images": [],
   "imageElements": [
     {
-      "id": "img-1769585127924-1-mayrpsgl",
+      "id": "img-1769897349039-1-jeypk5go",
       "type": "static",
       "label": "_idGenObjectAttribute-1 _idGenObjectAttribute-2",
-      "url": "/assets/books/1769585127924/images/page1_commonbg.jpg",
+      "url": "/assets/books/1769897349039/images/page1_commonbg.jpg",
       "position": {
         "x": -0.001,
         "y": 0,
@@ -324,6 +324,5 @@
       "combinationKey": "default"
     }
   ],
-  "cssContent": "\nbody, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure {\n\tmargin:0;\n\tpadding:0;\n\tborder-width:0;\n\ttext-rendering:optimizeSpeed;\n}\ndiv.Bloc-graphique-standard {\n\tborder-\n\tborder-width:1px;\n\tborder-style:solid;\n}\ndiv.Bloc-de-texte-standard {\n\tborder-style:solid;\n}\np.ParaOverride-1 {\n\tline-height:1;\n\twhite-space:nowrap;\n}\nspan.CharOverride-1 {\n\t-webkit-text-stroke-\n\t-webkit-text-stroke-width:20px;\n\t\n\t\n\t\n\t\n\t\n\ttext-stroke-\n\ttext-stroke-width:20px;\n\ttext-transform:uppercase;\n}\nspan.CharOverride-2 {\n\t-webkit-text-stroke-\n\t-webkit-text-stroke-width:20px;\n\t\n\t\n\t\n\t\n\t\n\ttext-stroke-\n\ttext-stroke-width:20px;\n\ttext-transform:uppercase;\n}\nspan.CharOverride-3 {\n\t-webkit-text-stroke-\n\t-webkit-text-stroke-width:20px;\n\t\n\t\n\t\n\t\n\t\n\ttext-stroke-\n\ttext-stroke-width:20px;\n\ttext-transform:uppercase;\n}\n#_idContainer000 {\n\t-webkit-transform:translate(-0.001px,0.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:629.29px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(-0.001px,0.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:629.29px;\n}\n#_idContainer001 {\n\t-webkit-transform:translate(36.000px,31.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:190.08px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(36.000px,31.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:557.29px;\n}\n#_idContainer002 {\n\t-webkit-transform:translate(25.511px,21.929px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:421.75px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(25.511px,21.929px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:582.05px;\n}\n#_idContainer003 {\n\t-webkit-transform:translate(25.511px,457.519px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:141.59px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(25.511px,457.519px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:582.05px;\n}\nimg._idGenObjectAttribute-1 {\n\theight:100.00%;\n\tmin-width:100%;\n\twidth:100.00%;\n}\nimg._idGenObjectAttribute-2 {\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n}\ndiv._idGenObjectStyle-Disabled {\n\tbackground-\n\tborder-width:0px;\n}\n",
-  "pageImages": []
+  "cssContent": "\nbody, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure {\n\tmargin:0;\n\tpadding:0;\n\tborder-width:0;\n\ttext-rendering:optimizeSpeed;\n}\ndiv.Bloc-graphique-standard {\n\tborder-\n\tborder-width:1px;\n\tborder-style:solid;\n}\ndiv.Bloc-de-texte-standard {\n\tborder-style:solid;\n}\np.ParaOverride-1 {\n\tline-height:1;\n\twhite-space:nowrap;\n}\nspan.CharOverride-1 {\n\t-webkit-text-stroke-\n\t-webkit-text-stroke-width:20px;\n\t\n\t\n\t\n\t\n\t\n\ttext-stroke-\n\ttext-stroke-width:20px;\n\ttext-transform:uppercase;\n}\nspan.CharOverride-2 {\n\t-webkit-text-stroke-\n\t-webkit-text-stroke-width:20px;\n\t\n\t\n\t\n\t\n\t\n\ttext-stroke-\n\ttext-stroke-width:20px;\n\ttext-transform:uppercase;\n}\nspan.CharOverride-3 {\n\t-webkit-text-stroke-\n\t-webkit-text-stroke-width:20px;\n\t\n\t\n\t\n\t\n\t\n\ttext-stroke-\n\ttext-stroke-width:20px;\n\ttext-transform:uppercase;\n}\n#_idContainer000 {\n\t-webkit-transform:translate(-0.001px,0.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:629.29px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(-0.001px,0.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:629.29px;\n}\n#_idContainer001 {\n\t-webkit-transform:translate(36.000px,31.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:190.08px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(36.000px,31.000px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:557.29px;\n}\n#_idContainer002 {\n\t-webkit-transform:translate(25.511px,21.929px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:421.75px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(25.511px,21.929px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:582.05px;\n}\n#_idContainer003 {\n\t-webkit-transform:translate(25.511px,457.519px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\t-webkit-transform-origin:0% 0%;\n\theight:141.59px;\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n\ttransform:translate(25.511px,457.519px) rotate(0.000deg) skew(0.000deg) scale(1.000,1.000);\n\ttransform-origin:0% 0%;\n\twidth:582.05px;\n}\nimg._idGenObjectAttribute-1 {\n\theight:100.00%;\n\tmin-width:100%;\n\twidth:100.00%;\n}\nimg._idGenObjectAttribute-2 {\n\tleft:0px;\n\tposition:absolute;\n\ttop:0px;\n}\ndiv._idGenObjectStyle-Disabled {\n\tbackground-\n\tborder-width:0px;\n}\n"
 }

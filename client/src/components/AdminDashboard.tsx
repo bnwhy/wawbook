@@ -1291,6 +1291,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     variableName: string,
     wizardConfig: any
   ): string | null => {
+    // Check if it's a preview variable (TXTVAR_dedication or TXTVAR_author)
+    if (variableName === 'TXTVAR_dedication' || variableName === 'TXTVAR_author') {
+      const fieldId = variableName.replace('TXTVAR_', '');
+      const previewField = wizardConfig?.previewFields?.find((f: any) => f.id === fieldId);
+      if (previewField) {
+        return `Preview > ${previewField.label}`;
+      }
+      // Fallback si previewFields n'existe pas
+      return fieldId === 'dedication' ? 'Preview > Dédicace' : 'Preview > Auteur';
+    }
+    
     // Expected format: TXTVAR_tabId_variantId or just variantId
     let tabId = '';
     let variantId = variableName;
@@ -6834,73 +6845,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           </p>
                        </div>
                     </div>
-
-                    {/* Variables de texte détectées */}
-                    {(() => {
-                       // Collecter toutes les variables de preview détectées dans les textes
-                       const previewVariables: Array<{
-                          varName: string;
-                          textId: string;
-                          textContent: string;
-                          pageIndex?: number;
-                       }> = [];
-
-                       selectedBook.contentConfig.texts?.forEach(text => {
-                          ['dedication', 'author'].forEach(fieldId => {
-                             const varName = `{TXTVAR_${fieldId}}`;
-                             if (text.content && text.content.includes(varName)) {
-                                previewVariables.push({
-                                   varName,
-                                   textId: text.id,
-                                   textContent: text.content,
-                                   pageIndex: text.position?.pageIndex
-                                });
-                             }
-                          });
-                       });
-
-                       if (previewVariables.length === 0) return null;
-
-                       return (
-                          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-                             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
-                                <FileText size={24} className="text-purple-600" />
-                                Variables de texte ({previewVariables.length})
-                             </h2>
-
-                             <div className="space-y-3">
-                                {previewVariables.map((variable, idx) => (
-                                   <div key={idx} className="bg-white rounded border border-purple-100 p-3 text-xs">
-                                      <div className="flex items-start gap-2 mb-2">
-                                         <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
-                                            #{idx + 1}
-                                         </span>
-                                         <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                               <span className="text-slate-400 font-medium">📝</span>
-                                               <span className="font-mono text-purple-600 font-bold">{variable.varName}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-[10px] text-slate-500 ml-5">
-                                               <span className="text-purple-500">→</span>
-                                               <span className="font-mono">{variable.textId}</span>
-                                               {variable.pageIndex !== undefined && (
-                                                  <>
-                                                     <span className="text-slate-300">|</span>
-                                                     <span>Page {variable.pageIndex + 1}</span>
-                                                  </>
-                                               )}
-                                            </div>
-                                         </div>
-                                      </div>
-                                      <div className="ml-7 mt-2 text-slate-700 font-mono bg-slate-50 px-2 py-1 rounded text-[10px]" style={{ whiteSpace: 'pre-wrap' }}>
-                                         "{variable.textContent.substring(0, 100)}{variable.textContent.length > 100 ? '...' : ''}"
-                                      </div>
-                                   </div>
-                                ))}
-                             </div>
-                          </div>
-                       );
-                    })()}
                  </div>
               )}
 
@@ -7716,14 +7660,32 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                             )}
                                                                             
                                                                             {/* Sections textes conditionnels et variables - NOUVEAU */}
-                                                                            {text.conditionalSegments && text.conditionalSegments.length > 0 && (() => {
+                                                                            {(() => {
                                                                                 const currentBook = draftBook || selectedBook;
                                                                                 
                                                                                 // Filtrer et séparer les segments
-                                                                                const conditionalSegments = text.conditionalSegments.filter((seg: any) => seg.condition);
-                                                                                const variableSegments = text.conditionalSegments.filter((seg: any) => 
+                                                                                const conditionalSegments = text.conditionalSegments?.filter((seg: any) => seg.condition) || [];
+                                                                                let variableSegments = text.conditionalSegments?.filter((seg: any) => 
                                                                                     seg.variables && seg.variables.length > 0
-                                                                                );
+                                                                                ) || [];
+                                                                                
+                                                                                // Si pas de conditionalSegments mais que le content contient des variables, créer des segments virtuels
+                                                                                if (!text.conditionalSegments || text.conditionalSegments.length === 0) {
+                                                                                    if (text.content) {
+                                                                                        // Détecter les variables TXTVAR dans le content
+                                                                                        const txtvarMatches = text.content.match(/\{\{?(TXTVAR_[a-zA-Z0-9_-]+)\}?\}/g);
+                                                                                        if (txtvarMatches && txtvarMatches.length > 0) {
+                                                                                            variableSegments = txtvarMatches.map((match: string) => {
+                                                                                                // Extraire le nom de variable (enlever les accolades)
+                                                                                                const varName = match.replace(/\{+|\}+/g, '');
+                                                                                                return {
+                                                                                                    text: text.content,
+                                                                                                    variables: [varName]
+                                                                                                };
+                                                                                            });
+                                                                                        }
+                                                                                    }
+                                                                                }
                                                                                 
                                                                                 // Ne rien afficher si pas de segments conditionnels ni de variables
                                                                                 if (conditionalSegments.length === 0 && variableSegments.length === 0) {

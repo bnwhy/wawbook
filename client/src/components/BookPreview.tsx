@@ -253,10 +253,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                 }
                 
                 // Priorité 2 : Rendu serveur (API /render-pages)
-                const bookPages = book.contentConfig?.pages;
-                
+                const bookPages = book.contentConfig?.pages;                
                 if (bookPages && bookPages.length > 0) {
-                    try {
+                    try {                        
                         setLoadingProgress(40);
                         await new Promise(resolve => setTimeout(resolve, 150));
                         
@@ -301,7 +300,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     }
                 }
                 
-                // Priorité 3 : Génération client (fallback)
+                // Priorité 3 : Génération client (fallback)                
                 setLoadingProgress(50);
                 setLoadingMessage("Assemblage des pages...");
                 const pages = await generateBookPages(book, config, currentCombinationKey, (pageProgress) => {

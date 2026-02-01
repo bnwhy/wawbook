@@ -12,6 +12,7 @@ import * as fs from "fs";
 import { extractFontsFromCss } from "./utils/fontExtractor";
 import { logger } from "./utils/logger";
 import { resolveConditionalText } from "./replit_integrations/object_storage/utils/conditionalTextResolver";
+import { fitTextToContainer } from "./utils/textFitter";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -173,7 +174,7 @@ export async function registerRoutes(
   });
 
   // ===== BOOK PAGE RENDERING =====
-  app.post("/api/books/:id/render-pages", async (req, res) => {
+  app.post("/api/books/:id/render-pages", async (req, res) => {    
     try {
       const book = await storage.getBook(req.params.id);
       if (!book) {
@@ -321,10 +322,8 @@ export async function registerRoutes(
       }
       
       // If all pages exist, return them immediately without regenerating
-      if (allPagesExist && existingPages.length === pages.length) {
-        return res.json({ pages: existingPages });
-      }
-      
+      if (allPagesExist && existingPages.length === pages.length) {        return res.json({ pages: existingPages });
+      }      
       // SOLUTION 2: Use system-installed fonts for Chromium headless
       // Note: Fonts must be pre-installed in ~/.fonts (e.g., Andika from SIL)
       // We don't copy from book fonts as they may be corrupted
@@ -581,8 +580,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           let textsHtml = pageTexts.map((txt: any) => {
             const pos = txt.position || {};
             const style = txt.style || {};
-            let content = txt.content || '';
-            
+            let content = txt.content || '';            
             // Helper function to check if a condition is active
             const isConditionActive = (segment: any): boolean => {
               if (!segment.condition) return true;
@@ -622,37 +620,36 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               }
               
               // Replace TXTVAR system variables (dedication, author)
-              if (config.dedication) {
-                resolved = resolved.replace(/\{\{TXTVAR_dedication\}\}/gi, config.dedication);
-                resolved = resolved.replace(/\{TXTVAR_dedication\}/gi, config.dedication);
-              }
-              if (config.author) {
-                resolved = resolved.replace(/\{\{TXTVAR_author\}\}/gi, config.author);
-                resolved = resolved.replace(/\{TXTVAR_author\}/gi, config.author);
-              }
+              // IMPORTANT: Si le champ est vide, remplacer par chaîne vide (ne pas afficher {TXTVAR_...})
+              resolved = resolved.replace(/\{\{TXTVAR_dedication\}\}/gi, config.dedication || '');
+              resolved = resolved.replace(/\{TXTVAR_dedication\}/gi, config.dedication || '');
+              resolved = resolved.replace(/\{\{TXTVAR_author\}\}/gi, config.author || '');
+              resolved = resolved.replace(/\{TXTVAR_author\}/gi, config.author || '');
               
               // Replace TXTVAR wizard variables (tabId_variantId)
+              // IMPORTANT: Si la variable n est pas resolue, remplacer par chaine vide
               resolved = resolved.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (match: string, tabId: string, variantId: string) => {
-                const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
+                const heroPrefix = 'hero-';
+                const wizardTabId = tabId.startsWith(heroPrefix) ? tabId.substring(heroPrefix.length) : tabId;
                 const tabSelections = characters?.[wizardTabId];
                 if (tabSelections && tabSelections[variantId]) {
                   return ' ' + tabSelections[variantId] + ' ';
                 }
-                return match;
+                return '';
               });
               
               return resolved;
             };
             
             // Helper function to build style for a segment
-            const buildSegmentStyle = (segmentStyle: any, globalStyle: any): string => {
+            const buildSegmentStyle = (segmentStyle: any, globalStyle: any, fontSizeScale: number = 1.0): string => {
               const segStyle = segmentStyle || globalStyle;
               
-              // Convert fontSize from points to pixels (factor 20)
+              // Convert fontSize from points to pixels (factor 1.33 = 96dpi/72dpi) with text-fitting scale
               let textFontSize = segStyle.fontSize || globalStyle.fontSize || '16pt';
               if (textFontSize.includes('pt')) {
                 const ptValue = parseFloat(textFontSize);
-                textFontSize = `${ptValue * 20}px`;
+                textFontSize = `${ptValue * fontSizeScale * 1.33}px`;
               }
               
               // Ensure font family is properly quoted
@@ -671,16 +668,17 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               const strokeColor = segStyle.strokeColor || globalStyle.strokeColor;
               const strokeWeight = segStyle.strokeWeight || globalStyle.strokeWeight;
               const strokeWidthPx = strokeColor
-                ? (strokeWeight ? `${strokeWeight * 20}px` : '20px')
+                ? (strokeWeight ? `${strokeWeight * 1.33}px` : '1.33px')
                 : undefined;
               
               const strokeCss = strokeColor && strokeWidthPx
                 ? `-webkit-text-stroke-color:${strokeColor};-webkit-text-stroke-width:${strokeWidthPx};text-stroke-color:${strokeColor};text-stroke-width:${strokeWidthPx};`
                 : '';
               
-              const fontStretchCss = fontStretch ? `font-stretch:${fontStretch};` : '';
+              // NOTE: font-stretch est IGNORÉ car il élargit le texte et cause des débordements
+              // Le horizontalScale d'InDesign est déjà pris en compte dans le text-fitting
               
-              return `font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}${fontStretchCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};`;
+              return `font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};`;
             };
             
             // NOUVEAU: Si segments conditionnels, rendre chaque segment avec son propre style
@@ -691,7 +689,34 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               // Filtrer les segments actifs
               const activeSegments = txt.conditionalSegments.filter((segment: any) => isConditionActive(segment));
               
-              // Rendre chaque segment avec son propre style
+              // === TEXT FITTING pour segments conditionnels ===
+              // Concaténer tout le texte résolu pour calculer la hauteur totale
+              const fullText = activeSegments.map((seg: any) => {
+                let t = seg.text || '';
+                t = resolveVariablesInText(t);
+                const segTransform = seg.resolvedStyle?.textTransform || globalTextTransform;
+                if (segTransform === 'uppercase') t = t.toUpperCase();
+                else if (segTransform === 'lowercase') t = t.toLowerCase();
+                return t;
+              }).join('');
+              
+              const originalFontSize = parseFloat(style.fontSize?.toString() || '42');
+              const lineHeightMultiplier = parseFloat(style.lineHeight?.toString() || '1.3');
+              const textIndentPt = parseFloat(style.textIndent?.toString() || '0');
+              // Largeur RÉELLE du container - le CSS word-break gérera le wrapping
+              const containerWidthPx = pos.width || 100;
+              const containerHeightPx = pos.height || 30;              
+              const fittedFontSize = fitTextToContainer(fullText, {
+                originalFontSize,
+                lineHeightMultiplier,
+                textIndent: textIndentPt,
+                containerWidth: containerWidthPx,
+                containerHeight: containerHeightPx
+              });
+              
+              const scaleFactor = fittedFontSize / originalFontSize;              // === FIN TEXT FITTING ===
+              
+              // Rendre chaque segment avec son propre style (fontSize ajustée)
               segmentsHtml = activeSegments.map((segment: any) => {
                 let segmentText = segment.text || '';
                 
@@ -712,8 +737,17 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                   segmentText = segmentText.toLowerCase();
                 }
                 
-                // Build style for this segment
-                const segmentStyleStr = buildSegmentStyle(segment.resolvedStyle, style);
+                // Créer un style avec fontSize déjà ajustée (pas de double scale)
+                const segmentStyleWithFittedSize = segment.resolvedStyle ? {
+                  ...segment.resolvedStyle,
+                  fontSize: `${parseFloat(segment.resolvedStyle.fontSize || originalFontSize) * scaleFactor}pt`
+                } : {
+                  ...style,
+                  fontSize: `${fittedFontSize}pt`
+                };
+                
+                // Build style for this segment (scale déjà appliqué dans fontSize)
+                const segmentStyleStr = buildSegmentStyle(segmentStyleWithFittedSize, style, 1.0);
                 
                 // Escape HTML
                 const escapedText = segmentText.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
@@ -739,8 +773,39 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 content = content.toLowerCase();
               }
               
+              // === TEXT FITTING : Ajuster la fontSize pour que le texte tienne ===
+              const originalFontSize = parseFloat(style.fontSize?.toString() || '12');
+              const lineHeightMultiplier = parseFloat(style.lineHeight?.toString() || '1.2');
+              const textIndentPt = parseFloat(style.textIndent?.toString() || '0');
+              // Largeur RÉELLE du container - le CSS word-break gérera le wrapping
+              const containerWidthPx = pos.width || 100;
+              const containerHeightPx = pos.height || 30;
+              
+              const fittedFontSize = fitTextToContainer(content, {
+                originalFontSize,
+                lineHeightMultiplier,
+                textIndent: textIndentPt,
+                containerWidth: containerWidthPx,
+                containerHeight: containerHeightPx
+              });
+              
+              // Appliquer la taille ajustée
+              const globalScaleFactor = fittedFontSize < originalFontSize 
+                ? fittedFontSize / originalFontSize 
+                : 1.0;              
+              if (fittedFontSize < originalFontSize) {
+                style = { ...style, fontSize: `${fittedFontSize}pt` };
+              }
+              // === FIN TEXT FITTING ===
+              
               // Escape HTML and convert line breaks
               content = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+              
+              // BUGFIX: Appliquer le style global au texte (comme pour les segments)
+              // Sinon le texte apparaît en taille par défaut du navigateur (~16px)
+              const globalStyleStr = buildSegmentStyle(undefined, style, 1.0);
+              const textTransformCss = textTransform !== 'none' ? `text-transform:${textTransform};` : '';
+              content = `<span style="${globalStyleStr}${textTransformCss}">${content}</span>`;
             }
             
             // Build common container styles (paragraph layout)
@@ -752,35 +817,25 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             // Build the text-align-last CSS if defined
             const textAlignLastCss = textAlignLast ? `text-align-last:${textAlignLast};` : '';
             
-            // BUGFIX: Reproduire exactement l'approche EPUB avec conteneur géant + scale
-            const scaleFactor = 20;
-            const containerWidth = pos.width * scaleFactor;
-            const containerHeight = pos.height * scaleFactor;
+            // Dimensions du container = taille ORIGINALE (pas de compensation)
+            const containerWidth = pos.width;
+            const containerHeight = pos.height;
             
-            // BUGFIX: Appliquer HorizontalScale via scaleX()
-            let transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor})`;
-            let finalPosX = pos.x;
+            // Appliquer rotation sur le container
+            const transformValue = `rotate(${pos.rotation || 0}deg)`;
+            const finalPosX = pos.x;
             const finalPosY = pos.y;
-            
-            if (style.idmlHorizontalScale && style.idmlHorizontalScale !== 100) {
-              const scaleXValue = style.idmlHorizontalScale / 100;
-              transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor}) scaleX(${scaleXValue})`;
-              
-              if (textAlign === 'center') {
-                const extraWidth = pos.width * (scaleXValue - 1);
-                finalPosX = pos.x - (extraWidth / 2);
-              }
-            }
             
             // Add text-transform to container if defined globally (for non-segmented text or as fallback)
             const containerTextTransform = globalTextTransform !== 'none' ? `text-transform:${globalTextTransform};` : '';
             
-            const containerStyle = `position:absolute;left:${finalPosX}px;top:${finalPosY}px;width:${containerWidth}px;height:${containerHeight}px;box-sizing:border-box;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};line-height:${lineHeight};${containerTextTransform}margin:0;padding:0;transform:${transformValue};transform-origin:0 0;`;
+            const containerStyle = `position:absolute;left:${finalPosX}px;top:${finalPosY}px;width:${containerWidth}px;height:${containerHeight}px;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};line-height:${lineHeight};${containerTextTransform}margin:0;padding:0;transform:${transformValue};transform-origin:0 0;`;
             
-            // Wrapper interne pour le texte avec text-align et text-indent
-            const innerStyle = `width:100%;text-align:${textAlign};${textAlignLastCss}text-indent:${textIndent};margin:0;padding:0;`;
+            // Wrapper interne pour le texte avec text-align, text-indent et word-wrap FORCÉ  
+            const innerStyle = `width:100%;text-align:${textAlign};${textAlignLastCss}text-indent:${textIndent};margin:0;padding:0;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;white-space:normal;box-sizing:border-box;`;
             
-            return `<div style="${containerStyle}"><div style="${innerStyle}">${content}</div></div>`;
+            const finalHtml = `<div style="${containerStyle}"><div style="${innerStyle}">${content}</div></div>`;            
+            return finalHtml;
           }).join('\n');
           
           let html = `<!DOCTYPE html>

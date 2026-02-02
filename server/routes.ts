@@ -599,6 +599,14 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             const resolveVariablesInText = (text: string): string => {
               let resolved = text;
               
+              // #region agent log
+              const logPath = '/home/runner/workspace/.cursor/debug.log';
+              try {
+                const logEntry = JSON.stringify({location:'routes.ts:600',message:'RESOLVE VARIABLES',data:{originalText:text.substring(0,50),hasDedication:!!config.dedication,dedicationValue:config.dedication,hasAuthor:!!config.author},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H12'}) + '\n';
+                fs.appendFileSync(logPath, logEntry);
+              } catch(e) {}
+              // #endregion
+              
               // Replace variables - support multiple formats
               if (config.childName) {
                 resolved = resolved.replace(/\{\{child_name\}\}/gi, config.childName);
@@ -686,10 +694,35 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             let globalTextTransform = style.textTransform || 'none';
             
             if (txt.conditionalSegments && txt.conditionalSegments.length > 0) {
+              // #region agent log
+              const logPath = '/home/runner/workspace/.cursor/debug.log';
+              try {
+                const logEntry = JSON.stringify({location:'routes.ts:720',message:'HAS CONDITIONAL SEGMENTS',data:{txtId:txt.id,segmentsCount:txt.conditionalSegments.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H13'}) + '\n';
+                fs.appendFileSync(logPath, logEntry);
+              } catch(e) {}
+              // #endregion
+              
               // Filtrer les segments actifs
               const activeSegments = txt.conditionalSegments.filter((segment: any) => isConditionActive(segment));
               
+              // #region agent log
+              try {
+                const logEntry = JSON.stringify({location:'routes.ts:732',message:'ACTIVE SEGMENTS FILTERED',data:{txtId:txt.id,activeCount:activeSegments.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H13'}) + '\n';
+                fs.appendFileSync(logPath, logEntry);
+              } catch(e) {}
+              // #endregion
+              
               // === TEXT FITTING pour segments conditionnels ===
+              let scaleFactor = 1.0; // Par défaut, pas de réduction
+              try {
+              // #region agent log
+              const logPath = '/home/runner/workspace/.cursor/debug.log';
+              try {
+                const logEntry = JSON.stringify({location:'routes.ts:736',message:'START SEGMENTS FITTING',data:{activeSegmentsCount:activeSegments.length,txtId:txt.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H15'}) + '\n';
+                fs.appendFileSync(logPath, logEntry);
+              } catch(e) {}
+              // #endregion
+              
               // Concaténer tout le texte résolu pour calculer la hauteur totale
               const fullText = activeSegments.map((seg: any) => {
                 let t = seg.text || '';
@@ -714,7 +747,15 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 containerHeight: containerHeightPx
               });
               
-              const scaleFactor = fittedFontSize / originalFontSize;              // === FIN TEXT FITTING ===
+              scaleFactor = fittedFontSize / originalFontSize;              // === FIN TEXT FITTING ===
+              } catch (fittingError) {
+                // En cas d'erreur dans le fitting, utiliser la taille d'origine
+                const logPath = '/home/runner/workspace/.cursor/debug.log';
+                try {
+                  const logEntry = JSON.stringify({location:'routes.ts:770',message:'FITTING ERROR',data:{error:String(fittingError),txtId:txt.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H14'}) + '\n';
+                  fs.appendFileSync(logPath, logEntry);
+                } catch(e) {}
+              }
               
               // Rendre chaque segment avec son propre style (fontSize ajustée)
               segmentsHtml = activeSegments.map((segment: any) => {

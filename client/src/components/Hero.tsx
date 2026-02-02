@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit, Settings, Gift, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
@@ -127,13 +127,13 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [carouselIndexes, setCarouselIndexes] = useState<Record<string, number>>({});
 
-  const visibleBooks = books.filter(b => !b.isHidden);
+  const visibleBooks = useMemo(() => books.filter(b => !b.isHidden), [books]);
   
   // Créer un map des livres par ID pour un accès rapide
-  const booksById = Object.fromEntries(visibleBooks.map(b => [b.id, b]));
+  const booksById = useMemo(() => Object.fromEntries(visibleBooks.map(b => [b.id, b])), [visibleBooks]);
   
   // Récupérer les sections visibles avec leurs livres (utiliser tableau vide si config pas chargée)
-  const visibleSections = (homepageConfig?.sections || [])
+  const visibleSections = useMemo(() => (homepageConfig?.sections || [])
     .filter(section => section.isVisible && section.bookIds.length > 0)
     .map(section => ({
       ...section,
@@ -141,7 +141,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
         .map(id => booksById[id])
         .filter(book => book !== undefined) // Filtrer les livres qui n'existent plus
     }))
-    .filter(section => section.books.length > 0); // Ne garder que les sections avec des livres
+    .filter(section => section.books.length > 0), [homepageConfig?.sections, booksById]); // Ne garder que les sections avec des livres
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -253,12 +253,9 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
                       : card.coverImage ? [{ url: card.coverImage, use3DEffect: true }] : [];
                     
                     const hasMultipleImages = carouselImages.length > 1;
-                    let currentImageIndex = carouselIndexes[card.id] || 0;
-                    // Protection : si l'index dépasse la longueur, revenir à 0
-                    if (currentImageIndex >= carouselImages.length) {
-                      currentImageIndex = 0;
-                      setCarouselIndexes(prev => ({...prev, [card.id]: 0}));
-                    }
+                    // Protection : si l'index dépasse la longueur, revenir à 0 (sans setState pour éviter la boucle infinie)
+                    const rawIndex = carouselIndexes[card.id] || 0;
+                    const currentImageIndex = carouselImages.length > 0 ? rawIndex % carouselImages.length : 0;
                     const currentImage = carouselImages[currentImageIndex];
                     
                     return (

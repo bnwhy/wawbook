@@ -269,6 +269,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                     childName: config.childName,
                                     age: config.age,
                                     dedication: config.dedication,
+                                    author: config.author,
                                     gender: config.gender,
                                 },
                                 characters: config.characters,

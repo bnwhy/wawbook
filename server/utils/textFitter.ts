@@ -13,11 +13,12 @@ interface FitOptions {
 /**
  * Estimation de la largeur d'un texte (approximation simple)
  * Note: En production, utiliser canvas ou une librairie précise
- * Facteur augmenté pour tenir compte des polices larges (Sue Ellen Francisco + extra-expanded)
+ * Facteur très conservatif pour garantir AUCUN débordement
  */
 function estimateTextWidth(text: string, fontSize: number): number {
-  // Approximation conservative: 1 caractère ≈ 1.2 * fontSize pour polices extra-larges
-  return text.length * fontSize * 1.2;
+  // Approximation TRÈS conservative pour polices manuscrites larges + horizontalScale + uppercase
+  // Facteur 1.8 garantit qu'on sous-estime jamais (mieux trop petit que débordement)
+  return text.length * fontSize * 1.8;
 }
 
 /**
@@ -99,8 +100,10 @@ export function fitTextToContainer(
     const lineHeight = currentFontSize * options.lineHeightMultiplier;
     const totalHeight = lineCount * lineHeight;
     
-    // Si ça tient, retourner cette taille
-    if (totalHeight <= options.containerHeight) {
+    // Si ça tient avec une marge de sécurité de 5%, retourner cette taille
+    // Marge de sécurité pour compenser les imprécisions d'estimation
+    const safetyMargin = options.containerHeight * 0.05;
+    if (totalHeight <= (options.containerHeight - safetyMargin)) {
       return currentFontSize;
     }
     

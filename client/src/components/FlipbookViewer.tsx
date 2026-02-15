@@ -9,6 +9,7 @@ interface FlipbookViewerProps {
   height?: string;
   onPageTurn?: (pageIndex: number) => void;
   className?: string;
+  initialPage?: number;
 }
 
 export interface FlipbookViewerHandle {
@@ -19,7 +20,7 @@ export interface FlipbookViewerHandle {
 }
 
 const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
-  ({ pages, width = '100%', height = '100%', onPageTurn, className }, ref) => {
+  ({ pages, width = '100%', height = '100%', onPageTurn, className, initialPage }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const flipbookRef = useRef<FlipBook | null>(null);
     const prevButtonRef = useRef<HTMLButtonElement>(null);
@@ -49,27 +50,37 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
         setIsInitialized(false);
       }
 
+      const shouldSkipOpenAnim = initialPage !== undefined && initialPage > 0;
+
       const timer = setTimeout(() => {
         try {
           flipbookRef.current = new FlipBook(flipbookEl, {
             canClose: true,
-            initialCall: true,
+            initialCall: !shouldSkipOpenAnim,
             arrowKeys: true,
             nextButton: nextButtonRef.current,
             previousButton: prevButtonRef.current,
             width,
             height,
             onPageTurn: (el: HTMLElement, context: { pagesActive: NodeListOf<HTMLElement>; children: NodeListOf<HTMLElement> }) => {
-              if (onPageTurn) {
-                const activePages = context.pagesActive;
-                if (activePages.length > 0) {
-                  const pageIndex = Array.from(context.children).indexOf(activePages[0]);
-                  onPageTurn(pageIndex);
-                }
+              const activePages = context.pagesActive;
+              let pageIndex = 0;
+              if (activePages.length > 0) {
+                pageIndex = Array.from(context.children).indexOf(activePages[0]);
               }
+              if (onPageTurn) onPageTurn(pageIndex);
             },
           });
           setIsInitialized(true);
+
+          // Navigate to initialPage after init (book starts open since initialCall=false)
+          if (shouldSkipOpenAnim && flipbookRef.current) {
+            setTimeout(() => {
+              for (let i = 0; i < initialPage; i++) {
+                flipbookRef.current?.turnPage('forward');
+              }
+            }, 200);
+          }
         } catch (error) {
           console.error('[FlipbookViewer] Error initializing flipbook:', error);
         }
@@ -95,6 +106,9 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
           .c-flipbook::after,
           .c-flipbook::before {
             display: none !important;
+          }
+          .c-flipbook__page {
+            transition: transform 1.1s cubic-bezier(0.645, 0.045, 0.355, 1) !important;
           }
         `}</style>
         <div className="c-flipbook" style={{ width, height, position: 'relative', zIndex: 50 }}>

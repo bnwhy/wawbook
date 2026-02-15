@@ -138,6 +138,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("Chargement...");
+  const [isApplying, setIsApplying] = useState(false);
+  const [applyProgress, setApplyProgress] = useState(0);
+  const [applySuccess, setApplySuccess] = useState(false);
   
   // Mobile single-page mode
   const [isMobile, setIsMobile] = useState(false);
@@ -416,6 +419,9 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const handleApplyChanges = async () => {
     if (!book) return;
     
+    setIsApplying(true);
+    setApplyProgress(20);
+    
     // Update config with new values
     config.dedication = dedication;
     config.author = author;
@@ -435,13 +441,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           },
           characters: config.characters,
           combinationKey: currentCombinationKey,
+          dedicationOnly: true,
         }),
       });
+      
+      setApplyProgress(60);
       
       if (response.ok) {
         const result = await response.json();
         
         if (result.pages && result.pages.length > 0) {
+          setApplyProgress(90);
           // Update generatedPages
           const cacheBust = Date.now();
           const updatedPages = { ...generatedPages };
@@ -456,10 +466,15 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
           
           // Force flipbook remount by changing key
           setFlipbookKey(prev => prev + 1);
+          setApplyProgress(100);
+          setApplySuccess(true);
         }
       }
     } catch (err) {
       console.error('Failed to regenerate pages:', err);
+    } finally {
+      setIsApplying(false);
+      setApplyProgress(0);
     }
   };
 
@@ -1203,8 +1218,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   >
                     {/* Pages carousel container */}
                     <div className="relative w-full h-full">
-                      {/* Current page (grisée si génération en cours) */}
-                      <div className={isGenerating ? "opacity-30 blur-sm transition-all duration-500" : "opacity-100 transition-all duration-500"}>
+                      {/* Current page (grisée si génération ou application en cours) */}
+                      <div className={(isGenerating || isApplying) ? "opacity-30 blur-sm transition-all duration-500" : "opacity-100 transition-all duration-500"}>
                         <div 
                           className={`absolute inset-0 w-full h-full transition-transform duration-350 ease-out ${
                             mobileSlideDirection === 'left' ? 'animate-slide-out-left' : 
@@ -1237,6 +1252,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                       {isGenerating && (
                         <div className="absolute inset-0 flex items-center justify-center z-50">
                           <LoadingAnimation progress={loadingProgress} message={loadingMessage} />
+                        </div>
+                      )}
+                      
+                      {/* Overlay pendant l'application des modifications */}
+                      {isApplying && (
+                        <div className="absolute inset-0 flex items-center justify-center z-50">
+                          <LoadingAnimation 
+                            progress={applyProgress} 
+                            message={applyProgress < 50 ? "Application de vos modifications..." : applyProgress < 95 ? "Mise à jour des pages..." : "Terminé !"} 
+                          />
                         </div>
                       )}
                     </div>
@@ -1289,7 +1314,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
               <div className={`relative z-10 flex items-center justify-center w-full max-w-5xl animate-drop-in ${isModal ? '' : ''}`}>
                 <div className="relative">
                   {/* FlipBook (toujours affiché) */}
-                  <div className={isGenerating ? "opacity-30 blur-sm pointer-events-none transition-all duration-500" : "opacity-100 transition-all duration-500"}>
+                  <div className={(isGenerating || isApplying) ? "opacity-30 blur-sm pointer-events-none transition-all duration-500" : "opacity-100 transition-all duration-500"}>
                     {flipbookPages.length > 0 ? (
                       <FlipbookViewer
                         key={`flipbook-${flipbookPages.length}-${book?.id || 'default'}-${flipbookKey}`}
@@ -1312,6 +1337,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                   {isGenerating && (
                     <div className="absolute inset-0 flex items-center justify-center z-50">
                       <LoadingAnimation progress={loadingProgress} message={loadingMessage} />
+                    </div>
+                  )}
+                  
+                  {/* Overlay de chargement pendant l'application des modifications */}
+                  {isApplying && (
+                    <div className="absolute inset-0 flex items-center justify-center z-50">
+                      <LoadingAnimation 
+                        progress={applyProgress} 
+                        message={applyProgress < 50 ? "Application de vos modifications..." : applyProgress < 95 ? "Mise à jour des pages..." : "Terminé !"} 
+                      />
                     </div>
                   )}
                 </div>
@@ -1342,7 +1377,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                           rows={4}
                           placeholder="Écrivez votre message personnel ici..."
                           value={dedication}
-                          onChange={(e) => setDedication(e.target.value)}
+                          onChange={(e) => { setDedication(e.target.value); setApplySuccess(false); }}
                           maxLength={600}
                        />
                        <div className="text-right text-xs text-gray-400 mb-4 mt-1 font-medium">
@@ -1355,7 +1390,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                           className="w-full p-3 border-2 border-cloud-dark/10 rounded-xl font-medium text-cloud-dark focus:border-cloud-blue focus:ring-0 outline-none transition-colors bg-white text-sm"
                           placeholder="Nom de l'auteur..."
                           value={author}
-                          onChange={(e) => setAuthor(e.target.value)}
+                          onChange={(e) => { setAuthor(e.target.value); setApplySuccess(false); }}
                           maxLength={20}
                        />
                        <div className="text-right text-xs text-gray-400 mb-4 mt-1 font-medium">
@@ -1364,15 +1399,26 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
 
                        {/* Bouton commun - toujours visible, bleu si modification */}
                        <button 
+                           id="apply-changes-btn"
                            onClick={handleApplyChanges}
-                           className={`w-full mt-2 py-3 px-4 font-bold text-sm rounded-xl transition-colors ${
-                               dedication !== initialDedication || author !== initialAuthor
-                                   ? 'bg-cloud-blue text-white hover:bg-cloud-deep cursor-pointer'
-                                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                           className={`w-full mt-2 py-3 px-4 font-bold text-sm rounded-xl transition-colors flex items-center justify-center gap-2 ${
+                               applySuccess
+                                   ? 'bg-green-500 text-white cursor-default'
+                                   : isApplying
+                                       ? 'bg-cloud-blue/70 text-white cursor-wait'
+                                       : dedication !== initialDedication || author !== initialAuthor
+                                           ? 'bg-cloud-blue text-white hover:bg-cloud-deep cursor-pointer'
+                                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                            }`}
-                           disabled={dedication === initialDedication && author === initialAuthor}
+                           disabled={isApplying || applySuccess || (dedication === initialDedication && author === initialAuthor)}
                        >
-                           Appliquer les modifications
+                           {isApplying ? (
+                             <><Loader2 size={16} className="animate-spin" /> Application en cours...</>
+                           ) : applySuccess ? (
+                             <><Check size={16} strokeWidth={3} /> Appliqué !</>
+                           ) : (
+                             'Appliquer les modifications'
+                           )}
                        </button>
                    </div>
 

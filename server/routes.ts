@@ -12,7 +12,6 @@ import * as fs from "fs";
 import { extractFontsFromCss } from "./utils/fontExtractor";
 import { logger } from "./utils/logger";
 import { resolveConditionalText } from "./replit_integrations/object_storage/utils/conditionalTextResolver";
-import { fitTextToContainer } from "./utils/textFitter";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -174,7 +173,7 @@ export async function registerRoutes(
   });
 
   // ===== BOOK PAGE RENDERING =====
-  app.post("/api/books/:id/render-pages", async (req, res) => {    
+  app.post("/api/books/:id/render-pages", async (req, res) => {
     try {
       const book = await storage.getBook(req.params.id);
       if (!book) {
@@ -187,7 +186,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "No pages to render" });
       }
 
-      const { config = {}, combinationKey = 'default', characters = {} } = req.body;
+      const { config = {}, combinationKey = 'default', characters = {}, dedicationOnly = false } = req.body;
       const objectStorageService = new ObjectStorageService();
       
       // Parse combinationKey into key-value pairs for partial matching
@@ -288,11 +287,12 @@ export async function registerRoutes(
       const fullDataString = JSON.stringify(fullPersonalizationData);
       const keyHash = crypto.createHash('md5').update(fullDataString).digest('hex').substring(0, 16);
       
-      // Check if all pages already exist
+      // Check if all pages already exist (skip for dedicationOnly — only check targeted pages)
       let allPagesExist = true;
       const existingPages: Array<{ pageIndex: number; imageUrl: string }> = [];
       
-      for (const pageData of pages) {
+      const pagesToCheck = dedicationOnly ? [] : pages;
+      for (const pageData of pagesToCheck) {
         try {
           const [files] = await bucket.getFiles({
             prefix: `public/previews/${book.id}/${keyHash}/page-${pageData.pageIndex}-`
@@ -322,8 +322,10 @@ export async function registerRoutes(
       }
       
       // If all pages exist, return them immediately without regenerating
-      if (allPagesExist && existingPages.length === pages.length) {        return res.json({ pages: existingPages });
-      }      
+      if (!dedicationOnly && allPagesExist && existingPages.length === pages.length) {
+        return res.json({ pages: existingPages });
+      }
+      
       // SOLUTION 2: Use system-installed fonts for Chromium headless
       // Note: Fonts must be pre-installed in ~/.fonts (e.g., Andika from SIL)
       // We don't copy from book fonts as they may be corrupted
@@ -451,7 +453,19 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
       // Default font to use when no fontFamily is specified
       const defaultFont = availableFonts[0] || 'sans-serif';
 
-      for (const pageData of pages) {
+      // Si dedicationOnly, ne régénérer que les pages contenant des variables dédicace/auteur
+      const allBookTexts = contentConfig?.texts || [];
+      const dedicationPageIndices = new Set(
+        allBookTexts
+          .filter((t: any) => t.content && /\{(TXTVAR_)?(dedication|author)\}/i.test(t.content))
+          .map((t: any) => t.position?.pageIndex)
+          .filter((idx: any) => idx !== undefined)
+      );
+      const pagesToRender = dedicationOnly
+        ? pages.filter((p: any) => dedicationPageIndices.has(p.pageIndex))
+        : pages;
+
+      for (const pageData of pagesToRender) {
         try {
           const browserPage = await browser.newPage();
           
@@ -565,6 +579,13 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             (txt) => txt.position?.pageIndex === pageData.pageIndex
           );
           
+          // #region agent log
+          const allTexts_debug = contentConfig?.texts || [];
+          const dedTexts = allTexts_debug.filter((t: any) => t.content && (t.content.includes('dedication') || t.content.includes('author') || t.content.includes('TXTVAR_dedication') || t.content.includes('TXTVAR_author')));
+          const fs_debug = await import('fs');
+          fs_debug.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:pageTexts',message:'Text zones for page',data:{pageIndex:pageData.pageIndex,pageTextsCount:pageTexts.length,pageTextsContent:pageTexts.map((t:any)=>t.content?.substring(0,100)),allTextsCount:allTexts_debug.length,dedicationTextsFound:dedTexts.length,dedicationTextsContent:dedTexts.map((t:any)=>({content:t.content?.substring(0,100),pageIndex:t.position?.pageIndex})),configDedication:config.dedication,configAuthor:config.author},timestamp:Date.now(),hypothesisId:'H6'}) + '\n');
+          // #endregion
+          
           // Build clean HTML with positioned zones instead of raw InDesign HTML
           // Images use pixel positions from EPUB CSS (same as texts)
           let imagesHtml = finalImages.map((img) => {
@@ -580,7 +601,8 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           let textsHtml = pageTexts.map((txt: any) => {
             const pos = txt.position || {};
             const style = txt.style || {};
-            let content = txt.content || '';            
+            let content = txt.content || '';
+            
             // Helper function to check if a condition is active
             const isConditionActive = (segment: any): boolean => {
               if (!segment.condition) return true;
@@ -599,14 +621,6 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             const resolveVariablesInText = (text: string): string => {
               let resolved = text;
               
-              // #region agent log
-              const logPath = '/home/runner/workspace/.cursor/debug.log';
-              try {
-                const logEntry = JSON.stringify({location:'routes.ts:600',message:'RESOLVE VARIABLES',data:{originalText:text.substring(0,50),hasDedication:!!config.dedication,dedicationValue:config.dedication,hasAuthor:!!config.author},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H12'}) + '\n';
-                fs.appendFileSync(logPath, logEntry);
-              } catch(e) {}
-              // #endregion
-              
               // Replace variables - support multiple formats
               if (config.childName) {
                 resolved = resolved.replace(/\{\{child_name\}\}/gi, config.childName);
@@ -615,49 +629,43 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 resolved = resolved.replace(/\{nom_enfant\}/gi, config.childName);
               }
               
-              // Replace dedication variable
-              if (config.dedication) {
-                resolved = resolved.replace(/\{\{dedication\}\}/gi, config.dedication);
-                resolved = resolved.replace(/\{dedication\}/gi, config.dedication);
-              }
+              // Replace dedication variable (chaîne vide si non renseigné)
+              resolved = resolved.replace(/\{\{dedication\}\}/gi, config.dedication || '');
+              resolved = resolved.replace(/\{dedication\}/gi, config.dedication || '');
               
-              // Replace author variable
-              if (config.author) {
-                resolved = resolved.replace(/\{\{author\}\}/gi, config.author);
-                resolved = resolved.replace(/\{author\}/gi, config.author);
-              }
+              // Replace author variable (chaîne vide si non renseigné)
+              resolved = resolved.replace(/\{\{author\}\}/gi, config.author || '');
+              resolved = resolved.replace(/\{author\}/gi, config.author || '');
               
               // Replace TXTVAR system variables (dedication, author)
-              // IMPORTANT: Si le champ est vide, remplacer par chaîne vide (ne pas afficher {TXTVAR_...})
+              // Toujours remplacer (chaîne vide si non renseigné) pour ne pas afficher {TXTVAR_...}
               resolved = resolved.replace(/\{\{TXTVAR_dedication\}\}/gi, config.dedication || '');
               resolved = resolved.replace(/\{TXTVAR_dedication\}/gi, config.dedication || '');
               resolved = resolved.replace(/\{\{TXTVAR_author\}\}/gi, config.author || '');
               resolved = resolved.replace(/\{TXTVAR_author\}/gi, config.author || '');
               
               // Replace TXTVAR wizard variables (tabId_variantId)
-              // IMPORTANT: Si la variable n est pas resolue, remplacer par chaine vide
               resolved = resolved.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (match: string, tabId: string, variantId: string) => {
-                const heroPrefix = 'hero-';
-                const wizardTabId = tabId.startsWith(heroPrefix) ? tabId.substring(heroPrefix.length) : tabId;
+                const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
                 const tabSelections = characters?.[wizardTabId];
                 if (tabSelections && tabSelections[variantId]) {
                   return ' ' + tabSelections[variantId] + ' ';
                 }
-                return '';
+                return match;
               });
               
               return resolved;
             };
             
             // Helper function to build style for a segment
-            const buildSegmentStyle = (segmentStyle: any, globalStyle: any, fontSizeScale: number = 1.0): string => {
+            const buildSegmentStyle = (segmentStyle: any, globalStyle: any): string => {
               const segStyle = segmentStyle || globalStyle;
               
-              // Convert fontSize from points to pixels (factor 1.33 = 96dpi/72dpi) with text-fitting scale
+              // Convert fontSize from points to pixels (factor 20)
               let textFontSize = segStyle.fontSize || globalStyle.fontSize || '16pt';
               if (textFontSize.includes('pt')) {
                 const ptValue = parseFloat(textFontSize);
-                textFontSize = `${ptValue * fontSizeScale * 1.33}px`;
+                textFontSize = `${ptValue * 20}px`;
               }
               
               // Ensure font family is properly quoted
@@ -676,17 +684,16 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               const strokeColor = segStyle.strokeColor || globalStyle.strokeColor;
               const strokeWeight = segStyle.strokeWeight || globalStyle.strokeWeight;
               const strokeWidthPx = strokeColor
-                ? (strokeWeight ? `${strokeWeight * 1.33}px` : '1.33px')
+                ? (strokeWeight ? `${strokeWeight * 20}px` : '20px')
                 : undefined;
               
               const strokeCss = strokeColor && strokeWidthPx
                 ? `-webkit-text-stroke-color:${strokeColor};-webkit-text-stroke-width:${strokeWidthPx};text-stroke-color:${strokeColor};text-stroke-width:${strokeWidthPx};`
                 : '';
               
-              // NOTE: font-stretch est IGNORÉ car il élargit le texte et cause des débordements
-              // Le horizontalScale d'InDesign est déjà pris en compte dans le text-fitting
+              const fontStretchCss = fontStretch ? `font-stretch:${fontStretch};` : '';
               
-              return `font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};`;
+              return `font-family:${textFontFamily};font-size:${textFontSize};font-weight:${fontWeight};font-style:${fontStyle};color:${textColor};${strokeCss}${fontStretchCss}letter-spacing:${letterSpacing};text-decoration:${textDecoration};`;
             };
             
             // NOUVEAU: Si segments conditionnels, rendre chaque segment avec son propre style
@@ -694,70 +701,10 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             let globalTextTransform = style.textTransform || 'none';
             
             if (txt.conditionalSegments && txt.conditionalSegments.length > 0) {
-              // #region agent log
-              const logPath = '/home/runner/workspace/.cursor/debug.log';
-              try {
-                const logEntry = JSON.stringify({location:'routes.ts:720',message:'HAS CONDITIONAL SEGMENTS',data:{txtId:txt.id,segmentsCount:txt.conditionalSegments.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H13'}) + '\n';
-                fs.appendFileSync(logPath, logEntry);
-              } catch(e) {}
-              // #endregion
-              
               // Filtrer les segments actifs
               const activeSegments = txt.conditionalSegments.filter((segment: any) => isConditionActive(segment));
               
-              // #region agent log
-              try {
-                const logEntry = JSON.stringify({location:'routes.ts:732',message:'ACTIVE SEGMENTS FILTERED',data:{txtId:txt.id,activeCount:activeSegments.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H13'}) + '\n';
-                fs.appendFileSync(logPath, logEntry);
-              } catch(e) {}
-              // #endregion
-              
-              // === TEXT FITTING pour segments conditionnels ===
-              let scaleFactor = 1.0; // Par défaut, pas de réduction
-              try {
-              // #region agent log
-              const logPath = '/home/runner/workspace/.cursor/debug.log';
-              try {
-                const logEntry = JSON.stringify({location:'routes.ts:736',message:'START SEGMENTS FITTING',data:{activeSegmentsCount:activeSegments.length,txtId:txt.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H15'}) + '\n';
-                fs.appendFileSync(logPath, logEntry);
-              } catch(e) {}
-              // #endregion
-              
-              // Concaténer tout le texte résolu pour calculer la hauteur totale
-              const fullText = activeSegments.map((seg: any) => {
-                let t = seg.text || '';
-                t = resolveVariablesInText(t);
-                const segTransform = seg.resolvedStyle?.textTransform || globalTextTransform;
-                if (segTransform === 'uppercase') t = t.toUpperCase();
-                else if (segTransform === 'lowercase') t = t.toLowerCase();
-                return t;
-              }).join('');
-              
-              const originalFontSize = parseFloat(style.fontSize?.toString() || '42');
-              const lineHeightMultiplier = parseFloat(style.lineHeight?.toString() || '1.3');
-              const textIndentPt = parseFloat(style.textIndent?.toString() || '0');
-              // Largeur RÉELLE du container - le CSS word-break gérera le wrapping
-              const containerWidthPx = pos.width || 100;
-              const containerHeightPx = pos.height || 30;              
-              const fittedFontSize = fitTextToContainer(fullText, {
-                originalFontSize,
-                lineHeightMultiplier,
-                textIndent: textIndentPt,
-                containerWidth: containerWidthPx,
-                containerHeight: containerHeightPx
-              });
-              
-              scaleFactor = fittedFontSize / originalFontSize;              // === FIN TEXT FITTING ===
-              } catch (fittingError) {
-                // En cas d'erreur dans le fitting, utiliser la taille d'origine
-                const logPath = '/home/runner/workspace/.cursor/debug.log';
-                try {
-                  const logEntry = JSON.stringify({location:'routes.ts:770',message:'FITTING ERROR',data:{error:String(fittingError),txtId:txt.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H14'}) + '\n';
-                  fs.appendFileSync(logPath, logEntry);
-                } catch(e) {}
-              }
-              
-              // Rendre chaque segment avec son propre style (fontSize ajustée)
+              // Rendre chaque segment avec son propre style
               segmentsHtml = activeSegments.map((segment: any) => {
                 let segmentText = segment.text || '';
                 
@@ -778,17 +725,8 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                   segmentText = segmentText.toLowerCase();
                 }
                 
-                // Créer un style avec fontSize déjà ajustée (pas de double scale)
-                const segmentStyleWithFittedSize = segment.resolvedStyle ? {
-                  ...segment.resolvedStyle,
-                  fontSize: `${parseFloat(segment.resolvedStyle.fontSize || originalFontSize) * scaleFactor}pt`
-                } : {
-                  ...style,
-                  fontSize: `${fittedFontSize}pt`
-                };
-                
-                // Build style for this segment (scale déjà appliqué dans fontSize)
-                const segmentStyleStr = buildSegmentStyle(segmentStyleWithFittedSize, style, 1.0);
+                // Build style for this segment
+                const segmentStyleStr = buildSegmentStyle(segment.resolvedStyle, style);
                 
                 // Escape HTML
                 const escapedText = segmentText.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
@@ -814,37 +752,11 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 content = content.toLowerCase();
               }
               
-              // === TEXT FITTING : Ajuster la fontSize pour que le texte tienne ===
-              const originalFontSize = parseFloat(style.fontSize?.toString() || '12');
-              const lineHeightMultiplier = parseFloat(style.lineHeight?.toString() || '1.2');
-              const textIndentPt = parseFloat(style.textIndent?.toString() || '0');
-              // Largeur RÉELLE du container - le CSS word-break gérera le wrapping
-              const containerWidthPx = pos.width || 100;
-              const containerHeightPx = pos.height || 30;
-              
-              const fittedFontSize = fitTextToContainer(content, {
-                originalFontSize,
-                lineHeightMultiplier,
-                textIndent: textIndentPt,
-                containerWidth: containerWidthPx,
-                containerHeight: containerHeightPx
-              });
-              
-              // Appliquer la taille ajustée
-              const globalScaleFactor = fittedFontSize < originalFontSize 
-                ? fittedFontSize / originalFontSize 
-                : 1.0;              
-              if (fittedFontSize < originalFontSize) {
-                style = { ...style, fontSize: `${fittedFontSize}pt` };
-              }
-              // === FIN TEXT FITTING ===
-              
               // Escape HTML and convert line breaks
               content = content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
               
-              // BUGFIX: Appliquer le style global au texte (comme pour les segments)
-              // Sinon le texte apparaît en taille par défaut du navigateur (~16px)
-              const globalStyleStr = buildSegmentStyle(undefined, style, 1.0);
+              // Wrap in span with font styling (same as conditional segments)
+              const globalStyleStr = buildSegmentStyle(null, style);
               const textTransformCss = textTransform !== 'none' ? `text-transform:${textTransform};` : '';
               content = `<span style="${globalStyleStr}${textTransformCss}">${content}</span>`;
             }
@@ -858,25 +770,35 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             // Build the text-align-last CSS if defined
             const textAlignLastCss = textAlignLast ? `text-align-last:${textAlignLast};` : '';
             
-            // Dimensions du container = taille ORIGINALE (pas de compensation)
-            const containerWidth = pos.width;
-            const containerHeight = pos.height;
+            // BUGFIX: Reproduire exactement l'approche EPUB avec conteneur géant + scale
+            const scaleFactor = 20;
+            const containerWidth = pos.width * scaleFactor;
+            const containerHeight = pos.height * scaleFactor;
             
-            // Appliquer rotation sur le container
-            const transformValue = `rotate(${pos.rotation || 0}deg)`;
-            const finalPosX = pos.x;
+            // BUGFIX: Appliquer HorizontalScale via scaleX()
+            let transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor})`;
+            let finalPosX = pos.x;
             const finalPosY = pos.y;
+            
+            if (style.idmlHorizontalScale && style.idmlHorizontalScale !== 100) {
+              const scaleXValue = style.idmlHorizontalScale / 100;
+              transformValue = `rotate(${pos.rotation || 0}deg) scale(${1 / scaleFactor}, ${1 / scaleFactor}) scaleX(${scaleXValue})`;
+              
+              if (textAlign === 'center') {
+                const extraWidth = pos.width * (scaleXValue - 1);
+                finalPosX = pos.x - (extraWidth / 2);
+              }
+            }
             
             // Add text-transform to container if defined globally (for non-segmented text or as fallback)
             const containerTextTransform = globalTextTransform !== 'none' ? `text-transform:${globalTextTransform};` : '';
             
-            const containerStyle = `position:absolute;left:${finalPosX}px;top:${finalPosY}px;width:${containerWidth}px;height:${containerHeight}px;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};line-height:${lineHeight};${containerTextTransform}margin:0;padding:0;transform:${transformValue};transform-origin:0 0;`;
+            const containerStyle = `position:absolute;left:${finalPosX}px;top:${finalPosY}px;width:${containerWidth}px;height:${containerHeight}px;box-sizing:border-box;overflow:visible;display:flex;flex-direction:column;justify-content:center;align-items:${textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start'};line-height:${lineHeight};${containerTextTransform}margin:0;padding:0;transform:${transformValue};transform-origin:0 0;`;
             
-            // Wrapper interne pour le texte avec text-align, text-indent et word-wrap FORCÉ  
-            const innerStyle = `width:100%;text-align:${textAlign};${textAlignLastCss}text-indent:${textIndent};margin:0;padding:0;word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;white-space:normal;box-sizing:border-box;`;
+            // Wrapper interne pour le texte avec text-align et text-indent
+            const innerStyle = `width:100%;text-align:${textAlign};${textAlignLastCss}text-indent:${textIndent};margin:0;padding:0;`;
             
-            const finalHtml = `<div style="${containerStyle}"><div style="${innerStyle}">${content}</div></div>`;            
-            return finalHtml;
+            return `<div style="${containerStyle}"><div style="${innerStyle}">${content}</div></div>`;
           }).join('\n');
           
           let html = `<!DOCTYPE html>

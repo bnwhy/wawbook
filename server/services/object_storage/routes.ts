@@ -70,29 +70,19 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(400).json({ error: "Missing required field: data" });
       }
 
-      // Use local file storage
-      const fs = await import('fs');
-      const path = await import('path');
-      
-      // Generate unique filename
       const fileId = randomUUID();
       const ext = getExtensionFromContentType(contentType || 'image/png');
       const finalFilename = filename ? `${filename}.${ext}` : `image_${fileId}.${ext}`;
-      
-      // Save to local assets directory
-      const uploadsDir = path.join(process.cwd(), 'server', 'assets', 'uploads');
-      await fs.promises.mkdir(uploadsDir, { recursive: true });
-      
-      const localPath = path.join(uploadsDir, finalFilename);
-      
-      const buffer = Buffer.from(data, 'base64');
-      await fs.promises.writeFile(localPath, buffer);
+      const objectKey = `uploads/${finalFilename}`;
 
-      // Return the asset path that can be served
-      const assetPath = `/assets/uploads/${finalFilename}`;
+      const buffer = Buffer.from(data, 'base64');
+      const file = objectStorageService.file(objectKey);
+      await file.save(buffer, { contentType: contentType || 'image/png' });
+
+      const publicUrl = objectStorageService.getPublicUrl(objectKey);
 
       res.json({
-        objectPath: assetPath,
+        objectPath: publicUrl,
         filename: finalFilename,
       });
     } catch (error: any) {
@@ -102,7 +92,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         details: {
           message: error.message,
           code: error.code,
-          stack: error.stack
         }
       });
     }

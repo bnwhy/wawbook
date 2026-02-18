@@ -166,6 +166,17 @@ export class ObjectNotFoundError extends Error {
 export class ObjectStorageService {
   constructor() {}
 
+  file(key: string): StorageFile {
+    return new StorageFile(key, R2_BUCKET_NAME);
+  }
+
+  getPublicUrl(key: string): string {
+    if (R2_PUBLIC_URL) {
+      return `${R2_PUBLIC_URL.replace(/\/$/, '')}/${key}`;
+    }
+    return `/objects/${key}`;
+  }
+
   getPublicObjectSearchPaths(): Array<string> {
     const pathsStr = process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
     const paths = Array.from(

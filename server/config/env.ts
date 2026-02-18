@@ -57,6 +57,9 @@ export type Env = z.infer<typeof envSchema>;
  * Lance une erreur si la validation échoue
  */
 function validateEnv(): Env {
+  console.log('[ENV DEBUG] Available env var keys:', Object.keys(process.env).filter(k => !k.startsWith('npm_')).join(', '));
+  console.log('[ENV DEBUG] DATABASE_URL present:', !!process.env.DATABASE_URL);
+  console.log('[ENV DEBUG] NODE_ENV:', process.env.NODE_ENV);
   try {
     return envSchema.parse(process.env);
   } catch (error) {

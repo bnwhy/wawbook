@@ -24,39 +24,25 @@ const ignoreDevModules: Plugin = {
   },
 };
 
-// server deps to bundle to reduce openat(2) syscalls
-// which helps cold start times
+// Server deps to bundle into dist/index.cjs to reduce cold start times.
+// Only include packages actually imported by server code.
 const allowlist = [
-  "@google/generative-ai",
-  "@neondatabase/serverless",
-  "axios",
   "bcryptjs",
   "connect-pg-simple",
-  "cors",
-  "date-fns",
   "drizzle-orm",
   "drizzle-zod",
   "express",
   "express-rate-limit",
   "express-session",
-  "google-auth-library",
-  "jsonwebtoken",
-  "memorystore",
-  "multer",
-  "nanoid",
-  "nodemailer",
-  "openai",
   "passport",
   "passport-apple",
   "passport-google-oauth20",
   "passport-local",
+  "pg",
   "pino",
   "pino-pretty",
   "sharp",
   "stripe",
-  "uuid",
-  "ws",
-  "xlsx",
   "zod",
   "zod-validation-error",
 ];

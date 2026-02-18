@@ -30,10 +30,17 @@ const envSchema = z.object({
   // Stripe (optional pour le développement)
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-  STRIPE_SYNC_BACKFILL: z.enum(['true', 'false']).optional(),
   
-  // Replit
-  REPLIT_DOMAINS: z.string().optional(),
+  // Cloudflare R2 Storage (optional in dev, required in production)
+  R2_ENDPOINT: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET_NAME: z.string().default('wawbook'),
+  R2_PUBLIC_URL: z.string().optional(),
+  
+  // Object Storage paths
+  PUBLIC_OBJECT_SEARCH_PATHS: z.string().optional(),
+  PRIVATE_OBJECT_DIR: z.string().optional(),
   
   // Logging
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).optional(),
@@ -78,7 +85,6 @@ if (env.NODE_ENV === 'development') {
     PORT: env.PORT,
     DATABASE_URL: env.DATABASE_URL ? '***configured***' : undefined,
     STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY ? '***configured***' : undefined,
-    REPLIT_DOMAINS: env.REPLIT_DOMAINS,
     LOG_LEVEL: env.LOG_LEVEL,
   });
 }

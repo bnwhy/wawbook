@@ -3,8 +3,6 @@ import { registerRoutes } from "./routes/index";
 import { registerRoutes as registerLegacyRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { runMigrations } from 'stripe-replit-sync';
-import { getStripeSync } from "./stripeClient";
 import { WebhookHandlers } from "./webhookHandlers";
 import { logger } from "./utils/logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
@@ -66,60 +64,8 @@ async function initOrderSequence() {
   }
 }
 
-async function initStripe() {
-  const databaseUrl = env.DATABASE_URL;
-  if (!databaseUrl) {
-    logger.warn('DATABASE_URL not set, skipping Stripe initialization');
-    return;
-  }
-
-  try {
-    logger.info('Initializing Stripe schema...');
-    await runMigrations({ databaseUrl });
-    logger.info('Stripe schema ready');
-
-    const stripeSync = await getStripeSync();
-
-    logger.info('Setting up managed webhook...');
-    const replitDomain = env.REPLIT_DOMAINS?.split(',')[0];
-    if (replitDomain) {
-      const webhookBaseUrl = `https://${replitDomain}`;
-      try {
-        const result = await stripeSync.findOrCreateManagedWebhook(
-          `${webhookBaseUrl}/api/stripe/webhook`
-        );
-        if (result?.webhook?.url) {
-          logger.info({ webhookUrl: result.webhook.url }, 'Webhook configured');
-        } else {
-          logger.info('Webhook setup completed (no URL returned)');
-        }
-      } catch (webhookError) {
-        logger.warn({ err: webhookError }, 'Could not set up managed webhook');
-      }
-    } else {
-      logger.info('No REPLIT_DOMAINS set, skipping webhook setup');
-    }
-
-    // syncBackfill peut prendre très longtemps ou tourner indéfiniment
-    // On le rend optionnel via STRIPE_SYNC_BACKFILL pour éviter qu'il bloque le démarrage
-    // Par défaut, on le désactive car les webhooks gèrent la synchronisation en temps réel
-    if (env.STRIPE_SYNC_BACKFILL === 'true') {
-      logger.info('Starting Stripe backfill sync (this may take a while)...');
-      stripeSync.syncBackfill()
-        .then(() => logger.info('Stripe data synced'))
-        .catch((err: unknown) => logger.error({ err }, 'Error syncing Stripe data'));
-    } else {
-      logger.info('Stripe backfill sync skipped (set STRIPE_SYNC_BACKFILL=true to enable)');
-      logger.info('Note: Stripe data will be synced via webhooks in real-time');
-    }
-  } catch (error) {
-    logger.error({ err: error }, 'Failed to initialize Stripe');
-  }
-}
-
 initDefaultSettings();
 initOrderSequence();
-initStripe();
 
 app.post(
   '/api/stripe/webhook',
@@ -260,7 +206,6 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);

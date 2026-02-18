@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import type { Server } from "http";
 import * as path from "path";
-import { registerObjectStorageRoutes } from "../replit_integrations/object_storage";
+import { registerObjectStorageRoutes } from "../services/object_storage";
 import authRouter from "./auth.routes";
 import booksRouter from "./books.routes";
 import customersRouter from "./customers.routes";

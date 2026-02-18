@@ -6,7 +6,7 @@ import { calculateTextFitScale, calculateSegmentsFitScale } from './textFitter';
 
 // Import des fonctions de résolution de texte conditionnel
 // @ts-ignore - Import depuis le serveur
-import { resolveConditionalText } from '../../../server/replit_integrations/object_storage/utils/conditionalTextResolver';
+import { resolveConditionalText } from '../../../server/services/object_storage/utils/conditionalTextResolver';
 
 /**
  * Checks if all image conditions are satisfied by the current wizard selections.

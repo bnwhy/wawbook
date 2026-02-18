@@ -4,14 +4,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema, type ImageElement, type TextElement, type BookConfiguration } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
-import { registerObjectStorageRoutes, ObjectStorageService, objectStorageClient } from "./replit_integrations/object_storage";
+import { registerObjectStorageRoutes, ObjectStorageService, objectStorageClient } from "./services/object_storage";
 import { stripeService } from "./stripeService";
 import { getStripePublishableKey } from "./stripeClient";
 import * as path from "path";
 import * as fs from "fs";
 import { extractFontsFromCss } from "./utils/fontExtractor";
 import { logger } from "./utils/logger";
-import { resolveConditionalText } from "./replit_integrations/object_storage/utils/conditionalTextResolver";
+import { resolveConditionalText } from "./services/object_storage/utils/conditionalTextResolver";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -142,7 +142,7 @@ export async function registerRoutes(
         const publicBucketPath = publicSearchPaths[0] || '';
         
         if (publicBucketPath) {
-          // Parse bucket name from path like /replit-objstore-xxx/public
+          // Parse bucket name from path like /bucketname/public
           const pathParts = publicBucketPath.startsWith('/') 
             ? publicBucketPath.slice(1).split('/') 
             : publicBucketPath.split('/');
@@ -265,8 +265,8 @@ export async function registerRoutes(
       const renderedPages: Array<{ pageIndex: number; imageUrl: string }> = [];
       
       // Check if pages already exist in bucket before regenerating
-      const { objectStorageClient } = await import('./replit_integrations/object_storage/objectStorage');
-      const bucketName = 'replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2';
+      const { objectStorageClient } = await import('./services/object_storage/objectStorage');
+      const bucketName = process.env.R2_BUCKET_NAME || 'wawbook';
       const bucket = objectStorageClient.bucket(bucketName);
       
       // Generate stable hash for this combination
@@ -334,7 +334,7 @@ export async function registerRoutes(
       // IGNORE EPUB CSS COMPLETELY - Only use IDML for text and fonts
       // EPUB only provides positions and images
       const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
-      const publicBucketPath = publicSearchPaths[0] || '/replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2/public';
+      const publicBucketPath = publicSearchPaths[0] || `/${process.env.R2_BUCKET_NAME || 'wawbook'}/public`;
       
       // Extract font names from IDML texts (not from EPUB CSS)
       const availableFonts: string[] = [];

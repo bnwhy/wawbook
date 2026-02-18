@@ -112,9 +112,6 @@ export const BooksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const updateBook = async (book: BookProduct) => {
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'BooksContext.tsx:114',message:'updateBook called',data:{bookId:book.id,bookName:book.name,galleryImages:book.galleryImages,galleryLength:book.galleryImages?.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H_SAVE'})}).catch(()=>{});
-    // #endregion
     await updateBookMutation.mutateAsync(book);
   };
 

@@ -5,7 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { parseIdmlBuffer } from './server/replit_integrations/object_storage/idmlParser';
+import { parseIdmlBuffer } from './server/services/object_storage/idmlParser';
 
 async function testChateauFix() {
   console.log('=== TEST: Correction des styles de caractères IDML ===\n');

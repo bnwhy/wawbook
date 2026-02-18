@@ -283,9 +283,9 @@ export function registerObjectStorageRoutes(app: Express): void {
       const objectPath = req.path.replace(/^\/objects\//, '');
       const parts = objectPath.split('/');
       
-      // PRIORITY 1: Check if first part looks like a bucket name (replit-objstore-*)
-      // If bucket is explicitly specified, ONLY use that bucket - no fallback
-      if (parts.length >= 2 && parts[0].startsWith('replit-objstore-')) {
+      // PRIORITY 1: Check if first part looks like a bucket name
+      // If bucket is explicitly specified, strip it and use the file path
+      if (parts.length >= 2 && parts[0] === (process.env.R2_BUCKET_NAME || 'wawbook')) {
         const bucketName = parts[0];
         const fileName = parts.slice(1).join('/');
         try {
@@ -378,7 +378,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       const bucketsToSearch = new Set<string>();
       
       // Add default bucket
-      const defaultBucket = 'replit-objstore-5e942e41-fb79-4139-8ca5-c1c4fc7182e2';
+      const defaultBucket = process.env.R2_BUCKET_NAME || 'wawbook';
       bucketsToSearch.add(defaultBucket);
       
       // Also check the configured private dir bucket if different

@@ -7,7 +7,7 @@ import { logger } from "../utils/logger";
 import * as path from "path";
 import * as fs from "fs";
 import { extractFontsFromCss } from "../utils/fontExtractor";
-import { ObjectStorageService, objectStorageClient } from "../replit_integrations/object_storage";
+import { ObjectStorageService, objectStorageClient } from "../services/object_storage";
 
 const router = express.Router();
 

@@ -594,23 +594,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     setIsImportingStoryboard(true);
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'AdminDashboard.tsx:619',message:'handleImportStoryboard STARTED - bucket flow',data:{epubFileName:epubFile?.name,idmlFileName:idmlFile?.name,bookId:selectedBook.id},timestamp:Date.now(),hypothesisId:'H1,H2'})}).catch(()=>{});
-      // #endregion
       // Upload EPUB to bucket
       toast.info('Upload EPUB vers le stockage...');
       const epubUpload = await uploadToBucket(epubFile);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'AdminDashboard.tsx:625',message:'EPUB upload result',data:{success:!!epubUpload,objectPath:epubUpload?.objectPath},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
       if (!epubUpload) throw new Error('Échec de l\'upload EPUB');
 
       // Upload IDML to bucket
       toast.info('Upload IDML vers le stockage...');
       const idmlUpload = await uploadToBucket(idmlFile);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'AdminDashboard.tsx:631',message:'IDML upload result',data:{success:!!idmlUpload,objectPath:idmlUpload?.objectPath},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
       if (!idmlUpload) throw new Error('Échec de l\'upload IDML');
 
       // Upload font files to bucket
@@ -747,9 +738,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         toast.warning('Aucun texte créé lors de l\'import. Vérifiez la structure du fichier.', { duration: 10000 });
       }
     } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'AdminDashboard.tsx:773',message:'handleImportStoryboard ERROR',data:{errorMessage:error.message,errorStack:error.stack?.substring(0,300)},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
       console.error('Error importing storyboard:', error);
       toast.error(`Échec de l'import : ${error.message}`);
     } finally {
@@ -7136,12 +7124,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                         const textTransformValue = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
                                                                                             ? segment.resolvedStyle.textTransform
                                                                                             : (text.style?.textTransform || 'none');
-                                                                                        
-                                                                                        // Si resolvedStyle existe, utiliser UNIQUEMENT ses propriétés (même si undefined)
-                                                                                        // Ne pas fallback sur text.style pour éviter que tous les segments aient le même style
-                                                                                        // #region agent log
-                                                                                        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:6715',message:'Building style for segment (ADMIN)',data:{hasResolvedStyle,segmentFontSize:segment.resolvedStyle?.fontSize,globalFontSize:text.style?.fontSize,segmentColor:segment.resolvedStyle?.color,globalColor:text.style?.color,segmentLetterSpacing:segment.resolvedStyle?.letterSpacing,globalLetterSpacing:text.style?.letterSpacing,segmentStrokeColor:segment.resolvedStyle?.strokeColor,globalStrokeColor:text.style?.webkitTextStrokeColor,segmentFontStretch:segment.resolvedStyle?.fontStretch,globalFontStretch:text.style?.fontStretch},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H4'})}).catch(()=>{});
-                                                                                        // #endregion
                                                                                         const style = hasResolvedStyle ? {
                                                                                             fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
                                                                                             fontSize: segment.resolvedStyle?.fontSize || 'inherit',
@@ -7169,10 +7151,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                             WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
                                                                                             fontStretch: text.style?.fontStretch as any,
                                                                                         };
-                                                                                        // #region agent log
-                                                                                        fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:6741',message:'Final style object (ADMIN)',data:{finalFontSize:style.fontSize,finalColor:style.color,finalLetterSpacing:style.letterSpacing,finalWebkitTextStroke:style.WebkitTextStroke,finalWebkitTextStrokeColor:style.WebkitTextStrokeColor,finalWebkitTextStrokeWidth:style.WebkitTextStrokeWidth,finalFontStretch:style.fontStretch,finalTextTransform:style.textTransform},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H4'})}).catch(()=>{});
-                                                                                        // #endregion
-                                                                                        
+
                                                                                         // Utiliser le texte du segment tel qu'extrait de l'IDML (préserve les espaces dans le segment)
                                                                                         const segmentText = segment.text || '';
                                                                                         

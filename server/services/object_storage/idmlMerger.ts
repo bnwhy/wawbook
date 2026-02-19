@@ -50,10 +50,6 @@ function resolveSegmentStyle(
   colors: Record<string, string>,
   globalParagraphStyleId?: string
 ): any {
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:ENTRY',message:'Function entry',data:{segmentText:segment.text?.substring(0,20),appliedCharStyle:segment.appliedCharacterStyle,hasInlineProps:!!segment.inlineCharProperties,inlineFillColor:segment.inlineCharProperties?.fillColor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H4'})}).catch(()=>{});
-  // #endregion
-  
   // 1. Résoudre le CharacterStyle du segment
   const resolvedCharId = resolveStyleId(
     characterStyles,
@@ -64,10 +60,6 @@ function resolveSegmentStyle(
   let charStyle = resolvedCharId && characterStyles[resolvedCharId]
     ? { ...characterStyles[resolvedCharId] }
     : {};
-  
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:AFTER_CHARSTYLE',message:'CharStyle resolved',data:{resolvedCharId,charStyleColor:charStyle.color,charStyleFontSize:charStyle.fontSize,charStyleFontFamily:charStyle.fontFamily},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3'})}).catch(()=>{});
-  // #endregion
   
   // 2. Résoudre le ParagraphStyle global pour l'héritage
   let paraStyle: any = {};
@@ -98,11 +90,6 @@ function resolveSegmentStyle(
     
     if (inline.fillColor) {
       const colorHex = colors[inline.fillColor];
-      
-      // #region agent log
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:INLINE_COLOR',message:'Inline color resolution',data:{fillColorRef:inline.fillColor,colorHex,isPaper:colorHex==='#77ff88',availableColorKeys:Object.keys(colors).filter(k=>k.includes('u14')).slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4,H5'})}).catch(()=>{});
-      // #endregion
-      
       if (colorHex) charStyle.color = colorHex;
     }
   }
@@ -110,11 +97,6 @@ function resolveSegmentStyle(
   // 4. Héritage depuis le ParagraphStyle pour les propriétés manquantes
   // CRITIQUE : C'est ICI que le bug se trouvait - les propriétés manquantes 
   // du CharacterStyle doivent être héritées du ParagraphStyle
-  
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:BEFORE_INHERIT',message:'Before inheritance',data:{charStyleColor:charStyle.color,hasExplicitColor:resolvedCharId&&characterStyles[resolvedCharId]&&characterStyles[resolvedCharId].color,isNoCharStyle:segment.appliedCharacterStyle?.includes('[No character style]'),paraColor:paraStyle.paraColor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3,H10'})}).catch(()=>{});
-  // #endregion
-  
   if (!charStyle.fontFamily && paraStyle.fontFamily) {
     charStyle.fontFamily = paraStyle.fontFamily;
   }
@@ -167,10 +149,6 @@ function resolveSegmentStyle(
   // Pour [No character style], toujours hériter du ParagraphStyle (noir par défaut n'est pas intentionnel)
   if (isNoCharacterStyle && paraStyle.paraColor) {
     charStyle.color = paraStyle.paraColor;
-    
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:INHERIT_NO_CHAR_STYLE',message:'[No character style] inherits from ParagraphStyle',data:{wasColor:charStyle.color,newColor:paraStyle.paraColor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H9,H10'})}).catch(()=>{});
-    // #endregion
   }
   
   // Pour les styles personnalisés, GARDER la couleur (même si c'est Paper/blanc)
@@ -208,11 +186,6 @@ function resolveSegmentStyle(
     strokeColor: charStyle.strokeColor,
     strokeWeight: charStyle.strokeWeight
   };
-  
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:resolveSegmentStyle:EXIT',message:'Function exit',data:{finalColor:cssStyle.color,finalFontSize:cssStyle.fontSize,finalTextTransform:cssStyle.textTransform,finalHorizontalScale:cssStyle.horizontalScale},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2,H3'})}).catch(()=>{});
-  // #endregion
-  
   return cssStyle;
 }
 
@@ -539,11 +512,6 @@ function createMergedText(
         idmlData.colors,
         paraStyleId
       );
-      
-      // #region agent log
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlMerger.ts:createMergedText:APPLY_FIRST_SEGMENT',message:'Applying first segment style to global',data:{segmentText:firstStyledSegment.text.substring(0,20),segmentColor:firstSegmentResolvedStyle.color,segmentFontSize:firstSegmentResolvedStyle.fontSize},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H11'})}).catch(()=>{});
-      // #endregion
-      
       // Appliquer le style du segment au charStyle global
       // Extraction des valeurs numériques depuis le format CSS
       if (firstSegmentResolvedStyle.fontFamily) {

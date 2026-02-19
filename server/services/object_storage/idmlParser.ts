@@ -409,21 +409,11 @@ export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
  */
 function extractColors(data: any): Record<string, string> {
   const colors: Record<string, string> = {};
-  
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:421',message:'extractColors ENTRY',data:{hasColorGroup:!!data?.ColorGroup,hasGraphicRoot:!!(data?.idPkg_Graphic||data?.Graphic),dataKeys:Object.keys(data||{}).slice(0,10)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H5'})}).catch(()=>{});
-  // #endregion
-  
   try {
     // Structure 1: Swatches.xml avec ColorGroup
     const colorGroup = data?.ColorGroup;
     if (colorGroup) {
       const swatches = Array.isArray(colorGroup) ? colorGroup : [colorGroup];
-      
-      // #region agent log
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:428',message:'ColorGroup found',data:{swatchesCount:swatches.length,isArray:Array.isArray(colorGroup)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
-      
       for (const swatch of swatches) {
         const colorSwatches = swatch?.Color;
         if (!colorSwatches) continue;
@@ -442,10 +432,6 @@ function extractColors(data: any): Record<string, string> {
             if (name) {
               colors[name] = hexColor;
             }
-            
-            // #region agent log
-            fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:442',message:'Color added from ColorGroup',data:{self,name,space,colorValue,hexColor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3'})}).catch(()=>{});
-            // #endregion
           }
         }
       }
@@ -458,11 +444,6 @@ function extractColors(data: any): Record<string, string> {
     
     if (directColors) {
       const colorArray = Array.isArray(directColors) ? directColors : [directColors];
-      
-      // #region agent log
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:457',message:'Direct colors found',data:{colorsCount:colorArray.length,isArray:Array.isArray(directColors)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
-      
       for (const color of colorArray) {
         const self = color['@_Self'];
         const name = color['@_Name'];
@@ -475,23 +456,11 @@ function extractColors(data: any): Record<string, string> {
           if (name && name !== '$ID/') {
             colors[name] = hexColor;
           }
-          
-          // #region agent log
-          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:467',message:'Color added from direct',data:{self,name,space,colorValue,hexColor},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H2,H3'})}).catch(()=>{});
-          // #endregion
         }
       }
     }
   } catch (e) {
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:474',message:'extractColors ERROR',data:{error:String(e)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1,H5'})}).catch(()=>{});
-    // #endregion
   }
-  
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:477',message:'extractColors EXIT',data:{totalColors:Object.keys(colors).length,colorKeys:Object.keys(colors).slice(0,10),colorValues:Object.values(colors).slice(0,10)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
-  // #endregion
-  
   return colors;
 }
 
@@ -653,11 +622,6 @@ export function extractCharacterStyles(
       // Color - check both locations
       const fillColorRef = charStyle['@_FillColor'] || props['@_FillColor'];
       const color = fillColorRef && colors[fillColorRef] ? colors[fillColorRef] : '#000000';
-      
-      // #region agent log
-      fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:636',message:'CharStyle color resolution',data:{styleName:name||self,fillColorRef,resolvedColor:color,colorFound:!!(fillColorRef&&colors[fillColorRef]),availableColorKeys:Object.keys(colors).slice(0,5)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
-      
       // Letter spacing (tracking) - check both locations
       // InDesign peut utiliser deux formats:
       // - Standard: tracking en 1/1000 em (ex: 50 = 0.05em)
@@ -1534,13 +1498,6 @@ function extractTextFromParagraphRanges(
         
         // Couleur inline
         const inlineFillColor = charRange['@_FillColor'] || props['@_FillColor'];
-        
-        // #region agent log
-        if (inlineFillColor) {
-          fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'idmlParser.ts:1539',message:'Inline FillColor detected',data:{inlineFillColor,charRangeAppliedStyle:charRange['@_AppliedCharacterStyle']},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H11'})}).catch(()=>{});
-        }
-        // #endregion
-        
         // HorizontalScale, VerticalScale, Skew
         const inlineHorizontalScale = parseFloat(charRange['@_HorizontalScale'] || props['@_HorizontalScale']) || undefined;
         const inlineVerticalScale = parseFloat(charRange['@_VerticalScale'] || props['@_VerticalScale']) || undefined;

@@ -7,38 +7,19 @@
  */
 export function convertColorToHex(space: string, colorValue: string): string {
   if (!colorValue) {
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorConverter.ts:9',message:'convertColorToHex: empty colorValue',data:{space,colorValue},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-    // #endregion
     return '#000000';
   }
   
   const values = colorValue.split(' ').map(v => parseFloat(v));
-  
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorConverter.ts:11',message:'convertColorToHex',data:{space,colorValue,values},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-  // #endregion
-  
   if (space === 'RGB') {
     const hex = rgbToHex(values[0] || 0, values[1] || 0, values[2] || 0);
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorConverter.ts:14',message:'RGB to hex',data:{values,hex},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-    // #endregion
     return hex;
   }
   
   if (space === 'CMYK') {
     const hex = cmykToHex(values[0] || 0, values[1] || 0, values[2] || 0, values[3] || 0);
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorConverter.ts:18',message:'CMYK to hex',data:{values,hex},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-    // #endregion
     return hex;
   }
-  
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorConverter.ts:21',message:'Unknown color space - defaulting to black',data:{space,colorValue},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
-  // #endregion
-  
   return '#000000';
 }
 
@@ -65,15 +46,8 @@ function rgbToHex(r: number, g: number, b: number): string {
  * - CMYK(55, 100, 0, 13) → RGB(128, 26, 118) #801a76
  */
 function cmykToHex(c: number, m: number, y: number, k: number): string {
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorConverter.ts:cmykToHex:ENTRY',message:'CMYK input',data:{c,m,y,k,isPaper:c===0&&m===0&&y===0&&k===0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H6,H7,H8'})}).catch(()=>{});
-  // #endregion
-  
   // BUGFIX CRITIQUE: Si CMYK(0,0,0,0) = Paper (blanc), retourner #ffffff directement
   if (c === 0 && m === 0 && y === 0 && k === 0) {
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorConverter.ts:cmykToHex:PAPER',message:'Paper detected - returning white',data:{result:'#ffffff'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H6,H7,H8'})}).catch(()=>{});
-    // #endregion
     return '#ffffff';
   }
   
@@ -99,10 +73,5 @@ function cmykToHex(c: number, m: number, y: number, k: number): string {
   const b = 255 * (1 - y2) * (1 - k2) * bFactor;
   
   const result = rgbToHex(r, g, b);
-  
-  // #region agent log
-  fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'colorConverter.ts:cmykToHex:EXIT',message:'CMYK converted',data:{c,m,y,k,r:Math.round(r),g:Math.round(g),b:Math.round(b),result},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H6,H8'})}).catch(()=>{});
-  // #endregion
-  
   return result;
 }

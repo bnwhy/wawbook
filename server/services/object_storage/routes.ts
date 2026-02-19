@@ -1722,9 +1722,6 @@ export function registerObjectStorageRoutes(app: Express): void {
   app.post("/api/books/import-storyboard", async (req, res) => {
     try {
       const { epubPath, idmlPath, bookId, fonts } = req.body;
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'routes.ts:import-storyboard',message:'import-storyboard called',data:{hasEpubPath:!!epubPath,hasIdmlPath:!!idmlPath,bookId,fontsCount:fonts?.length,epubPathValue:epubPath,idmlPathValue:idmlPath},timestamp:Date.now(),hypothesisId:'H1,H3'})}).catch(()=>{});
-      // #endregion
 
       if (!epubPath || !idmlPath || !bookId) {
         return res.status(400).json({ 

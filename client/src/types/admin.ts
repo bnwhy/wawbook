@@ -50,7 +50,8 @@ export interface BookProduct {
 export interface WizardConfiguration {
   avatarStyle: 'watercolor' | 'cartoon' | 'realistic';
   tabs: WizardTab[];
-  avatarMappings?: Record<string, string>; // key: "optId1_optId2" (sorted), value: "url"
+  avatarMappings?: Record<string, string>;
+  previewFields?: { id: string; label: string; enabled: boolean; textElementId?: string }[];
 }
 
 export interface WizardOption {
@@ -62,9 +63,10 @@ export interface WizardOption {
 
 export interface WizardVariant {
   id: string;
-  label: string; // Internal name
-  title?: string; // Public display title
-  type: 'options' | 'text' | 'checkbox';
+  label: string;
+  title?: string;
+  type: 'options' | 'text' | 'checkbox' | 'color';
+  showLabel?: boolean;
   minLength?: number;
   maxLength?: number;
   unit?: string;
@@ -108,21 +110,31 @@ export interface PageDefinition {
   description?: string; // e.g. "Introduction in the bedroom"
 }
 
+export interface ConditionalSegment {
+  text: string;
+  condition?: string;
+  parsedCondition?: { character: string; variant: string; option: string };
+  variables?: string[];
+  appliedCharacterStyle?: string;
+}
+
 export interface TextElement {
   id: string;
-  label: string; // Internal label
+  label: string;
   type: 'fixed' | 'variable';
-  content: string; // Default content or variable key
-  combinationKey?: string; // Optional: restrict to specific variant
+  content: string;
+  combinationKey?: string;
   style?: React.CSSProperties;
+  conditionalSegments?: ConditionalSegment[];
+  availableConditions?: string[];
   position: {
     pageIndex: number;
-    zoneId: string; // e.g., "header", "body", "footer"
+    zoneId: string;
     layer?: number;
-    x?: number; // Percentage 0-100
-    y?: number; // Percentage 0-100
-    width?: number; // Percentage
-    height?: number; // Percentage
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
     rotation?: number;
   };
 }

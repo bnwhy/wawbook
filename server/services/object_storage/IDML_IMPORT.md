@@ -265,6 +265,6 @@ Structure :
 
 ## Fichiers modifiés
 
-- `server/replit_integrations/object_storage/idmlParser.ts` (nouveau)
-- `server/replit_integrations/object_storage/routes.ts` (modifié)
+- `server/services/object_storage/idmlParser.ts` (nouveau)
+- `server/services/object_storage/routes.ts` (modifié)
 - `package.json` (dépendance fast-xml-parser ajoutée)

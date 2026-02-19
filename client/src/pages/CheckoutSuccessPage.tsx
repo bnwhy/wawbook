@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, Loader2, ShoppingCart, User, Truck, CreditCard, Check, Lock } from 'lucide-react';
+import { CheckCircle, Loader2, Lock } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { formatPrice } from '../utils/formatPrice';

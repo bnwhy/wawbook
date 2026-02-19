@@ -1,6 +1,6 @@
 import express from "express";
 import { storage } from "../storage";
-import { insertBookSchema, type ImageElement, type TextElement } from "@shared/schema";
+import { insertBookSchema, type ImageElement } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { NotFoundError, ValidationError } from "../utils/errors";
 import { logger } from "../utils/logger";
@@ -12,7 +12,7 @@ import { ObjectStorageService, objectStorageClient } from "../services/object_st
 const router = express.Router();
 
 // GET /api/books
-router.get("/", async (req, res, next) => {
+router.get("/", async (_req, res, next) => {
   try {
     const books = await storage.getAllBooks();
     res.json(books);
@@ -72,7 +72,7 @@ router.patch("/:id", async (req, res, next) => {
     }, 'Updating book');
     
     if (body.contentConfig?.imageElements?.length > 0) {
-      const firstWithConditions = body.contentConfig.imageElements.find((img) => img.conditions && img.conditions.length > 0);
+      const firstWithConditions = body.contentConfig.imageElements.find((img: ImageElement) => img.conditions && img.conditions.length > 0);
       if (firstWithConditions) {
         logger.debug({ firstWithConditions }, 'First image with conditions');
       }

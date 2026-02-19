@@ -25,7 +25,7 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
     const flipbookRef = useRef<FlipBook | null>(null);
     const prevButtonRef = useRef<HTMLButtonElement>(null);
     const nextButtonRef = useRef<HTMLButtonElement>(null);
-    const [isInitialized, setIsInitialized] = useState(false);
+    const [_isInitialized, setIsInitialized] = useState(false);
     
     const pagesKey = useMemo(() => {
       if (pages.length === 0) return '';
@@ -62,7 +62,7 @@ const FlipbookViewer = forwardRef<FlipbookViewerHandle, FlipbookViewerProps>(
             previousButton: prevButtonRef.current,
             width,
             height,
-            onPageTurn: (el: HTMLElement, context: { pagesActive: NodeListOf<HTMLElement>; children: NodeListOf<HTMLElement> }) => {
+            onPageTurn: (_el: HTMLElement, context: { pagesActive: NodeListOf<HTMLElement>; children: NodeListOf<HTMLElement> }) => {
               const activePages = context.pagesActive;
               let pageIndex = 0;
               if (activePages.length > 0) {

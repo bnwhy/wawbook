@@ -6,7 +6,7 @@ Le fichier `Le château.idml` doit être présent dans `__tests__/fixtures/`.
 
 ```bash
 # Copier le fichier depuis la racine
-cp "Le château.idml" server/replit_integrations/object_storage/__tests__/fixtures/
+cp "Le château.idml" server/services/object_storage/__tests__/fixtures/
 ```
 
 ## Exécution des tests
@@ -14,45 +14,45 @@ cp "Le château.idml" server/replit_integrations/object_storage/__tests__/fixtur
 ### Tous les tests
 
 ```bash
-npm test server/replit_integrations/object_storage/__tests__/
+npm test server/services/object_storage/__tests__/
 ```
 
 ### Par catégorie
 
 ```bash
 # Tests unitaires
-npx vitest run server/replit_integrations/object_storage/__tests__/unit/
+npx vitest run server/services/object_storage/__tests__/unit/
 
 # Tests de régression
-npx vitest run server/replit_integrations/object_storage/__tests__/regression/
+npx vitest run server/services/object_storage/__tests__/regression/
 
 # Tests d'intégration
-npx vitest run server/replit_integrations/object_storage/__tests__/integration/
+npx vitest run server/services/object_storage/__tests__/integration/
 ```
 
 ### Tests spécifiques
 
 ```bash
 # Test HorizontalScale 141%
-npx vitest run server/replit_integrations/object_storage/__tests__/regression/horizontalScale.test.ts
+npx vitest run server/services/object_storage/__tests__/regression/horizontalScale.test.ts
 
 # Test letter-spacing
-npx vitest run server/replit_integrations/object_storage/__tests__/regression/letterSpacing.test.ts
+npx vitest run server/services/object_storage/__tests__/regression/letterSpacing.test.ts
 
 # Test parsing complet
-npx vitest run server/replit_integrations/object_storage/__tests__/integration/idmlParser.test.ts
+npx vitest run server/services/object_storage/__tests__/integration/idmlParser.test.ts
 ```
 
 ### Mode watch (développement)
 
 ```bash
-npx vitest server/replit_integrations/object_storage/__tests__/
+npx vitest server/services/object_storage/__tests__/
 ```
 
 ### Coverage
 
 ```bash
-npx vitest run server/replit_integrations/object_storage/__tests__/ --coverage
+npx vitest run server/services/object_storage/__tests__/ --coverage
 ```
 
 ## Tests créés
@@ -86,9 +86,9 @@ Tous les tests devraient passer SAUF ceux qui nécessitent des fixtures manquant
 ### Exemple de sortie
 
 ```
-✓ server/replit_integrations/object_storage/__tests__/unit/xmlFlags.test.ts (8 tests)
-✓ server/replit_integrations/object_storage/__tests__/unit/extractColors.test.ts (4 tests)
-✓ server/replit_integrations/object_storage/__tests__/regression/letterSpacing.test.ts (7 tests)
+✓ server/services/object_storage/__tests__/unit/xmlFlags.test.ts (8 tests)
+✓ server/services/object_storage/__tests__/unit/extractColors.test.ts (4 tests)
+✓ server/services/object_storage/__tests__/regression/letterSpacing.test.ts (7 tests)
 ...
 
 Test Files  13 passed (13)

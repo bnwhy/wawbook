@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sparkles, Cloud, ChevronDown, Menu, X, ChevronRight, ShoppingCart, User, LogOut, Package } from 'lucide-react';
+import { Sparkles, ChevronDown, Menu, X, ShoppingCart, User, LogOut, Package } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useMenus } from '../context/MenuContext';
 import { useCart } from '../context/CartContext';

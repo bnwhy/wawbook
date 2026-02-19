@@ -8,7 +8,7 @@ import { logger } from "../utils/logger";
 const router = express.Router();
 
 // GET /api/stripe/config
-router.get("/stripe/config", async (req, res, next) => {
+router.get("/stripe/config", async (_req, res, next) => {
   try {
     const publishableKey = await getStripePublishableKey();
     res.json({ publishableKey });

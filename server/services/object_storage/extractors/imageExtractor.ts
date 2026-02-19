@@ -31,7 +31,7 @@ export class ImageExtractor {
   static extractImageReferences(spreadsData: any[]): ImageReference[] {
     const images: ImageReference[] = [];
 
-    for (const spread of spreadsData) {
+    for (const _spread of spreadsData) {
       // TODO: Parser les Rectangle/Polygon qui contiennent des images
       // Structure IDML typique :
       // <Rectangle Self="...">

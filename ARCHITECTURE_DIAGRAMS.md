@@ -932,7 +932,7 @@ flowchart TD
         CDN[CDN CloudFlare]
     end
     
-    subgraph Replit[Replit Infrastructure]
+    subgraph Infra[Cloud Infrastructure]
         LoadBalancer[Load Balancer]
         
         subgraph AppServers[Application Servers]

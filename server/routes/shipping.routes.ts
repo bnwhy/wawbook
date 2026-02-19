@@ -8,7 +8,7 @@ import { logger } from "../utils/logger";
 const router = express.Router();
 
 // GET /api/shipping-zones
-router.get("/", async (req, res, next) => {
+router.get("/", async (_req, res, next) => {
   try {
     const zones = await storage.getAllShippingZones();
     res.json(zones);

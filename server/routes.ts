@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import express from "express";
-import { createServer, type Server } from "http";
+import { type Server } from "http";
 import { storage } from "./storage";
-import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema, type ImageElement, type TextElement, type BookConfiguration } from "@shared/schema";
+import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema, type ImageElement } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { registerObjectStorageRoutes, ObjectStorageService, objectStorageClient } from "./services/object_storage";
 import { stripeService } from "./stripeService";
@@ -11,7 +11,6 @@ import * as path from "path";
 import * as fs from "fs";
 import { extractFontsFromCss } from "./utils/fontExtractor";
 import { logger } from "./utils/logger";
-import { resolveConditionalText } from "./services/object_storage/utils/conditionalTextResolver";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -26,13 +25,13 @@ export async function registerRoutes(
   logger.info({ assetsPath }, 'Serving local assets');
 
   // ===== BOOKS =====
-  app.get("/api/books", async (req, res) => {
+  app.get("/api/books", async (_req, res) => {
     try {
       const books = await storage.getAllBooks();
-      res.json(books);
+      return res.json(books);
     } catch (error) {
       logger.error({ error }, "Error getting books");
-      res.status(500).json({ error: "Failed to get books" });
+      return res.status(500).json({ error: "Failed to get books" });
     }
   });
 
@@ -42,10 +41,10 @@ export async function registerRoutes(
       if (!book) {
         return res.status(404).json({ error: "Book not found" });
       }
-      res.json(book);
+      return res.json(book);
     } catch (error) {
       logger.error({ error, bookId: req.params.id }, "Error getting book");
-      res.status(500).json({ error: "Failed to get book" });
+      return res.status(500).json({ error: "Failed to get book" });
     }
   });
 
@@ -61,10 +60,10 @@ export async function registerRoutes(
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
       const book = await storage.createBook(validationResult.data);
-      res.status(201).json(book);
+      return res.status(201).json(book);
     } catch (error) {
       logger.error({ error }, "Error creating book");
-      res.status(500).json({ error: "Failed to create book" });
+      return res.status(500).json({ error: "Failed to create book" });
     }
   });
 
@@ -93,10 +92,10 @@ export async function registerRoutes(
       if (!book) {
         return res.status(404).json({ error: "Book not found" });
       }
-      res.json(book);
+      return res.json(book);
     } catch (error) {
       logger.error({ error, bookId: req.params.id }, "Error updating book");
-      res.status(500).json({ error: "Failed to update book" });
+      return res.status(500).json({ error: "Failed to update book" });
     }
   });
 
@@ -165,10 +164,10 @@ export async function registerRoutes(
       await storage.deleteBook(bookId);
       logger.info({ bookId }, 'Deleted book from database');
       
-      res.status(204).send();
+      return res.status(204).send();
     } catch (error) {
       logger.error({ error, bookId: req.params.id }, "Error deleting book");
-      res.status(500).json({ error: "Failed to delete book" });
+      return res.status(500).json({ error: "Failed to delete book" });
     }
   });
 
@@ -187,7 +186,6 @@ export async function registerRoutes(
       }
 
       const { config = {}, combinationKey = 'default', characters = {}, dedicationOnly = false } = req.body;
-      const objectStorageService = new ObjectStorageService();
       
       // Parse combinationKey into key-value pairs for partial matching
       // e.g., "haircolor:blond_skin:light" -> { haircolor: "blond", skin: "light" }
@@ -333,8 +331,6 @@ export async function registerRoutes(
       
       // IGNORE EPUB CSS COMPLETELY - Only use IDML for text and fonts
       // EPUB only provides positions and images
-      const publicSearchPaths = objectStorageService.getPublicObjectSearchPaths();
-      const publicBucketPath = publicSearchPaths[0] || `/${process.env.R2_BUCKET_NAME || 'wawbook'}/public`;
       
       // Extract font names from IDML texts (not from EPUB CSS)
       const availableFonts: string[] = [];
@@ -487,7 +483,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                 // ALL conditions must match
                 const allMatch = img.conditions.every((cond) => {
                   // Find if user selected this variant with this value
-                  for (const tabSelections of Object.values(characters)) {
+                  for (const tabSelections of Object.values(characters) as Record<string, string>[]) {
                     if (tabSelections[cond.variantId] === cond.optionId) {
                       return true; // Found matching selection
                     }
@@ -507,7 +503,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           // If multiple images have the same position, keep only the one that best matches user selections
           const imagesByPosition = new Map<string, ImageElement[]>();
           for (const img of pageImages) {
-            const pos = img.position || {};
+            const pos = (img.position || {}) as { x?: number; y?: number; width?: number; height?: number };
             // Create a position key (rounded to avoid floating point issues)
             const posKey = `${Math.round(pos.x || 0)}_${Math.round(pos.y || 0)}_${Math.round(pos.width || 0)}_${Math.round(pos.height || 0)}`;
             
@@ -519,7 +515,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           
           // For each position, keep only the best matching image
           const finalImages: ImageElement[] = [];
-          for (const [posKey, imagesAtPosition] of imagesByPosition.entries()) {
+          for (const [_posKey, imagesAtPosition] of imagesByPosition.entries()) {
             if (imagesAtPosition.length === 1) {
               // Only one image at this position, use it
               finalImages.push(imagesAtPosition[0]);
@@ -540,7 +536,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                   } else {
                     // Partial match - count how many conditions match
                     const matchingCount = img.conditions.filter((cond) => {
-                      for (const [tabId, tabSelections] of Object.entries(characters)) {
+                      for (const [_tabId, tabSelections] of Object.entries(characters) as [string, Record<string, string>][]) {
                         if (tabSelections[cond.variantId] === cond.optionId) {
                           return true;
                         }
@@ -589,7 +585,7 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           // Build clean HTML with positioned zones instead of raw InDesign HTML
           // Images use pixel positions from EPUB CSS (same as texts)
           let imagesHtml = finalImages.map((img) => {
-            const pos = img.position || {};
+            const pos = (img.position || {}) as { x?: number; y?: number; width?: number; height?: number; scaleX?: number; scaleY?: number; rotation?: number };
             const imgUrl = img.url?.startsWith('/') ? `${baseUrl}${img.url}` : img.url;
             const scaleX = pos.scaleX || 1;
             const scaleY = pos.scaleY || 1;
@@ -608,10 +604,10 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               if (!segment.condition) return true;
               
               if (segment.parsedCondition) {
-                const { tabId, variantId, optionId } = segment.parsedCondition;
+                const { character: tabId, variant: variantId, option: optionId } = segment.parsedCondition;
                 const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
-                const tabSelections = characters?.[wizardTabId];
-                return tabSelections && tabSelections[variantId] === optionId;
+                const tabSelections = (characters ?? {})[wizardTabId] as Record<string, string> | undefined;
+                return tabSelections ? tabSelections[variantId] === optionId : false;
               }
               
               return true;
@@ -829,7 +825,7 @@ ${textsHtml}
           
           // CRITICAL: Force font loading with document.fonts.load()
           // This is the ONLY way to ensure fonts are loaded in Chromium headless
-          const fontsLoaded = await browserPage.evaluate(async (fontNames: string[]) => {
+          await browserPage.evaluate(async (fontNames: string[]) => {
             const results: string[] = [];
             
             // Force load each font at multiple sizes
@@ -896,10 +892,10 @@ ${textsHtml}
       await browser.close();
       
       logger.info({ count: renderedPages.length }, 'Successfully rendered pages');
-      res.json({ success: true, pages: renderedPages });
+      return res.json({ success: true, pages: renderedPages });
     } catch (error) {
       logger.error({ error }, "Failed to render pages");
-      res.status(500).json({ error: "Failed to render pages" });
+      return res.status(500).json({ error: "Failed to render pages" });
     }
   });
 
@@ -909,20 +905,20 @@ ${textsHtml}
       const htmlPath = path.join(process.cwd(), 'server', 'assets', 'books', req.params.id, `render_${req.params.pageIndex}.html`);
       const htmlContent = await fs.promises.readFile(htmlPath, 'utf-8');
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.send(htmlContent);
+      return res.send(htmlContent);
     } catch (error) {
-      res.status(404).send('HTML file not found');
+      return res.status(404).send('HTML file not found');
     }
   });
 
   // ===== CUSTOMERS =====
-  app.get("/api/customers", async (req, res) => {
+  app.get("/api/customers", async (_req, res) => {
     try {
       const customers = await storage.getAllCustomers();
-      res.json(customers);
+      return res.json(customers);
     } catch (error) {
       logger.error({ error }, "Error getting customers");
-      res.status(500).json({ error: "Failed to get customers" });
+      return res.status(500).json({ error: "Failed to get customers" });
     }
   });
 
@@ -932,10 +928,10 @@ ${textsHtml}
       if (!customer) {
         return res.status(404).json({ error: "Customer not found" });
       }
-      res.json(customer);
+      return res.json(customer);
     } catch (error) {
       logger.error({ error, customerId: req.params.id }, "Error getting customer");
-      res.status(500).json({ error: "Failed to get customer" });
+      return res.status(500).json({ error: "Failed to get customer" });
     }
   });
 
@@ -959,10 +955,10 @@ ${textsHtml}
       }
       
       const customer = await storage.createCustomer(validationResult.data);
-      res.status(201).json(customer);
+      return res.status(201).json(customer);
     } catch (error) {
       logger.error({ error }, "Error creating customer");
-      res.status(500).json({ error: "Failed to create customer" });
+      return res.status(500).json({ error: "Failed to create customer" });
     }
   });
 
@@ -976,45 +972,45 @@ ${textsHtml}
       if (!customer) {
         return res.status(404).json({ error: "Customer not found" });
       }
-      res.json(customer);
+      return res.json(customer);
     } catch (error) {
       logger.error({ error }, "Error updating customer");
-      res.status(500).json({ error: "Failed to update customer" });
+      return res.status(500).json({ error: "Failed to update customer" });
     }
   });
 
   app.delete("/api/customers/:id", async (req, res) => {
     try {
       await storage.deleteCustomer(req.params.id);
-      res.status(204).send();
+      return res.status(204).send();
     } catch (error) {
       logger.error({ error }, "Error deleting customer");
-      res.status(500).json({ error: "Failed to delete customer" });
+      return res.status(500).json({ error: "Failed to delete customer" });
     }
   });
 
   // ===== ORDERS =====
-  app.get("/api/orders/next-id", async (req, res) => {
+  app.get("/api/orders/next-id", async (_req, res) => {
     try {
       const { pool } = await import("./storage");
       const result = await pool.query("SELECT nextval('order_number_seq') as seq");
       const seq = result.rows[0].seq;
       const year = new Date().getFullYear().toString().slice(-2);
       const orderId = `ORD-${year}-${String(seq).padStart(7, '0')}`;
-      res.json({ orderId });
+      return res.json({ orderId });
     } catch (error) {
       logger.error({ error }, "Error generating order ID");
-      res.status(500).json({ error: "Failed to generate order ID" });
+      return res.status(500).json({ error: "Failed to generate order ID" });
     }
   });
 
-  app.get("/api/orders", async (req, res) => {
+  app.get("/api/orders", async (_req, res) => {
     try {
       const orders = await storage.getAllOrders();
-      res.json(orders);
+      return res.json(orders);
     } catch (error) {
       logger.error({ error }, "Error getting orders");
-      res.status(500).json({ error: "Failed to get orders" });
+      return res.status(500).json({ error: "Failed to get orders" });
     }
   });
 
@@ -1024,20 +1020,20 @@ ${textsHtml}
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
-      res.json(order);
+      return res.json(order);
     } catch (error) {
       logger.error({ error }, "Error getting order");
-      res.status(500).json({ error: "Failed to get order" });
+      return res.status(500).json({ error: "Failed to get order" });
     }
   });
 
   app.get("/api/customers/:customerId/orders", async (req, res) => {
     try {
       const orders = await storage.getOrdersByCustomer(req.params.customerId);
-      res.json(orders);
+      return res.json(orders);
     } catch (error) {
       logger.error({ error }, "Error getting customer orders");
-      res.status(500).json({ error: "Failed to get customer orders" });
+      return res.status(500).json({ error: "Failed to get customer orders" });
     }
   });
 
@@ -1052,10 +1048,10 @@ ${textsHtml}
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
       const order = await storage.createOrder(validationResult.data);
-      res.status(201).json(order);
+      return res.status(201).json(order);
     } catch (error) {
       logger.error({ error }, "Error creating order");
-      res.status(500).json({ error: "Failed to create order" });
+      return res.status(500).json({ error: "Failed to create order" });
     }
   });
 
@@ -1069,31 +1065,31 @@ ${textsHtml}
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
-      res.json(order);
+      return res.json(order);
     } catch (error) {
       logger.error({ error }, "Error updating order");
-      res.status(500).json({ error: "Failed to update order" });
+      return res.status(500).json({ error: "Failed to update order" });
     }
   });
 
   app.delete("/api/orders/:id", async (req, res) => {
     try {
       await storage.deleteOrder(req.params.id);
-      res.status(204).send();
+      return res.status(204).send();
     } catch (error) {
       logger.error({ error }, "Error deleting order");
-      res.status(500).json({ error: "Failed to delete order" });
+      return res.status(500).json({ error: "Failed to delete order" });
     }
   });
 
   // ===== SHIPPING ZONES =====
-  app.get("/api/shipping-zones", async (req, res) => {
+  app.get("/api/shipping-zones", async (_req, res) => {
     try {
       const zones = await storage.getAllShippingZones();
-      res.json(zones);
+      return res.json(zones);
     } catch (error) {
       logger.error({ error }, "Error getting shipping zones");
-      res.status(500).json({ error: "Failed to get shipping zones" });
+      return res.status(500).json({ error: "Failed to get shipping zones" });
     }
   });
 
@@ -1103,10 +1099,10 @@ ${textsHtml}
       if (!zone) {
         return res.status(404).json({ error: "Shipping zone not found" });
       }
-      res.json(zone);
+      return res.json(zone);
     } catch (error) {
       logger.error({ error }, "Error getting shipping zone");
-      res.status(500).json({ error: "Failed to get shipping zone" });
+      return res.status(500).json({ error: "Failed to get shipping zone" });
     }
   });
 
@@ -1117,10 +1113,10 @@ ${textsHtml}
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
       const zone = await storage.createShippingZone(validationResult.data);
-      res.status(201).json(zone);
+      return res.status(201).json(zone);
     } catch (error) {
       logger.error({ error }, "Error creating shipping zone");
-      res.status(500).json({ error: "Failed to create shipping zone" });
+      return res.status(500).json({ error: "Failed to create shipping zone" });
     }
   });
 
@@ -1130,31 +1126,31 @@ ${textsHtml}
       if (!zone) {
         return res.status(404).json({ error: "Shipping zone not found" });
       }
-      res.json(zone);
+      return res.json(zone);
     } catch (error) {
       logger.error({ error }, "Error updating shipping zone");
-      res.status(500).json({ error: "Failed to update shipping zone" });
+      return res.status(500).json({ error: "Failed to update shipping zone" });
     }
   });
 
   app.delete("/api/shipping-zones/:id", async (req, res) => {
     try {
       await storage.deleteShippingZone(req.params.id);
-      res.status(204).send();
+      return res.status(204).send();
     } catch (error) {
       logger.error({ error }, "Error deleting shipping zone");
-      res.status(500).json({ error: "Failed to delete shipping zone" });
+      return res.status(500).json({ error: "Failed to delete shipping zone" });
     }
   });
 
   // ===== PRINTERS =====
-  app.get("/api/printers", async (req, res) => {
+  app.get("/api/printers", async (_req, res) => {
     try {
       const printers = await storage.getAllPrinters();
-      res.json(printers);
+      return res.json(printers);
     } catch (error) {
       logger.error({ error }, "Error getting printers");
-      res.status(500).json({ error: "Failed to get printers" });
+      return res.status(500).json({ error: "Failed to get printers" });
     }
   });
 
@@ -1164,10 +1160,10 @@ ${textsHtml}
       if (!printer) {
         return res.status(404).json({ error: "Printer not found" });
       }
-      res.json(printer);
+      return res.json(printer);
     } catch (error) {
       logger.error({ error }, "Error getting printer");
-      res.status(500).json({ error: "Failed to get printer" });
+      return res.status(500).json({ error: "Failed to get printer" });
     }
   });
 
@@ -1178,10 +1174,10 @@ ${textsHtml}
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
       const printer = await storage.createPrinter(validationResult.data);
-      res.status(201).json(printer);
+      return res.status(201).json(printer);
     } catch (error) {
       logger.error({ error }, "Error creating printer");
-      res.status(500).json({ error: "Failed to create printer" });
+      return res.status(500).json({ error: "Failed to create printer" });
     }
   });
 
@@ -1191,31 +1187,31 @@ ${textsHtml}
       if (!printer) {
         return res.status(404).json({ error: "Printer not found" });
       }
-      res.json(printer);
+      return res.json(printer);
     } catch (error) {
       logger.error({ error }, "Error updating printer");
-      res.status(500).json({ error: "Failed to update printer" });
+      return res.status(500).json({ error: "Failed to update printer" });
     }
   });
 
   app.delete("/api/printers/:id", async (req, res) => {
     try {
       await storage.deletePrinter(req.params.id);
-      res.status(204).send();
+      return res.status(204).send();
     } catch (error) {
       logger.error({ error }, "Error deleting printer");
-      res.status(500).json({ error: "Failed to delete printer" });
+      return res.status(500).json({ error: "Failed to delete printer" });
     }
   });
 
   // ===== MENUS =====
-  app.get("/api/menus", async (req, res) => {
+  app.get("/api/menus", async (_req, res) => {
     try {
       const menus = await storage.getAllMenus();
-      res.json(menus);
+      return res.json(menus);
     } catch (error) {
       logger.error({ error }, "Error getting menus");
-      res.status(500).json({ error: "Failed to get menus" });
+      return res.status(500).json({ error: "Failed to get menus" });
     }
   });
 
@@ -1225,10 +1221,10 @@ ${textsHtml}
       if (!menu) {
         return res.status(404).json({ error: "Menu not found" });
       }
-      res.json(menu);
+      return res.json(menu);
     } catch (error) {
       logger.error({ error }, "Error getting menu");
-      res.status(500).json({ error: "Failed to get menu" });
+      return res.status(500).json({ error: "Failed to get menu" });
     }
   });
 
@@ -1239,10 +1235,10 @@ ${textsHtml}
         return res.status(400).json({ error: fromZodError(validationResult.error).message });
       }
       const menu = await storage.createMenu(validationResult.data);
-      res.status(201).json(menu);
+      return res.status(201).json(menu);
     } catch (error) {
       logger.error({ error }, "Error creating menu");
-      res.status(500).json({ error: "Failed to create menu" });
+      return res.status(500).json({ error: "Failed to create menu" });
     }
   });
 
@@ -1252,20 +1248,20 @@ ${textsHtml}
       if (!menu) {
         return res.status(404).json({ error: "Menu not found" });
       }
-      res.json(menu);
+      return res.json(menu);
     } catch (error) {
       logger.error({ error }, "Error updating menu");
-      res.status(500).json({ error: "Failed to update menu" });
+      return res.status(500).json({ error: "Failed to update menu" });
     }
   });
 
   app.delete("/api/menus/:id", async (req, res) => {
     try {
       await storage.deleteMenu(req.params.id);
-      res.status(204).send();
+      return res.status(204).send();
     } catch (error) {
       logger.error({ error }, "Error deleting menu");
-      res.status(500).json({ error: "Failed to delete menu" });
+      return res.status(500).json({ error: "Failed to delete menu" });
     }
   });
 
@@ -1276,20 +1272,20 @@ ${textsHtml}
       if (!setting) {
         return res.status(404).json({ error: "Setting not found" });
       }
-      res.json(setting);
+      return res.json(setting);
     } catch (error) {
       logger.error({ error }, "Error getting setting");
-      res.status(500).json({ error: "Failed to get setting" });
+      return res.status(500).json({ error: "Failed to get setting" });
     }
   });
 
   app.put("/api/settings/:key", async (req, res) => {
     try {
       const setting = await storage.setSetting(req.params.key, req.body.value);
-      res.json(setting);
+      return res.json(setting);
     } catch (error) {
       logger.error({ error }, "Error setting value");
-      res.status(500).json({ error: "Failed to set value" });
+      return res.status(500).json({ error: "Failed to set value" });
     }
   });
 
@@ -1297,13 +1293,13 @@ ${textsHtml}
   registerObjectStorageRoutes(app);
 
   // ===== STRIPE CHECKOUT =====
-  app.get("/api/stripe/config", async (req, res) => {
+  app.get("/api/stripe/config", async (_req, res) => {
     try {
       const publishableKey = await getStripePublishableKey();
-      res.json({ publishableKey });
+      return res.json({ publishableKey });
     } catch (error) {
       logger.error({ error }, "Error getting Stripe config");
-      res.status(500).json({ error: "Failed to get Stripe config" });
+      return res.status(500).json({ error: "Failed to get Stripe config" });
     }
   });
 
@@ -1345,10 +1341,10 @@ ${textsHtml}
         },
       });
 
-      res.json({ url: session.url, sessionId: session.id });
+      return res.json({ url: session.url, sessionId: session.id });
     } catch (error) {
       logger.error({ error }, "Error creating checkout session");
-      res.status(500).json({ error: "Failed to create checkout session" });
+      return res.status(500).json({ error: "Failed to create checkout session" });
     }
   });
 
@@ -1372,13 +1368,13 @@ ${textsHtml}
         });
       }
 
-      res.json({
+      return res.json({
         paymentStatus: paymentResult.status,
         paymentIntentId: paymentResult.paymentIntentId,
       });
     } catch (error) {
       logger.error({ error }, "Error verifying payment");
-      res.status(500).json({ error: "Failed to verify payment" });
+      return res.status(500).json({ error: "Failed to verify payment" });
     }
   });
 
@@ -1403,26 +1399,26 @@ ${textsHtml}
             });
           }
           
-          res.json({
+          return res.json({
             paymentStatus: paymentResult.status,
             stripeSessionId: order.stripeSessionId,
             stripePaymentIntentId: paymentResult.paymentIntentId,
           });
         } catch (stripeError) {
           // If Stripe fails, return stored status
-          res.json({
+          return res.json({
             paymentStatus: order.paymentStatus || 'pending',
             stripeSessionId: order.stripeSessionId,
           });
         }
       } else {
-        res.json({
+        return res.json({
           paymentStatus: order.paymentStatus || 'pending',
         });
       }
     } catch (error) {
       logger.error({ error }, "Error getting payment status");
-      res.status(500).json({ error: "Failed to get payment status" });
+      return res.status(500).json({ error: "Failed to get payment status" });
     }
   });
 

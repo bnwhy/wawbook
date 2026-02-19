@@ -2,29 +2,28 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle, ShoppingCart, User, Check } from 'lucide-react';
-import { useLocation, Link } from 'wouter';
+import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle, ShoppingCart } from 'lucide-react';
+import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import PaymentBadges from '../components/PaymentBadges';
-import { ShippingMethod } from '../types/ecommerce';
 import { ALL_COUNTRIES } from '../data/countries';
 import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
 
 const CheckoutPage = () => {
-  const { items, total, clearCart } = useCart();
-  const { createOrder, shippingZones } = useEcommerce();
+  const { items, total, clearCart: _clearCart } = useCart();
+  const { createOrder: _createOrder, shippingZones } = useEcommerce();
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
-  const [orderNumber, setOrderNumber] = useState<string>('');
+  const [orderNumber, _setOrderNumber] = useState<string>('');
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
 
-  const [billingMode, setBillingMode] = useState<'same' | 'different'>('same');
+  const [_billingMode, _setBillingMode] = useState<'same' | 'different'>('same');
 
   // Form states - pre-fill with user data if authenticated
   const [formData, setFormData] = useState({

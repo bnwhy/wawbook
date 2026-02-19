@@ -37,7 +37,7 @@ const BookFilters: React.FC<BookFiltersProps> = ({
     { id: 'occasion', label: 'Occasions' }
   ];
 
-  const themeOptions = Object.entries(Theme).map(([key, value]) => ({
+  const themeOptions = Object.entries(Theme).map(([_key, value]) => ({
     id: value,
     label: value
   }));
@@ -54,7 +54,7 @@ const BookFilters: React.FC<BookFiltersProps> = ({
   const occasionsMenu = mainMenu.find(m => m.id === 'occasions');
   const occasions = (occasionsMenu?.items || []).map(item => ({
     label: item as string,
-    path: `${occasionsMenu.basePath}/${encodeURIComponent(item as string)}`
+    path: `${occasionsMenu?.basePath ?? ''}/${encodeURIComponent(item as string)}`
   }));
 
   const handleReset = () => {

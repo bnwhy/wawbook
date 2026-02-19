@@ -9,7 +9,6 @@ import CheckoutCancelPage from '../pages/CheckoutCancelPage';
 import { AppState, BookConfig, Story, Theme, Activity } from '../types';
 import { Switch, Route, useLocation } from 'wouter';
 import StaticPage from '../pages/StaticPage';
-import CategoryPage from '../pages/CategoryPage';
 import CataloguePage from '../pages/CataloguePage';
 import NotFound from '../pages/NotFound';
 import { AuthProvider } from '../context/AuthContext';
@@ -41,7 +40,7 @@ const PublicApp: React.FC = () => {
   const [selectedBookTitle, setSelectedBookTitle] = useState<string | undefined>(undefined);
   const [initialSelections, setInitialSelections] = useState<Record<string, Record<string, any>> | undefined>(undefined);
   const [editingCartItemId, setEditingCartItemId] = useState<string | undefined>(undefined);
-  const [location, setLocation] = useLocation();
+  const [_location, setLocation] = useLocation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -74,7 +73,7 @@ const PublicApp: React.FC = () => {
    * handleConfigComplete - Passe directement à READING
    * BookPreview gère toute la génération (texte + pages) avec animation intégrée
    */
-  const handleConfigComplete = async (finalConfig: BookConfig, context?: { theme?: Theme, productId?: string }) => {
+  const handleConfigComplete = async (finalConfig: BookConfig, _context?: { theme?: Theme, productId?: string }) => {
     setConfig(finalConfig);
     setAppState('READING');
   };
@@ -142,7 +141,7 @@ const PublicApp: React.FC = () => {
 
                   {appState === 'READING' && config && (
                     <BookPreview 
-                      story={story}
+                      story={story ?? undefined}
                       config={config} 
                       onReset={handleReset}
                       onStart={() => startCreation(config.theme, undefined, story?.title || selectedBookTitle, config.characters)}

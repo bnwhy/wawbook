@@ -95,7 +95,7 @@ export class ReadingOrderValidator {
    * @param idmlData - Données IDML complètes
    * @returns Map des chaînes de frames liés (clé: premier frame ID, valeur: liste des IDs liés)
    */
-  static detectLinkedFrames(idmlData: any): Map<string, string[]> {
+  static detectLinkedFrames(_idmlData: any): Map<string, string[]> {
     const linkedChains = new Map<string, string[]>();
 
     // TODO: Parser les Spreads pour trouver les NextTextFrame / PreviousTextFrame

@@ -18,7 +18,7 @@ Cette règle s'applique à toutes les interactions avec le projet, qu'elles soie
 
 #### 2. Modifications de configuration
 - Fichiers de configuration (`vite.config.ts`, `tsconfig.json`, `drizzle.config.ts`, etc.)
-- Fichiers de build et déploiement (`.replit`, `package.json`)
+- Fichiers de build et déploiement (`Dockerfile`, `package.json`)
 - Variables d'environnement (`.env`, `.env.local`)
 - Configuration des outils (ESLint, Prettier, PostCSS, etc.)
 

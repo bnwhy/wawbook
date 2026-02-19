@@ -9,7 +9,7 @@ const router = express.Router();
  * GET /health
  * Returns the health status of the application and its dependencies
  */
-router.get("/", async (req, res) => {
+router.get("/", async (_req, res) => {
   const startTime = Date.now();
   
   const health = {
@@ -51,7 +51,7 @@ router.get("/", async (req, res) => {
  * GET /health/ready
  * Returns 200 if the app is ready to serve traffic
  */
-router.get("/ready", async (req, res) => {
+router.get("/ready", async (_req, res) => {
   try {
     // Check if database is accessible
     await pool.query('SELECT 1');
@@ -67,7 +67,7 @@ router.get("/ready", async (req, res) => {
  * GET /health/live
  * Returns 200 if the app is alive (basic ping)
  */
-router.get("/live", (req, res) => {
+router.get("/live", (_req, res) => {
   res.status(200).json({ status: 'alive' });
 });
 

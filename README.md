@@ -2,7 +2,7 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6.3-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.2.0-61dafb.svg)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24+-green.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 NuageBook est une plateforme e-commerce full-stack permettant de créer, personnaliser et vendre des livres personnalisés pour enfants. Le système s'appuie sur l'import de templates EPUB/IDML depuis Adobe InDesign, offre un wizard de personnalisation interactif, et intègre un système complet de paiement Stripe.
@@ -75,8 +75,8 @@ NuageBook est une plateforme e-commerce full-stack permettant de créer, personn
 
 ### Prérequis
 
-- Node.js 20+
-- PostgreSQL 14+ (ou Neon Serverless)
+- Node.js 24+
+- PostgreSQL 14+ (ou Railway)
 - Chromium (pour rendu serveur)
 
 ### Installation
@@ -100,23 +100,28 @@ npm run db:push
 ### Développement
 
 ```bash
-# Terminal 1 : Backend (port 5001)
 npm run dev
-
-# Terminal 2 : Frontend (port 5000)
-npm run dev:client
 ```
 
-Ouvrir http://localhost:5000
+Le serveur démarre sur http://localhost:5000 (API + client Vite en dev).
 
-### Production
+### Déploiement en production
 
 ```bash
-# Build
-npm run build
+# 1. Vérifier que le build passe AVANT de pousser
+npm run predeploy
 
-# Démarrer
-npm start
+# 2. Pousser — Railway rebuild via Dockerfile automatiquement
+git push
+```
+
+Le Dockerfile inclut un **HEALTHCHECK** qui vérifie `/health/live` toutes les 30s.
+
+### Build manuel (sans deploy)
+
+```bash
+npm run build     # Build client + serveur
+npm start         # Démarrer en mode production
 ```
 
 ## 🏗️ Architecture
@@ -167,7 +172,7 @@ Pour plus de détails, consultez le fichier [RULES.md](RULES.md).
 │   ├── middleware/         # Validation, rate-limit, errors
 │   ├── routes/             # Routes modulaires
 │   ├── utils/              # Utilitaires serveur
-│   ├── replit_integrations/
+│   ├── services/
 │   │   └── object_storage/ # Import EPUB/IDML
 │   └── index.ts
 │
@@ -239,10 +244,10 @@ npm run test:ui
 
 ```bash
 # Développement
-npm run dev              # Backend (port 5001)
-npm run dev:client       # Frontend (port 5000)
+npm run dev              # Serveur + client Vite (port 5000)
 
-# Build
+# Build & Deploy
+npm run predeploy        # Vérification pré-déploiement (build client + serveur)
 npm run build            # Build complet
 npm run check            # Type checking TypeScript
 
@@ -254,44 +259,35 @@ npm test                 # Run tests
 npm run test:coverage    # Tests avec coverage
 
 # Production
-npm start                # Démarrer production
+npm start                # Démarrer production (après build)
 ```
 
 ## 🔐 Variables d'Environnement
 
-Créer `.env` à la racine :
+Copier `.env.example` et adapter :
 
 ```bash
-# Node
-NODE_ENV=development
-PORT=5001
-
-# Database
-DATABASE_URL=postgresql://user:pass@host/db
-
-# Session (REQUIS pour authentification)
-SESSION_SECRET=votre_secret_aleatoire_32_caracteres_minimum
-
-# Stripe
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-
-# Optional
-LOG_LEVEL=debug
-STRIPE_SYNC_BACKFILL=false
+cp .env.example .env
 ```
 
-**⚠️ Important :** `SESSION_SECRET` est **obligatoire** pour le système d'authentification. Générer un secret fort :
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+Variables principales :
+
+| Variable | Requis | Description |
+|----------|--------|-------------|
+| `DATABASE_URL` | Oui | URL PostgreSQL (Railway en prod) |
+| `SESSION_SECRET` | Oui | Secret de session (32+ caractères) |
+| `PORT` | Non | Port serveur (défaut: 5000) |
+| `STRIPE_SECRET_KEY` | Non (dev) | Clé Stripe |
+| `R2_*` | Non (dev) | Cloudflare R2 pour le stockage |
+
+**⚠️ Important :** En local, `.env` pointe vers la DB de dev. Les variables de production sont configurées directement dans Railway (Dashboard → Variables).
 
 **Validation :** Toutes les variables sont validées au démarrage via Zod. Voir [`server/config/env.ts`](server/config/env.ts)
 
 ## 🛠️ Stack Technique
 
 ### Backend
-- **Runtime** : Node.js 20+ avec TypeScript 5.6
+- **Runtime** : Node.js 24+ avec TypeScript 5.6
 - **Framework** : Express.js 4.21
 - **Database** : PostgreSQL (Neon) avec Drizzle ORM
 - **Validation** : Zod 3.25
@@ -348,7 +344,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### Health Checks
 ```bash
-curl http://localhost:5001/health
+curl http://localhost:5000/health
 ```
 
 ### Logs Structurés
@@ -358,13 +354,28 @@ Les logs sont en JSON (production) ou pretty (dev) :
 [2026-01-21 10:30:05] ERROR: Import failed (error: "Font missing")
 ```
 
+## 🚀 Workflow de déploiement
+
+```
+1. npm run predeploy        ← Le build passe ? OK, continue
+2. git add . && git commit  ← Commit tes changements
+3. git push                 ← Railway rebuild via Dockerfile
+4. Railway: /health/live    ← HEALTHCHECK auto toutes les 30s
+```
+
+**Points clés :**
+- Le Dockerfile utilise **Node 24** (aligné avec le dev local)
+- Le HEALTHCHECK Docker vérifie `/health/live` (3 retries avant unhealthy)
+- Les variables de prod sont dans **Railway Dashboard**, pas dans le repo
+
 ## 🤝 Contribution
 
 1. Fork le projet
 2. Créer une branche (`git checkout -b feature/amazing`)
-3. Commit (`git commit -m "Add amazing feature"`)
-4. Push (`git push origin feature/amazing`)
-5. Ouvrir une Pull Request
+3. **Lancer `npm run predeploy`** pour vérifier le build
+4. Commit (`git commit -m "Add amazing feature"`)
+5. Push (`git push origin feature/amazing`)
+6. Ouvrir une Pull Request
 
 **Important :** Respecter les règles de [RULES.md](RULES.md)
 
@@ -388,7 +399,7 @@ MIT License - voir [LICENSE](LICENSE)
 ---
 
 **Version :** 1.1.0  
-**Dernière mise à jour :** 29 Janvier 2026  
+**Dernière mise à jour :** 19 Février 2026  
 **Status :** 🟢 Production Ready
 
 **🎉 Nouveautés v1.1 - [Release Notes](RELEASE_NOTES_v1.1.md):**

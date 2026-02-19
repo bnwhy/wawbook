@@ -118,9 +118,9 @@ Lors de la génération du livre, le système :
 
 ## Fichiers Modifiés
 
-- `server/replit_integrations/object_storage/idmlParser.ts` - Extraction des segments conditionnels
-- `server/replit_integrations/object_storage/idmlMerger.ts` - Propagation vers les TextElements
-- `server/replit_integrations/object_storage/utils/conditionalTextResolver.ts` - Résolution et remplacement
+- `server/services/object_storage/idmlParser.ts` - Extraction des segments conditionnels
+- `server/services/object_storage/idmlMerger.ts` - Propagation vers les TextElements
+- `server/services/object_storage/utils/conditionalTextResolver.ts` - Résolution et remplacement
 - `server/routes.ts` - Intégration dans le rendu des pages
 - `shared/schema.ts` - Schémas Zod pour validation
 
@@ -137,7 +137,7 @@ Lors de la génération du livre, le système :
 Un script de test est disponible :
 
 ```bash
-npx tsx server/replit_integrations/object_storage/__tests__/testConditionalText.ts
+npx tsx server/services/object_storage/__tests__/testConditionalText.ts
 ```
 
 Il valide :

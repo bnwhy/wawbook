@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Search, ShoppingBag, Menu, User, Heart } from "lucide-react";
+import { Search, ShoppingBag, Menu, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,

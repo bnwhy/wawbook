@@ -78,10 +78,10 @@ router.post("/signup", strictLimiter, async (req, res, next) => {
       }
       
       logger.info({ customerId: customer.id }, 'Customer signed up and logged in successfully');
-      res.status(201).json(customer);
+      return res.status(201).json(customer);
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -92,7 +92,7 @@ router.post("/login", strictLimiter, (req, res, next) => {
     return res.status(400).json({ error: validation.error.errors[0].message });
   }
 
-  passport.authenticate("local", (err: any, user: Express.User | false, info: any) => {
+  return passport.authenticate("local", (err: any, user: Express.User | false, info: any) => {
     if (err) {
       return next(err);
     }
@@ -107,7 +107,7 @@ router.post("/login", strictLimiter, (req, res, next) => {
       }
 
       logger.info({ customerId: user.id }, 'Customer logged in successfully');
-      res.json(user);
+      return res.json(user);
     });
   })(req, res, next);
 });
@@ -127,7 +127,7 @@ router.post("/logout", authLimiter, (req, res, next) => {
       }
 
       logger.info({ customerId: userId }, 'Customer logged out');
-      res.json({ message: "Déconnecté avec succès" });
+      return res.json({ message: "Déconnecté avec succès" });
     });
   });
 });
@@ -138,7 +138,7 @@ router.get("/me", authLimiter, (req, res) => {
     return res.status(401).json({ error: "Non authentifié" });
   }
 
-  res.json(req.user);
+  return res.json(req.user);
 });
 
 // POST /api/auth/set-password - Set password for existing customer (post-purchase account creation)
@@ -175,10 +175,10 @@ router.post("/set-password", strictLimiter, async (req, res, next) => {
       }
 
       logger.info({ customerId: customer.id }, 'Password set and auto-logged in');
-      res.json(customer);
+      return res.json(customer);
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -213,9 +213,9 @@ router.post("/forgot-password", strictLimiter, async (req, res, next) => {
     }
 
     // Always return success
-    res.json({ message: "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé." });
+    return res.json({ message: "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé." });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -295,7 +295,7 @@ router.get('/google/callback',
 
 // GET /api/auth/apple - Initiate Apple Sign In
 router.get('/apple',
-  (req, res, next) => {
+  (req, _res, next) => {
     // Store returnTo in session
     const returnTo = req.query.returnTo as string;
     if (returnTo) {

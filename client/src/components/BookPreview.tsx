@@ -11,19 +11,18 @@
  * - Couleur : bleu clair du site (#0EA5E9)
  */
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ArrowLeft, Cloud, Heart, Settings, BookOpen, Check, ArrowRight, Loader2, PenTool, Image, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Cloud, BookOpen, Check, ArrowRight, Loader2, PenTool, Image, Sparkles } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { Story, BookConfig, Gender, Theme } from '../types';
-import { BookProduct, TextElement, ImageElement } from '../types/admin';
+import { Story, BookConfig, Theme } from '../types';
+import { BookProduct, TextElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
-import { generateBookPages, matchesImageConditions, getCombinationKey as getCombinationKeyUtil } from '../utils/imageGenerator';
+import { generateBookPages, getCombinationKey as getCombinationKeyUtil } from '../utils/imageGenerator';
 import { generateStoryText } from '../services/geminiService';
 import Navigation from './Navigation';
 import FlipbookViewer from './FlipbookViewer';
 import Footer from './Footer';
 import { formatPrice } from '../utils/formatPrice';
-import html2canvas from 'html2canvas';
 
 const hardcoverIcon = null;
 const softcoverIcon = null;
@@ -116,7 +115,7 @@ interface BookPreviewProps {
   initialTheme?: Theme;
 }
 
-const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, onReset, onStart, editingCartItemId, isModal = false, bookTitle, initialTheme }) => {
+const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, onReset: _onReset, onStart, editingCartItemId, isModal = false, bookTitle, initialTheme }) => {
   const { books } = useBooks();
   const { addToCart, updateItem } = useCart();
   const [, setLocation] = useLocation();
@@ -125,9 +124,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const book = bookProduct || books.find(b => b.name === currentStory?.title || b.name === bookTitle);
   
 
-  const [currentView, setCurrentView] = useState(0);
-  const [isFlipping, setIsFlipping] = useState(false);
-  const [direction, setDirection] = useState<'next' | 'prev' | null>(null);
+  const [, setCurrentView] = useState(0);
   const [dedication, setDedication] = useState(config.dedication || '');
   const [author, setAuthor] = useState(config.author || '');
   const [initialDedication, setInitialDedication] = useState(config.dedication || '');
@@ -159,36 +156,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  // --- HELPER: Resolve Variables ---
-  const resolveTextVariable = (text: string) => {
-    // 1. Handle {{variable}} style
-    let content = text.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-        const k = key.trim();
-        if (k === 'childName') return config.childName || "l'enfant";
-        if (k === 'dedication') return config.dedication || '';
-        if (k === 'author') return config.author || '';
-        if (k === 'age') return config.age?.toString() || '';
-        if (k === 'heroName') return config.childName || 'Héros';
-        if (k === 'gender') return config.gender === Gender.Girl ? 'Fille' : 'Garçon';
-
-        return match;
-    });
-
-    // 2. Legacy {variable} style
-    content = content.replace(/\{([^}]+)\}/g, (match, key) => {
-        if (key === 'childName') return config.childName || "l'enfant";
-        
-        // Handle {tabId.variantId}
-        const [tabId, variantId] = key.split('.');
-        if (tabId && variantId && config.characters?.[tabId]) {
-            return config.characters[tabId][variantId] || match;
-        }
-        return match;
-    });
-    
-    return content;
-  };
 
   const currentCombinationKey = useMemo(() => {
     return book ? getCombinationKeyUtil(book, config) : 'default';
@@ -329,6 +296,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
         }, 100);
         return () => clearTimeout(timer);
     }
+    return;
   }, [book, currentCombinationKey, currentStory]);
 
   // --- DIMENSIONS & SCALE ---
@@ -538,37 +506,6 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       pageCount = Math.max(1, ...Object.keys(generatedPages).map(k => parseInt(k)).filter(n => n < 900));
   }
 
-  const totalSpreads = Math.ceil(pageCount / 2); 
-  
-  // 0: Cover
-  // [Offset]: Spreads
-  // N+1: Closed Back
-  const totalViews = 1 + totalSpreads + 1;
-
-  const handleNext = () => {
-    if (currentView < totalViews - 1 && !isFlipping) {
-      setIsFlipping(true);
-      setDirection('next');
-      setTimeout(() => {
-        setCurrentView(c => c + 1);
-        setIsFlipping(false);
-        setDirection(null);
-      }, 900); // Match CSS duration
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentView > 0 && !isFlipping) {
-      setIsFlipping(true);
-      setDirection('prev');
-      setTimeout(() => {
-        setCurrentView(c => c - 1);
-        setIsFlipping(false);
-        setDirection(null);
-      }, 900);
-    }
-  };
-
   // --- MOBILE NAVIGATION ---
   // Build list of actual mobile pages that exist in generatedPages
   const mobilePagesList = useMemo(() => {
@@ -683,463 +620,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     return `Page ${actualPageNum}`;
   };
 
-  // --- CONTENT GENERATORS ---
-
-  const resolveImageUrl = (el: ImageElement) => {
-      if (el.type === 'static') return el.url;
-      
-      if (el.type === 'variable' && el.variableKey) {
-          // If variableKey is a Tab ID (e.g. "child")
-          const tabId = el.variableKey;
-          const tab = book?.wizardConfig?.tabs.find(t => t.id === tabId);
-          
-          if (tab && config.characters?.[tabId]) {
-              // Construct combination key for this tab
-              const optionIds: string[] = [];
-              tab.variants.forEach(v => {
-                 if (v.type === 'options') {
-                     const selectedOptId = config.characters![tabId][v.id];
-                     if (selectedOptId) optionIds.push(selectedOptId);
-                 }
-              });
-              
-              if (optionIds.length > 0) {
-                  // Try scoped key first (tabId:optionIds), then fallback to legacy key (optionIds only)
-                  const legacyKey = optionIds.join('_');
-                  const scopedKey = `${tabId}:${legacyKey}`;
-                  const avatarUrl = book?.wizardConfig?.avatarMappings?.[scopedKey] ?? book?.wizardConfig?.avatarMappings?.[legacyKey];
-                  if (avatarUrl) {
-                      return avatarUrl;
-                  }
-              }
-          }
-      }
-      return el.url; // Fallback
-  };
-
-  const renderPageContent = (pageIndex: number, isLeft: boolean) => {
-      // 1. Check if we have generated image
-      if (generatedPages[pageIndex]) {
-          return (
-             <div className="w-full h-full relative overflow-hidden bg-white">
-                 <img 
-                    src={generatedPages[pageIndex]} 
-                    className="w-full h-full object-contain" 
-                    alt={`Page ${pageIndex}`} 
-                 />
-             </div>
-          );
-      }
-      
-      // 2. Loading State
-      if (isGenerating) {
-          return (
-             <div className="w-full h-full flex items-center justify-center bg-white text-gray-300">
-                <Loader2 className="animate-spin" size={32} />
-             </div>
-          );
-      }
-
-      // 3. Check if we have Admin Config but not yet generated (fallback to empty)
-      if (book?.contentConfig?.pages) {
-          return <div className="w-full h-full bg-white flex items-center justify-center text-gray-100"><BookOpen size={40} /></div>;
-      }
-
-      // 4. Fallback to Simple Story (Legacy)
-      // Only if no content config is present at all
-      return <div className="w-full h-full bg-white"></div>;
-  };
-
-  const getSpreadContent = (index: number) => {
-    // 0: Cover
-    if (index === 0) {
-      // ... (Cover Logic preserved) ...
-      // Find configured cover elements if available
-      const coverTexts = (book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [])
-        .map(t => ({...t, _kind: 'text'}));
-      const coverImages = (book?.contentConfig?.imageElements?.filter(i => {
-        if (i.position.pageIndex !== 0) return false;
-        // Check combinationKey match
-        const keyMatches = !i.combinationKey || 
-                          i.combinationKey === currentCombinationKey || 
-                          i.combinationKey === 'default' || 
-                          i.combinationKey === 'all';
-        // Check conditions match
-        const conditionsMatch = matchesImageConditions(i.conditions, config.characters || {}, book);
-        // If conditions exist, they take precedence
-        if (i.conditions && i.conditions.length > 0) {
-          return conditionsMatch;
-        }
-        return keyMatches;
-      }) || [])
-        .map(i => ({...i, _kind: 'image'}));
-      // Also check for background image specifically for page 0
-      const coverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
-
-      // Check if we have a custom cover configuration from Admin
-      const hasCustomCover = coverTexts.length > 0 || coverImages.length > 0 || !!coverBg;
-
-      return {
-        left: <div className="w-full h-full bg-transparent" />, // Empty space left of cover
-        right: (
-          <div data-page-index="0" className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-l-8 border-gray-100 bg-white text-slate-900`}>
-             {/* Spine / Binding Effect */}
-             <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-gray-200 to-white border-r border-black/5 z-30"></div>
-             <div className="absolute left-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
-
-             {/* Cover Thickness (Right Edge) */}
-             <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-l from-black/20 to-transparent z-20 pointer-events-none"></div>
-
-             {generatedPages[0] ? (
-                 <img 
-                    src={generatedPages[0]} 
-                    className="absolute inset-0 w-full h-full object-cover" 
-                    style={{ marginLeft: '12px', width: 'calc(100% - 12px)' }} 
-                    alt="Cover" 
-                 />
-             ) : hasCustomCover ? (
-                /* RENDER CUSTOM ADMIN CONTENT FOR COVER (Fallback if generation pending) */
-                (<>
-                    {/* Background */}
-                    {coverBg && (
-                         <img src={coverBg.imageUrl} className="absolute inset-0 w-full h-full object-cover" style={{ marginLeft: '12px', width: 'calc(100% - 12px)' }} alt="Cover Background" />
-                    )}
-                    {/* Loading overlay if generating */}
-                    {isGenerating && (
-                        <div className="absolute inset-0 z-50 bg-white/50 flex items-center justify-center" style={{ marginLeft: '12px' }}>
-                            <Loader2 className="animate-spin text-cloud-blue" />
-                        </div>
-                    )}
-                    {/* Texts */}
-                    <div className="absolute inset-0 z-10" style={{ marginLeft: '12px' }}>
-                        {coverTexts.map(text => {
-                            // Gérer les segments conditionnels si présents
-                            const hasConditionalSegments = text.conditionalSegments && text.conditionalSegments.length > 0;
-                            
-                            return (
-                                <div 
-                                    key={text.id}
-                                    className="absolute break-words whitespace-pre-wrap pointer-events-none"
-                                    style={{
-                                        left: `${text.position.x}%`,
-                                        top: `${text.position.y}%`,
-                                        width: `${text.position.width || 30}%`,
-                                        transform: `rotate(${text.position.rotation || 0}deg)`,
-                                        // Styles de paragraphe (layout) uniquement sur le conteneur
-                                        textAlign: text.style?.textAlign as any || 'left',
-                                        lineHeight: text.style?.lineHeight || 'normal',
-                                        textIndent: text.style?.textIndent || '0',
-                                    }}
-                                >
-                                    {hasConditionalSegments ? (
-                                        // Afficher chaque segment avec son propre style
-                                        text.conditionalSegments.map((segment: any, segIdx: number) => {
-                                            // Si resolvedStyle existe, utiliser ses propriétés en priorité
-                                            // Mais si textTransform est "none" ou undefined dans resolvedStyle, hériter du style global
-                                            const hasResolvedStyle = segment.resolvedStyle !== undefined;
-                                            
-                                            // Priorité: resolvedStyle.textTransform (si défini et différent de 'none') > text.style.textTransform > 'none'
-                                            const textTransformValue = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
-                                                ? segment.resolvedStyle.textTransform
-                                                : (text.style?.textTransform || 'none');
-                                            
-                                            // Si resolvedStyle existe, utiliser UNIQUEMENT ses propriétés (même si undefined)
-                                            // Ne pas fallback sur text.style pour éviter que tous les segments aient le même style
-                                            const style = hasResolvedStyle ? {
-                                                fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
-                                                fontSize: segment.resolvedStyle?.fontSize || 'inherit',
-                                                fontWeight: segment.resolvedStyle?.fontWeight || 'normal',
-                                                fontStyle: segment.resolvedStyle?.fontStyle || 'normal',
-                                                color: segment.resolvedStyle?.color || '#000000',
-                                                letterSpacing: segment.resolvedStyle?.letterSpacing || 'normal',
-                                                textDecoration: segment.resolvedStyle?.textDecoration || 'none',
-                                                textTransform: textTransformValue as any,
-                                                WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : 'none',
-                                                WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor,
-                                                WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : '1pt') : undefined,
-                                                fontStretch: segment.resolvedStyle?.fontStretch as any,
-                                            } : {
-                                                fontFamily: text.style?.fontFamily || 'inherit',
-                                                fontSize: text.style?.fontSize || 'inherit',
-                                                fontWeight: text.style?.fontWeight || 'normal',
-                                                fontStyle: text.style?.fontStyle || 'normal',
-                                                color: text.style?.color || '#000000',
-                                                letterSpacing: text.style?.letterSpacing || 'normal',
-                                                textDecoration: text.style?.textDecoration || 'none',
-                                                textTransform: textTransformValue as any,
-                                                WebkitTextStroke: text.style?.webkitTextStroke || 'none',
-                                                WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
-                                                WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
-                                                fontStretch: text.style?.fontStretch as any,
-                                            };
-                                            
-                                            return (
-                                                <span
-                                                    key={segIdx}
-                                                    style={style}
-                                                    dangerouslySetInnerHTML={{ __html: resolveTextVariable(segment.text || '').replace(/\n/g, '<br/>') }}
-                                                />
-                                            );
-                                        })
-                                    ) : (
-                                        // Pas de segments : afficher le texte avec le style global
-                                        <div 
-                                            className="w-full h-full" 
-                                            style={{
-                                                fontFamily: text.style?.fontFamily || 'inherit',
-                                                fontSize: text.style?.fontSize || 'inherit',
-                                                fontWeight: text.style?.fontWeight || 'normal',
-                                                fontStyle: text.style?.fontStyle || 'normal',
-                                                color: text.style?.color || '#000000',
-                                                letterSpacing: text.style?.letterSpacing || 'normal',
-                                                textDecoration: text.style?.textDecoration || 'none',
-                                                textTransform: text.style?.textTransform as any || 'none',
-                                                WebkitTextStroke: text.style?.webkitTextStroke,
-                                                WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
-                                                WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
-                                                fontStretch: text.style?.fontStretch as any,
-                                            }}
-                                            dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
-                                        />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </>)
-             ) : (
-                /* EMPTY COVER IF NOT CONFIGURED */
-                (<div className="absolute inset-0 bg-white" style={{ marginLeft: '12px' }}></div>)
-             )}
-          </div>
-        )
-      };
-    }
-
-    // N: Closed Back Cover
-    if (index === totalViews - 1) {
-        // Find configured BACK cover elements (Page 999)
-        const backCoverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 999) || [];
-        const backCoverImages = book?.contentConfig?.imageElements?.filter(i => {
-          if (i.position.pageIndex !== 999) return false;
-          // Check combinationKey match
-          const keyMatches = !i.combinationKey || 
-                            i.combinationKey === currentCombinationKey || 
-                            i.combinationKey === 'default' || 
-                            i.combinationKey === 'all';
-          // Check conditions match
-          const conditionsMatch = matchesImageConditions(i.conditions, config.characters || {}, book);
-          // If conditions exist, they take precedence
-          if (i.conditions && i.conditions.length > 0) {
-            return conditionsMatch;
-          }
-          return keyMatches;
-        }) || [];
-        const backCoverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 999 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
-        
-        // Also check Front Cover for fallback logic (Page 0) - to determine if we are in "custom mode"
-        const frontCoverTexts = book?.contentConfig?.texts?.filter(t => t.position.pageIndex === 0) || [];
-        const frontCoverImages = book?.contentConfig?.imageElements?.filter(i => {
-          if (i.position.pageIndex !== 0) return false;
-          // Check combinationKey match
-          const keyMatches = !i.combinationKey || 
-                            i.combinationKey === currentCombinationKey || 
-                            i.combinationKey === 'default' || 
-                            i.combinationKey === 'all';
-          // Check conditions match
-          const conditionsMatch = matchesImageConditions(i.conditions, config.characters || {}, book);
-          // If conditions exist, they take precedence
-          if (i.conditions && i.conditions.length > 0) {
-            return conditionsMatch;
-          }
-          return keyMatches;
-        }) || [];
-        const frontCoverBg = book?.contentConfig?.images?.find(i => i.pageIndex === 0 && (i.combinationKey === currentCombinationKey || i.combinationKey === 'default'));
-
-        // Check if we have a custom BACK cover configuration
-        const hasCustomBackCover = backCoverTexts.length > 0 || backCoverImages.length > 0 || !!backCoverBg;
-        
-        // Check if we have a custom FRONT cover
-        const hasCustomFrontCover = frontCoverTexts.length > 0 || frontCoverImages.length > 0 || !!frontCoverBg;
-
-        const showCustomBack = hasCustomBackCover;
-        const showCleanBack = !hasCustomBackCover; // Always clean if not configured
-
-        return {
-            left: (
-                <div className={`w-full h-full relative flex flex-col items-center justify-center text-center overflow-hidden shadow-inner border-r-8 border-gray-100 ${showCustomBack || showCleanBack ? 'bg-white' : 'bg-cloud-blue text-white'}`}>
-                     {/* Spine / Binding Effect */}
-                     <div className="absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-gray-200 to-white border-l border-black/5 z-30"></div>
-                     <div className="absolute right-3 top-0 bottom-0 w-1 bg-black/5 z-20 mix-blend-multiply"></div>
-        
-                     {/* Cover Thickness (Left Edge) */}
-                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-black/20 to-transparent z-20 pointer-events-none"></div>
-        
-                     {generatedPages[999] ? (
-                        <img 
-                            src={generatedPages[999]} 
-                            className="absolute inset-0 w-full h-full object-cover" 
-                            style={{ marginRight: '12px', width: 'calc(100% - 12px)' }} 
-                            alt="Back Cover" 
-                         />
-                     ) : showCustomBack ? (
-                        /* Custom Admin Back Cover Content */
-                        (<>
-                            {/* Background */}
-                            {backCoverBg ? (
-                               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${backCoverBg.imageUrl})`, marginRight: '12px' }}></div>
-                            ) : null}
-                            <div className="absolute inset-0 z-10" style={{ marginRight: '12px' }}>
-                               {/* Stickers */}
-                               {backCoverImages.map(el => {
-                                   const imageUrl = resolveImageUrl(el);
-                                   return (
-                                       <div 
-                                           key={el.id}
-                                           className="absolute z-10"
-                                           style={{
-                                               left: `${el.position.x}%`,
-                                               top: `${el.position.y}%`,
-                                               width: `${el.position.width}%`,
-                                               height: el.position.height ? `${el.position.height}%` : 'auto',
-                                               transform: `rotate(${el.position.rotation || 0}deg)`
-                                           }}
-                                       >
-                                           {imageUrl && <img src={imageUrl} className="w-full h-full object-contain" alt={el.label} />}
-                                       </div>
-                                   );
-                               })}
-
-                               {/* Texts */}
-                               {backCoverTexts.map(text => {
-                                   // Gérer les segments conditionnels si présents
-                                   const hasConditionalSegments = text.conditionalSegments && text.conditionalSegments.length > 0;
-                                   
-                                   return (
-                                       <div 
-                                           key={text.id}
-                                           className="absolute z-20 break-words whitespace-pre-wrap pointer-events-none"
-                                           style={{
-                                               left: `${text.position.x}%`,
-                                               top: `${text.position.y}%`,
-                                               width: `${text.position.width || 30}%`,
-                                               transform: `rotate(${text.position.rotation || 0}deg)`,
-                                               // Styles de paragraphe (layout) uniquement sur le conteneur
-                                               textAlign: text.style?.textAlign as any || 'left',
-                                               lineHeight: text.style?.lineHeight || 'normal',
-                                               textIndent: text.style?.textIndent || '0',
-                                           }}
-                                       >
-                                           {hasConditionalSegments ? (
-                                               // Afficher chaque segment avec son propre style
-                                               text.conditionalSegments.map((segment: any, segIdx: number) => {
-                                                   // Si resolvedStyle existe, utiliser ses propriétés en priorité
-                                                   // Mais si textTransform est "none" ou undefined dans resolvedStyle, hériter du style global
-                                                   const hasResolvedStyle = segment.resolvedStyle !== undefined;
-                                                   
-                                                   // Priorité: resolvedStyle.textTransform (si défini et différent de 'none') > text.style.textTransform > 'none'
-                                                   const textTransformValue = hasResolvedStyle && segment.resolvedStyle?.textTransform && segment.resolvedStyle.textTransform !== 'none'
-                                                       ? segment.resolvedStyle.textTransform
-                                                       : (text.style?.textTransform || 'none');
-                                                   
-                                                   // Si resolvedStyle existe, utiliser UNIQUEMENT ses propriétés (même si undefined)
-                                                   // Ne pas fallback sur text.style pour éviter que tous les segments aient le même style
-                                                   const style = hasResolvedStyle ? {
-                                                       fontFamily: segment.resolvedStyle?.fontFamily || 'inherit',
-                                                       fontSize: segment.resolvedStyle?.fontSize || 'inherit',
-                                                       fontWeight: segment.resolvedStyle?.fontWeight || 'normal',
-                                                       fontStyle: segment.resolvedStyle?.fontStyle || 'normal',
-                                                       color: segment.resolvedStyle?.color || '#000000',
-                                                       letterSpacing: segment.resolvedStyle?.letterSpacing || 'normal',
-                                                       textDecoration: segment.resolvedStyle?.textDecoration || 'none',
-                                                       textTransform: textTransformValue as any,
-                                                       WebkitTextStroke: segment.resolvedStyle?.strokeColor ? `${segment.resolvedStyle?.strokeWeight || 1}pt ${segment.resolvedStyle?.strokeColor}` : 'none',
-                                                       WebkitTextStrokeColor: segment.resolvedStyle?.strokeColor,
-                                                       WebkitTextStrokeWidth: segment.resolvedStyle?.strokeColor ? (segment.resolvedStyle?.strokeWeight ? `${segment.resolvedStyle.strokeWeight}pt` : '1pt') : undefined,
-                                                       fontStretch: segment.resolvedStyle?.fontStretch as any,
-                                                   } : {
-                                                       fontFamily: text.style?.fontFamily || 'inherit',
-                                                       fontSize: text.style?.fontSize || 'inherit',
-                                                       fontWeight: text.style?.fontWeight || 'normal',
-                                                       fontStyle: text.style?.fontStyle || 'normal',
-                                                       color: text.style?.color || '#000000',
-                                                       letterSpacing: text.style?.letterSpacing || 'normal',
-                                                       textDecoration: text.style?.textDecoration || 'none',
-                                                       textTransform: textTransformValue as any,
-                                                       WebkitTextStroke: text.style?.webkitTextStroke || 'none',
-                                                       WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
-                                                       WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
-                                                       fontStretch: text.style?.fontStretch as any,
-                                                   };
-                                                   
-                                                   return (
-                                                       <span
-                                                           key={segIdx}
-                                                           style={style}
-                                                           dangerouslySetInnerHTML={{ __html: resolveTextVariable(segment.text || '').replace(/\n/g, '<br/>') }}
-                                                       />
-                                                   );
-                                               })
-                                           ) : (
-                                               // Pas de segments : afficher le texte avec le style global
-                                               <div 
-                                                   className="w-full h-full" 
-                                                   style={{
-                                                       fontFamily: text.style?.fontFamily || 'inherit',
-                                                       fontSize: text.style?.fontSize || 'inherit',
-                                                       fontWeight: text.style?.fontWeight || 'normal',
-                                                       fontStyle: text.style?.fontStyle || 'normal',
-                                                       color: text.style?.color || '#000000',
-                                                       letterSpacing: text.style?.letterSpacing || 'normal',
-                                                       textDecoration: text.style?.textDecoration || 'none',
-                                                       textTransform: text.style?.textTransform as any || 'none',
-                                                       WebkitTextStroke: text.style?.webkitTextStroke,
-                                                       WebkitTextStrokeColor: text.style?.webkitTextStrokeColor,
-                                                       WebkitTextStrokeWidth: text.style?.webkitTextStrokeWidth,
-                                                       fontStretch: text.style?.fontStretch as any,
-                                                   }}
-                                                   dangerouslySetInnerHTML={{ __html: resolveTextVariable(text.content).replace(/\n/g, '<br/>') }}
-                                               />
-                                           )}
-                                       </div>
-                                   );
-                               })}
-                            </div>
-                        </>)
-                     ) : showCleanBack ? (
-                        /* Clean White Back (when front is custom but back is empty) */
-                         (null)
-                     ) : null}
-            
-                     {/* Branding removed as per strict config requirement */}
-                     <div className="relative z-10 flex flex-col items-center pr-4">
-                     </div>
-                  </div>
-            ),
-            right: <div className="w-full h-full bg-transparent" />
-        };
-    }
-
-    // Story Spreads
-    // index starts at 1 (0=cover)
-    // Spread 1: Page 1 (Left), Page 2 (Right)
-    const spreadOffset = 1;
-    const spreadIndex = index - spreadOffset;
-    const leftPageNum = spreadIndex * 2 + 1;
-    const rightPageNum = spreadIndex * 2 + 2;
-
-    return {
-      left: renderPageContent(leftPageNum, true),
-      right: renderPageContent(rightPageNum, false)
-    };
-  };
-
   // --- SCENE COMPOSITION ---
-  
-  const currentSpread = getSpreadContent(currentView);
-  // For animations, we need the neighbor spread
-  const nextSpread = direction === 'next' ? getSpreadContent(currentView + 1) : null;
-  const prevSpread = direction === 'prev' ? getSpreadContent(currentView - 1) : null;
 
   // Convert generatedPages to array for FlipbookViewer
   const flipbookPages = useMemo(() => {

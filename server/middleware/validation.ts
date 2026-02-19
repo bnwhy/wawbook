@@ -1,5 +1,5 @@
 import { type Request, type Response, type NextFunction } from 'express';
-import { type z } from 'zod';
+import { z } from 'zod';
 import { ValidationError } from '../utils/errors';
 import { fromZodError } from 'zod-validation-error';
 
@@ -9,7 +9,7 @@ import { fromZodError } from 'zod-validation-error';
  * @returns Middleware Express
  */
 export function validate(schema: z.ZodSchema) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       req.body = await schema.parseAsync(req.body);
       next();
@@ -27,7 +27,7 @@ export function validate(schema: z.ZodSchema) {
  * Validation des paramètres de requête
  */
 export function validateParams(schema: z.ZodSchema) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       req.params = await schema.parseAsync(req.params);
       next();
@@ -45,7 +45,7 @@ export function validateParams(schema: z.ZodSchema) {
  * Validation de la query string
  */
 export function validateQuery(schema: z.ZodSchema) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       req.query = await schema.parseAsync(req.query);
       next();

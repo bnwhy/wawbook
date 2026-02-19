@@ -10,7 +10,7 @@ import { requireAuth } from "../middleware/auth";
 const router = express.Router();
 
 // GET /api/orders/next-id
-router.get("/next-id", async (req, res, next) => {
+router.get("/next-id", async (_req, res, next) => {
   try {
     const result = await pool.query("SELECT nextval('order_number_seq') as seq");
     const seq = result.rows[0].seq;
@@ -23,7 +23,7 @@ router.get("/next-id", async (req, res, next) => {
 });
 
 // GET /api/orders
-router.get("/", async (req, res, next) => {
+router.get("/", async (_req, res, next) => {
   try {
     const orders = await storage.getAllOrders();
     res.json(orders);

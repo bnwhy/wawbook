@@ -6,8 +6,6 @@
 import JSZip from 'jszip';
 import {
   IdmlParseError,
-  IdmlMissingFileError,
-  IdmlCorruptedFileError,
   IdmlInvalidXmlError,
 } from '../errors/IdmlErrors';
 

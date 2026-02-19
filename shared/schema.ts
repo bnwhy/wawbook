@@ -31,7 +31,8 @@ export const wizardOptionSchema = z.object({
 export const wizardVariantSchema = z.object({
   id: z.string(),
   label: z.string(),
-  type: z.enum(['radio', 'checkbox', 'select']).optional(),
+  type: z.enum(['radio', 'checkbox', 'select', 'color']).optional(),
+  showLabel: z.boolean().optional(),
   options: z.array(wizardOptionSchema),
 });
 
@@ -69,6 +70,10 @@ export const textStyleSchema = z.object({
   textIndent: z.string().optional(),
   marginTop: z.string().optional(),
   marginBottom: z.string().optional(),
+  webkitTextStroke: z.string().optional(),
+  webkitTextStrokeColor: z.string().optional(),
+  webkitTextStrokeWidth: z.string().optional(),
+  idmlJustification: z.string().optional(),
 });
 
 export const positionSchema = z.object({
@@ -102,9 +107,9 @@ export const imageElementSchema = z.object({
  * Pattern de naming IDML: (TXTCOND)tabId_variantId-optionId (même format que les images)
  */
 export const parsedConditionSchema = z.object({
-  tabId: z.string(),      // ex: "hero-child"
-  variantId: z.string(),  // ex: "gender"
-  optionId: z.string(),   // ex: "boy"
+  character: z.string(),   // ex: "hero-child"
+  variant: z.string(),     // ex: "gender"
+  option: z.string(),      // ex: "boy"
 });
 
 /**

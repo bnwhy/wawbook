@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useCart, CartItem } from '../context/CartContext';
 import { useBooks } from '../context/BooksContext';
-import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, Lock, Edit2, Eye, X } from 'lucide-react';
+import { Plus, Lock, Edit2, Eye, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import PaymentBadges from '../components/PaymentBadges';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import BookPreview from '../components/BookPreview';
-import BookCover from '../components/BookCover';
 import { generateStoryText } from '../services/geminiService';
 import { Story } from '../types';
 import { formatPrice } from '../utils/formatPrice';
@@ -20,7 +19,7 @@ interface CartPageProps {
 }
 
 const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
-  const { items, removeFromCart, updateQuantity, total } = useCart();
+  const { items, removeFromCart, updateQuantity: _updateQuantity, total } = useCart();
   const { defaultShippingRate } = useEcommerce();
   const { books } = useBooks();
   const [, setLocation] = useLocation();

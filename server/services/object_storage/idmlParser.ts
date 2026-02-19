@@ -1,15 +1,6 @@
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
 import { convertColorToHex } from './utils/colorConverter';
-import { IdmlValidator } from './validators/IdmlValidator';
-import {
-  idmlLogger,
-  logParsingStart,
-  logParsingComplete,
-  logParsingError,
-  logValidation,
-} from './utils/logger';
-import { IdmlCorruptedFileError } from './errors/IdmlErrors';
 
 /**
  * IDML Parser - Extrait les textes et styles depuis un fichier IDML InDesign
@@ -234,8 +225,6 @@ interface IdmlData {
  * - pageDimensions : dimensions des pages (pour vérification)
  */
 export async function parseIdmlBuffer(idmlBuffer: Buffer): Promise<IdmlData> {
-  const startTime = Date.now();
-  
   // logParsingStart(); // Temporairement désactivé - cause erreur logPath
   
   const zip = await JSZip.loadAsync(idmlBuffer);
@@ -1407,8 +1396,8 @@ function extractTextFromCharRange(charRange: any): { text: string; variables: st
  */
 function extractTextFromParagraphRanges(
   paraRanges: any,
-  frameId: string,
-  frameName: string
+  _frameId: string,
+  _frameName: string
 ): { 
   content: string; 
   appliedCharStyle: string; 
@@ -1473,7 +1462,7 @@ function extractTextFromParagraphRanges(
           // AppliedConditions peut être une string ou un array
           // Format: "Condition/TXTCOND_hero-child_gender-boy" ou "Condition/Version_Garcon"
           const conditionRef = Array.isArray(appliedConditions) ? appliedConditions[0] : appliedConditions;
-          conditionName = conditionRef.replace(/^Condition\//, '');
+          conditionName = (typeof conditionRef === 'string' ? conditionRef.replace(/^Condition\//, '') : '') || '';
           availableConditionsSet.add(conditionName);
           hasAnyCondition = true;
           
@@ -1661,7 +1650,7 @@ function extractTextFromParagraphRanges(
           segment.condition = conditionName;
         }
         if (parsedCondition) {
-          segment.parsedCondition = parsedCondition;
+          segment.parsedCondition = { character: parsedCondition.tabId, variant: parsedCondition.variantId, option: parsedCondition.optionId };
         }
         if (segmentVars.length > 0) {
           segment.variables = segmentVars;
@@ -1745,8 +1734,8 @@ function extractTextFromParagraphRanges(
  */
 export function extractTextFrames(
   storyData: any,
-  characterStyles: Record<string, CharacterStyleProperties>,
-  paragraphStyles: Record<string, ParagraphStyleProperties>
+  _characterStyles: Record<string, CharacterStyleProperties>,
+  _paragraphStyles: Record<string, ParagraphStyleProperties>
 ): TextFrameData[] {
   const textFrames: TextFrameData[] = [];
   
@@ -2036,116 +2025,6 @@ function extractTextFramesFromSpread(
   }
   
   return textFrames;
-}
-
-/**
- * Extract text frame positions from Spreads
- */
-function extractTextFramePositions(spreadData: any, spreadPagesInfo: Array<{pageIndex: number, transformX: number, width: number}>): Array<{
-  parentStory: string;
-  textFrameId?: string;
-  pageIndex: number;
-  position: { x: number; y: number; width: number; height: number };
-}> {
-  const positions: Array<any> = [];
-  
-  try {
-    // Support both structures: spreadData.Spread and spreadData.Spread.Spread
-    let spread = spreadData?.Spread?.Spread || spreadData?.Spread;
-    if (!spread) return positions;
-    
-    // TextFrames are at spread level, not page level
-    const textFrames = spread?.TextFrame;
-    if (!textFrames) return positions;
-    
-    const textFrameArray = Array.isArray(textFrames) ? textFrames : [textFrames];
-    
-    for (const tf of textFrameArray) {
-      const parentStory = tf['@_ParentStory'];
-      const textFrameId = tf['@_Self'];
-      const itemTransform = tf['@_ItemTransform'];
-      
-      if ((parentStory || textFrameId) && itemTransform) {
-        // ItemTransform format: "a b c d tx ty" (matrix transformation)
-        // For simple translation: "1 0 0 1 x y"
-        const transform = itemTransform.split(' ').map((v: string) => parseFloat(v));
-        if (transform.length === 6) {
-          const x = transform[4];
-          const y = transform[5];
-          
-          // Extract dimensions from PathGeometry
-          let width = 100;
-          let height = 30;
-          
-          const pathGeometry = tf?.Properties?.PathGeometry?.GeometryPathType?.PathPointArray?.PathPointType;
-          if (pathGeometry && Array.isArray(pathGeometry) && pathGeometry.length >= 2) {
-            // Calculate bounding box from path points
-            const points = pathGeometry.map((pt: any) => {
-              const anchor = pt['@_Anchor'];
-              if (anchor) {
-                const coords = anchor.split(' ').map((v: string) => parseFloat(v));
-                return { x: coords[0], y: coords[1] };
-              }
-              return null;
-            }).filter((p: any) => p !== null);
-            
-            if (points.length >= 2) {
-              const xCoords = points.map((p: any) => p.x);
-              const yCoords = points.map((p: any) => p.y);
-              width = Math.max(...xCoords) - Math.min(...xCoords);
-              height = Math.max(...yCoords) - Math.min(...yCoords);
-            }
-          }
-          
-          // Determine pageIndex based on X position
-          // Pages in a spread are positioned side by side
-          // Sort pages by transformX to get left-to-right order
-          const sortedPages = [...spreadPagesInfo].sort((a, b) => a.transformX - b.transformX);
-          
-          let pageIndex = sortedPages[0]?.pageIndex || 1;
-          
-          // Find which page contains this TextFrame based on X position
-          for (let i = 0; i < sortedPages.length; i++) {
-            const page = sortedPages[i];
-            const nextPage = sortedPages[i + 1];
-            
-            const pageLeft = page.transformX;
-            const pageRight = page.transformX + page.width;
-            
-            // Check if TextFrame X is within this page's bounds
-            if (nextPage) {
-              // Not the last page: check if X is before the next page
-              if (x >= pageLeft && x < nextPage.transformX) {
-                pageIndex = page.pageIndex;
-                break;
-              }
-            } else {
-              // Last page: check if X is within or after this page's left edge
-              if (x >= pageLeft) {
-                pageIndex = page.pageIndex;
-                break;
-              }
-            }
-          }
-          
-          positions.push({
-            parentStory,
-            textFrameId,
-            pageIndex,
-            position: {
-              x,
-              y,
-              width,
-              height
-            }
-          });
-        }
-      }
-    }
-  } catch (e) {
-  }
-  
-  return positions;
 }
 
 /**

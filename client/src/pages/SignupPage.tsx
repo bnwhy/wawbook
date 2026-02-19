@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, Link } from 'wouter';
-import { UserPlus, Mail, Lock, Phone, Loader2, Package, Zap, BookOpen, Cloud } from 'lucide-react';
+import { Mail, Lock, Phone, Loader2, Package, BookOpen, Cloud } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 

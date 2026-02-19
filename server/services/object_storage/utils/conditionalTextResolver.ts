@@ -37,9 +37,9 @@ export interface ConditionalSegment {
   text: string;
   condition?: string;
   parsedCondition?: {
-    tabId: string;
-    variantId: string;
-    optionId: string;
+    character: string;
+    variant: string;
+    option: string;
   };
   variables?: string[];
   appliedCharacterStyle?: string;
@@ -186,11 +186,11 @@ function isConditionActive(
   
   // Matching via condition parsée
   if (parsedCondition) {
-    const { tabId, variantId, optionId } = parsedCondition;
+    const { character: tabId, variant: variantId, option: optionId } = parsedCondition;
     
     // Vérifier avec mapping hero-*
     const tabSelections = findTabSelections(tabId, selections);
-    const isActive = tabSelections && tabSelections[variantId] === optionId;
+    const isActive = (tabSelections && tabSelections[variantId] === optionId) ?? false;
     
     return isActive;
   }
@@ -201,7 +201,7 @@ function isConditionActive(
     const { tabId, variantId, optionId } = parsed;
     
     const tabSelections = findTabSelections(tabId, selections);
-    const isActive = tabSelections && tabSelections[variantId] === optionId;
+    const isActive = (tabSelections && tabSelections[variantId] === optionId) ?? false;
     
     return isActive;
   }
@@ -250,15 +250,18 @@ export function generateAllVariants(
   const tabVariantOptions: Record<string, Record<string, Set<string>>> = {};
   
   for (const segment of segments) {
-    let parsed = segment.parsedCondition;
+    let parsed: { character?: string; variant?: string; option?: string; tabId?: string; variantId?: string; optionId?: string } | undefined = segment.parsedCondition;
     
     // Si pas de parsedCondition, tenter de parser la condition
     if (!parsed && segment.condition) {
-      parsed = parseConditionName(segment.condition) ?? undefined;
+      const parsedFromName = parseConditionName(segment.condition);
+      parsed = parsedFromName ? { character: parsedFromName.tabId, variant: parsedFromName.variantId, option: parsedFromName.optionId } : undefined;
     }
     
     if (parsed) {
-      const { tabId, variantId, optionId } = parsed;
+      const tabId = parsed.character ?? parsed.tabId ?? '';
+      const variantId = parsed.variant ?? parsed.variantId ?? '';
+      const optionId = parsed.option ?? parsed.optionId ?? '';
       
       if (!tabVariantOptions[tabId]) {
         tabVariantOptions[tabId] = {};

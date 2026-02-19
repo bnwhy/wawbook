@@ -7,7 +7,7 @@ import { logger } from "../utils/logger";
 
 const router = express.Router();
 
-router.get("/", async (req, res, next) => {
+router.get("/", async (_req, res, next) => {
   try {
     const menus = await storage.getAllMenus();
     res.json(menus);

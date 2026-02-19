@@ -1,4 +1,4 @@
-import { BookProduct, ContentConfiguration, ImageElement, TextElement, ImageVariant, ImageCondition } from '../types/admin';
+import { BookProduct, ImageCondition } from '../types/admin';
 import { BookConfig } from '../types';
 
 // Import du module de text-fitting (auto-ajustement de taille de police)
@@ -237,7 +237,7 @@ function renderConditionalSegments(
     
     // Vérifier si la condition est satisfaite
     if (segment.parsedCondition) {
-      const { tabId, variantId, optionId } = segment.parsedCondition;
+      const { character: tabId, variant: variantId, option: optionId } = segment.parsedCondition;
       
       // Mapper hero-* vers le tabId du wizard
       const wizardTabId = tabId.startsWith('hero-') ? tabId.replace(/^hero-/, '') : tabId;
@@ -333,12 +333,12 @@ function renderConditionalSegments(
     
     // First resolve TXTVAR system variables (dedication, author)
     // IMPORTANT: Si vide, remplacer par chaîne vide (ne pas afficher {TXTVAR_...})
-    text = text.replace(/\{TXTVAR_dedication\}/gi, config.dedication || '');
-    text = text.replace(/\{TXTVAR_author\}/gi, config.author || '');
+    text = text.replace(/\{TXTVAR_dedication\}/gi, config?.dedication || '');
+    text = text.replace(/\{TXTVAR_author\}/gi, config?.author || '');
     
     // Then resolve TXTVAR wizard variables (tabId_variantId)
     // IMPORTANT: Si la variable n est pas resolue, remplacer par chaine vide
-    text = text.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (match: string, tabId: string, variantId: string) => {
+    text = text.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (_match: string, tabId: string, variantId: string) => {
       const heroPrefix = 'hero-';
       const wizardTabId = tabId.startsWith(heroPrefix) ? tabId.substring(heroPrefix.length) : tabId;
       const tabSelections = wizardSelections[wizardTabId];
@@ -696,7 +696,7 @@ export const generateBookPages = async (
           const textTransform = (layer.style?.textTransform as string) || 'none';          const canvasAlign = mapTextAlignToCanvas(
             layer.style?.textAlign as string,
             layer.style?.textAlignLast as string,
-            layer.style?.idmlJustification as string
+            (layer.style as any)?.idmlJustification as string
           );
           
           // Parse lineHeight from style (ex: "1.2" or "14.4pt")

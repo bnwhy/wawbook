@@ -1,5 +1,5 @@
 import express from "express";
-import { storage, pool } from "../storage";
+import { pool } from "../storage";
 import { logger } from "../utils/logger";
 import { requireAuth } from "../middleware/auth";
 
@@ -80,7 +80,7 @@ router.delete("/reset/orders", requireAuth, async (req, res, next) => {
 });
 
 // GET /api/admin/stats - Get database statistics
-router.get("/stats", requireAuth, async (req, res, next) => {
+router.get("/stats", requireAuth, async (_req, res, next) => {
   try {
     const booksCount = await pool.query('SELECT COUNT(*) FROM books');
     const customersCount = await pool.query('SELECT COUNT(*) FROM customers');

@@ -38,7 +38,7 @@ NuageBook est une plateforme e-commerce full-stack pour des livres personnalisé
 
 **Paiements**
 - **Stripe** : 20.0.0 - SDK Stripe officiel
-- **stripe-replit-sync** : 1.0.0 - Synchronisation webhooks → DB
+- **stripe-sync** : 1.0.0 - Synchronisation webhooks → DB
 
 **Rendu Serveur**
 - **Playwright** : playwright-core 1.40.0 - Automatisation Chromium
@@ -793,7 +793,7 @@ SESSION_SECRET=string (min 32 chars) // NOUVEAU - Obligatoire pour auth
 STRIPE_SECRET_KEY=sk_...
 STRIPE_PUBLISHABLE_KEY=pk_...
 LOG_LEVEL=debug|info|warn|error
-REPLIT_DOMAINS=...
+R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
 STRIPE_SYNC_BACKFILL=true|false
 ```
 

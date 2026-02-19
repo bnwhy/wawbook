@@ -1,4 +1,4 @@
-import express, { type Request, Response, NextFunction } from "express";
+import express from "express";
 import { registerRoutes } from "./routes/index";
 import { registerRoutes as registerLegacyRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -86,11 +86,11 @@ app.post(
       }
 
       await WebhookHandlers.processWebhook(req.body as Buffer, sig);
-      res.status(200).json({ received: true });
+      return res.status(200).json({ received: true });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ err: error }, `Webhook error: ${message}`);
-      res.status(400).json({ error: 'Webhook processing error' });
+      return res.status(400).json({ error: 'Webhook processing error' });
     }
   }
 );

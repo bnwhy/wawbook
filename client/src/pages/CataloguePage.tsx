@@ -23,7 +23,7 @@ export interface CatalogueFilters {
 }
 
 const CataloguePage: React.FC<CataloguePageProps> = ({ onSelectBook }) => {
-  const [location, setLocation] = useLocation();
+  const [_location, setLocation] = useLocation();
   const { books } = useBooks();
   const { mainMenu } = useMenus();
   const [isFilterOpen, setIsFilterOpen] = useState(false);

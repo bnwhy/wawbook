@@ -19,7 +19,6 @@ import type {
   Menu,
   InsertMenu,
   Setting,
-  InsertSetting,
 } from "@shared/schema";
 import {
   users,
@@ -123,12 +122,12 @@ export class DbStorage implements IStorage {
   }
 
   async createBook(book: InsertBook): Promise<Book> {
-    const result = await db.insert(books).values(book).returning();
+    const result = await db.insert(books).values(book as any).returning();
     return result[0];
   }
 
   async updateBook(id: string, book: Partial<InsertBook>): Promise<Book | undefined> {
-    const result = await db.update(books).set(book).where(eq(books.id, id)).returning();
+    const result = await db.update(books).set(book as any).where(eq(books.id, id)).returning();
     return result[0];
   }
 
@@ -223,12 +222,12 @@ export class DbStorage implements IStorage {
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {
-    const result = await db.insert(orders).values(order).returning();
+    const result = await db.insert(orders).values(order as any).returning();
     return result[0];
   }
 
   async updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order | undefined> {
-    const result = await db.update(orders).set(order).where(eq(orders.id, id)).returning();
+    const result = await db.update(orders).set(order as any).where(eq(orders.id, id)).returning();
     return result[0];
   }
 
@@ -247,12 +246,12 @@ export class DbStorage implements IStorage {
   }
 
   async createShippingZone(zone: InsertShippingZone): Promise<ShippingZone> {
-    const result = await db.insert(shippingZones).values(zone).returning();
+    const result = await db.insert(shippingZones).values(zone as any).returning();
     return result[0];
   }
 
   async updateShippingZone(id: string, zone: Partial<InsertShippingZone>): Promise<ShippingZone | undefined> {
-    const result = await db.update(shippingZones).set(zone).where(eq(shippingZones.id, id)).returning();
+    const result = await db.update(shippingZones).set(zone as any).where(eq(shippingZones.id, id)).returning();
     return result[0];
   }
 
@@ -271,12 +270,12 @@ export class DbStorage implements IStorage {
   }
 
   async createPrinter(printer: InsertPrinter): Promise<Printer> {
-    const result = await db.insert(printers).values(printer).returning();
+    const result = await db.insert(printers).values(printer as any).returning();
     return result[0];
   }
 
   async updatePrinter(id: string, printer: Partial<InsertPrinter>): Promise<Printer | undefined> {
-    const result = await db.update(printers).set(printer).where(eq(printers.id, id)).returning();
+    const result = await db.update(printers).set(printer as any).where(eq(printers.id, id)).returning();
     return result[0];
   }
 
@@ -295,12 +294,12 @@ export class DbStorage implements IStorage {
   }
 
   async createMenu(menu: InsertMenu): Promise<Menu> {
-    const result = await db.insert(menus).values(menu).returning();
+    const result = await db.insert(menus).values(menu as any).returning();
     return result[0];
   }
 
   async updateMenu(id: string, menu: Partial<InsertMenu>): Promise<Menu | undefined> {
-    const result = await db.update(menus).set(menu).where(eq(menus.id, id)).returning();
+    const result = await db.update(menus).set(menu as any).where(eq(menus.id, id)).returning();
     return result[0];
   }
 

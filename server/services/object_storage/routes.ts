@@ -1,4 +1,4 @@
-import type { Express, Request } from "express";
+import type { Express } from "express";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "./objectStorage";
 import { randomUUID } from "crypto";
 import JSZip from "jszip";
@@ -9,7 +9,6 @@ import { extractEpubFromBuffer } from "./epubExtractor";
 import { mergeEpubWithIdml } from "./idmlMerger";
 import { cleanCssSyntax, detectFontIssues } from "./utils/cssHelpers";
 import { parseImageFilename } from "./utils/filenameParser";
-import { buildWizardConfigFromCharacteristics } from "./wizardConfigBuilder";
 import { parseFontFileName } from "./utils/fontNameParser";
 import { 
   getContentTypeFromExt, 
@@ -29,6 +28,28 @@ import { logger } from "../../utils/logger";
 
 // Fonctions mergeEpubWithIdml et extractEpubFromBuffer déplacées vers des modules séparés
 // (idmlMerger.ts et epubExtractor.ts respectivement)
+
+/**
+ * Download a file from object storage given its objectPath (e.g. "/objects/bucket/path/to/file").
+ * Returns the file content as a Buffer. Throws if the file does not exist.
+ */
+async function downloadFromBucket(objectPath: string): Promise<Buffer> {
+  const pathWithoutPrefix = objectPath.replace(/^\/objects\//, '');
+  const parts = pathWithoutPrefix.split('/');
+  const bucketName = parts[0];
+  const objectName = parts.slice(1).join('/');
+
+  const bucket = objectStorageClient.bucket(bucketName);
+  const file = bucket.file(objectName);
+
+  const [exists] = await file.exists();
+  if (!exists) {
+    throw new Error(`File not found in bucket: ${objectPath}`);
+  }
+
+  const [buffer] = await file.download();
+  return buffer;
+}
 
 /**
  * Register object storage routes for file uploads.
@@ -81,13 +102,13 @@ export function registerObjectStorageRoutes(app: Express): void {
 
       const publicUrl = objectStorageService.getPublicUrl(objectKey);
 
-      res.json({
+      return res.json({
         objectPath: publicUrl,
         filename: finalFilename,
       });
     } catch (error: any) {
       logger.error({ error, message: error.message }, "Error uploading base64 image");
-      res.status(500).json({
+      return res.status(500).json({
         error: "Failed to upload image",
         details: {
           message: error.message,
@@ -115,16 +136,11 @@ export function registerObjectStorageRoutes(app: Express): void {
    */
   app.post("/api/uploads/extract-zip", async (req, res) => {
     try {
-      const { data, filename } = req.body;
+      const { data } = req.body;
 
       if (!data) {
         return res.status(400).json({ error: "Missing required field: data" });
       }
-
-      // Construct base URL for Puppeteer to access images
-      const protocol = req.headers['x-forwarded-proto'] || 'http';
-      const host = req.headers['host'] || 'localhost:5000';
-      const baseUrl = `${protocol}://${host}`;
 
       const publicPaths = objectStorageService.getPublicObjectSearchPaths();
       if (!publicPaths.length) {
@@ -144,12 +160,10 @@ export function registerObjectStorageRoutes(app: Express): void {
       const cssContent: Record<string, string> = {};
       
       const bucket = objectStorageClient.bucket(bucketName);
-      
+
       // First pass: extract all assets (images and fonts)
       for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
         if (zipEntry.dir) continue;
-        
-        const lowerPath = relativePath.toLowerCase();
         
         // Handle images
         if (/\.(jpg|jpeg|png|gif|svg|webp)$/i.test(relativePath)) {
@@ -199,7 +213,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         allCssUpdated[cssPath] = cleanCssSyntax(css);
       }
       
-      res.json({
+      return res.json({
         images: imageMap,
         htmlFiles,
         htmlContent,
@@ -208,7 +222,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       });
     } catch (error) {
       logger.error({ error }, "Error extracting ZIP");
-      res.status(500).json({ error: "Failed to extract ZIP file" });
+      return res.status(500).json({ error: "Failed to extract ZIP file" });
     }
   });
 
@@ -246,7 +260,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       // Extract object path from the presigned URL for later reference
       const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
 
-      res.json({
+      return res.json({
         uploadURL,
         objectPath,
         // Echo back the metadata for client convenience
@@ -254,7 +268,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       });
     } catch (error) {
       logger.error({ error }, "Error generating upload URL");
-      res.status(500).json({ error: "Failed to generate upload URL" });
+      return res.status(500).json({ error: "Failed to generate upload URL" });
     }
   });
 
@@ -345,21 +359,21 @@ export function registerObjectStorageRoutes(app: Express): void {
 
       const objectPath = `/objects/${bucketName}/${epubPath}`;
 
-      res.json({
+      return res.json({
         objectPath,
         filename,
         size: buffer.length,
       });
     } catch (error) {
       logger.error({ error }, "Error uploading EPUB");
-      res.status(500).json({ error: "Failed to upload EPUB" });
+      return res.status(500).json({ error: "Failed to upload EPUB" });
     }
   });
 
   /**
    * List all EPUB files from all known buckets
    */
-  app.get("/api/epubs", async (req, res) => {
+  app.get("/api/epubs", async (_req, res) => {
     try {
       const allEpubs: Array<{name: string, path: string, size?: number, updated?: string}> = [];
       
@@ -401,10 +415,10 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
 
-      res.json({ epubs: allEpubs });
+      return res.json({ epubs: allEpubs });
     } catch (error) {
       logger.error({ error }, "Error listing EPUBs");
-      res.status(500).json({ error: "Failed to list EPUBs" });
+      return res.status(500).json({ error: "Failed to list EPUBs" });
     }
   });
 
@@ -420,24 +434,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       }
 
 
-      // Parse the epub path to get bucket and object name
-      const pathWithoutPrefix = epubPath.replace(/^\/objects\//, '');
-      const parts = pathWithoutPrefix.split('/');
-      const bucketName = parts[0];
-      const objectName = parts.slice(1).join('/');
-      
-      const bucket = objectStorageClient.bucket(bucketName);
-      const epubFile = bucket.file(objectName);
-      
-      const [exists] = await epubFile.exists();
-      if (!exists) {
-        return res.status(404).json({ error: "EPUB file not found" });
-      }
-
-      // Download EPUB to memory
-      const [epubBuffer] = await epubFile.download();
-
-      // Use shared extraction logic
+      const epubBuffer = await downloadFromBucket(epubPath);
       const result = await extractEpubFromBuffer(epubBuffer, bookId);
       
       // Match image characteristics to existing wizard configuration
@@ -828,7 +825,7 @@ export function registerObjectStorageRoutes(app: Express): void {
           
           
           // Log final combinationKeys for verification
-          result.imageElements.forEach((img: any, idx: number) => {
+          result.imageElements.forEach((img: any, _idx: number) => {
             if (img.combinationKey && img.combinationKey !== 'default') {
             }
           });
@@ -836,10 +833,10 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
-      res.json(result);
+      return res.json(result);
     } catch (error) {
       console.error("[epub-extract] Error:", error);
-      res.status(500).json({ error: "Failed to extract EPUB from bucket. Try direct file upload instead." });
+      return res.status(500).json({ error: "Failed to extract EPUB from bucket. Try direct file upload instead." });
     }
   });
 
@@ -881,8 +878,6 @@ export function registerObjectStorageRoutes(app: Express): void {
       const path = await import('path');
       const avatarDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'avatars', tabId, 'images');
       await fs.promises.mkdir(avatarDir, { recursive: true });
-      
-      const imageCharacteristicsMap: Record<string, any> = {};
       
       // Store all extracted images with their characteristics
       const extractedImages: Array<{ fileName: string; localPath: string; characteristics: Record<string, string> }> = [];
@@ -992,7 +987,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         const allPossibleCombos = generateCombos(0, {});
         
         // For each combo, find matching layers and compose
-        const sharp = (await import('sharp')).default;
         const composedDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'avatars', tabId, 'composed');
         await fs.promises.mkdir(composedDir, { recursive: true });
         
@@ -1088,12 +1082,12 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
-      res.json({
+      return res.json({
         avatarMappings,
         stats: {
           totalImages: extractedImages.length,
           mappedImages: mappedCount,
-          skippedImages: skippedCount,
+          skippedImages: extractedImages.length - mappedCount,
           characteristicsCoverage: Object.fromEntries(
             Object.entries(charCoverage).map(([k, v]) => [k, Array.from(v)])
           ),
@@ -1103,7 +1097,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       });
     } catch (error: any) {
       console.error("[avatar-template] Error:", error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: "Failed to extract avatar template EPUB",
         details: error.message || String(error)
       });
@@ -1283,7 +1277,6 @@ export function registerObjectStorageRoutes(app: Express): void {
         const allPossibleCombos = generateCombos(0, {});
         
         // For each combo, find matching layers and compose
-        const sharp = (await import('sharp')).default;
         const composedDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'avatars', tabId, 'composed');
         await fs.promises.mkdir(composedDir, { recursive: true });
         
@@ -1379,7 +1372,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
       
-      res.json({
+      return res.json({
         avatarMappings,
         stats: {
           totalImages: extractedImages.length,
@@ -1394,7 +1387,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       });
     } catch (error: any) {
       console.error("[avatar-template-file] Error:", error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: "Failed to extract avatar template EPUB from file",
         details: error.message || String(error)
       });
@@ -1402,11 +1395,12 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
-   * Check import files (IDML, EPUB, fonts) before actual import
+   * Check import files (IDML, EPUB, fonts) before actual import.
+   * Accepts bucket paths instead of base64 data.
    */
   app.post("/api/books/check-import", async (req, res) => {
     try {
-      const { idml, epub, fonts } = req.body;
+      const { idmlPath, epubPath, fonts } = req.body;
       
       const results: {
         idml?: { valid: boolean; stats?: any; fonts?: string[]; error?: string };
@@ -1415,16 +1409,11 @@ export function registerObjectStorageRoutes(app: Express): void {
       } = {};
       
       // 1. Check IDML
-      if (idml) {
+      if (idmlPath) {
         try {
-          const idmlBuffer = Buffer.from(idml, 'base64');
+          const idmlBuffer = await downloadFromBucket(idmlPath);
           const idmlData = await parseIdmlBuffer(idmlBuffer);
           
-          // Use fonts already extracted by parseIdmlBuffer (via extractUsedFonts)
-          // This is more reliable than manual scanning because it checks all locations:
-          // - characterStyles (fontFamily)
-          // - paragraphStyles (fontFamily)
-          // - textFrames.inlineCharProperties (fontFamily)
           const detectedFonts = idmlData.fonts || [];
           
           results.idml = {
@@ -1443,9 +1432,9 @@ export function registerObjectStorageRoutes(app: Express): void {
       }
       
       // 2. Check EPUB
-      if (epub) {
+      if (epubPath) {
         try {
-          const epubBuffer = Buffer.from(epub, 'base64');
+          const epubBuffer = await downloadFromBucket(epubPath);
           const zip = await JSZip.loadAsync(epubBuffer);
           const htmlFiles = Object.keys(zip.files).filter(f => /\.(xhtml|html)$/i.test(f));
           results.epub = { valid: true, pages: htmlFiles.length };
@@ -1467,24 +1456,18 @@ export function registerObjectStorageRoutes(app: Express): void {
           };
           
           try {
-            const fontBuffer = Buffer.from(font.data, 'base64');
+            const fontBuffer = await downloadFromBucket(font.objectPath);
             const ext = font.name.split('.').pop()?.toLowerCase() || 'ttf';
             
-            // Check font magic bytes
-            // TTF: 00 01 00 00 or 'true' (74 72 75 65)
-            // OTF: OTTO (4F 54 54 4F)
-            // WOFF: wOFF (77 4F 46 46)
-            // WOFF2: wOF2 (77 4F 46 32)
             const magic = fontBuffer.slice(0, 4);
             const magicHex = magic.toString('hex').toUpperCase();
             const magicStr = magic.toString('ascii');
             
-            
             const validMagics: Record<string, string[]> = {
-              ttf: ['00010000', '74727565'], // TTF signature or 'true'
-              otf: ['4F54544F'], // 'OTTO'
-              woff: ['774F4646'], // 'wOFF'
-              woff2: ['774F4632'], // 'wOF2'
+              ttf: ['00010000', '74727565'],
+              otf: ['4F54544F'],
+              woff: ['774F4646'],
+              woff2: ['774F4632'],
             };
             
             const expectedMagics = validMagics[ext] || validMagics.ttf;
@@ -1507,15 +1490,12 @@ export function registerObjectStorageRoutes(app: Express): void {
           
           results.fonts.push(fontResult);
         }
-        
-        const validCount = results.fonts.filter(f => f.valid).length;
-        const obfuscatedCount = results.fonts.filter(f => f.obfuscated).length;
       }
       
-      res.json({ success: true, results });
+      return res.json({ success: true, results });
     } catch (error: any) {
       console.error('[check-import] Error:', error);
-      res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
   });
 
@@ -1669,7 +1649,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         ])
       ).sort((a, b) => a.localeCompare(b));
       
-      res.json({
+      return res.json({
         success: true,
         stats: {
           textFrames: idmlData.textFrames.length,
@@ -1695,7 +1675,7 @@ export function registerObjectStorageRoutes(app: Express): void {
       });
     } catch (error: any) {
       console.error('[test-idml] Error:', error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: "Failed to parse IDML: " + error.message,
         stack: error.stack
       });
@@ -1715,11 +1695,11 @@ export function registerObjectStorageRoutes(app: Express): void {
    * 
    * Request body (JSON):
    * {
-   *   "epub": "base64_encoded_epub_file",     // Images + positions uniquement
-   *   "idml": "base64_encoded_idml_file",     // Textes + polices + styles
+   *   "epubPath": "/objects/bucket/path/to/file.epub",  // Bucket path
+   *   "idmlPath": "/objects/bucket/path/to/file.idml",  // Bucket path
    *   "bookId": "unique_book_id",
-   *   "fonts": [                               // Polices personnalisées (optionnel)
-   *     { "name": "font.ttf", "data": "base64..." }
+   *   "fonts": [                                         // Optionnel
+   *     { "name": "font.ttf", "objectPath": "/objects/bucket/...", "fontFamily": "..." }
    *   ]
    * }
    * 
@@ -1741,17 +1721,19 @@ export function registerObjectStorageRoutes(app: Express): void {
    */
   app.post("/api/books/import-storyboard", async (req, res) => {
     try {
-      const { epub, idml, bookId, fonts } = req.body;
+      const { epubPath, idmlPath, bookId, fonts } = req.body;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'routes.ts:import-storyboard',message:'import-storyboard called',data:{hasEpubPath:!!epubPath,hasIdmlPath:!!idmlPath,bookId,fontsCount:fonts?.length,epubPathValue:epubPath,idmlPathValue:idmlPath},timestamp:Date.now(),hypothesisId:'H1,H3'})}).catch(()=>{});
+      // #endregion
 
-      if (!epub || !idml || !bookId) {
+      if (!epubPath || !idmlPath || !bookId) {
         return res.status(400).json({ 
-          error: "Missing required fields: epub (base64), idml (base64), bookId" 
+          error: "Missing required fields: epubPath, idmlPath, bookId" 
         });
       }
 
-
-      // 1. Extract EPUB (images + text positions ONLY - no text content or fonts)
-      const epubBuffer = Buffer.from(epub, 'base64');
+      // 1. Download & extract EPUB from bucket
+      const epubBuffer = await downloadFromBucket(epubPath);
       const epubResult = await extractEpubFromBuffer(epubBuffer, bookId);
 
       if (!epubResult.success) {
@@ -1759,18 +1741,13 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(500).json({ error: "Failed to extract EPUB" });
       }
 
-
-      // 1.5. Upload custom fonts if provided AND install them for Playwright
+      // 1.5. Process fonts already uploaded to bucket
       const uploadedFonts: Record<string, { url: string; fontFamily?: string; fontWeight?: string; fontStyle?: string }> = {};
       
       if (fonts && Array.isArray(fonts) && fonts.length > 0) {
-        
-        const publicPaths = objectStorageService.getPublicObjectSearchPaths();
-        const hasPublicPath = publicPaths.length > 0;
-        
         for (const font of fonts) {
           try {
-            const fontBuffer = Buffer.from(font.data, 'base64');
+            const fontBuffer = await downloadFromBucket(font.objectPath);
             const ext = font.name.split('.').pop()?.toLowerCase() || 'ttf';
             
             // Check if font is valid (not obfuscated)
@@ -1788,14 +1765,14 @@ export function registerObjectStorageRoutes(app: Express): void {
               continue;
             }
             
-            // Parse font metadata
             const parsed = parseFontFileName(font.name);
             const fontFamilyName = font.fontFamily || parsed.fontFamily;
             
+            // Font is already in bucket — copy to the book's font directory in object storage
+            const publicPaths = objectStorageService.getPublicObjectSearchPaths();
             let fontSaved = false;
-            
-            // Try to upload to object storage if available
-            if (hasPublicPath) {
+
+            if (publicPaths.length > 0) {
               try {
                 const publicPath = publicPaths[0];
                 const { bucketName, objectName: basePath } = parseObjectPathSimple(publicPath);
@@ -1813,30 +1790,26 @@ export function registerObjectStorageRoutes(app: Express): void {
                   metadata: { cacheControl: 'public, max-age=31536000' },
                 });
                 
-                const objectPath = `/objects/${bucketName}/${objectName}`;
+                const objectPathFinal = `/objects/${bucketName}/${objectName}`;
                 uploadedFonts[font.name] = {
-                  url: objectPath,
+                  url: objectPathFinal,
                   fontFamily: fontFamilyName,
                   fontWeight: parsed.fontWeight,
                   fontStyle: parsed.fontStyle
                 };
                 fontSaved = true;
               } catch (uploadError) {
-                // Object storage upload failed, will fallback to local storage
-                console.warn('[import-storyboard] Object storage upload failed, using local fallback:', font.name);
+                console.warn('[import-storyboard] Object storage copy failed, using local fallback:', font.name);
               }
             }
             
-            // If object storage failed or not available, save to local assets
             if (!fontSaved) {
-              // Save to local assets/books/{bookId}/font/ directory
               const bookFontDir = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'font');
               await fs.promises.mkdir(bookFontDir, { recursive: true });
               
               const localFontPath = path.join(bookFontDir, font.name);
               await fs.promises.writeFile(localFontPath, fontBuffer);
               
-              // Use relative URL path for the font
               const fontUrl = `../font/${font.name}`;
               uploadedFonts[font.name] = {
                 url: fontUrl,
@@ -1847,13 +1820,13 @@ export function registerObjectStorageRoutes(app: Express): void {
             }
             
           } catch (fontError) {
-            console.error(`[import-storyboard] ⚠️ Failed to process font ${font.name}:`, fontError);
+            console.error(`[import-storyboard] Failed to process font ${font.name}:`, fontError);
           }
         }
       }
 
-      // 2. Parse IDML (texts + fonts + styles - ONLY SOURCE for text information)
-      const idmlBuffer = Buffer.from(idml, 'base64');
+      // 2. Download & parse IDML from bucket
+      const idmlBuffer = await downloadFromBucket(idmlPath);
       const idmlData = await parseIdmlBuffer(idmlBuffer);
 
       
@@ -1948,7 +1921,7 @@ export function registerObjectStorageRoutes(app: Express): void {
         paragraphStylesDetails: idmlData.paragraphStyles
       };
 
-      res.json({
+      return res.json({
         success: true,
         bookId,
         contentConfig,
@@ -1971,7 +1944,7 @@ export function registerObjectStorageRoutes(app: Express): void {
 
     } catch (error: any) {
       console.error("[import-storyboard] Error:", error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: "Failed to import storyboard: " + error.message 
       });
     }

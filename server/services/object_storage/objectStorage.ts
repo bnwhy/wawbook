@@ -33,6 +33,8 @@ const s3Client = new S3Client({
  * so that existing route code works with minimal changes.
  */
 export class StorageFile {
+  metadata?: Record<string, any>;
+
   constructor(
     public readonly name: string,
     private bucket: string = R2_BUCKET_NAME
@@ -132,7 +134,7 @@ class StorageBucket {
     const files = (response.Contents || []).map(obj => {
       const file = new StorageFile(obj.Key || "", this.bucketName);
       // Attach metadata for list results
-      (file as any).metadata = {
+      file.metadata = {
         size: obj.Size?.toString(),
         updated: obj.LastModified?.toISOString(),
       };

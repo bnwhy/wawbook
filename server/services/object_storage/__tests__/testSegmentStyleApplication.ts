@@ -7,7 +7,7 @@
  * détectés et appliqués correctement dans le style global.
  * 
  * Utilisation :
- *   npx tsx server/replit_integrations/object_storage/__tests__/testSegmentStyleApplication.ts
+ *   npx tsx server/services/object_storage/__tests__/testSegmentStyleApplication.ts
  */
 
 console.log('=== TEST: Application des styles de segments ===\n');
@@ -119,7 +119,7 @@ if (firstStyledSegment) {
   console.log('  Style appliqué:', firstStyledSegment.appliedCharacterStyle);
   
   // Vérifier que le style existe dans le dictionnaire
-  const styleKey = firstStyledSegment.appliedCharacterStyle.replace('CharacterStyle/', '');
+  const styleKey = firstStyledSegment.appliedCharacterStyle.replace('CharacterStyle/', '') as keyof typeof mockIdmlData.characterStyles;
   const charStyle = mockIdmlData.characterStyles[styleKey];
   
   if (charStyle) {
@@ -128,7 +128,7 @@ if (firstStyledSegment) {
     console.log('  - fontSize:', charStyle.fontSize);
     console.log('  - color:', charStyle.color);
     console.log('  - textTransform:', charStyle.textTransform);
-    console.log('  - horizontalScale:', charStyle.horizontalScale);
+    console.log('  - horizontalScale:', (charStyle as { horizontalScale?: number }).horizontalScale);
     
     console.log('\n✓ TEST RÉUSSI: Le style du premier segment sera appliqué au style global');
     console.log('  Résultat attendu:');

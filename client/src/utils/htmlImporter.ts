@@ -1,15 +1,7 @@
 import { TextElement, ImageElement } from '../types/admin';
 import JSZip from 'jszip';
 
-interface ParsedPage {
-  pageIndex: number;
-  width: number;
-  height: number;
-  texts: TextElement[];
-  images: ImageElement[];
-}
-
-// Map of filename -> Blob URL
+// Map of filename -> Blob URL -> Blob URL
 type ImageMap = Record<string, string>;
 
 export const parseZipFile = async (file: File, defaultWidth = 800, defaultHeight = 600): Promise<{ texts: TextElement[], images: ImageElement[], htmlContent: string, width: number, height: number }> => {
@@ -433,7 +425,6 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
         const bgImage = style.backgroundImage;
         if (el.tagName.toLowerCase() === 'img' || (el.tagName.toLowerCase() === 'div' && bgImage && bgImage !== 'none')) {
             let src = '';
-            let isBg = false;
 
             if (el.tagName.toLowerCase() === 'img') {
                 src = (el as HTMLImageElement).getAttribute('src') || '';
@@ -442,7 +433,6 @@ const parseHtmlContent = (htmlText: string, defaultWidth: number, defaultHeight:
                 const match = bgImage.match(/url\(['"]?(.*?)['"]?\)/);
                 if (match) {
                     src = match[1];
-                    isBg = true;
                 }
             }
 

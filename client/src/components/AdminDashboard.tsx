@@ -1,25 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Image, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Copy, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, PenTool, Truck, Package, Printer, Download, Barcode, Search, ArrowLeft, ArrowRight, RotateCcw, MessageSquare, Send, MapPin, Clock, Zap, Columns, HelpCircle, FileCode, Camera, CreditCard, CloudDownload, Loader2, Sparkles, ShieldCheck, Compass, Gift } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2 } from 'lucide-react';
 import { Theme } from '../types';
-import { BookProduct, WizardTab, TextElement, PageDefinition, ImageElement, Printer as PrinterType, PageDimension } from '../types/admin';
+import { BookProduct, WizardTab, Printer as PrinterType } from '../types/admin';
 import { ShippingZone, ShippingMethod } from '../types/ecommerce';
 import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { useHomepage } from '../context/HomepageContext';
 import { HomepageSection } from '../types/homepage';
-import { MenuItem, MenuColumn } from '../types/menu';
+import { MenuItem } from '../types/menu';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { SortableItem } from './SortableItem';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
-import { Checkbox } from './ui/checkbox';
-import { Badge } from './ui/badge';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
-import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
+import { formatPrice } from '../utils/formatPrice';
 import { formatDate, formatDateTime } from '../utils/formatDate';
 
 
@@ -35,13 +32,10 @@ const slugify = (text: string) => {
     .replace(/__+/g, '_');
 };
 
-// Load Google Fonts
-const GOOGLE_FONTS_API_KEY = ''; // We'll use the package instead if possible or a direct list
 // Import font list from the package we just installed if available, or fallback to a larger list
 import googleFonts from 'google-fonts-complete';
-
-import { readPsd } from 'ag-psd';
 import { uploadFileToStorage } from '../utils/imageUploader';
+import { useUpload } from '../hooks/use-upload';
 
 // Characteristic labels for French display
 const CHARACTERISTIC_LABELS: Record<string, string> = {
@@ -163,21 +157,6 @@ const ImageCard: React.FC<ImageCardProps> = ({ img, wizardConfig }) => {
   );
 };
 
-// Legacy component kept for compatibility
-interface ImageConditionEditorProps {
-  img: any;
-  wizardConfig: any;
-}
-
-const ImageConditionEditor: React.FC<ImageConditionEditorProps> = ({ img, wizardConfig }) => {
-  return (
-    <ImageCard 
-      img={img} 
-      wizardConfig={wizardConfig}
-    />
-  );
-};
-
 // Sortable Book Item for drag & drop
 interface SortableBookItemProps {
   id: string;
@@ -197,7 +176,7 @@ const SortableBookItem: React.FC<SortableBookItemProps> = ({ id, book, onRemove,
     isDragging
   } = useSortable({ id });
   
-  const [isEditingBadge, setIsEditingBadge] = React.useState(false);
+  const [_isEditingBadge, _setIsEditingBadge] = React.useState(false);
 
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
@@ -258,9 +237,8 @@ const SortableBookItem: React.FC<SortableBookItemProps> = ({ id, book, onRemove,
 };
 
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const { books, addBook, updateBook, deleteBook } = useBooks();
-  const { mainMenu, setMainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
+  const { mainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
   const { homepageConfig, updateHomepageConfig, isLoading: homepageLoading } = useHomepage();
   const { 
     customers, 
@@ -279,6 +257,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     updateCustomer, 
     addCustomer 
   } = useEcommerce();
+  const { uploadFile: uploadToBucket } = useUpload();
   
   // DnD sensors
   const sensors = useSensors(
@@ -290,7 +269,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping' | 'homepage'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [_isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showFulfillment, setShowFulfillment] = useState(false);
@@ -299,9 +278,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [isCustomerSearchOpen, setIsCustomerSearchOpen] = useState(false);
 
-  // EPUB from bucket state
-  const [showEpubSelector, setShowEpubSelector] = useState(false);
-  const [isExtractingEpub, setIsExtractingEpub] = useState(false);
+  // EPUB from bucket state (used by Avatar import)
   const [bucketEpubs, setBucketEpubs] = useState<Array<{name: string, path: string, size?: number}>>([]);
   const [isLoadingEpubs, setIsLoadingEpubs] = useState(false);
 
@@ -384,113 +361,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   // Load EPUBs when modal opens
-  React.useEffect(() => {
-    if (showEpubSelector) {
-      loadBucketEpubs();
-    }
-  }, [showEpubSelector]);
-
-  // Function to extract EPUB from bucket
-  const handleExtractEpub = async (epubPath: string) => {
-    if (!selectedBook) {
-      toast.error('Veuillez sélectionner un livre');
-      return;
-    }
-
-    setIsExtractingEpub(true);
-    try {
-      toast.info('Extraction de l\'EPUB en cours...');
-      const response = await fetch('/api/epubs/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          epubPath,
-          bookId: selectedBook.id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to extract EPUB');
-      }
-
-      const result = await response.json();
-      console.log('[EPUB Extract] Result:', result);
-
-      // Auto-save the book with the new content (including extracted texts and images)
-      // IMPORTANT: Replace imageElements completely, don't merge with old data
-      const updatedBook = {
-        ...selectedBook,
-        contentConfig: {
-          ...selectedBook.contentConfig,
-          pages: result.pages || [],
-          cssContent: result.cssContent || '',
-          pageImages: result.pageImages || [],
-          texts: result.texts || [],
-          // Replace imageElements completely with new data from extraction
-          imageElements: result.imageElements || [],
-          fontWarnings: result.fontWarnings || [],
-        }
-      };
-      
-      // Save immediately to database (not just draft)
-      await updateBook(updatedBook);
-      setDraftBook(updatedBook);
-
-      setShowEpubSelector(false);
-      
-      // Show font warnings if any
-      if (result.fontWarnings && result.fontWarnings.length > 0) {
-        const errors = result.fontWarnings.filter((w: any) => w.severity === 'error');
-        const warnings = result.fontWarnings.filter((w: any) => w.severity === 'warning');
-        
-        if (errors.length > 0) {
-          toast.error(
-            `Polices manquantes (${errors.length}) : ${errors.map((w: any) => w.fontFamily).join(', ')}. Ces polices ne s'afficheront pas correctement.`,
-            { duration: 10000 }
-          );
-        }
-        if (warnings.length > 0) {
-          toast.warning(
-            `Avertissements polices (${warnings.length}) : ${warnings.map((w: any) => w.fontFamily).join(', ')}`,
-            { duration: 8000 }
-          );
-        }
-      }
-      
-      // Show unmapped characteristics warning if any
-      if (result.unmappedCharacteristics && Object.keys(result.unmappedCharacteristics).length > 0) {
-        const unmappedList = Object.entries(result.unmappedCharacteristics)
-          .map(([key, values]: [string, any]) => `${key}: ${Array.isArray(values) ? values.join(', ') : values}`)
-          .join('; ');
-        
-        toast.warning(
-          `Caractéristiques non mappées détectées : ${unmappedList}. Ces caractéristiques n'ont pas d'équivalent dans la configuration du wizard actuelle.`,
-          { duration: 12000 }
-        );
-        console.warn('[EPUB Extract] Unmapped characteristics:', result.unmappedCharacteristics);
-      }
-      
-      // Count successfully mapped images
-      const mappedImagesCount = result.imageElements?.filter((img: any) => 
-        img.conditions && img.conditions.length > 0
-      ).length || 0;
-      const totalImagesWithCharacteristics = result.imageElements?.filter((img: any) => 
-        img.characteristics && Object.keys(img.characteristics).length > 0
-      ).length || 0;
-      
-      const successMessage = totalImagesWithCharacteristics > 0
-        ? `EPUB extrait avec succès : ${result.pages?.length || 0} pages, ${Object.keys(result.images || {}).length} images, ${Object.keys(result.fonts || {}).length} polices. ${mappedImagesCount}/${totalImagesWithCharacteristics} images mappées au wizard.`
-        : `EPUB extrait avec succès : ${result.pages?.length || 0} pages, ${Object.keys(result.images || {}).length} images, ${Object.keys(result.fonts || {}).length} polices`;
-      
-      toast.success(successMessage);
-    } catch (error) {
-      console.error('[EPUB Extract] Error:', error);
-      toast.error('Erreur lors de l\'extraction de l\'EPUB');
-    } finally {
-      setIsExtractingEpub(false);
-    }
-  };
-
   // Function to import avatar template EPUB
   const handleImportAvatarEpub = async (epubPath: string) => {
     if (!selectedBook) {
@@ -724,32 +594,47 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     setIsImportingStoryboard(true);
     try {
-      toast.info('Import du storyboard EPUB + IDML en cours...');
-      
-      // Convert files to base64
-      const epubBase64 = await fileToBase64(epubFile);
-      const idmlBase64 = await fileToBase64(idmlFile);
-      
-      // Convert font files to base64 if any, organized by font family
-      const fontsData: Array<{ name: string; data: string; fontFamily: string }> = [];
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'AdminDashboard.tsx:619',message:'handleImportStoryboard STARTED - bucket flow',data:{epubFileName:epubFile?.name,idmlFileName:idmlFile?.name,bookId:selectedBook.id},timestamp:Date.now(),hypothesisId:'H1,H2'})}).catch(()=>{});
+      // #endregion
+      // Upload EPUB to bucket
+      toast.info('Upload EPUB vers le stockage...');
+      const epubUpload = await uploadToBucket(epubFile);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'AdminDashboard.tsx:625',message:'EPUB upload result',data:{success:!!epubUpload,objectPath:epubUpload?.objectPath},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+      if (!epubUpload) throw new Error('Échec de l\'upload EPUB');
+
+      // Upload IDML to bucket
+      toast.info('Upload IDML vers le stockage...');
+      const idmlUpload = await uploadToBucket(idmlFile);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'AdminDashboard.tsx:631',message:'IDML upload result',data:{success:!!idmlUpload,objectPath:idmlUpload?.objectPath},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+      if (!idmlUpload) throw new Error('Échec de l\'upload IDML');
+
+      // Upload font files to bucket
+      const fontPaths: Array<{ name: string; objectPath: string; fontFamily: string }> = [];
       for (const [fontFamily, files] of Object.entries(fontFilesByFamily)) {
         for (const file of files) {
-          const fontBase64 = await fileToBase64(file);
-          fontsData.push({
+          const fontUpload = await uploadToBucket(file);
+          if (!fontUpload) throw new Error(`Échec de l'upload de la police ${file.name}`);
+          fontPaths.push({
             name: file.name,
-            data: fontBase64,
-            fontFamily: fontFamily
+            objectPath: fontUpload.objectPath,
+            fontFamily
           });
         }
       }
-      
+
+      toast.info('Import du storyboard en cours...');
       const response = await fetch('/api/books/import-storyboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          epub: epubBase64,
-          idml: idmlBase64,
-          fonts: fontsData,
+          epubPath: epubUpload.objectPath,
+          idmlPath: idmlUpload.objectPath,
+          fonts: fontPaths,
           bookId: selectedBook.id,
         }),
       });
@@ -862,6 +747,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         toast.warning('Aucun texte créé lors de l\'import. Vérifiez la structure du fichier.', { duration: 10000 });
       }
     } catch (error: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'992d07'},body:JSON.stringify({sessionId:'992d07',location:'AdminDashboard.tsx:773',message:'handleImportStoryboard ERROR',data:{errorMessage:error.message,errorStack:error.stack?.substring(0,300)},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
       console.error('Error importing storyboard:', error);
       toast.error(`Échec de l'import : ${error.message}`);
     } finally {
@@ -891,37 +779,32 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
 
     try {
-      toast.info('Vérification des fichiers d\'import...');
+      toast.info('Upload des fichiers pour vérification...');
       
-      // Prepare data
-      const payload: { idml?: string; epub?: string; fonts?: Array<{ name: string; data: string; fontFamily: string }> } = {};
+      const payload: { idmlPath?: string; epubPath?: string; fonts?: Array<{ name: string; objectPath: string; fontFamily: string }> } = {};
       
       if (idmlFile) {
-        console.log('[Check Import] Processing IDML file:', idmlFile.name, `(${(idmlFile.size / 1024 / 1024).toFixed(2)} MB)`);
-        payload.idml = await fileToBase64(idmlFile);
+        const upload = await uploadToBucket(idmlFile);
+        if (!upload) throw new Error('Échec de l\'upload IDML');
+        payload.idmlPath = upload.objectPath;
       }
       if (epubFile) {
-        console.log('[Check Import] Processing EPUB file:', epubFile.name, `(${(epubFile.size / 1024 / 1024).toFixed(2)} MB)`);
-        payload.epub = await fileToBase64(epubFile);
+        const upload = await uploadToBucket(epubFile);
+        if (!upload) throw new Error('Échec de l\'upload EPUB');
+        payload.epubPath = upload.objectPath;
       }
       if (totalFontFiles > 0) {
         payload.fonts = [];
         for (const [fontFamily, files] of Object.entries(fontFilesByFamily)) {
           for (const file of files) {
-            const fontBase64 = await fileToBase64(file);
-            payload.fonts.push({ name: file.name, data: fontBase64, fontFamily });
+            const upload = await uploadToBucket(file);
+            if (!upload) throw new Error(`Échec de l'upload de ${file.name}`);
+            payload.fonts.push({ name: file.name, objectPath: upload.objectPath, fontFamily });
           }
         }
       }
       
-      const payloadSize = JSON.stringify(payload).length / 1024 / 1024;
-      console.log('[Check Import] Payload size:', payloadSize.toFixed(2), 'MB');
-      
-      if (payloadSize > 50) {
-        toast.error(`Fichiers trop volumineux (${payloadSize.toFixed(2)} MB). Limite: 50 MB`);
-        return;
-      }
-      
+      toast.info('Vérification des fichiers d\'import...');
       const response = await fetch('/api/books/check-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1183,8 +1066,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return;
       }
 
-      const selectedBook = books.find(b => b.id === newOrderForm.items[0].bookId) || books[0];
-      
       const orderItems = newOrderForm.items.map(item => {
           const book = books.find(b => b.id === item.bookId) || books[0];
           return {
@@ -1232,8 +1113,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [selectedOrderId, activeTab]);
 
   // Font Search State
-  const [fontSearch, setFontSearch] = useState('');
-  const [availableFonts, setAvailableFonts] = useState<string[]>([]);
+  const [_fontSearch, _setFontSearch] = useState('');
+  const [_availableFonts, setAvailableFonts] = useState<string[]>([]);
 
   // Initialize fonts
   React.useEffect(() => {
@@ -1251,23 +1132,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   }, []);
 
-
-  // Effect to dynamically load selected font
-  const loadFont = (fontFamily: string) => {
-    if (!fontFamily) return;
-    const link = document.createElement('link');
-    link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}&display=swap`;
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-  };
-
   // Utility function to resolve wizard mapping from parsed condition
   const resolveWizardMapping = (
-    parsedCondition: { tabId: string; variantId: string; optionId: string },
+    parsedCondition: { character: string; variant: string; option: string },
     wizardConfig: any
   ): string | null => {
     // Handle hero-* -> * mapping
-    let effectiveTabId = parsedCondition.tabId;
+    let effectiveTabId = parsedCondition.character;
     if (effectiveTabId.startsWith('hero-')) {
       effectiveTabId = effectiveTabId.substring(5); // Remove "hero-"
     }
@@ -1277,13 +1148,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     if (!tab) return null;
     
     // Find the variant
-    const variant = tab.variants?.find((v: any) => v.id === parsedCondition.variantId);
+    const variant = tab.variants?.find((v: any) => v.id === parsedCondition.variant);
     if (!variant) return null;
     
     // Find the option
-    const option = variant.options?.find((o: any) => o.id === parsedCondition.optionId);
+    const option = variant.options?.find((o: any) => o.id === parsedCondition.option);
     
-    return `${tab.label} > ${variant.title || variant.label} > ${option?.label || parsedCondition.optionId}`;
+    return `${tab.label} > ${variant.title || variant.label} > ${option?.label || parsedCondition.option}`;
   };
 
   // Utility function to resolve variable mapping
@@ -1405,99 +1276,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     
     return generateCombinations(variantsWithOptions, 0, []);
   };
-  const [viewMode, setViewMode] = useState<'single' | 'spread'>('single');
-  const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
+  const [viewMode, _setViewMode] = useState<'single' | 'spread'>('single');
+  const [activeLayerId, _setActiveLayerId] = useState<string | null>(null);
   const [expandedVariantIds, setExpandedVariantIds] = useState<Set<string>>(new Set());
 
   const contextBook = books.find(b => b.id === selectedBookId);
   const [draftBook, setDraftBook] = useState<BookProduct | null>(null);
   const selectedBook = draftBook || contextBook;
 
-  // Compute available variable options based on selected book wizard config
-  const variableOptions = useMemo(() => {
-    const options: { value: string; label: string }[] = [
-        { value: '', label: '-- Texte Fixe --' }
-    ];
-
-    if (selectedBook?.wizardConfig?.tabs) {
-        selectedBook.wizardConfig.tabs.forEach(tab => {
-            if (tab.variants) {
-                tab.variants.forEach(variant => {
-                    if (variant.type === 'text') {
-                        options.push({
-                            value: `{{${variant.id}}}`,
-                            label: `${variant.title || variant.label} (${variant.id})`
-                        });
-                    }
-                });
-            }
-        });
-    }
-
-    // Add standard/global variables ONLY if strictly necessary and standard for all books
-    // Use previewFields if configured, otherwise fallback to default "dedication"
-    const standardVars: { id: string; label: string }[] = [];
-    if (selectedBook?.wizardConfig?.previewFields) {
-        selectedBook.wizardConfig.previewFields
-            .filter(field => field.enabled)
-            .forEach(field => {
-                standardVars.push({ id: field.id, label: field.label });
-            });
-    }
-    // Fallback si previewFields n'existe pas ou est vide
-    if (standardVars.length === 0) {
-        standardVars.push({ id: 'dedication', label: 'Dédicace' });
-    }
-
-    standardVars.forEach(stdVar => {
-        const key = `{{${stdVar.id}}}`;
-        if (!options.some(o => o.value === key)) {
-             options.push({
-                value: key,
-                label: `${stdVar.label} (${stdVar.id})`
-            });
-        }
-    });
-
-    return options;
-  }, [selectedBook]);
-
-  // Compute available image variant options (variants with type 'options', 'color' or 'checkbox')
-  const imageVariantOptions = useMemo(() => {
-    const options: { value: string; label: string; variant?: any; tabLabel?: string; variantOptions?: { id: string; label: string }[] }[] = [];
-
-    if (selectedBook?.wizardConfig?.tabs) {
-        selectedBook.wizardConfig.tabs.forEach(tab => {
-            if (tab.variants) {
-                tab.variants.forEach(variant => {
-                    if ((variant.type === 'options' || variant.type === 'color') && variant.options && variant.options.length > 0) {
-                        options.push({
-                            value: variant.id,
-                            label: `${variant.title || variant.label}`,
-                            tabLabel: tab.label,
-                            variant: variant,
-                            variantOptions: variant.options.map(o => ({ id: o.id, label: o.label }))
-                        });
-                    } else if (variant.type === 'checkbox') {
-                        options.push({
-                            value: variant.id,
-                            label: `${variant.title || variant.label}`,
-                            tabLabel: tab.label,
-                            variant: variant,
-                            variantOptions: [
-                                { id: 'true', label: 'Coché' },
-                                { id: 'false', label: 'Non coché' }
-                            ]
-                        });
-                    }
-                });
-            }
-        });
-    }
-
-    return options;
-  }, [selectedBook]);
-  
   // Effect to load all fonts used in the book
   React.useEffect(() => {
     if (!selectedBook?.contentConfig?.texts) return;
@@ -1543,7 +1329,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   }, [selectedBook?.contentConfig?.texts]);
 
-  const [activeRightTab, setActiveRightTab] = useState<'layers' | 'properties'>('layers');
+  const [_activeRightTab, _setActiveRightTab] = useState<'layers' | 'properties'>('layers');
 
   // Drag & Drop State
   const canvasRef = React.useRef<HTMLDivElement>(null);
@@ -1554,10 +1340,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [initialDims, setInitialDims] = useState<{w: number, h: number, r: number} | null>(null);
 
   // Grid & Precision State
-  const [showGrid, setShowGrid] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [gridSizeMm, setGridSizeMm] = useState(10); // 10mm grid default
-  const [snapToGrid, setSnapToGrid] = useState(false);
+  const [_showGrid, _setShowGrid] = useState(false);
+  const [_zoomLevel, _setZoomLevel] = useState(1);
+  const [_gridSizeMm, _setGridSizeMm] = useState(10); // 10mm grid default
+  const [_snapToGrid, _setSnapToGrid] = useState(false);
 
   // Keyboard Nudge Logic
   React.useEffect(() => {
@@ -1809,78 +1595,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [isDragging, activeLayerId, dragStartPos, dragStartElementPos, selectedBook, viewMode, selectedPageId, resizeHandle, initialDims]);
   const hasUnsavedChanges = JSON.stringify(draftBook) !== JSON.stringify(contextBook);
 
-
-  // Calculate aspect ratio style
-  const bookDimensions = selectedBook?.features?.dimensions || { width: 210, height: 210 }; // Default square 21x21
-  const aspectRatio = bookDimensions.width / bookDimensions.height;
-
-  // Helper to render Resize/Rotate Handles
-  const renderTransformHandles = (elementId: string, position: {width?: number, height?: number, rotation?: number}) => {
-      if (activeLayerId !== elementId) return null;
-      
-      const handleStyle = "absolute w-2.5 h-2.5 bg-white border border-brand-coral rounded-full shadow z-50 pointer-events-auto";
-      const w = position.width || 0;
-      const h = position.height || 0;
-
-      const onHandleDown = (e: React.MouseEvent, type: string) => {
-          e.stopPropagation();
-          e.preventDefault();
-          setIsDragging(true);
-          setResizeHandle(type);
-          setDragStartPos({ x: e.clientX, y: e.clientY });
-          
-          const textLayer = selectedBook?.contentConfig.texts.find(t => t.id === elementId);
-          const imgLayer = (selectedBook?.contentConfig.imageElements || []).find(i => i.id === elementId);
-          const layer = textLayer || imgLayer;
-          
-          if (layer) {
-              setDragStartElementPos({ x: layer.position.x || 0, y: layer.position.y || 0 });
-              setInitialDims({ 
-                  w: layer.position.width || 0, 
-                  h: layer.position.height || 0,
-                  r: layer.position.rotation || 0
-              });
-          }
-      };
-
-      return (
-          <>
-            {/* Rotate Handle */}
-            <div 
-                className={handleStyle} 
-                style={{ top: '-15px', left: '50%', transform: 'translateX(-50%)', cursor: 'grab' }}
-                onMouseDown={(e) => onHandleDown(e, 'rotate')}
-                title="Pivoter"
-            >
-                <div className="absolute top-full left-1/2 h-2.5 w-px bg-brand-coral -translate-x-1/2"></div>
-            </div>
-
-            {/* Corners */}
-            <div className={handleStyle} style={{ top: '-5px', left: '-5px', cursor: 'nw-resize' }} onMouseDown={(e) => onHandleDown(e, 'nw')} />
-            <div className={handleStyle} style={{ top: '-5px', right: '-5px', cursor: 'ne-resize' }} onMouseDown={(e) => onHandleDown(e, 'ne')} />
-            <div className={handleStyle} style={{ bottom: '-5px', left: '-5px', cursor: 'sw-resize' }} onMouseDown={(e) => onHandleDown(e, 'sw')} />
-            <div className={handleStyle} style={{ bottom: '-5px', right: '-5px', cursor: 'se-resize' }} onMouseDown={(e) => onHandleDown(e, 'se')} />
-            
-            {/* Edges */}
-            <div className="absolute top-0 left-1/2 w-full h-1 -translate-y-1/2 -translate-x-1/2 cursor-n-resize group-hover/handle:bg-brand-coral/20" onMouseDown={(e) => onHandleDown(e, 'n')} />
-            <div className="absolute bottom-0 left-1/2 w-full h-1 translate-y-1/2 -translate-x-1/2 cursor-s-resize" onMouseDown={(e) => onHandleDown(e, 's')} />
-            <div className="absolute left-0 top-1/2 h-full w-1 -translate-x-1/2 -translate-y-1/2 cursor-w-resize" onMouseDown={(e) => onHandleDown(e, 'w')} />
-            <div className="absolute right-0 top-1/2 h-full w-1 translate-x-1/2 -translate-y-1/2 cursor-e-resize" onMouseDown={(e) => onHandleDown(e, 'e')} />
-          </>
-      );
-  };
-
   const handleSaveBook = (updatedBook: BookProduct) => {
     setDraftBook(updatedBook);
-  };
-
-  const handleSaveAndExit = (updatedBook: BookProduct) => {
-    // #region agent log
-    fetch('http://localhost:7242/ingest/aa4c1bba-a516-4425-8523-5cad25aa24d1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AdminDashboard.tsx:1858',message:'Saving book',data:{bookId:updatedBook.id,bookName:updatedBook.name,galleryImages:updatedBook.galleryImages,galleryLength:updatedBook.galleryImages?.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H_SAVE'})}).catch(()=>{});
-    // #endregion
-    updateBook(updatedBook);
-    setDraftBook(null); // Clear draft to resync with new context
-    setIsEditing(false);
   };
 
   const createNewBook = () => {
@@ -1923,28 +1639,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     
     const updatedFields = currentFields.map(field => 
       field.id === fieldId ? { ...field, enabled: !field.enabled } : field
-    );
-    
-    handleSaveBook({
-      ...selectedBook,
-      wizardConfig: {
-        ...selectedBook.wizardConfig,
-        previewFields: updatedFields
-      }
-    });
-  };
-
-  const handleUpdatePreviewFieldMapping = (fieldId: string, textElementId: string) => {
-    if (!selectedBook) return;
-    
-    // Initialize previewFields if it doesn't exist
-    const currentFields = selectedBook.wizardConfig.previewFields || [
-      { id: 'dedication', label: 'Dédicace', enabled: false, textElementId: '' },
-      { id: 'author', label: 'Auteur', enabled: false, textElementId: '' }
-    ];
-    
-    const updatedFields = currentFields.map(field => 
-      field.id === fieldId ? { ...field, textElementId } : field
     );
     
     handleSaveBook({
@@ -7143,13 +6837,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   <Upload size={18} />
                               </button>
                               <button 
-                                  onClick={() => setShowEpubSelector(true)}
-                                  className="p-2 bg-green-100 hover:bg-green-200 rounded text-green-700 shrink-0" 
-                                  title="Importer depuis le stockage (EPUBs uploadés)"
-                              >
-                                  <CloudDownload size={18} />
-                              </button>
-                              <button 
                                   onClick={() => {
                                     setShowIdmlImporter(true);
                                     setDetectedFonts([]);
@@ -7232,8 +6919,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         {sortedPages.map((page: any) => {
                                                             const pageImagesFromElements = selectedBook.contentConfig.imageElements?.filter((i: any) => i.position?.pageIndex === page.pageIndex) || [];
                                                             const pageImageEntry = pageImages.find((pi: any) => pi.pageIndex === page.pageIndex);
-                                                            const thumbnailUrl = pageImageEntry?.imageUrl
-                                                                || (pageImagesFromElements.length > 0 ? pageImagesFromElements[0].url : null);
                                                             const isSelected = effectiveSelectedPage === page.pageIndex;
                                                             const pageTextsForThumb = selectedBook.contentConfig.texts?.filter((t: any) => t.position?.pageIndex === page.pageIndex) || [];
                                                             const imagesCount = pageImagesFromElements.length;
@@ -7898,96 +7583,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </button>
                     </div>
                  </div>
-              )}
-
-              {/* EPUB Selector Modal */}
-              {showEpubSelector && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-                    <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-green-50 to-emerald-50">
-                      <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                        <CloudDownload size={20} className="text-green-600" />
-                        Importer un EPUB depuis le stockage
-                      </h3>
-                      <button 
-                        onClick={() => setShowEpubSelector(false)}
-                        className="p-1 hover:bg-white rounded-lg transition-colors"
-                      >
-                        <X size={18} className="text-slate-500" />
-                      </button>
-                    </div>
-                    <div className="p-4 space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                        <p className="font-medium mb-1">Instructions :</p>
-                        <p className="text-xs text-blue-700">
-                          Uploadez vos fichiers EPUB dans le dossier <code className="bg-blue-100 px-1 rounded">.private/</code> de l'Object Storage (panneau de gauche), puis sélectionnez-les ci-dessous.
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-sm font-medium text-slate-700">
-                            EPUBs disponibles
-                          </label>
-                          <button
-                            onClick={loadBucketEpubs}
-                            className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
-                          >
-                            <RotateCcw size={12} />
-                            Rafraîchir
-                          </button>
-                        </div>
-                        
-                        {isLoadingEpubs ? (
-                          <div className="flex items-center justify-center py-8 text-slate-400">
-                            <Loader2 size={20} className="animate-spin mr-2" />
-                            Chargement...
-                          </div>
-                        ) : bucketEpubs.length === 0 ? (
-                          <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                            <FileCode size={32} className="mx-auto text-slate-300 mb-2" />
-                            <p className="text-sm text-slate-500">Aucun EPUB trouvé</p>
-                            <p className="text-xs text-slate-400 mt-1">Uploadez des fichiers .epub dans le dossier .private/</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2 max-h-64 overflow-y-auto">
-                            {bucketEpubs.map((epub) => (
-                              <div 
-                                key={epub.path}
-                                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-green-300 transition-colors"
-                              >
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <FileCode size={18} className="text-green-600 shrink-0" />
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-medium text-slate-700 truncate">{epub.name}</p>
-                                    {epub.size && (
-                                      <p className="text-xs text-slate-400">{(epub.size / 1024 / 1024).toFixed(2)} MB</p>
-                                    )}
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => handleExtractEpub(epub.path)}
-                                  disabled={isExtractingEpub}
-                                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1 shrink-0"
-                                >
-                                  {isExtractingEpub ? (
-                                    <Loader2 size={14} className="animate-spin" />
-                                  ) : (
-                                    <CloudDownload size={14} />
-                                  )}
-                                  Importer
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500">
-                      Les EPUBs sont extraits et les images sont stockées dans le bucket public.
-                    </div>
-                  </div>
-                </div>
               )}
 
               {/* Avatar EPUB Selector Modal */}

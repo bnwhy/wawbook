@@ -5,7 +5,6 @@ import AppleStrategy from 'passport-apple';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { storage } from '../storage';
-import type { Customer } from '@shared/schema';
 import { logger } from '../utils/logger';
 import { env } from './env';
 
@@ -59,7 +58,7 @@ export function configurePassport() {
           clientSecret: env.GOOGLE_CLIENT_SECRET,
           callbackURL: '/api/auth/google/callback',
         },
-        async (accessToken, refreshToken, profile, done) => {
+        async (_accessToken, _refreshToken, profile, done) => {
           try {
             const email = profile.emails?.[0]?.value;
             
@@ -111,7 +110,7 @@ export function configurePassport() {
           callbackURL: '/api/auth/apple/callback',
           passReqToCallback: false,
         },
-        async (accessToken: string, refreshToken: string, idToken: any, profile: any, done: any) => {
+        async (_accessToken: string, _refreshToken: string, idToken: any, profile: any, done: any) => {
           try {
             const email = idToken.email || profile.email;
             

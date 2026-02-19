@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { HomepageConfig, HomepageSection } from '../types/homepage';
+import { HomepageConfig } from '../types/homepage';
 import { useBooks } from './BooksContext';
 import { toast } from 'sonner';
 

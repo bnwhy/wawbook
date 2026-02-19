@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowRight, Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Compass, Wand2, Rocket, Rabbit, Settings, Gift, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Gift } from 'lucide-react';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
 import Banner from './Banner';
@@ -49,20 +49,6 @@ const STEPS = [
     color: "bg-cloud-sky"
   }
 ];
-
-const CloudLogo = () => (
-  <div className="relative w-12 h-12 flex items-center justify-center">
-     <div className="absolute inset-0 text-cloud-blue drop-shadow-lg">
-        <Cloud fill="currentColor" size={48} strokeWidth={0} />
-     </div>
-     <div className="relative z-10 text-white font-display font-black text-xl mb-1">
-        W
-     </div>
-     <div className="absolute -top-1 -right-1 text-accent-sun animate-pulse">
-        <Sparkles size={16} fill="currentColor" />
-     </div>
-  </div>
-);
 
 interface BookCardInfoProps {
   features?: {
@@ -121,7 +107,7 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
   );
 };
 
-const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
+const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => {
   const { books } = useBooks();
   const { homepageConfig, isLoading } = useHomepage();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -145,10 +131,6 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick }) => {
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
-  };
-
-  const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
   
   // Auto-carousel pour les images multiples

@@ -420,6 +420,6 @@ IDML = Texte + Mise en forme (QUOI mettre et COMMENT)
 
 ---
 
-**Documentation complète** : Voir aussi `server/replit_integrations/object_storage/IDML_IMPORT.md` pour plus de détails techniques.
+**Documentation complète** : Voir aussi `server/services/object_storage/IDML_IMPORT.md` pour plus de détails techniques.
 
 **Dernière mise à jour** : Janvier 2026

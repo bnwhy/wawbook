@@ -258,7 +258,7 @@ export function mergeEpubWithIdml(
       conditionalSegments?: Array<{
         text: string;
         condition?: string;
-        parsedCondition?: { tabId: string; variantId: string; optionId: string };
+        parsedCondition?: { character: string; variant: string; option: string };
         variables?: string[];
         appliedCharacterStyle?: string;
       }>;
@@ -523,7 +523,7 @@ function createMergedText(
   if (idmlFrame.conditionalSegments && idmlFrame.conditionalSegments.length > 0) {
     // Trouver le premier segment non-vide avec un style de caractère appliqué
     const firstStyledSegment = idmlFrame.conditionalSegments.find(
-      seg => seg.text.trim() && 
+      (seg: any) => seg.text.trim() && 
              seg.appliedCharacterStyle && 
              seg.appliedCharacterStyle !== 'CharacterStyle/$ID/[No character style]'
     );
@@ -599,7 +599,7 @@ function createMergedText(
   
   // Toujours traiter le contenu s'il contient des accolades
   if (processedContent.includes('{')) {
-    processedContent = processedContent.replace(/\{([^}]+)\}/g, (match, varName) => {
+    processedContent = processedContent.replace(/\{([^}]+)\}/g, (match: string, varName: string) => {
       // Si c'est une variable TXTVAR (preview fields), garder les simples accolades
       if (varName.startsWith('TXTVAR_')) {
         return match; // Garder {TXTVAR_...}
@@ -638,7 +638,7 @@ function createMergedText(
   // NOUVEAU: Ajouter les segments conditionnels si présents
   if (idmlFrame.conditionalSegments && idmlFrame.conditionalSegments.length > 0) {
     // Enrichir chaque segment avec son style résolu
-    result.conditionalSegments = idmlFrame.conditionalSegments.map(segment => {
+    result.conditionalSegments = idmlFrame.conditionalSegments.map((segment: any) => {
       const resolvedStyle = resolveSegmentStyle(
         segment,
         idmlData.characterStyles,

@@ -23,7 +23,7 @@ const StaticPage: React.FC<StaticPageProps> = ({ title, category }) => {
     return books.filter(b => !b.isHidden && b.associatedPaths?.includes(location));
   }, [books, location]);
 
-  const handleBookClick = (title: string) => {
+  const handleBookClick = (_title: string) => {
     setLocation('/');
     // In a real app we might pass the title via URL param or context to pre-select it
     // For now, redirecting to home is consistent with CategoryPage behavior in this mockup

@@ -3,8 +3,9 @@ export interface HomepageSection {
   title: string;
   subtitle?: string;
   isVisible: boolean;
-  bookIds: string[]; // IDs des livres dans l'ordre d'affichage
-  bookBadges?: Record<string, string>; // bookId -> badge text personnalisé
+  bookIds: string[];
+  bookBadges?: Record<string, string>;
+  badgeType?: string;
 }
 
 export interface HeroConfig {

@@ -9,12 +9,12 @@ import { requireAuth } from "../middleware/auth";
 const router = express.Router();
 
 // GET /api/customers
-router.get("/", async (req, res, next) => {
+router.get("/", async (_req, res, next) => {
   try {
     const customers = await storage.getAllCustomers();
-    res.json(customers);
+    return res.json(customers);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -25,9 +25,9 @@ router.get("/:id", async (req, res, next) => {
     if (!customer) {
       throw new NotFoundError('Customer', req.params.id);
     }
-    res.json(customer);
+    return res.json(customer);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -54,9 +54,9 @@ router.post("/", async (req, res, next) => {
     
     const customer = await storage.createCustomer(validationResult.data);
     logger.info({ customerId: customer.id }, 'Customer created');
-    res.status(201).json(customer);
+    return res.status(201).json(customer);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -72,9 +72,9 @@ router.patch("/:id", async (req, res, next) => {
       throw new NotFoundError('Customer', req.params.id);
     }
     logger.info({ customerId: customer.id }, 'Customer updated');
-    res.json(customer);
+    return res.json(customer);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -83,9 +83,9 @@ router.delete("/:id", async (req, res, next) => {
   try {
     await storage.deleteCustomer(req.params.id);
     logger.info({ customerId: req.params.id }, 'Customer deleted');
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -95,9 +95,9 @@ router.get("/me", requireAuth, async (req, res, next) => {
     if (!req.user) {
       throw new Error('User not found in request');
     }
-    res.json(req.user);
+    return res.json(req.user);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -124,9 +124,9 @@ router.patch("/me", requireAuth, async (req, res, next) => {
     }
 
     logger.info({ customerId: customer.id }, 'Customer profile updated');
-    res.json(customer);
+    return res.json(customer);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

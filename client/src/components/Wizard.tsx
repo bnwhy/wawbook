@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Wand2, Cloud, Check, ChevronRight, ArrowRight, Pencil } from 'lucide-react';
+import { Wand2, Cloud, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
-import { BookConfig, Gender, Theme, HairStyle, Outfit, Activity } from '../types';
-import { WizardVariant, WizardOption } from '../types/admin';
+import { BookConfig, Theme, Activity } from '../types';
 import Navigation from './Navigation';
 import { useBooks } from '../context/BooksContext';
 import Footer from './Footer';
 import { formatPrice } from '../utils/formatPrice';
-
-const previewBackground = '';
 
 interface WizardProps {
   onComplete: (config: BookConfig, context?: { theme?: Theme, productId?: string }) => void;
@@ -41,6 +38,7 @@ const AvatarImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
       }, 600);
       return () => clearTimeout(timer);
     }
+    return;
   }, [imageLoaded, error]);
 
   return (
@@ -223,17 +221,6 @@ const Wizard: React.FC<WizardProps> = (props) => {
     }
   };
 
-  // Helper to get resource (color/image) for a selection
-  const getSelectedResource = (tabId: string, variantId: string) => {
-     const selectedId = selections[tabId]?.[variantId];
-     if (!selectedId) return null;
-     
-     const tab = wizardConfig.tabs.find(t => t.id === tabId);
-     const variant = tab?.variants.find(v => v.id === variantId);
-     const option = variant?.options?.find(o => o.id === selectedId);
-     return option?.resource;
-  };
-
   const renderCharacterAvatar = (tabId: string) => {
      const currentSelections = selections[tabId] || {};
 
@@ -346,9 +333,6 @@ const Wizard: React.FC<WizardProps> = (props) => {
     
     onComplete(config, { theme: book.theme, productId: book.id });
   };
-
-  // Helper to get current colors for SVG defs (just taking first available for now as example)
-  const bgPattern = `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2384cc16' fill-opacity='0.1'%3E%3Cpath d='M25 10 Q35 0 45 10 Q35 20 25 10 Z' /%3E%3Cpath d='M75 60 Q85 50 95 60 Q85 70 75 60 Z' /%3E%3C/g%3E%3Cg fill='%23fca5a5' fill-opacity='0.1'%3E%3Crect x='10' y='60' width='10' height='10' transform='rotate(45 15 65)' /%3E%3Crect x='80' y='20' width='10' height='10' transform='rotate(45 85 25)' /%3E%3C/g%3E%3C/svg%3E")`;
 
   return (
     <div className="min-h-screen flex flex-col font-sans relative" style={{ 

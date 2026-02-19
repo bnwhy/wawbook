@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, PenTool, Image as ImageIcon, Book, Sparkles } from 'lucide-react';
+import { PenTool, Image as ImageIcon, Book, Sparkles } from 'lucide-react';
 
 const MESSAGES = [
   { text: "On ouvre le grimoire...", icon: <Book className="w-8 h-8" />, cssColor: "var(--color-fun-blue)", progressRange: [0, 20] },
@@ -24,6 +24,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress, currentStep }) 
       }, 1500);
       return () => clearInterval(interval);
     }
+    return;
   }, [progress]);
 
   // Déterminer le message basé sur progress si fourni

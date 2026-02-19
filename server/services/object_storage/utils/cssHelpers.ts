@@ -48,7 +48,7 @@ export interface FontWarning {
  * Cette fonction vérifie uniquement si les polices utilisées sont disponibles en base64
  * ou sont des polices système natives.
  */
-export function detectFontIssues(css: string, fontMap: Record<string, string> = {}): FontWarning[] {
+export function detectFontIssues(css: string, _fontMap: Record<string, string> = {}): FontWarning[] {
   const warnings: FontWarning[] = [];
   const usedFonts = new Set<string>();
   

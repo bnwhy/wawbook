@@ -71,20 +71,20 @@ Frontend:
 
 **Documents:**
 1. **[GUIDE_EPUB_IDML.md](GUIDE_EPUB_IDML.md)** - Guide complet
-2. [server/replit_integrations/object_storage/README.md](server/replit_integrations/object_storage/README.md) - README module
-3. [server/replit_integrations/object_storage/IDML_IMPORT.md](server/replit_integrations/object_storage/IDML_IMPORT.md) - Détails techniques
+2. [server/services/object_storage/README.md](server/services/object_storage/README.md) - README module
+3. [server/services/object_storage/IDML_IMPORT.md](server/services/object_storage/IDML_IMPORT.md) - Détails techniques
 
 **Documents Connexes:**
 - [CONDITIONAL_TEXT_IMPLEMENTATION.md](CONDITIONAL_TEXT_IMPLEMENTATION.md)
-- [server/replit_integrations/object_storage/VARIABLE_MAPPING.md](server/replit_integrations/object_storage/VARIABLE_MAPPING.md)
-- [server/replit_integrations/object_storage/PARSER_IMPROVEMENTS.md](server/replit_integrations/object_storage/PARSER_IMPROVEMENTS.md)
+- [server/services/object_storage/VARIABLE_MAPPING.md](server/services/object_storage/VARIABLE_MAPPING.md)
+- [server/services/object_storage/PARSER_IMPROVEMENTS.md](server/services/object_storage/PARSER_IMPROVEMENTS.md)
 
 **Fichiers Code:**
 ```
-- server/replit_integrations/object_storage/epubExtractor.ts
-- server/replit_integrations/object_storage/idmlParser.ts
-- server/replit_integrations/object_storage/idmlMerger.ts
-- server/replit_integrations/object_storage/wizardConfigBuilder.ts
+- server/services/object_storage/epubExtractor.ts
+- server/services/object_storage/idmlParser.ts
+- server/services/object_storage/idmlMerger.ts
+- server/services/object_storage/wizardConfigBuilder.ts
 ```
 
 ### 🎨 Wizard & Personnalisation

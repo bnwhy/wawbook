@@ -156,7 +156,7 @@ export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }));
   };
 
-  const updateMenuItem = async (index: number, item: MenuItem) => {
+  const updateMenuItem = async (_index: number, item: MenuItem) => {
     await updateMenuMutation.mutateAsync({ id: item.id, data: item });
   };
 

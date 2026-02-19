@@ -249,14 +249,14 @@ if (embedded.length > 0) {
 
 ```bash
 # 1. Copier le fichier de test
-cp "Le château.idml" server/replit_integrations/object_storage/__tests__/fixtures/
+cp "Le château.idml" server/services/object_storage/__tests__/fixtures/
 
 # 2. Exécuter tous les tests
-npm test server/replit_integrations/object_storage/__tests__/
+npm test server/services/object_storage/__tests__/
 
 # 3. Vérifier le parsing réel
 IDML_LOG_LEVEL=debug node -e "
-  const { parseIdmlBuffer } = require('./dist/server/replit_integrations/object_storage/idmlParser.js');
+  const { parseIdmlBuffer } = require('./dist/server/services/object_storage/idmlParser.js');
   const fs = require('fs');
   
   (async () => {

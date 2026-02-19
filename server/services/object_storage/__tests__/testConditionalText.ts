@@ -9,7 +9,7 @@
  * Exemple : TXTVAR_hero-child_name
  * 
  * Utilisation :
- *   npx tsx server/replit_integrations/object_storage/__tests__/testConditionalText.ts
+ *   npx tsx server/services/object_storage/__tests__/testConditionalText.ts
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -43,7 +43,7 @@ async function testConditionalText() {
         console.log(`    - Texte: "${seg.text.trim()}"`);
         console.log(`      Condition: ${seg.condition || 'aucune'}`);
         if (seg.parsedCondition) {
-          console.log(`      Parsed: tabId=${seg.parsedCondition.tabId}, variantId=${seg.parsedCondition.variantId}, optionId=${seg.parsedCondition.optionId}`);
+          console.log(`      Parsed: character=${seg.parsedCondition.character}, variant=${seg.parsedCondition.variant}, option=${seg.parsedCondition.option}`);
         }
         if (seg.variables && seg.variables.length > 0) {
           console.log(`      Variables: ${seg.variables.join(', ')}`);

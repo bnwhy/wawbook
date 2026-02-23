@@ -221,20 +221,21 @@ export function calculateSegmentsFitScale(
   containerWidth: number,
   containerHeight: number,
   globalStyle: any,
-  resolveVariables: (text: string) => string
+  resolveVariables: (text: string) => string,
+  fontScale: number = 4
 ): number {  
   // Sécurité : si pas de segments ou pas de container, pas de fitting
   if (!segments || segments.length === 0 || containerWidth <= 0 || containerHeight <= 0) {    return 1;
   }
   
-  const step = 0.5 * 4; // 0.5pt en pixels canvas
-  const absoluteMinimum = 1 * 4; // 1pt minimum
+  const step = 0.5 * fontScale; // 0.5pt en pixels canvas
+  const absoluteMinimum = 1 * fontScale; // 1pt minimum
   
   // Taille de référence (la plus grande parmi les segments)
   let maxFontSize = 0;
   for (const segment of segments) {
     const segStyle = segment.resolvedStyle || globalStyle;
-    const fontSize = parseFloat(segStyle?.fontSize?.toString() || '16') * 4;
+    const fontSize = parseFloat(segStyle?.fontSize?.toString() || '16') * fontScale;
     maxFontSize = Math.max(maxFontSize, fontSize);
   }
   
@@ -252,7 +253,8 @@ export function calculateSegmentsFitScale(
       containerWidth,
       globalStyle,
       scaleFactor,
-      resolveVariables
+      resolveVariables,
+      fontScale
     );
     
     // Si ça tient, on a trouvé le bon facteur
@@ -274,9 +276,10 @@ function simulateSegmentsHeight(
   containerWidth: number,
   globalStyle: any,
   scaleFactor: number,
-  resolveVariables: (text: string) => string
+  resolveVariables: (text: string) => string,
+  fontScale: number = 4
 ): number {
-  const globalFontSize = parseFloat(globalStyle?.fontSize || '16') * 4 * scaleFactor;
+  const globalFontSize = parseFloat(globalStyle?.fontSize || '16') * fontScale * scaleFactor;
   const lineHeightMultiplier = parseFloat(globalStyle?.lineHeight || '1.2');
   const globalLineHeight = globalFontSize * lineHeightMultiplier;
   
@@ -298,7 +301,7 @@ function simulateSegmentsHeight(
   
   for (const segment of segments) {
     const segStyle = segment.resolvedStyle || globalStyle;
-    const fontSize = parseFloat(segStyle?.fontSize?.toString() || '16') * 4 * scaleFactor;
+    const fontSize = parseFloat(segStyle?.fontSize?.toString() || '16') * fontScale * scaleFactor;
     const fontFamily = segStyle?.fontFamily || 'serif';
     const fontWeight = segStyle?.fontWeight || 'normal';
     const fontStyle = segStyle?.fontStyle || 'normal';
@@ -317,8 +320,10 @@ function simulateSegmentsHeight(
     // Résoudre les variables dans le texte du segment
     let text = resolveVariables(segment.text || '');
     
-    // Appliquer text-transform
-    const textTransform = segStyle?.textTransform || 'none';
+    // Appliquer text-transform (inherit from globalStyle if segment has none)
+    const textTransform = (segStyle?.textTransform && segStyle.textTransform !== 'none')
+      ? segStyle.textTransform
+      : (globalStyle?.textTransform || 'none');
     if (textTransform === 'uppercase') {
       text = text.toUpperCase();
     } else if (textTransform === 'lowercase') {

@@ -271,11 +271,12 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     }
                 }
                 
-                // Priorité 3 : Génération client (fallback)                
+                // Priorité 3 : Génération client (fallback)
                 setLoadingProgress(50);
                 setLoadingMessage("Assemblage des pages...");
+                // Attendre que toutes les fonts soient chargées avant de générer le canvas
+                await document.fonts.ready;
                 const pages = await generateBookPages(book, config, currentCombinationKey, (pageProgress) => {
-                  // Map page progress (0-100) to overall progress (50-100)
                   const overallProgress = 50 + (pageProgress * 0.50);
                   setLoadingProgress(Math.min(100, overallProgress));
                   if (overallProgress >= 95) {

@@ -245,6 +245,22 @@ export function registerObjectStorageRoutes(app: Express): void {
    * IMPORTANT: The client should NOT send the file to this endpoint.
    * Send JSON metadata only, then upload the file directly to uploadURL.
    */
+  app.put("/api/uploads/put/:key", async (req, res) => {
+    try {
+      const key = `private/uploads/${req.params.key}`;
+      const contentType = (req.headers["content-type"] as string) || "application/octet-stream";
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) { chunks.push(Buffer.from(chunk)); }
+      const body = Buffer.concat(chunks);
+      const file = objectStorageService.file(key);
+      await file.save(body, { contentType });
+      res.status(200).json({ ok: true });
+    } catch (error: any) {
+      logger.error({ error }, "Error in upload proxy");
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
   app.post("/api/uploads/request-url", async (req, res) => {
     try {
       const { name, size, contentType } = req.body;
@@ -255,18 +271,18 @@ export function registerObjectStorageRoutes(app: Express): void {
         });
       }
 
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-
-      // Extract object path from the presigned URL for later reference
-      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+      const objectId = randomUUID();
+      const privateDir = objectStorageService.getPrivateObjectDir();
+      const { bucketName } = parseObjectPathSimple(privateDir);
+      const objectPath = `/objects/${bucketName}/private/uploads/${objectId}`;
+      const uploadURL = `/api/uploads/put/${objectId}`;
 
       return res.json({
         uploadURL,
         objectPath,
-        // Echo back the metadata for client convenience
         metadata: { name, size, contentType },
       });
-    } catch (error) {
+    } catch (error: any) {
       logger.error({ error }, "Error generating upload URL");
       return res.status(500).json({ error: "Failed to generate upload URL" });
     }

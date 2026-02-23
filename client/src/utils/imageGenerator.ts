@@ -219,7 +219,8 @@ function renderConditionalSegments(
   w: number,
   h: number,
   rotation: number,
-  config?: BookConfig // Ajouté pour le text-fitting
+  config?: BookConfig,
+  fontScale: number = 4
 ) {
   if (!layer.conditionalSegments || layer.conditionalSegments.length === 0) {
     return;
@@ -230,6 +231,14 @@ function renderConditionalSegments(
   if (rotation) {
     ctx.rotate(rotation * Math.PI / 180);
   }
+  // DEBUG: rectangle rouge = zone EPUB
+  ctx.save();
+  ctx.strokeStyle = 'red';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(0, 0, w, h);
+  ctx.restore();
+
+  // No clip - text fitting handles overflow
 
   // Filtrer les segments actifs selon les conditions
   const activeSegments = layer.conditionalSegments.filter((segment: any) => {
@@ -257,26 +266,39 @@ function renderConditionalSegments(
     resolved = resolved.replace(/\{TXTVAR_dedication\}/gi, config?.dedication || '');
     resolved = resolved.replace(/\{TXTVAR_author\}/gi, config?.author || '');
     // Résoudre TXTVAR wizard variables
-    resolved = resolved.replace(/\{TXTVAR_([^_]+)_([^}]+)\}/g, (_match: string, tabId: string, variantId: string) => {
+    resolved = resolved.replace(/\{TXTVAR_([^_}]+(?:-[^_}]+)?)_([^}]+)\}/g, (_match: string, tabId: string, variantId: string) => {
       const heroPrefix = 'hero-';
       const wizardTabId = tabId.startsWith(heroPrefix) ? tabId.substring(heroPrefix.length) : tabId;
-      const tabSelections = wizardSelections[wizardTabId];
-      if (tabSelections && tabSelections[variantId]) {
-        return ' ' + tabSelections[variantId] + ' ';
+      // Try direct tab + variantId lookup
+      const directTab = wizardSelections[wizardTabId] || wizardSelections[tabId];
+      if (directTab && directTab[variantId]) return directTab[variantId];
+      // Fallback: search all tabs for a key matching variantId or a text value (for name/nom)
+      for (const tab of Object.values(wizardSelections)) {
+        if (tab && typeof tab === 'object') {
+          if (tab[variantId]) return tab[variantId];
+          // For 'name' variantId, look for common French equivalents
+          if (variantId === 'name' && (tab['nom'] || tab['prenom'] || tab['name'])) {
+            return tab['nom'] || tab['prenom'] || tab['name'];
+          }
+        }
       }
+      // Ultimate fallback: childName from config
+      if (variantId === 'name' && config?.childName) return config.childName;
       return '';
     });
+
     return resolved;
   };
   
   // Calculer le facteur de réduction uniforme pour tous les segments
+  // On utilise h complet car topOffset < 1 ligne et le fitting gère le débordement
   const textFitScaleFactor = h > 0 
-    ? calculateSegmentsFitScale(ctx, activeSegments, w, h, layer.style || {}, resolveSegmentVariables)
+    ? calculateSegmentsFitScale(ctx, activeSegments, w, h, layer.style || {}, resolveSegmentVariables, fontScale)
     : 1.0;  // === FIN TEXT FITTING ===
 
   // Configuration commune (du style global du layer comme fallback)
   const globalStyle = layer.style || {};
-  const globalFontSize = parseFloat(globalStyle.fontSize || '16') * 4 * textFitScaleFactor;
+  const globalFontSize = parseFloat(globalStyle.fontSize || '16') * fontScale * textFitScaleFactor;
   const globalLineHeight = globalFontSize * (parseFloat(globalStyle.lineHeight || '1.2'));
   
   // Parse textIndent from global style
@@ -304,19 +326,22 @@ function renderConditionalSegments(
   let isFirstLineOfPara = true;
 
   for (const segment of activeSegments) {
-    const segmentStyle = segment.resolvedStyle || globalStyle;    
+    const segmentStyle = segment.resolvedStyle || globalStyle;
     // Extraire les propriétés de style du segment (avec text-fitting scale appliqué)
-    const fontSize = parseFloat(segmentStyle.fontSize?.toString() || '16') * 4 * textFitScaleFactor;
+    const fontSize = parseFloat(segmentStyle.fontSize?.toString() || '16') * fontScale * textFitScaleFactor;
     const fontFamily = segmentStyle.fontFamily || 'serif';
     const fontWeight = segmentStyle.fontWeight || 'normal';
     const fontStyle = segmentStyle.fontStyle || 'normal';
     const color = segmentStyle.color || '#000000';
-    const textTransform = segmentStyle.textTransform || 'none';
-    const strokeColor = segmentStyle.strokeColor || segmentStyle.webkitTextStroke || segmentStyle.webkitTextStrokeColor;
-    const strokeWeight = segmentStyle.strokeWeight || (segmentStyle.webkitTextStrokeWidth ? parseFloat(segmentStyle.webkitTextStrokeWidth) : undefined);
-    
-    console.log(`[renderConditionalSegments] Parsed style:`, { fontSize, fontFamily, color, strokeColor, strokeWeight });
-    
+    const textTransform = (segmentStyle.textTransform && segmentStyle.textTransform !== 'none')
+      ? segmentStyle.textTransform
+      : (globalStyle.textTransform || 'none');
+    const strokeColor = segmentStyle.strokeColor || segmentStyle.webkitTextStroke || segmentStyle.webkitTextStrokeColor
+      || globalStyle.strokeColor || globalStyle.webkitTextStroke || globalStyle.webkitTextStrokeColor;
+    const strokeWeight = segmentStyle.strokeWeight || (segmentStyle.webkitTextStrokeWidth ? parseFloat(segmentStyle.webkitTextStrokeWidth) : undefined)
+      || globalStyle.strokeWeight || (globalStyle.webkitTextStrokeWidth ? parseFloat(globalStyle.webkitTextStrokeWidth) : undefined);
+    const horizontalScale = (segmentStyle.idmlHorizontalScale || globalStyle.idmlHorizontalScale || 100) / 100;
+
     // Letter spacing
     let letterSpacing = 0;
     if (segmentStyle.letterSpacing && segmentStyle.letterSpacing !== 'normal') {
@@ -392,7 +417,8 @@ function renderConditionalSegments(
             color,
             letterSpacing,
             strokeColor,
-            strokeWeight
+            strokeWeight,
+            horizontalScale
           }
         });
         currentLineWidth += wordWidth;
@@ -413,8 +439,20 @@ function renderConditionalSegments(
     lines.push({ segments: currentLine, isFirstLine: isFirstLineOfPara });
   }
 
+  // Mesurer le vrai débordement supérieur avec la police réellement chargée
+  let topOffset = 0;
+  if (lines.length > 0 && lines[0].segments.length > 0) {
+    const s0 = lines[0].segments[0];
+    ctx.font = `${s0.style.fontStyle} ${s0.style.fontWeight} ${s0.style.fontSize}px ${s0.style.fontFamily}`;
+    ctx.textBaseline = 'top';
+    const m = ctx.measureText('ÀÉHg');
+    // Avec textBaseline='top': actualBoundingBoxAscent > 0 = glyphes AU-DESSUS du point y
+    // → décaler currentY vers le bas pour que le haut des glyphes soit à y=0
+    topOffset = m.actualBoundingBoxAscent > 0 ? m.actualBoundingBoxAscent : 0;
+  }
+
   // Rendu des lignes
-  let currentY = 0;
+  let currentY = topOffset;
   for (const line of lines) {
     let currentX = line.isFirstLine ? textIndent : 0;
     
@@ -437,6 +475,7 @@ function renderConditionalSegments(
     
     // Rendre chaque segment de la ligne
     for (const seg of line.segments) {
+      ctx.save();
       ctx.font = `${seg.style.fontStyle} ${seg.style.fontWeight} ${seg.style.fontSize}px ${seg.style.fontFamily}`;
       ctx.fillStyle = seg.style.color;
       ctx.textBaseline = 'top';
@@ -445,7 +484,7 @@ function renderConditionalSegments(
       const hasStroke = seg.style.strokeColor && seg.style.strokeWeight;
       if (hasStroke) {
         ctx.strokeStyle = seg.style.strokeColor;
-        ctx.lineWidth = seg.style.strokeWeight * 4; // Convertir pt en px (facteur 4 comme fontSize)
+        ctx.lineWidth = seg.style.strokeWeight * fontScale;
         ctx.lineJoin = 'round';
         ctx.miterLimit = 2;
       }
@@ -464,8 +503,12 @@ function renderConditionalSegments(
           ctx.strokeText(seg.text, currentX, currentY);
         }
         ctx.fillText(seg.text, currentX, currentY);
-        currentX += ctx.measureText(seg.text).width;
+        // Mesurer le mot + espace séparément car measureText ignore les trailing spaces
+        const wordWidth = ctx.measureText(seg.text.trimEnd()).width;
+        const spaceWidth = seg.text.endsWith(' ') ? ctx.measureText(' ').width : 0;
+        currentX += wordWidth + spaceWidth;
       }
+      ctx.restore();
     }
     
     currentY += globalLineHeight;
@@ -486,6 +529,45 @@ export const generateBookPages = async (
 ): Promise<Record<number, string>> => {
   
   const pages: Record<number, string> = {};
+
+  // Charger les fonts custom du livre via FontFace API avant le rendu canvas
+  const usedFontFamilies = new Set<string>();
+  book.contentConfig?.texts?.forEach(t => {
+    const ff = t.style?.fontFamily as string;
+    if (ff) usedFontFamilies.add(ff.replace(/["']/g, '').trim());
+    t.conditionalSegments?.forEach((seg: any) => {
+      const sff = seg.resolvedStyle?.fontFamily as string;
+      if (sff) usedFontFamilies.add(sff.replace(/["']/g, '').trim());
+    });
+  });
+  // Charger chaque font (toujours, pour garantir disponibilité dans canvas)
+  const fontLoadPromises: Promise<void>[] = [];
+  for (const fontFamily of usedFontFamilies) {
+    if (!fontFamily || fontFamily === 'serif' || fontFamily === 'sans-serif') continue;
+    // Essayer plusieurs variantes de nom de fichier
+    const variants = [
+      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '')}.ttf`,
+      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '')}.otf`,
+      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '_')}.ttf`,
+      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '_')}.otf`,
+      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '-')}.ttf`,
+    ];
+    const tryLoad = async () => {
+      for (const url of variants) {
+        try {
+          const ff = new FontFace(fontFamily, `url('${url}')`);
+          const loaded = await ff.load();
+          document.fonts.add(loaded);
+          return; // succès
+        } catch { /* essayer suivant */ }
+      }
+    };
+    fontLoadPromises.push(tryLoad());
+  }
+  if (fontLoadPromises.length > 0) {
+    await Promise.allSettled(fontLoadPromises);
+    await document.fonts.ready;
+  }
   
   let maxPage = book.features?.pages || 20;
   
@@ -503,10 +585,23 @@ export const generateBookPages = async (
       }
   });
 
-  // Canvas dimensions (A4 ratio or from config)
-  // High res for better quality
-  const width = (book.features?.dimensions?.width || 210) * 4; // Scale up for quality
-  const height = (book.features?.dimensions?.height || 210) * 4;
+  // Canvas dimensions: use EPUB page dims if available (IDML books), else features.dimensions or default 210
+  const epubPageDims = book.contentConfig?.pages?.[0];
+  const hasHtmlPages = !!(epubPageDims?.width);
+  const pageDims = hasHtmlPages
+    ? { width: epubPageDims!.width, height: epubPageDims!.height }
+    : (book.features?.dimensions || { width: 210, height: 210 });
+  const width = pageDims.width * 4;
+  const height = pageDims.height * 4;
+
+  // IDML/EPUB: positions are in page CSS pixels → multiply by 4 (same as canvas scale)
+  // Non-IDML: positions are percentages (0-100) → divide by 100, multiply by canvas size
+  const posScaleW = hasHtmlPages ? pageDims.width : 100;
+  const posScaleH = hasHtmlPages ? pageDims.height : 100;
+  // IDML font sizes are in pt. CSS at 96dpi: 1pt = 96/72 px. Canvas scale is ×4.
+  // IDML font sizes are in pt. EPUB CSS positions are at 72dpi (1pt=1px).
+  // Canvas is at 4x resolution. At 96dpi screen, 1pt = 96/72 px → fontScale = (96/72)*4
+  const fontScale = hasHtmlPages ? (96 / 72) * 4 : 4;
   
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -633,10 +728,10 @@ export const generateBookPages = async (
              try {
                  const img = await loadImage(layer.url);
                  
-                 const x = (layer.position.x || 0) / 100 * width;
-                 const y = (layer.position.y || 0) / 100 * height;
-                 const w = (layer.position.width || 100) / 100 * width;
-                 const h = (layer.position.height || 100) / 100 * height; // or keep aspect ratio if h is missing
+                 const x = (layer.position.x || 0) / posScaleW * width;
+                 const y = (layer.position.y || 0) / posScaleH * height;
+                 const w = (layer.position.width || posScaleW) / posScaleW * width;
+                 const h = (layer.position.height || posScaleH) / posScaleH * height;
                  
                  ctx.save();
                  // Move to center of image for rotation
@@ -663,31 +758,35 @@ export const generateBookPages = async (
                                                    layer.conditionalSegments.some((seg: any) => seg.resolvedStyle);          
           if (hasConditionalSegmentsWithStyles) {              
               // Rendu segment-par-segment avec styles spécifiques
-              const x = (layer.position.x || 0) / 100 * width;
-              const y = (layer.position.y || 0) / 100 * height;
-              const w = (layer.position.width || 30) / 100 * width;
-              const h = (layer.position.height || 30) / 100 * height;
+              const x = (layer.position.x || 0) / posScaleW * width;
+              const y = (layer.position.y || 0) / posScaleH * height;
+              const w = (layer.position.width || posScaleW * 0.3) / posScaleW * width;
+              const h = (layer.position.height || posScaleH * 0.3) / posScaleH * height;
               const rotation = layer.position.rotation || 0;
               
-              renderConditionalSegments(ctx, layer, config.characters || {}, x, y, w, h, rotation, config);
+              renderConditionalSegments(ctx, layer, config.characters || {}, x, y, w, h, rotation, config, fontScale);
               continue; // Passer au layer suivant
           }          
           // Rendu classique (code existant)
           let text = resolveText(layer.content);
           
           ctx.save();
-          const x = (layer.position.x || 0) / 100 * width;
-          const y = (layer.position.y || 0) / 100 * height;
-          const w = (layer.position.width || 30) / 100 * width;
-          const h = (layer.position.height || 30) / 100 * height;
-          
+          const x = (layer.position.x || 0) / posScaleW * width;
+          const y = (layer.position.y || 0) / posScaleH * height;
+          const w = (layer.position.width || posScaleW * 0.3) / posScaleW * width;
+          const h = (layer.position.height || posScaleH * 0.3) / posScaleH * height;
+
           ctx.translate(x, y);
+          // Clip to text box bounds (in local coordinates after translate)
+          ctx.beginPath();
+          ctx.rect(0, 0, w, h);
+          ctx.clip();
           if (layer.position.rotation) {
              ctx.rotate(layer.position.rotation * Math.PI / 180);
           }
           
           // Extract style properties
-          const originalFontSize = parseFloat((layer.style?.fontSize as string) || '16') * 4;
+          const originalFontSize = parseFloat((layer.style?.fontSize as string) || '16') * fontScale;
           let fontSize = originalFontSize; // Sera ajusté par le text-fitting si nécessaire
           const fontFamily = (layer.style?.fontFamily as string) || 'serif';
           const fontWeight = (layer.style?.fontWeight as string) || 'normal';
@@ -725,7 +824,7 @@ export const generateBookPages = async (
           if (layer.style?.textIndent) {
             const ti = layer.style.textIndent as string;
             if (ti.endsWith('pt')) {
-              textIndent = parseFloat(ti) * 4; // Scale for canvas
+              textIndent = parseFloat(ti) * 4;
             } else {
               textIndent = parseFloat(ti) * 4;
             }
@@ -783,7 +882,7 @@ export const generateBookPages = async (
           if (layer.style?.baselineShift) {
             const bs = layer.style.baselineShift as string;
             if (bs.endsWith('pt')) {
-              baselineShift = -parseFloat(bs) * 4; // Negative because Canvas Y increases downward
+              baselineShift = -parseFloat(bs) * 4;
             }
           }
           

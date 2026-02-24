@@ -445,23 +445,14 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
               // or fallback: list R2 by bookId prefix (backward compat for books without fontMappings)
               let r2Key: string | null = null;
               const storedPath = fontMappings[fontName];
-              // #region agent log
-              logger.info({ fontName, hasMappings: Object.keys(fontMappings).length > 0, storedPath: storedPath || null, bookId: book.id }, '[font-debug] font not found locally, checking R2');
-              // #endregion
               if (storedPath) {
                 // Direct lookup: strip '/objects/bucketName/' prefix to get S3 key
                 r2Key = storedPath.replace(/^\/objects\/[^/]+\//, '');
-                // #region agent log
-                logger.info({ fontName, storedPath, r2Key }, '[font-debug] r2Key from fontMappings');
-                // #endregion
               } else {
                 // Fallback for older books: list R2 and find by name
                 const r2Bucket = objectStorageClient.bucket();
                 const [r2Files] = await r2Bucket.getFiles({ prefix: `public/fonts/${book.id}_` });
                 const searchName = fontName.toLowerCase().replace(/[\s\-_]/g, '');
-                // #region agent log
-                logger.info({ fontName, searchName, r2FilesCount: r2Files.length, prefix: `public/fonts/${book.id}_` }, '[font-debug] R2 fallback listing');
-                // #endregion
                 const r2Match = r2Files.find(f => {
                   const basename = f.name.split('/').pop() || '';
                   const withoutPrefix = basename.replace(/^\d+_(?:[a-f0-9]+_)?/i, '');
@@ -469,9 +460,6 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                   return normalized.includes(searchName) || searchName.includes(normalized);
                 });
                 if (r2Match) r2Key = r2Match.name;
-                // #region agent log
-                logger.info({ fontName, r2Key, r2MatchName: r2Match?.name || null }, '[font-debug] R2 fallback result');
-                // #endregion
               }
 
               if (r2Key) {
@@ -487,23 +475,10 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
                   systemFontFaces.push(
                     `@font-face { font-family: '${fontName}'; src: url('${dataUri2}') format('${format2}'); }`
                   );
-                  // #region agent log
-                  logger.info({ fontName, r2Key, sizeBytes: r2Buffer.length }, '[font-debug] font embedded from R2 OK');
-                  // #endregion
-                } else {
-                  // #region agent log
-                  logger.warn({ fontName, r2Key, magic: r2Magic }, '[font-debug] R2 font failed magic bytes validation');
-                  // #endregion
                 }
-              } else {
-                // #region agent log
-                logger.warn({ fontName, bookId: book.id }, '[font-debug] font not found in R2 either');
-                // #endregion
               }
-            } catch (r2Err) {
-              // #region agent log
-              logger.error({ error: r2Err, fontName, bookId: book.id }, '[font-debug] R2 font lookup error');
-              // #endregion
+            } catch {
+              // R2 unavailable or no match — skip silently
             }
           }
         } catch (err) {

@@ -46,7 +46,7 @@ async function initDefaultSettings() {
 
     const homepageSetting = await storage.getSetting('homepage');
     if (!homepageSetting) {
-      await storage.setSetting('homepage', null);
+      await storage.setSetting('homepage', {});
       logger.info('Created default homepage setting');
     }
     

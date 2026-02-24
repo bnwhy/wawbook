@@ -18,10 +18,33 @@ const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || "";
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "wawbook";
 const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || "";
 
+// Validate R2 config at startup and surface precise errors
+function validateR2Config() {
+  const issues: string[] = [];
+  if (!R2_ENDPOINT) {
+    issues.push("R2_ENDPOINT is missing");
+  } else {
+    try {
+      new URL(R2_ENDPOINT);
+    } catch {
+      issues.push(`R2_ENDPOINT is not a valid URL (got: "${R2_ENDPOINT}")`);
+    }
+  }
+  if (!R2_ACCESS_KEY_ID) issues.push("R2_ACCESS_KEY_ID is missing");
+  if (!R2_SECRET_ACCESS_KEY) issues.push("R2_SECRET_ACCESS_KEY is missing");
+  if (issues.length > 0) {
+    console.error("[R2] Storage configuration error:\n" + issues.map(i => `  - ${i}`).join("\n"));
+    console.error("[R2] Expected format: R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com");
+  } else {
+    console.info(`[R2] Storage configured: endpoint=${R2_ENDPOINT} bucket=${R2_BUCKET_NAME}`);
+  }
+}
+validateR2Config();
+
 // S3 client configured for Cloudflare R2
 const s3Client = new S3Client({
   region: "auto",
-  endpoint: R2_ENDPOINT,
+  ...(R2_ENDPOINT ? { endpoint: R2_ENDPOINT } : {}),
   credentials: {
     accessKeyId: R2_ACCESS_KEY_ID,
     secretAccessKey: R2_SECRET_ACCESS_KEY,

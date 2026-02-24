@@ -18,6 +18,10 @@ import { configurePassport } from "./config/passport";
 const app = express();
 const httpServer = createServer(app);
 
+// Required for accurate IP detection behind reverse proxies (Docker, nginx, cloud LBs)
+// Without this, all users share the same rate limit (the proxy IP)
+app.set('trust proxy', 1);
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;

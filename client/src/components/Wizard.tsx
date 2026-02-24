@@ -590,6 +590,15 @@ const Wizard: React.FC<WizardProps> = (props) => {
              </button>
              )}
 
+             {/* Mobile CTA — hidden on lg+ where the right column button is shown */}
+             <button
+               onClick={handleComplete}
+               className="lg:hidden w-full bg-[#0c4a6e] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-2 mt-4"
+             >
+               <Wand2 size={24} />
+               {props.isEditing ? "Mettre à jour" : "Créer le livre"}
+             </button>
+
              </div>
              {/* END WIZARD FORM */}
           </div>

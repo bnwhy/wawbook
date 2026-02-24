@@ -375,6 +375,9 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
       // This is the ONLY method that works reliably in Chromium headless
       const systemFontFaces: string[] = [];
       const bookFontDir = path.join(process.cwd(), 'server', 'assets', 'books', book.id, 'font');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0723d6'},body:JSON.stringify({sessionId:'0723d6',location:'routes.ts:font-search-start',message:'Font search init',data:{bookId:book.id,availableFonts,bookFontDir,systemFontsDir},timestamp:Date.now(),hypothesisId:'A-B-C-D'})}).catch(()=>{});
+      // #endregion
       
       for (const fontName of availableFonts) {
         try {
@@ -416,6 +419,10 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             }
           }
           
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0723d6'},body:JSON.stringify({sessionId:'0723d6',location:'routes.ts:font-found',message:'Font lookup result',data:{fontName,fontFile:fontFile||null,fontPath:fontPath||null,foundLocally:!!fontPath},timestamp:Date.now(),hypothesisId:'A-B'})}).catch(()=>{});
+          // #endregion
+
           if (fontPath && fontFile) {
             
             // Verify font is valid before embedding
@@ -442,6 +449,9 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           logger.error({ error: err, fontName }, 'Error embedding font');
         }
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/6f16d041-f957-4b2b-86d1-ee80d5eb214b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0723d6'},body:JSON.stringify({sessionId:'0723d6',location:'routes.ts:font-embed-result',message:'Font embedding complete',data:{injectedCount:systemFontFaces.length,fonts:systemFontFaces.map(f=>f.slice(0,80))},timestamp:Date.now(),hypothesisId:'A-B-C'})}).catch(()=>{});
+      // #endregion
       
       cssContent = systemFontFaces.join('\n') + '\n' + cssContent;
       

@@ -1883,13 +1883,23 @@ export function registerObjectStorageRoutes(app: Express): void {
       const fontWarnings = detectFontIssues(finalCssContent, {});
       
       // 6. Build complete ContentConfiguration
+      // Build fontMappings (fontFamily -> object storage path) so render-pages
+      // can download fonts directly from R2 without needing local files
+      const fontMappings: Record<string, string> = {};
+      for (const fontData of Object.values(uploadedFonts)) {
+        if (fontData.fontFamily && fontData.url) {
+          fontMappings[fontData.fontFamily] = fontData.url;
+        }
+      }
+
       const contentConfig = {
         pages: epubResult.pages,
         texts: mergedTexts,
         images: [], // Legacy format, not used with imageElements
         imageElements: epubResult.imageElements,
         cssContent: finalCssContent,
-        pageImages: [] // Legacy format
+        pageImages: [], // Legacy format
+        fontMappings // R2 paths keyed by font family name
       };
 
       // Save contentConfig to disk for render-pages endpoint

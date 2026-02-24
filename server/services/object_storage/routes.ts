@@ -1892,11 +1892,39 @@ export function registerObjectStorageRoutes(app: Express): void {
         }
       }
 
+      // Upload EPUB images to R2 so they persist across container restarts
+      const imageUrlMap: Record<string, string> = {}; // localUrl -> r2Url
+      const imgPublicPaths = objectStorageService.getPublicObjectSearchPaths();
+      if (imgPublicPaths.length > 0) {
+        try {
+          const { bucketName: imgBucket, objectName: imgBasePath } = parseObjectPathSimple(imgPublicPaths[0]);
+          const imgR2Bucket = objectStorageClient.bucket(imgBucket);
+          for (const imgEl of epubResult.imageElements) {
+            if (!imgEl.url || !imgEl.url.startsWith('/assets/books/')) continue;
+            const fileName = imgEl.url.split('/').pop();
+            if (!fileName) continue;
+            const localImgPath = path.join(process.cwd(), 'server', 'assets', 'books', bookId, 'images', fileName);
+            try {
+              const imgBuffer = await fs.promises.readFile(localImgPath);
+              const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+              const contentType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+              const objectName = imgBasePath ? `${imgBasePath}/books/${bookId}/images/${fileName}` : `books/${bookId}/images/${fileName}`;
+              await imgR2Bucket.file(objectName).save(imgBuffer, { contentType, metadata: { cacheControl: 'public, max-age=31536000' } });
+              imageUrlMap[imgEl.url] = `/objects/${imgBucket}/${objectName}`;
+            } catch { /* keep local URL as fallback */ }
+          }
+        } catch { /* R2 unavailable — URLs stay local */ }
+      }
+      const updatedImageElements = epubResult.imageElements.map(img => ({
+        ...img,
+        url: imageUrlMap[img.url] || img.url
+      }));
+
       const contentConfig = {
         pages: epubResult.pages,
         texts: mergedTexts,
         images: [], // Legacy format, not used with imageElements
-        imageElements: epubResult.imageElements,
+        imageElements: updatedImageElements,
         cssContent: finalCssContent,
         pageImages: [], // Legacy format
         fontMappings // R2 paths keyed by font family name

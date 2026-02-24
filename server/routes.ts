@@ -619,9 +619,12 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
           
           // Build clean HTML with positioned zones instead of raw InDesign HTML
           // Images use pixel positions from EPUB CSS (same as texts)
+          const localServerPort = process.env.PORT || 5001;
+          const localServerBase = `http://localhost:${localServerPort}`;
           let imagesHtml = finalImages.map((img) => {
             const pos = (img.position || {}) as { x?: number; y?: number; width?: number; height?: number; scaleX?: number; scaleY?: number; rotation?: number };
-            const imgUrl = img.url?.startsWith('/') ? `${baseUrl}${img.url}` : img.url;
+            // Use localhost for relative URLs — Chromium runs on the same host, no internet round-trip needed
+            const imgUrl = img.url?.startsWith('/') ? `${localServerBase}${img.url}` : img.url;
             const scaleX = pos.scaleX || 1;
             const scaleY = pos.scaleY || 1;
             const rotation = pos.rotation || 0;

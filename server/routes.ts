@@ -444,6 +444,36 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             systemFontFaces.push(
               `@font-face { font-family: '${fontName}'; src: url('${dataUri}') format('${format}'); }`
             );
+          } else {
+            // Font not found locally — try R2 (fonts uploaded during IDML import)
+            try {
+              const r2Bucket = objectStorageClient.bucket();
+              const [r2Files] = await r2Bucket.getFiles({ prefix: `public/fonts/${book.id}_` });
+              const searchName = fontName.toLowerCase().replace(/[\s\-_]/g, '');
+              const r2Match = r2Files.find(f => {
+                const basename = f.name.split('/').pop() || '';
+                // Strip "bookId_" or "bookId_hash_" prefix, then normalize
+                const withoutPrefix = basename.replace(/^\d+_(?:[a-f0-9]+_)?/i, '');
+                const normalized = withoutPrefix.toLowerCase().replace(/[\s\-_]/g, '').replace(/\.(ttf|otf)$/i, '').replace(/regular$/i, '');
+                return normalized.includes(searchName) || searchName.includes(normalized) || normalized.includes(searchName.replace(/regular$/i, ''));
+              });
+              if (r2Match) {
+                const [r2Buffer] = await r2Match.download();
+                const r2Magic = r2Buffer.slice(0, 4).toString('hex').toUpperCase();
+                const validMagics2 = ['00010000', '74727565', '4F54544F', '774F4646', '774F4632'];
+                if (validMagics2.some(m => r2Magic.startsWith(m))) {
+                  const ext = r2Match.name.endsWith('.otf') ? 'otf' : 'ttf';
+                  const mimeType2 = ext === 'otf' ? 'font/otf' : 'font/ttf';
+                  const format2 = ext === 'otf' ? 'opentype' : 'truetype';
+                  const dataUri2 = `data:${mimeType2};base64,${r2Buffer.toString('base64')}`;
+                  systemFontFaces.push(
+                    `@font-face { font-family: '${fontName}'; src: url('${dataUri2}') format('${format2}'); }`
+                  );
+                }
+              }
+            } catch {
+              // R2 unavailable or no match — skip silently
+            }
           }
         } catch (err) {
           logger.error({ error: err, fontName }, 'Error embedding font');

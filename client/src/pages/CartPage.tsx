@@ -6,7 +6,6 @@ import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import PaymentBadges from '../components/PaymentBadges';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import BookPreview from '../components/BookPreview';
 import { generateStoryText } from '../services/geminiService';
 import { Story } from '../types';
@@ -268,24 +267,36 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
       
       <Footer />
 
-      <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
-        <DialogContent
-          className="max-w-6xl w-full h-[90vh] p-0 overflow-hidden bg-stone-100 border-none"
-          style={{ position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+      {previewItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4"
+          style={{ background: 'rgba(0,0,0,0.8)' }}
+          onClick={() => setPreviewItem(null)}
         >
-            {previewItem && previewStory && (
-                <div className="h-full w-full overflow-y-auto">
-                    <BookPreview 
-                        story={previewStory} 
-                        config={previewItem.config} 
-                        onReset={() => setPreviewItem(null)}
-                        onStart={() => setPreviewItem(null)}
-                        isModal={true}
-                    />
-                </div>
+          <div
+            className="relative w-full h-full sm:h-[90vh] sm:max-w-6xl sm:rounded-lg overflow-hidden bg-stone-100"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewItem(null)}
+              className="absolute right-4 top-4 z-10 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {previewStory && (
+              <div className="h-full w-full overflow-y-auto">
+                <BookPreview
+                  story={previewStory}
+                  config={previewItem.config}
+                  onReset={() => setPreviewItem(null)}
+                  onStart={() => setPreviewItem(null)}
+                  isModal={true}
+                />
+              </div>
             )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

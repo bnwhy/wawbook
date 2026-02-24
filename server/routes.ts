@@ -584,13 +584,6 @@ body, div, dl, dt, dd, h1, h2, h3, h4, h5, h6, p, pre, code, blockquote, figure 
             (txt) => txt.position?.pageIndex === pageData.pageIndex
           );
           
-          // #region agent log
-          const allTexts_debug = contentConfig?.texts || [];
-          const dedTexts = allTexts_debug.filter((t: any) => t.content && (t.content.includes('dedication') || t.content.includes('author') || t.content.includes('TXTVAR_dedication') || t.content.includes('TXTVAR_author')));
-          const fs_debug = await import('fs');
-          fs_debug.appendFileSync('/home/runner/workspace/.cursor/debug.log', JSON.stringify({location:'routes.ts:pageTexts',message:'Text zones for page',data:{pageIndex:pageData.pageIndex,pageTextsCount:pageTexts.length,pageTextsContent:pageTexts.map((t:any)=>t.content?.substring(0,100)),allTextsCount:allTexts_debug.length,dedicationTextsFound:dedTexts.length,dedicationTextsContent:dedTexts.map((t:any)=>({content:t.content?.substring(0,100),pageIndex:t.position?.pageIndex})),configDedication:config.dedication,configAuthor:config.author},timestamp:Date.now(),hypothesisId:'H6'}) + '\n');
-          // #endregion
-          
           // Build clean HTML with positioned zones instead of raw InDesign HTML
           // Images use pixel positions from EPUB CSS (same as texts)
           let imagesHtml = finalImages.map((img) => {

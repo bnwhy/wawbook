@@ -156,7 +156,7 @@ const PublicApp: React.FC = () => {
                       story={story ?? undefined}
                       config={config} 
                       onReset={handleReset}
-                      onStart={() => startCreation(config.theme, undefined, story?.title || selectedBookTitle, config.characters)}
+                      onStart={() => startCreation(config.theme, undefined, story?.title || selectedBookTitle, config.characters, editingCartItemId)}
                       editingCartItemId={editingCartItemId}
                       bookTitle={selectedBookTitle}
                       initialTheme={initialTheme}

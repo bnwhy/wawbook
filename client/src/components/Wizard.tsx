@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wand2, Cloud, Pencil } from 'lucide-react';
+import { Wand2, Cloud, Pencil, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { BookConfig, Theme, Activity } from '../types';
 import Navigation from './Navigation';
@@ -580,20 +580,19 @@ const Wizard: React.FC<WizardProps> = (props) => {
                 })}
              </div>
 
-             {/* FOOTER ACTIONS */}
-             {props.isEditing && (
-             <button 
-               onClick={onCancel}
-               className="text-gray-400 hover:text-gray-600 font-bold text-xl px-4 py-2 mr-auto hover:bg-gray-100 rounded-lg transition-colors"
-             >
-                 Retour au panier
-             </button>
-             )}
-
              </div>
              {/* END WIZARD FORM */}
 
              {/* Mobile CTA — outside the overflow-hidden card but inside the left column */}
+             {props.isEditing && (
+               <button
+                 onClick={onCancel}
+                 className="text-cloud-blue font-bold text-xl hover:underline flex items-center justify-center gap-1 transition-colors hover:text-cloud-deep mt-8 w-full"
+               >
+                 <ChevronLeft size={22} />
+                 Retour au panier
+               </button>
+             )}
              <button
                onClick={handleComplete}
                className="lg:hidden w-full bg-[#0c4a6e] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-2 mt-4"

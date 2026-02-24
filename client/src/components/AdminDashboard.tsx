@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import HomeDashboard from './admin/HomeDashboard';
 import SettingsPanel from './admin/SettingsPanel';
 import AnalyticsPanel from './admin/AnalyticsPanel';
@@ -6437,8 +6438,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
 
               {/* Avatar EPUB Selector Modal */}
-              {showAvatarEpubSelector && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              {showAvatarEpubSelector && createPortal(
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9000]">
                   <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                     <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50">
                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -6595,11 +6596,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
                   </div>
                 </div>
-              )}
+              , document.body)}
 
               {/* EPUB + IDML Importer Modal */}
-              {showIdmlImporter && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              {showIdmlImporter && createPortal(
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9000]">
                   <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                     <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50">
                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
@@ -6757,7 +6758,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <button
                           onClick={handleImportStoryboard}
                           disabled={!epubFile || !idmlFile || isImportingStoryboard}
-                          className="flex-[2] py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          className="flex-[2] py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                           {isImportingStoryboard ? (
                             <>
@@ -6785,7 +6786,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
                   </div>
                 </div>
-              )}
+              , document.body)}
            </main>
         </div>
      </div>

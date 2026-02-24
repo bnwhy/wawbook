@@ -231,12 +231,6 @@ function renderConditionalSegments(
   if (rotation) {
     ctx.rotate(rotation * Math.PI / 180);
   }
-  // DEBUG: rectangle rouge = zone EPUB
-  ctx.save();
-  ctx.strokeStyle = 'red';
-  ctx.lineWidth = 8;
-  ctx.strokeRect(0, 0, w, h);
-  ctx.restore();
 
   // No clip - text fitting handles overflow
 
@@ -540,17 +534,24 @@ export const generateBookPages = async (
       if (sff) usedFontFamilies.add(sff.replace(/["']/g, '').trim());
     });
   });
-  // Charger chaque font (toujours, pour garantir disponibilité dans canvas)
+  // Cache statique pour éviter les rechargements multiples
+  const _loadedFonts: Set<string> = (generateBookPages as any)._loadedFonts 
+    || ((generateBookPages as any)._loadedFonts = new Set<string>());
+
   const fontLoadPromises: Promise<void>[] = [];
   for (const fontFamily of usedFontFamilies) {
     if (!fontFamily || fontFamily === 'serif' || fontFamily === 'sans-serif') continue;
-    // Essayer plusieurs variantes de nom de fichier
+    if (_loadedFonts.has(fontFamily)) continue; // déjà chargée avec succès
+    const baseName = fontFamily.replace(/ /g, '');
     const variants = [
-      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '')}.ttf`,
-      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '')}.otf`,
+      `/assets/books/${book.id}/font/${baseName}.ttf`,
+      `/assets/books/${book.id}/font/${baseName}.otf`,
+      `/assets/books/${book.id}/font/${baseName}-Regular.ttf`,
+      `/assets/books/${book.id}/font/${baseName}-Regular.otf`,
       `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '_')}.ttf`,
-      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '_')}.otf`,
+      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '_')}-Regular.ttf`,
       `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '-')}.ttf`,
+      `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '-')}-Regular.ttf`,
     ];
     const tryLoad = async () => {
       for (const url of variants) {
@@ -558,7 +559,8 @@ export const generateBookPages = async (
           const ff = new FontFace(fontFamily, `url('${url}')`);
           const loaded = await ff.load();
           document.fonts.add(loaded);
-          return; // succès
+          _loadedFonts.add(fontFamily);
+          return;
         } catch { /* essayer suivant */ }
       }
     };
@@ -602,7 +604,7 @@ export const generateBookPages = async (
   // IDML font sizes are in pt. EPUB CSS positions are at 72dpi (1pt=1px).
   // Canvas is at 4x resolution. At 96dpi screen, 1pt = 96/72 px → fontScale = (96/72)*4
   const fontScale = hasHtmlPages ? (96 / 72) * 4 : 4;
-  
+
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -635,7 +637,25 @@ export const generateBookPages = async (
           return match;
       });
 
-      // 2. Handle legacy [variable] style
+      // 2. Handle {TXTVAR_*} style (IDML variables)
+      content = content.replace(/\{TXTVAR_dedication\}/gi, config.dedication || '');
+      content = content.replace(/\{TXTVAR_author\}/gi, config.author || '');
+      content = content.replace(/\{TXTVAR_([^_}]+(?:-[^_}]+)?)_([^}]+)\}/g, (_match, tabId, variantId) => {
+        const heroPrefix = 'hero-';
+        const wizardTabId = tabId.startsWith(heroPrefix) ? tabId.substring(heroPrefix.length) : tabId;
+        const directTab = (config.characters || {})[wizardTabId] || (config.characters || {})[tabId];
+        if (directTab && directTab[variantId]) return directTab[variantId];
+        for (const tab of Object.values(config.characters || {})) {
+          if (tab && typeof tab === 'object') {
+            if ((tab as any)[variantId]) return (tab as any)[variantId];
+            if (variantId === 'name') return (tab as any)['nom'] || (tab as any)['prenom'] || (tab as any)['name'] || '';
+          }
+        }
+        if (variantId === 'name' && config.childName) return config.childName;
+        return '';
+      });
+
+      // 3. Handle legacy [variable] style
       content = content.replace(/\[childName\]/gi, config.childName || 'Enfant');
       content = content.replace(/\[age\]/gi, config.age?.toString() || '');
       content = content.replace(/\[dedication\]/gi, config.dedication || '');
@@ -777,13 +797,13 @@ export const generateBookPages = async (
           const h = (layer.position.height || posScaleH * 0.3) / posScaleH * height;
 
           ctx.translate(x, y);
-          // Clip to text box bounds (in local coordinates after translate)
-          ctx.beginPath();
-          ctx.rect(0, 0, w, h);
-          ctx.clip();
           if (layer.position.rotation) {
              ctx.rotate(layer.position.rotation * Math.PI / 180);
           }
+          // Clip: allow ascenders above (same logic as renderConditionalSegments)
+          ctx.beginPath();
+          ctx.rect(0, -h * 0.5, w, h * 1.5);
+          ctx.clip();
           
           // Extract style properties
           const originalFontSize = parseFloat((layer.style?.fontSize as string) || '16') * fontScale;
@@ -817,7 +837,9 @@ export const generateBookPages = async (
               }
             }
           }
-          let lineHeight = fontSize * lineHeightMultiplier;
+          // lineHeight basé sur pt×4 (pas fontScale) pour fidélité InDesign
+          const fontSizePt = parseFloat((layer.style?.fontSize as string) || '16');
+          let lineHeight = fontSizePt * 4 * lineHeightMultiplier;
           
           // Parse textIndent (ex: "12pt" or "0")
           let textIndent = 0;
@@ -863,8 +885,8 @@ export const generateBookPages = async (
             // Appliquer le scale si nécessaire
             if (fitResult.scale < 1) {
               fontSize = fitResult.fittedFontSize;
-              // Recalculer lineHeight et letterSpacing avec la nouvelle taille
-              lineHeight = fontSize * lineHeightMultiplier;
+              // Recalculer lineHeight basé sur pt×4×scale
+              lineHeight = fontSizePt * 4 * fitResult.scale * lineHeightMultiplier;
               if (layer.style?.letterSpacing && (layer.style.letterSpacing as string).endsWith('em')) {
                 letterSpacing = parseFloat(layer.style.letterSpacing as string) * fontSize;
               }            }
@@ -876,7 +898,20 @@ export const generateBookPages = async (
           ctx.fillStyle = color;
           ctx.textAlign = canvasAlign;
           ctx.textBaseline = 'top';
-          
+
+          // topOffset: décaler vers le bas pour éviter rognage des ascendantes
+          const classicMeasure = ctx.measureText('ÀÉHg');
+          const classicTopOffset = classicMeasure.actualBoundingBoxAscent > 0 ? classicMeasure.actualBoundingBoxAscent : 0;
+
+          // Stroke (contour) depuis style
+          const classicStrokeColor = (layer.style as any)?.strokeColor || (layer.style as any)?.webkitTextStrokeColor;
+          const classicStrokeWeight = (layer.style as any)?.strokeWeight;
+          if (classicStrokeColor && classicStrokeWeight) {
+            ctx.strokeStyle = classicStrokeColor;
+            ctx.lineWidth = classicStrokeWeight * fontScale;
+            ctx.lineJoin = 'round';
+          }
+
           // Apply baseline shift if present (approximation via translate)
           let baselineShift = 0;
           if (layer.style?.baselineShift) {
@@ -936,7 +971,7 @@ export const generateBookPages = async (
             }
             
             let xPos = 0;
-            const yPos = idx * lineHeight + marginTopOffset + baselineShift;
+            const yPos = classicTopOffset + idx * lineHeight + marginTopOffset + baselineShift;
             
             // Apply text indent to first line
             const indent = lineObj.isFirstLine ? textIndent : 0;
@@ -972,8 +1007,7 @@ export const generateBookPages = async (
               
               ctx.textAlign = savedAlign; // Restore original alignment
             } else {
-              if (canvasAlign === 'right') {
-              }
+              if (classicStrokeColor && classicStrokeWeight) ctx.strokeText(lineText, xPos, yPos);
               ctx.fillText(lineText, xPos, yPos);
             }
             

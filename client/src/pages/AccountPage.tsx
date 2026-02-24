@@ -31,7 +31,9 @@ const AccountPage = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setOrders(data.slice(0, 5)); // Only show last 5
+        setOrders(data.slice(0, 5));
+      } else if (response.status === 401) {
+        setLocation('/auth/login');
       }
     } catch (error) {
       console.error('Failed to fetch orders:', error);
@@ -114,7 +116,11 @@ const AccountPage = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-stone-900">Mes Commandes</h3>
-                  <p className="text-sm text-stone-500">{orders.length} commande{orders.length > 1 ? 's' : ''}</p>
+                  {isLoading ? (
+                    <div className="h-3 bg-stone-200 rounded animate-pulse w-20 mt-1"></div>
+                  ) : (
+                    <p className="text-sm text-stone-500">{orders.length} commande{orders.length > 1 ? 's' : ''}</p>
+                  )}
                 </div>
                 <ChevronRight className="text-stone-400 group-hover:text-cloud-blue transition-colors" />
               </div>

@@ -18,6 +18,7 @@ const CheckoutPage = () => {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
   const [isLoading, setIsLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string>('');
   const [orderNumber, _setOrderNumber] = useState<string>('');
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
@@ -116,6 +117,7 @@ const CheckoutPage = () => {
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPaymentError('');
     setIsLoading(true);
     
     try {
@@ -161,12 +163,15 @@ const CheckoutPage = () => {
           shippingMethod: selectedMethod,
         }));
         window.location.href = data.url;
+      } else if (data.error) {
+        setPaymentError(data.error);
+        setIsLoading(false);
       } else {
         throw new Error('No checkout URL received');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Une erreur est survenue. Veuillez réessayer.');
+      setPaymentError('Une erreur est survenue. Veuillez vérifier vos informations et réessayer.');
       setIsLoading(false);
     }
   };
@@ -517,9 +522,17 @@ const CheckoutPage = () => {
                                 Continuer vers le paiement
                             </button>
                         ) : (
-                            <button type="submit" form="payment-form" disabled={isLoading || !selectedMethod} className="mt-6 w-full bg-cloud-deep text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
-                                <Lock size={20} /> Payer {formatPrice(grandTotal)}
-                            </button>
+                            <>
+                                {paymentError && (
+                                    <div className="mt-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm flex items-start gap-2">
+                                        <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                                        <span>{paymentError}</span>
+                                    </div>
+                                )}
+                                <button type="submit" form="payment-form" disabled={isLoading || !selectedMethod} className="mt-4 w-full bg-cloud-deep text-white font-black text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+                                    {isLoading ? <span className="animate-pulse">Traitement...</span> : <><Lock size={20} /> Payer {formatPrice(grandTotal)}</>}
+                                </button>
+                            </>
                         )}
                         
                         <div className="mt-4 space-y-3">

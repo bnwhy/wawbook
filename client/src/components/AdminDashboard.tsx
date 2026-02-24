@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import HomeDashboard from './admin/HomeDashboard';
+import SettingsPanel from './admin/SettingsPanel';
+import AnalyticsPanel from './admin/AnalyticsPanel';
+import PrintersManager from './admin/PrintersManager';
+import ShippingManager from './admin/ShippingManager';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Filter, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2 } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2 } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, Printer as PrinterType } from '../types/admin';
-import { ShippingZone, ShippingMethod } from '../types/ecommerce';
 import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
@@ -255,7 +259,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     addOrderLog, 
     createOrder, 
     updateCustomer, 
-    addCustomer 
+    addCustomer,
+    isLoading: ordersLoading,
   } = useEcommerce();
   const { uploadFile: uploadToBucket } = useUpload();
   
@@ -313,10 +318,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const { active, over } = event;
     
     if (active.id !== over?.id) {
-      const menu = mainMenu[menuIdx];
+      const menu = localMainMenu[menuIdx];
+      if (!menu) return;
       
       if (colIdx !== undefined && menu.columns) {
-        // Reorder column items
         const col = menu.columns[colIdx];
         const oldIndex = col.items.indexOf(active.id as string);
         const newIndex = col.items.indexOf(over!.id as string);
@@ -325,16 +330,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             const newItems = arrayMove(col.items, oldIndex, newIndex);
             const newCols = [...menu.columns];
             newCols[colIdx] = { ...col, items: newItems };
-            updateMenuItem(menuIdx, { ...menu, columns: newCols });
+            setLocalMenuItem(menuIdx, { ...menu, columns: newCols });
         }
       } else if (menu.items) {
-        // Reorder simple items
         const oldIndex = menu.items.indexOf(active.id as string);
         const newIndex = menu.items.indexOf(over!.id as string);
         
         if (oldIndex !== -1 && newIndex !== -1) {
             const newItems = arrayMove(menu.items, oldIndex, newIndex);
-            updateMenuItem(menuIdx, { ...menu, items: newItems });
+            setLocalMenuItem(menuIdx, { ...menu, items: newItems });
         }
       }
     }
@@ -879,21 +883,27 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  // Menu Dirty State Tracking
-  const [originalMainMenu, setOriginalMainMenu] = useState<MenuItem[]>([]);
+  // Menu local state (edits stay local until Save is clicked)
+  const [localMainMenu, setLocalMainMenu] = useState<MenuItem[]>([]);
 
-  // Update original menu state when entering the tab
+  // Sync local state when entering the tab or when remote data arrives
   React.useEffect(() => {
-    if (activeTab === 'menus') {
-        setOriginalMainMenu(JSON.parse(JSON.stringify(mainMenu)));
+    if (activeTab === 'menus' && mainMenu.length > 0) {
+      setLocalMainMenu(JSON.parse(JSON.stringify(mainMenu)));
     }
-  }, [activeTab]);
+  }, [activeTab, mainMenu]);
 
-  const handleSaveMenu = (idx: number) => {
-      const newOriginals = [...originalMainMenu];
-      newOriginals[idx] = JSON.parse(JSON.stringify(mainMenu[idx]));
-      setOriginalMainMenu(newOriginals);
-      toast.success('Menu enregistré avec succès');
+  // Update one item in local state only
+  const setLocalMenuItem = (idx: number, item: MenuItem) => {
+    setLocalMainMenu(prev => {
+      const next = [...prev];
+      next[idx] = item;
+      return next;
+    });
+  };
+
+  const handleSaveMenu = async (idx: number) => {
+    await updateMenuItem(idx, localMainMenu[idx]);
   };
 
   // Edit Customer State
@@ -2101,609 +2111,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
            <main className="flex-1 overflow-y-auto p-8">
               
               {/* --- VIEW: HOME (DASHBOARD) --- */}
-              {activeTab === 'home' && (() => {
-                 const now = new Date();
-                 const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                 const previous30Days = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-                 
-                 // Commandes des 30 derniers jours
-                 const recentOrders = orders.filter(order => {
-                    const orderDate = new Date(order.createdAt);
-                    return orderDate >= last30Days;
-                 });
-                 
-                 // Commandes des 30 jours précédents
-                 const previousOrders = orders.filter(order => {
-                    const orderDate = new Date(order.createdAt);
-                    return orderDate >= previous30Days && orderDate < last30Days;
-                 });
-                 
-                 // Calcul des totaux récents
-                 const recentTotal = recentOrders.reduce((acc, order) => acc + Number(order.totalAmount), 0);
-                 const recentOrdersCount = recentOrders.length;
-                 const recentAverage = recentOrdersCount > 0 ? recentTotal / recentOrdersCount : 0;
-                 
-                 // Calcul des totaux précédents
-                 const previousTotal = previousOrders.reduce((acc, order) => acc + Number(order.totalAmount), 0);
-                 const previousOrdersCount = previousOrders.length;
-                 const previousAverage = previousOrdersCount > 0 ? previousTotal / previousOrdersCount : 0;
-                 
-                 // Calcul des variations en %
-                 const salesChange = previousTotal > 0 ? ((recentTotal - previousTotal) / previousTotal * 100) : 0;
-                 const ordersChange = previousOrdersCount > 0 ? ((recentOrdersCount - previousOrdersCount) / previousOrdersCount * 100) : 0;
-                 const avgChange = previousAverage > 0 ? ((recentAverage - previousAverage) / previousAverage * 100) : 0;
-                 
-                 // Totaux globaux (tous les ordres)
-                 const totalSales = orders.reduce((acc, order) => acc + Number(order.totalAmount), 0);
-                 const totalOrders = orders.length;
-                 const avgOrder = totalOrders > 0 ? totalSales / totalOrders : 0;
-                 
-                 return (
-                 <div className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                          <div className="flex items-center justify-between mb-4">
-                             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Ventes Totales</h3>
-                             {previousTotal > 0 ? (
-                                <div className={`${salesChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
-                                   {salesChange >= 0 ? '+' : ''}{salesChange.toFixed(1)}%
-                                </div>
-                             ) : recentTotal > 0 ? (
-                                <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">
-                                   Nouveau
-                                </div>
-                             ) : null}
-                          </div>
-                          <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {totalSales.toFixed(2)} €
-                          </div>
-                          <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
-                       </div>
-
-                       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                          <div className="flex items-center justify-between mb-4">
-                             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Commandes</h3>
-                             {previousOrdersCount > 0 ? (
-                                <div className={`${ordersChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
-                                   {ordersChange >= 0 ? '+' : ''}{ordersChange.toFixed(1)}%
-                                </div>
-                             ) : recentOrdersCount > 0 ? (
-                                <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">
-                                   Nouveau
-                                </div>
-                             ) : null}
-                          </div>
-                          <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {totalOrders}
-                          </div>
-                          <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
-                       </div>
-
-                       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                          <div className="flex items-center justify-between mb-4">
-                             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Panier Moyen</h3>
-                             {previousAverage > 0 ? (
-                                <div className={`${avgChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
-                                   {avgChange >= 0 ? '+' : ''}{avgChange.toFixed(1)}%
-                                </div>
-                             ) : recentAverage > 0 ? (
-                                <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">
-                                   Nouveau
-                                </div>
-                             ) : null}
-                          </div>
-                          <div className="text-3xl font-bold text-slate-900 mb-1">
-                             {avgOrder.toFixed(2)} €
-                          </div>
-                          <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
-                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                       <div className="lg:col-span-2 space-y-6">
-                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                                <h3 className="font-bold text-slate-800">Dernières commandes</h3>
-                                <button onClick={() => setActiveTab('orders')} className="text-indigo-600 text-sm font-bold hover:underline">Tout voir</button>
-                             </div>
-                             <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 text-slate-500 font-medium">
-                                   <tr>
-                                      <th className="px-6 py-3">Commande</th>
-                                      <th className="px-6 py-3">Client</th>
-                                      <th className="px-6 py-3">Statut</th>
-                                      <th className="px-6 py-3 text-right">Total</th>
-                                   </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                   {[...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5).map(order => (
-                                      <tr key={order.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => { setActiveTab('orders'); setSelectedOrderId(order.id); }}>
-                                         <td className="px-6 py-4 font-bold text-slate-900">{order.id}</td>
-                                         <td className="px-6 py-4">{order.customerName}</td>
-                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase ${
-                                               order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                               order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                                               order.status === 'processing' ? 'bg-orange-100 text-orange-700' :
-                                               order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                                               'bg-slate-100 text-slate-600'
-                                            }`}>
-                                               {order.status === 'pending' ? 'En attente' :
-                                                order.status === 'processing' ? 'En cours' :
-                                                order.status === 'shipped' ? 'Expédiée' :
-                                                order.status === 'delivered' ? 'Livrée' : 'Annulée'}
-                                            </span>
-                                         </td>
-                                         <td className="px-6 py-4 text-right font-bold">{Number(order.totalAmount).toFixed(2)} €</td>
-                                      </tr>
-                                   ))}
-                                   {orders.length === 0 && (
-                                      <tr>
-                                         <td colSpan={4} className="px-6 py-8 text-center text-slate-500">Aucune commande récente</td>
-                                      </tr>
-                                   )}
-                                </tbody>
-                             </table>
-                          </div>
-                       </div>
-
-                       <div className="space-y-6">
-                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                             <h3 className="font-bold text-slate-800 mb-4">À faire</h3>
-                             <div className="space-y-3">
-                                <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100 text-orange-800">
-                                   <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0"></div>
-                                   <span className="text-sm font-medium">{orders.filter(o => o.status === 'pending').length} commandes à traiter</span>
-                                   <ChevronRight size={16} className="ml-auto opacity-50" />
-                                </div>
-                                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100 text-blue-800">
-                                   <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></div>
-                                   <span className="text-sm font-medium">{orders.filter(o => o.status === 'processing').length} en cours de production</span>
-                                   <ChevronRight size={16} className="ml-auto opacity-50" />
-                                </div>
-                             </div>
-                          </div>
-
-                          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                             <h3 className="font-bold text-slate-800 mb-4">Top Produits</h3>
-                             <div className="space-y-4">
-                                {books.slice(0, 3).map((book, i) => (
-                                   <div key={book.id} className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">
-                                         {i + 1}
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                         <div className="text-sm font-medium text-slate-900 truncate">{book.name}</div>
-                                         <div className="text-xs text-slate-500">{book.wizardConfig.tabs.length} options</div>
-                                      </div>
-                                      <div className="text-xs font-bold text-slate-700">{formatPrice(book.price)}</div>
-                                   </div>
-                                ))}
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-                 );
-              })()}
+              {activeTab === 'home' && (
+                <HomeDashboard orders={orders} books={books} ordersLoading={ordersLoading} setActiveTab={setActiveTab} setSelectedOrderId={setSelectedOrderId} />
+              )}
+              
 
               {/* --- VIEW: ANALYTICS --- */}
-              {activeTab === 'analytics' && (
-                 <div className="space-y-8">
-                    <div className="bg-slate-900 text-white p-8 rounded-xl shadow-lg relative overflow-hidden">
-                       <div className="relative z-10">
-                          <h2 className="text-3xl font-bold mb-2">Performances</h2>
-                          <p className="text-slate-400 max-w-xl">
-                             Analysez vos ventes, le comportement de vos clients et la performance de vos produits pour optimiser votre boutique.
-                          </p>
-                       </div>
-                       <BarChart3 className="absolute right-8 top-8 text-slate-800 opacity-20 w-64 h-64 -rotate-12" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-64 flex flex-col items-center justify-center text-center">
-                          <BarChart3 size={48} className="text-slate-300 mb-4" />
-                          <h3 className="font-bold text-slate-800">Graphique des ventes</h3>
-                          <p className="text-sm text-slate-500 mt-2">Données simulées pour la démo.</p>
-                       </div>
-                       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-64 flex flex-col items-center justify-center text-center">
-                          <Globe size={48} className="text-slate-300 mb-4" />
-                          <h3 className="font-bold text-slate-800">Ventes par région</h3>
-                          <p className="text-sm text-slate-500 mt-2">Données simulées pour la démo.</p>
-                       </div>
-                    </div>
-                 </div>
-              )}
+              {activeTab === 'analytics' && <AnalyticsPanel />}
 
               {/* --- VIEW: SETTINGS --- */}
               {activeTab === 'settings' && (
-                 <div className="max-w-4xl mx-auto space-y-8">
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                       <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
-                          <div>
-                             <h3 className="font-bold text-slate-800 text-lg">Général</h3>
-                             <p className="text-sm text-slate-500">Informations de base de votre boutique</p>
-                          </div>
-                          <button 
-                             onClick={() => handleSaveSettings('Général')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
-                          >
-                             <Save size={16} /> Sauvegarder
-                          </button>
-                       </div>
-                       <div className="p-6 space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nom de la boutique</label>
-                                <input 
-                                   type="text" 
-                                   value={settings.general.storeName}
-                                   onChange={(e) => setSettings({...settings, general: {...settings.general, storeName: e.target.value}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                />
-                             </div>
-                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email de contact</label>
-                                <input 
-                                   type="email" 
-                                   value={settings.general.supportEmail}
-                                   onChange={(e) => setSettings({...settings, general: {...settings.general, supportEmail: e.target.value}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                />
-                             </div>
-                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Devise</label>
-                                <select 
-                                   value={settings.general.currency}
-                                   onChange={(e) => setSettings({...settings, general: {...settings.general, currency: e.target.value}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                >
-                                   <option value="EUR">Euro (€)</option>
-                                   <option value="USD">Dollar ($)</option>
-                                   <option value="GBP">Livre (£)</option>
-                                </select>
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                       <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
-                          <div>
-                             <h3 className="font-bold text-slate-800 text-lg">Paiement</h3>
-                             <p className="text-sm text-slate-500">Fournisseurs et passerelles de paiement</p>
-                          </div>
-                          <button 
-                             onClick={() => handleSaveSettings('Paiement')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
-                          >
-                             <Save size={16} /> Sauvegarder
-                          </button>
-                       </div>
-                       <div className="p-6 space-y-6">
-                          <div className="flex items-start gap-4">
-                             <div className="pt-1">
-                                <input 
-                                   type="checkbox" 
-                                   checked={settings.payment.stripeEnabled}
-                                   onChange={(e) => setSettings({...settings, payment: {...settings.payment, stripeEnabled: e.target.checked}})}
-                                   className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4"
-                                />
-                             </div>
-                             <div className="flex-1">
-                                <h4 className="font-bold text-slate-700">Stripe</h4>
-                                <p className="text-sm text-slate-500 mb-2">Accepter les cartes bancaires via Stripe.</p>
-                                {settings.payment.stripeEnabled && (
-                                   <div>
-                                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Clé API Publique</label>
-                                      <input 
-                                         type="text" 
-                                         value={settings.payment.stripeKey}
-                                         onChange={(e) => setSettings({...settings, payment: {...settings.payment, stripeKey: e.target.value}})}
-                                         className="w-full text-sm border-gray-300 rounded-lg bg-slate-50 font-mono text-slate-600"
-                                      />
-                                   </div>
-                                )}
-                             </div>
-                          </div>
-                          
-                          <div className="w-full h-px bg-gray-100"></div>
-
-                          <div className="flex items-start gap-4">
-                             <div className="pt-1">
-                                <input 
-                                   type="checkbox" 
-                                   checked={settings.payment.paypalEnabled}
-                                   onChange={(e) => setSettings({...settings, payment: {...settings.payment, paypalEnabled: e.target.checked}})}
-                                   className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4"
-                                />
-                             </div>
-                             <div className="flex-1">
-                                <h4 className="font-bold text-slate-700">PayPal</h4>
-                                <p className="text-sm text-slate-500">Accepter les paiements via PayPal.</p>
-                             </div>
-                          </div>
-
-                          <div className="w-full h-px bg-gray-100"></div>
-
-                          <div className="flex-1">
-                             <h4 className="font-bold text-slate-700 mb-3">Badges des moyens de paiement affichés</h4>
-                             <p className="text-sm text-slate-500 mb-4">Sélectionnez les badges à afficher sur les pages de paiement.</p>
-                             
-                             <div className="space-y-3">
-                                <div className="text-xs font-bold text-slate-500 uppercase">Cartes bancaires</div>
-                                <div className="grid grid-cols-2 gap-3">
-                                   {[
-                                      { id: 'visa', label: 'Visa' },
-                                      { id: 'mastercard', label: 'Mastercard' },
-                                      { id: 'amex', label: 'American Express' },
-                                      { id: 'discover', label: 'Discover' }
-                                   ].map(method => (
-                                      <label key={method.id} className="flex items-center gap-2 cursor-pointer">
-                                         <input 
-                                            type="checkbox" 
-                                            checked={settings.payment.acceptedPaymentMethods?.includes(method.id) || false}
-                                            onChange={(e) => {
-                                               const methods = settings.payment.acceptedPaymentMethods || [];
-                                               const newMethods = e.target.checked 
-                                                  ? [...methods, method.id]
-                                                  : methods.filter(m => m !== method.id);
-                                               setSettings({...settings, payment: {...settings.payment, acceptedPaymentMethods: newMethods}});
-                                            }}
-                                            className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
-                                         />
-                                         <span className="text-sm text-slate-700">{method.label}</span>
-                                      </label>
-                                   ))}
-                                </div>
-
-                                <div className="text-xs font-bold text-slate-500 uppercase mt-4">Portefeuilles digitaux</div>
-                                <div className="grid grid-cols-2 gap-3">
-                                   {[
-                                      { id: 'applepay', label: 'Apple Pay' },
-                                      { id: 'googlepay', label: 'Google Pay' }
-                                   ].map(method => (
-                                      <label key={method.id} className="flex items-center gap-2 cursor-pointer">
-                                         <input 
-                                            type="checkbox" 
-                                            checked={settings.payment.acceptedPaymentMethods?.includes(method.id) || false}
-                                            onChange={(e) => {
-                                               const methods = settings.payment.acceptedPaymentMethods || [];
-                                               const newMethods = e.target.checked 
-                                                  ? [...methods, method.id]
-                                                  : methods.filter(m => m !== method.id);
-                                               setSettings({...settings, payment: {...settings.payment, acceptedPaymentMethods: newMethods}});
-                                            }}
-                                            className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
-                                         />
-                                         <span className="text-sm text-slate-700">{method.label}</span>
-                                      </label>
-                                   ))}
-                                </div>
-
-                                <div className="text-xs font-bold text-slate-500 uppercase mt-4">Autres moyens</div>
-                                <div className="grid grid-cols-2 gap-3">
-                                   {[
-                                      { id: 'paypal', label: 'PayPal' },
-                                      { id: 'klarna', label: 'Klarna' }
-                                   ].map(method => (
-                                      <label key={method.id} className="flex items-center gap-2 cursor-pointer">
-                                         <input 
-                                            type="checkbox" 
-                                            checked={settings.payment.acceptedPaymentMethods?.includes(method.id) || false}
-                                            onChange={(e) => {
-                                               const methods = settings.payment.acceptedPaymentMethods || [];
-                                               const newMethods = e.target.checked 
-                                                  ? [...methods, method.id]
-                                                  : methods.filter(m => m !== method.id);
-                                               setSettings({...settings, payment: {...settings.payment, acceptedPaymentMethods: newMethods}});
-                                            }}
-                                            className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
-                                         />
-                                         <span className="text-sm text-slate-700">{method.label}</span>
-                                      </label>
-                                   ))}
-                                </div>
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                       <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
-                          <div>
-                             <h3 className="font-bold text-slate-800 text-lg">Expédition</h3>
-                             <p className="text-sm text-slate-500">Tarifs et règles de livraison</p>
-                          </div>
-                          <button 
-                             onClick={() => handleSaveSettings('Expédition')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
-                          >
-                             <Save size={16} /> Sauvegarder
-                          </button>
-                       </div>
-                       <div className="p-6 space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Livraison Standard (€)</label>
-                                <input 
-                                   type="number" 
-                                   step="0.1"
-                                   value={settings.shipping.standardRate}
-                                   onChange={(e) => setSettings({...settings, shipping: {...settings.shipping, standardRate: parseFloat(e.target.value)}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                />
-                             </div>
-                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Livraison Express (€)</label>
-                                <input 
-                                   type="number" 
-                                   step="0.1"
-                                   value={settings.shipping.expressRate}
-                                   onChange={(e) => setSettings({...settings, shipping: {...settings.shipping, expressRate: parseFloat(e.target.value)}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                />
-                             </div>
-                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Seuil Gratuité (€)</label>
-                                <input 
-                                   type="number" 
-                                   value={settings.shipping.freeShippingThreshold}
-                                   onChange={(e) => setSettings({...settings, shipping: {...settings.shipping, freeShippingThreshold: parseFloat(e.target.value)}})}
-                                   className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                />
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                       <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
-                          <div>
-                             <h3 className="font-bold text-slate-800 text-lg">Notifications</h3>
-                             <p className="text-sm text-slate-500">Emails transactionnels</p>
-                          </div>
-                          <button 
-                             onClick={() => handleSaveSettings('Notifications')}
-                             className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm"
-                          >
-                             <Save size={16} /> Sauvegarder
-                          </button>
-                       </div>
-                       <div className="p-6 space-y-4">
-                          <div className="flex items-start gap-4">
-                             <div className="pt-1">
-                                <input 
-                                   type="checkbox" 
-                                   checked={settings.notifications.orderConfirmation}
-                                   onChange={(e) => setSettings({...settings, notifications: {...settings.notifications, orderConfirmation: e.target.checked}})}
-                                   className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4"
-                                />
-                             </div>
-                             <div className="flex-1">
-                                <h4 className="font-bold text-slate-700">Confirmation de commande</h4>
-                                <p className="text-sm text-slate-500">Envoyer un email au client lors de la commande.</p>
-                             </div>
-                          </div>
-                          <div className="flex items-start gap-4">
-                             <div className="pt-1">
-                                <input 
-                                   type="checkbox" 
-                                   checked={settings.notifications.shippingUpdate}
-                                   onChange={(e) => setSettings({...settings, notifications: {...settings.notifications, shippingUpdate: e.target.checked}})}
-                                   className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4"
-                                />
-                             </div>
-                             <div className="flex-1">
-                                <h4 className="font-bold text-slate-700">Mise à jour d'expédition</h4>
-                                <p className="text-sm text-slate-500">Envoyer un email au client lors de l'expédition.</p>
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden">
-                       <div className="p-6 border-b border-red-100 flex justify-between items-center bg-red-50/50">
-                          <div>
-                             <h3 className="font-bold text-red-800 text-lg">Zone de Danger</h3>
-                             <p className="text-sm text-red-500">Nettoyage de la base de données</p>
-                          </div>
-                       </div>
-                       <div className="p-6">
-                          <p className="text-sm text-slate-600 mb-6">
-                             ⚠️ <strong>Attention :</strong> Ces actions suppriment définitivement les données de la base de données PostgreSQL. 
-                             Cette opération est <strong>irréversible</strong>.
-                          </p>
-                          
-                          <div className="space-y-3">
-                             <button 
-                                onClick={async () => {
-                                   if (confirm('⚠️ DANGER : Toutes les données seront supprimées définitivement (livres, commandes, clients, zones d\'expédition). Voulez-vous vraiment continuer ?')) {
-                                      try {
-                                         const response = await fetch('/api/admin/reset/all', { method: 'DELETE' });
-                                         if (response.ok) {
-                                            toast.success('Toutes les données ont été supprimées');
-                                            window.location.reload();
-                                         } else {
-                                            toast.error('Erreur lors de la suppression');
-                                         }
-                                      } catch (error) {
-                                         toast.error('Erreur de connexion');
-                                      }
-                                   }
-                                }}
-                                className="w-full bg-white border-2 border-red-500 text-red-600 px-4 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-50 transition-colors shadow-sm"
-                             >
-                                <Trash2 size={16} /> Supprimer TOUTES les données
-                             </button>
-
-                             <button 
-                                onClick={async () => {
-                                   if (confirm('Tous les livres seront supprimés de la base de données. Voulez-vous continuer ?')) {
-                                      try {
-                                         const response = await fetch('/api/admin/reset/books', { method: 'DELETE' });
-                                         if (response.ok) {
-                                            toast.success('Tous les livres ont été supprimés');
-                                            window.location.reload();
-                                         } else {
-                                            toast.error('Erreur lors de la suppression');
-                                         }
-                                      } catch (error) {
-                                         toast.error('Erreur de connexion');
-                                      }
-                                   }
-                                }}
-                                className="w-full bg-white border border-orange-300 text-orange-600 px-4 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-orange-50 transition-colors"
-                             >
-                                <Book size={16} /> Supprimer tous les livres
-                             </button>
-
-                             <button 
-                                onClick={async () => {
-                                   if (confirm('Toutes les commandes seront supprimées de la base de données. Voulez-vous continuer ?')) {
-                                      try {
-                                         const response = await fetch('/api/admin/reset/orders', { method: 'DELETE' });
-                                         if (response.ok) {
-                                            toast.success('Toutes les commandes ont été supprimées');
-                                            window.location.reload();
-                                         } else {
-                                            toast.error('Erreur lors de la suppression');
-                                         }
-                                      } catch (error) {
-                                         toast.error('Erreur de connexion');
-                                      }
-                                   }
-                                }}
-                                className="w-full bg-white border border-blue-300 text-blue-600 px-4 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors"
-                             >
-                                <Package size={16} /> Supprimer toutes les commandes
-                             </button>
-
-                             <button 
-                                onClick={async () => {
-                                   if (confirm('Tous les clients seront supprimés de la base de données. Voulez-vous continuer ?')) {
-                                      try {
-                                         const response = await fetch('/api/admin/reset/customers', { method: 'DELETE' });
-                                         if (response.ok) {
-                                            toast.success('Tous les clients ont été supprimés');
-                                            window.location.reload();
-                                         } else {
-                                            toast.error('Erreur lors de la suppression');
-                                         }
-                                      } catch (error) {
-                                         toast.error('Erreur de connexion');
-                                      }
-                                   }
-                                }}
-                                className="w-full bg-white border border-purple-300 text-purple-600 px-4 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-purple-50 transition-colors"
-                             >
-                                <Users size={16} /> Supprimer tous les clients
-                             </button>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
+                <SettingsPanel settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} />
               )}
+              
 
               {/* --- VIEW: HOMEPAGE MANAGEMENT --- */}
               {activeTab === 'homepage' && (
@@ -4622,7 +4042,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   </div>
 
                   <div className="grid grid-cols-1 gap-8">
-                      {mainMenu.map((menu, idx) => (
+                      {localMainMenu.map((menu, idx) => (
                           <div key={menu.id || idx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                               <div className="p-6 border-b border-gray-100 flex justify-between items-start">
                                   <div className="flex-1 space-y-4">
@@ -4631,7 +4051,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           <input 
                                               type="text" 
                                               value={menu.label}
-                                              onChange={(e) => updateMenuItem(idx, { ...menu, label: e.target.value })}
+                                              onChange={(e) => setLocalMenuItem(idx, { ...menu, label: e.target.value })}
                                               className="font-bold text-xl text-slate-800 bg-transparent border border-gray-200 rounded px-3 py-2 w-full max-w-md focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral transition-all"
                                           />
                                       </div>
@@ -4642,7 +4062,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   {['simple', 'grid', 'columns'].map((type) => (
                                                       <button
                                                           key={type}
-                                                          onClick={() => updateMenuItem(idx, { ...menu, type: type as any })}
+                                                          onClick={() => setLocalMenuItem(idx, { ...menu, type: type as any })}
                                                           className={`px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-all ${
                                                               menu.type === type 
                                                                   ? 'bg-white text-slate-900 shadow-sm' 
@@ -4659,7 +4079,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               <input 
                                                   type="text" 
                                                   value={menu.basePath}
-                                                  onChange={(e) => updateMenuItem(idx, { ...menu, basePath: e.target.value })}
+                                                  onChange={(e) => setLocalMenuItem(idx, { ...menu, basePath: e.target.value })}
                                                   className="text-sm border border-gray-200 rounded px-3 py-1.5 focus:ring-brand-coral focus:border-brand-coral font-mono text-slate-600 w-48"
                                               />
                                           </div>
@@ -4695,7 +4115,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               onChange={(e) => {
                                                                   const newCols = [...(menu.columns || [])];
                                                                   newCols[colIdx] = { ...col, title: e.target.value };
-                                                                  updateMenuItem(idx, { ...menu, columns: newCols });
+                                                                  setLocalMenuItem(idx, { ...menu, columns: newCols });
                                                               }}
                                                               className="font-bold text-sm bg-transparent border-none p-0 focus:ring-0 text-slate-800 w-full"
                                                               placeholder="Titre de la colonne"
@@ -4703,7 +4123,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           <button 
                                                               onClick={() => {
                                                                   const newCols = (menu.columns || []).filter((_, i) => i !== colIdx);
-                                                                  updateMenuItem(idx, { ...menu, columns: newCols });
+                                                                  setLocalMenuItem(idx, { ...menu, columns: newCols });
                                                               }}
                                                               className="text-slate-400 hover:text-red-500"
                                                           >
@@ -4731,7 +4151,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                       newItems[itemIdx] = e.target.value;
                                                                                       const newCols = [...(menu.columns || [])];
                                                                                       newCols[colIdx] = { ...col, items: newItems };
-                                                                                      updateMenuItem(idx, { ...menu, columns: newCols });
+                                                                                      setLocalMenuItem(idx, { ...menu, columns: newCols });
                                                                                   }}
                                                                                   className="flex-1 border-none p-0 text-sm focus:ring-0 bg-transparent"
                                                                                   onPointerDown={(e) => e.stopPropagation()}
@@ -4742,7 +4162,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                                       const newItems = col.items.filter((_, i) => i !== itemIdx);
                                                                                       const newCols = [...(menu.columns || [])];
                                                                                       newCols[colIdx] = { ...col, items: newItems };
-                                                                                      updateMenuItem(idx, { ...menu, columns: newCols });
+                                                                                      setLocalMenuItem(idx, { ...menu, columns: newCols });
                                                                                   }}
                                                                                   className="text-slate-300 hover:text-red-400"
                                                                                   onPointerDown={(e) => e.stopPropagation()}
@@ -4759,7 +4179,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                   const newItems = [...col.items, 'Nouveau lien'];
                                                                   const newCols = [...(menu.columns || [])];
                                                                   newCols[colIdx] = { ...col, items: newItems };
-                                                                  updateMenuItem(idx, { ...menu, columns: newCols });
+                                                                  setLocalMenuItem(idx, { ...menu, columns: newCols });
                                                               }}
                                                               className="mt-3 w-full py-2 border border-dashed border-gray-300 rounded-lg text-slate-500 hover:text-brand-coral hover:border-brand-coral text-xs font-bold transition-colors flex items-center justify-center gap-1"
                                                           >
@@ -4772,7 +4192,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               <button 
                                                   onClick={() => {
                                                       const newCols = [...(menu.columns || []), { title: 'Nouvelle Colonne', items: [] }];
-                                                      updateMenuItem(idx, { ...menu, columns: newCols });
+                                                      setLocalMenuItem(idx, { ...menu, columns: newCols });
                                                   }}
                                                   className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center text-slate-400 hover:text-brand-coral hover:border-brand-coral hover:bg-slate-50 transition-all min-h-[200px]"
                                               >
@@ -4804,7 +4224,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                         onChange={(e) => {
                                                                             const newItems = [...(menu.items || [])];
                                                                             newItems[itemIdx] = e.target.value;
-                                                                            updateMenuItem(idx, { ...menu, items: newItems });
+                                                                            setLocalMenuItem(idx, { ...menu, items: newItems });
                                                                         }}
                                                                         className="w-full bg-transparent border-none p-0 focus:ring-0 text-slate-700 font-medium"
                                                                         placeholder="Nom du lien"
@@ -4815,7 +4235,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  <button 
                                                                      onClick={() => {
                                                                          const newItems = (menu.items || []).filter((_, i) => i !== itemIdx);
-                                                                         updateMenuItem(idx, { ...menu, items: newItems });
+                                                                         setLocalMenuItem(idx, { ...menu, items: newItems });
                                                                      }}
                                                                      className="text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-2"
                                                                      onPointerDown={(e) => e.stopPropagation()}
@@ -4839,7 +4259,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   <button 
                                                       onClick={() => {
                                                           const newItems = [...(menu.items || []), 'Nouveau lien'];
-                                                          updateMenuItem(idx, { ...menu, items: newItems });
+                                                          setLocalMenuItem(idx, { ...menu, items: newItems });
                                                       }}
                                                       className="text-brand-coral font-bold text-sm flex items-center gap-2 hover:underline px-2"
                                                   >
@@ -4853,9 +4273,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
                                       <button 
                                           onClick={() => handleSaveMenu(idx)}
-                                          disabled={JSON.stringify(menu) === JSON.stringify(originalMainMenu[idx] || {})}
+                                          disabled={JSON.stringify(menu) === JSON.stringify(mainMenu[idx] || {})}
                                           className={`px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors shadow-sm ${
-                                              JSON.stringify(menu) !== JSON.stringify(originalMainMenu[idx] || {})
+                                              JSON.stringify(menu) !== JSON.stringify(mainMenu[idx] || {})
                                                   ? 'bg-slate-900 text-white hover:bg-slate-800' 
                                                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                           }`}
@@ -4872,563 +4292,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
               {/* --- VIEW: SHIPPING --- */}
               {activeTab === 'shipping' && (
-                 <div className="max-w-4xl mx-auto space-y-8">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-800">Expédition et Livraison</h2>
-                            <p className="text-slate-500 mt-1">Configurez les zones, tarifs et délais de livraison.</p>
-                        </div>
-                        <div className="flex gap-2">
-                             <button 
-                                onClick={() => {
-                                    const newZone: ShippingZone = {
-                                        id: `zone-${Date.now()}`,
-                                        name: 'Nouvelle Zone',
-                                        countries: [],
-                                        methods: []
-                                    };
-                                    addShippingZone(newZone);
-                                    setEditingZoneId(newZone.id);
-                                }}
-                                className="bg-white border border-gray-300 text-slate-700 px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors"
-                            >
-                                <Plus size={18} /> Ajouter une zone
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 bg-slate-50/50 flex justify-between items-center">
-                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                                <Globe size={20} className="text-indigo-600" />
-                                Zones d'expédition
-                            </h3>
-                            
-                            <div className="flex items-center gap-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase">Tarif par défaut:</label>
-                                <div className="relative w-24">
-                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-                                    <input 
-                                        type="number" 
-                                        value={defaultShippingRate}
-                                        onChange={(e) => updateDefaultShippingRate(parseFloat(e.target.value) || 0)}
-                                        className="w-full text-sm border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none text-right font-bold text-slate-800"
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="divide-y divide-gray-100">
-                             {shippingZones.map(zone => (
-                                <div key={zone.id} className="p-6">
-                                    {editingZoneId === zone.id ? (
-                                        <div className="space-y-6 bg-slate-50 p-4 rounded-xl border border-indigo-100">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-bold text-slate-700 mb-1">Nom de la zone</label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={zone.name}
-                                                        onChange={(e) => updateShippingZone(zone.id, { name: e.target.value })}
-                                                        className="w-full text-sm border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-                                                        placeholder="Ex: France Métropolitaine"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-bold text-slate-700 mb-1">Pays (Codes ISO ou Noms)</label>
-                                                    <div className="flex flex-wrap gap-2 mb-2 p-2 bg-white border border-gray-300 rounded min-h-[42px]">
-                                                        {zone.countries.map(country => (
-                                                            <span key={country} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                                                                {country}
-                                                                <button onClick={() => updateShippingZone(zone.id, { countries: zone.countries.filter(c => c !== country) })}>
-                                                                    <X size={12} />
-                                                                </button>
-                                                            </span>
-                                                        ))}
-                                                        <input 
-                                                            type="text" 
-                                                            placeholder={zone.countries.length === 0 ? "Ajouter (Entrée)" : ""}
-                                                            className="bg-transparent border-none p-0 text-sm focus:ring-0 min-w-[100px] flex-1"
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    const val = e.currentTarget.value.trim();
-                                                                    if (val && !zone.countries.includes(val)) {
-                                                                        updateShippingZone(zone.id, { countries: [...zone.countries, val] });
-                                                                        e.currentTarget.value = '';
-                                                                    }
-                                                                }
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <label className="block text-sm font-bold text-slate-700">Méthodes de livraison</label>
-                                                    <button 
-                                                        onClick={() => {
-                                                            const newMethod: ShippingMethod = {
-                                                                id: `method-${Date.now()}`,
-                                                                name: 'Nouvelle méthode',
-                                                                price: 0,
-                                                                estimatedDelay: '2-3 jours'
-                                                            };
-                                                            updateShippingZone(zone.id, { methods: [...zone.methods, newMethod] });
-                                                        }}
-                                                        className="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:underline"
-                                                    >
-                                                        <Plus size={14} /> Ajouter une méthode
-                                                    </button>
-                                                </div>
-                                                
-                                                <div className="space-y-3">
-                                                    {zone.methods.map((method, mIdx) => (
-                                                        <div key={method.id} className="flex flex-col md:flex-row gap-3 bg-white p-3 rounded border border-gray-200 items-start md:items-center">
-                                                            <div className="flex-1 w-full">
-                                                                <div className="flex items-center gap-2 mb-2">
-                                                                    <input 
-                                                                        type="text" 
-                                                                        value={method.name}
-                                                                        onChange={(e) => {
-                                                                            const newMethods = [...zone.methods];
-                                                                            newMethods[mIdx] = { ...method, name: e.target.value };
-                                                                            updateShippingZone(zone.id, { methods: newMethods });
-                                                                        }}
-                                                                        className="flex-1 text-sm font-bold border-none p-0 focus:ring-0 text-slate-800 placeholder-gray-400"
-                                                                        placeholder="Nom de la méthode"
-                                                                    />
-                                                                    {method.condition && method.condition.type !== 'none' && (
-                                                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 whitespace-nowrap">
-                                                                            {method.condition.type === 'price' ? 'Prix' : method.condition.type === 'weight' ? 'Poids' : 'Quantité'} {
-                                                                                method.condition.operator === 'greater_than' ? '> ' : 
-                                                                                method.condition.operator === 'less_than' ? '< ' : ''
-                                                                            }
-                                                                            {method.condition.value}
-                                                                            {method.condition.operator === 'between' ? ` - ${method.condition.maxValue}` : ''}
-                                                                            {method.condition.type === 'price' ? '€' : method.condition.type === 'weight' ? 'kg' : ''}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <input 
-                                                                    type="text" 
-                                                                    value={method.estimatedDelay || ''}
-                                                                    onChange={(e) => {
-                                                                        const newMethods = [...zone.methods];
-                                                                        newMethods[mIdx] = { ...method, estimatedDelay: e.target.value };
-                                                                        updateShippingZone(zone.id, { methods: newMethods });
-                                                                    }}
-                                                                    className="w-full text-xs text-slate-500 border-none p-0 focus:ring-0 placeholder-gray-300"
-                                                                    placeholder="Délai estimé (ex: 48h)"
-                                                                />
-                                                            </div>
-                                                            <div className="flex items-center gap-3 w-full md:w-auto">
-                                                                <div className="relative">
-                                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-                                                                    <input 
-                                                                        type="number" 
-                                                                        value={method.price}
-                                                                        onChange={(e) => {
-                                                                            const newMethods = [...zone.methods];
-                                                                            newMethods[mIdx] = { ...method, price: parseFloat(e.target.value) || 0 };
-                                                                            updateShippingZone(zone.id, { methods: newMethods });
-                                                                        }}
-                                                                        className="w-20 text-sm border border-gray-200 rounded pl-6 pr-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 text-right font-bold"
-                                                                    />
-                                                                </div>
-                                                                <Popover>
-                                                                    <PopoverTrigger asChild>
-                                                                        <button className={`p-1.5 rounded transition-colors ${method.condition?.type && method.condition.type !== 'none' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:text-slate-500'}`}>
-                                                                            <Filter size={16} />
-                                                                        </button>
-                                                                    </PopoverTrigger>
-                                                                    <PopoverContent className="w-80 p-4 bg-white">
-                                                                        <div className="space-y-4">
-                                                                            <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                                                                                <Filter size={14} /> Condition d'application
-                                                                            </h4>
-                                                                            
-                                                                            <div className="space-y-3">
-                                                                                <div>
-                                                                                    <label className="text-xs font-bold text-slate-500 mb-1 block">Type de condition</label>
-                                                                                    <select 
-                                                                                        className="w-full text-sm border border-gray-200 rounded p-2"
-                                                                                        value={method.condition?.type || 'none'}
-                                                                                        onChange={(e) => {
-                                                                                            const newMethods = [...zone.methods];
-                                                                                            // @ts-ignore
-                                                                                            const type = e.target.value as 'weight' | 'price' | 'quantity' | 'none';
-                                                                                            newMethods[mIdx] = { 
-                                                                                                ...method, 
-                                                                                                condition: type === 'none' ? undefined : { 
-                                                                                                    type, 
-                                                                                                    operator: 'greater_than', 
-                                                                                                    value: 0 
-                                                                                                } 
-                                                                                            };
-                                                                                            updateShippingZone(zone.id, { methods: newMethods });
-                                                                                        }}
-                                                                                    >
-                                                                                        <option value="none">Aucune condition (Toujours appliquer)</option>
-                                                                                        <option value="price">Basé sur le prix de la commande</option>
-                                                                                        <option value="weight">Basé sur le poids de la commande</option>
-                                                                                    <option value="quantity">Basé sur la quantité d'articles</option>
-                                                                                    </select>
-                                                                                </div>
-
-                                                                                {method.condition && method.condition.type !== 'none' && (
-                                                                                    <div className="grid grid-cols-2 gap-2">
-                                                                                        <div>
-                                                                                            <label className="text-xs font-bold text-slate-500 mb-1 block">Opérateur</label>
-                                                                                            <select 
-                                                                                                className="w-full text-sm border border-gray-200 rounded p-2"
-                                                                                                value={method.condition.operator}
-                                                                                                onChange={(e) => {
-                                                                                                    const newMethods = [...zone.methods];
-                                                                                                    if (newMethods[mIdx].condition) {
-                                                                                                        // @ts-ignore
-                                                                                                        newMethods[mIdx].condition.operator = e.target.value;
-                                                                                                        updateShippingZone(zone.id, { methods: newMethods });
-                                                                                                    }
-                                                                                                }}
-                                                                                            >
-                                                                                                <option value="greater_than">Supérieur à ({'>'})</option>
-                                                                                                <option value="less_than">Inférieur à ({'<'})</option>
-                                                                                                <option value="between">Entre</option>
-                                                                                            </select>
-                                                                                        </div>
-                                                                                        <div>
-                                                                                            <label className="text-xs font-bold text-slate-500 mb-1 block">
-                                                                                                Valeur {method.condition.type === 'price' ? '(€)' : method.condition.type === 'weight' ? '(kg)' : '(Qté)'}
-                                                                                            </label>
-                                                                                            <input 
-                                                                                                type="number"
-                                                                                                className="w-full text-sm border border-gray-200 rounded p-2"
-                                                                                                value={method.condition.value}
-                                                                                                onChange={(e) => {
-                                                                                                    const newMethods = [...zone.methods];
-                                                                                                    if (newMethods[mIdx].condition) {
-                                                                                                        newMethods[mIdx].condition.value = parseFloat(e.target.value) || 0;
-                                                                                                        updateShippingZone(zone.id, { methods: newMethods });
-                                                                                                    }
-                                                                                                }}
-                                                                                            />
-                                                                                        </div>
-                                                                                    </div>
-                                                                                )}
-                                                                                
-                                                                                {method.condition && method.condition.operator === 'between' && (
-                                                                                    <div>
-                                                                                        <label className="text-xs font-bold text-slate-500 mb-1 block">
-                                                                                            Valeur Max {method.condition.type === 'price' ? '(€)' : method.condition.type === 'weight' ? '(kg)' : '(Qté)'}
-                                                                                        </label>
-                                                                                        <input 
-                                                                                            type="number"
-                                                                                            className="w-full text-sm border border-gray-200 rounded p-2"
-                                                                                            value={method.condition.maxValue || 0}
-                                                                                            onChange={(e) => {
-                                                                                                const newMethods = [...zone.methods];
-                                                                                                if (newMethods[mIdx].condition) {
-                                                                                                    newMethods[mIdx].condition.maxValue = parseFloat(e.target.value) || 0;
-                                                                                                    updateShippingZone(zone.id, { methods: newMethods });
-                                                                                                }
-                                                                                            }}
-                                                                                        />
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    </PopoverContent>
-                                                                </Popover>
-                                                                <button 
-                                                                    onClick={() => {
-                                                                        const newMethods = zone.methods.filter((_, i) => i !== mIdx);
-                                                                        updateShippingZone(zone.id, { methods: newMethods });
-                                                                    }}
-                                                                    className="text-gray-400 hover:text-red-500 transition-colors"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                    {zone.methods.length === 0 && (
-                                                        <p className="text-sm text-gray-400 italic text-center py-2">Aucune méthode configurée pour cette zone.</p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex justify-between items-center pt-2 border-t border-indigo-100">
-                                                <button 
-                                                    onClick={() => {
-                                                        if (confirm('Êtes-vous sûr de vouloir supprimer cette zone ?')) {
-                                                            deleteShippingZone(zone.id);
-                                                        }
-                                                    }}
-                                                    className="text-red-500 text-xs font-bold flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                                                >
-                                                    <Trash2 size={14} /> Supprimer la zone
-                                                </button>
-                                                <button 
-                                                    onClick={() => setEditingZoneId(null)}
-                                                    className="px-4 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
-                                                >
-                                                    <Save size={16} /> Enregistrer
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-sm">
-                                                        {zone.countries.length > 0 ? zone.countries[0].substring(0, 2).toUpperCase() : '??'}
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-slate-900">{zone.name}</h4>
-                                                        <p className="text-xs text-slate-500 truncate max-w-md">
-                                                            {zone.countries.length > 0 ? zone.countries.join(', ') : 'Aucun pays défini'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <button 
-                                                    onClick={() => setEditingZoneId(zone.id)}
-                                                    className="text-indigo-600 font-bold text-xs hover:underline flex items-center gap-1"
-                                                >
-                                                    <Edit2 size={14} /> Modifier
-                                                </button>
-                                            </div>
-                                            <div className="bg-slate-50 rounded-lg p-4 border border-gray-100 space-y-3">
-                                                {zone.methods.map(method => (
-                                                    <div key={method.id} className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex flex-col">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-sm font-medium text-slate-700">{method.name}</span>
-                                                                    {method.condition && method.condition.type !== 'none' && (
-                                                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 whitespace-nowrap">
-                                                                            {method.condition.type === 'price' ? 'Prix' : method.condition.type === 'weight' ? 'Poids' : 'Quantité'} {
-                                                                                method.condition.operator === 'greater_than' ? '> ' : 
-                                                                                method.condition.operator === 'less_than' ? '< ' : ''
-                                                                            }
-                                                                            {method.condition.value}
-                                                                            {method.condition.operator === 'between' ? ` - ${method.condition.maxValue}` : ''}
-                                                                            {method.condition.type === 'price' ? '€' : method.condition.type === 'weight' ? 'kg' : ''}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                {method.estimatedDelay && (
-                                                                    <span className="text-[10px] text-slate-400">{method.estimatedDelay}</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="text-sm font-bold text-slate-900">{formatPrice(method.price)}</div>
-                                                    </div>
-                                                ))}
-                                                {zone.methods.length === 0 && (
-                                                    <p className="text-xs text-slate-400 italic">Aucune méthode de livraison configurée.</p>
-                                                )}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                             ))}
-                             {shippingZones.length === 0 && (
-                                 <div className="p-12 text-center">
-                                     <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                                         <Globe size={32} className="text-slate-300" />
-                                     </div>
-                                     <h3 className="text-slate-800 font-bold mb-2">Aucune zone d'expédition</h3>
-                                     <p className="text-slate-500 text-sm mb-6">Configurez les zones où vous livrez vos produits.</p>
-                                     <button 
-                                        onClick={() => {
-                                            const newZone: ShippingZone = {
-                                                id: `zone-${Date.now()}`,
-                                                name: 'Nouvelle Zone',
-                                                countries: [],
-                                                methods: []
-                                            };
-                                            addShippingZone(newZone);
-                                            setEditingZoneId(newZone.id);
-                                        }}
-                                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors"
-                                     >
-                                         Créer une première zone
-                                     </button>
-                                 </div>
-                             )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-                            <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                                <Package size={20} className="text-indigo-600" />
-                                Règles d'emballage
-                            </h3>
-                        </div>
-                        <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Poids par livre (g)</label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
-                                        defaultValue={350}
-                                    />
-                                    <p className="text-xs text-slate-500 mt-1">Poids moyen utilisé pour le calcul des frais de port.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                 </div>
+                <ShippingManager shippingZones={shippingZones} defaultShippingRate={defaultShippingRate} updateDefaultShippingRate={updateDefaultShippingRate} addShippingZone={addShippingZone} updateShippingZone={updateShippingZone} deleteShippingZone={deleteShippingZone} editingZoneId={editingZoneId} setEditingZoneId={setEditingZoneId} />
               )}
+              
 
               {/* --- VIEW: PRINTERS --- */}
               {activeTab === 'printers' && (
-                <div className="max-w-4xl mx-auto space-y-6">
-                   <div className="flex justify-between items-center">
-                      <div>
-                         <h2 className="text-2xl font-bold text-slate-800">Imprimeurs</h2>
-                         <p className="text-slate-500 mt-1">Gérez vos partenaires d'impression par région.</p>
-                      </div>
-                      <button 
-                        onClick={() => {
-                          const newPrinter: PrinterType = {
-                             id: `PRT-${Date.now()}`,
-                             name: 'Nouvel Imprimeur',
-                             countryCodes: [],
-                             contactEmail: '',
-                             productionDelayDays: 3
-                          };
-                          setPrinters([...printers, newPrinter]);
-                          setEditingPrinterId(newPrinter.id);
-                        }}
-                        className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-md"
-                      >
-                         <Plus size={18} />
-                         Ajouter
-                      </button>
-                   </div>
-
-                   <div className="grid gap-4">
-                      {printers.map(printer => (
-                         <div key={printer.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                            {editingPrinterId === printer.id ? (
-                               <div className="space-y-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                     <div>
-                                        <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Nom</label>
-                                        <input 
-                                           type="text" 
-                                           value={printer.name}
-                                           onChange={(e) => setPrinters(printers.map(p => p.id === printer.id ? {...p, name: e.target.value} : p))}
-                                           className="w-full text-sm border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                     </div>
-                                     <div>
-                                        <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Email Contact</label>
-                                        <input 
-                                           type="text" 
-                                           value={printer.contactEmail || ''}
-                                           onChange={(e) => setPrinters(printers.map(p => p.id === printer.id ? {...p, contactEmail: e.target.value} : p))}
-                                           className="w-full text-sm border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                     </div>
-                                  </div>
-                                  
-                                  <div>
-                                     <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Pays supportés (codes ISO)</label>
-                                     <div className="flex flex-wrap gap-2 mb-2">
-                                        {printer.countryCodes.map(code => (
-                                           <span key={code} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                                              {code}
-                                              <button onClick={() => setPrinters(printers.map(p => p.id === printer.id ? {...p, countryCodes: p.countryCodes.filter(c => c !== code)} : p))}>
-                                                 <X size={12} />
-                                              </button>
-                                           </span>
-                                        ))}
-                                        <input 
-                                           type="text" 
-                                           placeholder="+ AJOUTER (Ex: FR)"
-                                           className="bg-transparent border border-dashed border-gray-300 rounded px-2 py-1 text-xs uppercase w-32 focus:w-40 transition-all outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                                           onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                 const code = e.currentTarget.value.toUpperCase();
-                                                 if (code && !printer.countryCodes.includes(code)) {
-                                                    setPrinters(printers.map(p => p.id === printer.id ? {...p, countryCodes: [...p.countryCodes, code]} : p));
-                                                    e.currentTarget.value = '';
-                                                 }
-                                              }
-                                           }}
-                                        />
-                                     </div>
-                                     <p className="text-xs text-slate-400">Appuyez sur Entrée pour ajouter un code pays.</p>
-                                  </div>
-
-                                  <div className="flex justify-end gap-2 pt-2">
-                                     <button 
-                                        onClick={() => setEditingPrinterId(null)}
-                                        className="px-4 py-2 bg-green-50 text-green-700 font-bold text-xs rounded hover:bg-green-100"
-                                     >
-                                        Terminer
-                                     </button>
-                                  </div>
-                               </div>
-                            ) : (
-                               <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-4">
-                                     <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
-                                        <Printer size={24} />
-                                     </div>
-                                     <div>
-                                        <h3 className="font-bold text-slate-900">{printer.name}</h3>
-                                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                           <span className="font-mono bg-slate-100 px-1 rounded">{printer.id}</span>
-                                           <span>•</span>
-                                           <span>{printer.contactEmail}</span>
-                                        </div>
-                                     </div>
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-6">
-                                     <div className="flex items-center gap-2">
-                                        <Globe size={16} className="text-slate-400" />
-                                        <div className="flex gap-1">
-                                           {printer.countryCodes.map(code => (
-                                              <span key={code} className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
-                                                 {code}
-                                              </span>
-                                           ))}
-                                        </div>
-                                     </div>
-
-                                     <div className="flex items-center gap-2 border-l border-gray-100 pl-6">
-                                        <button 
-                                           onClick={() => setEditingPrinterId(printer.id)}
-                                           className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                                        >
-                                           <Edit2 size={16} />
-                                        </button>
-                                        <button 
-                                           onClick={() => {
-                                              if (confirm('Supprimer cet imprimeur ?')) {
-                                                 setPrinters(printers.filter(p => p.id !== printer.id));
-                                              }
-                                           }}
-                                           className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                        >
-                                           <Trash2 size={16} />
-                                        </button>
-                                     </div>
-                                  </div>
-                               </div>
-                            )}
-                         </div>
-                      ))}
-                   </div>
-                </div>
+                <PrintersManager printers={printers} setPrinters={setPrinters} editingPrinterId={editingPrinterId} setEditingPrinterId={setEditingPrinterId} />
               )}
+              
 
               {/* --- VIEW: EDIT BOOK GENERAL --- */}
               {activeTab === 'books' && selectedBookId && selectedBook && (

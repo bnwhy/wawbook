@@ -22,7 +22,7 @@ NuageBook est une plateforme e-commerce full-stack pour des livres personnalisé
 - **Build** : esbuild 0.25.0 pour bundling production
 
 **Base de Données**
-- **PostgreSQL** : Neon Serverless (@neondatabase/serverless 0.10.4)
+- **PostgreSQL** : Railway PostgreSQL (proxy `rlwy.net`)
 - **ORM** : Drizzle ORM 0.39.1 avec drizzle-kit 0.31.4
 - **Migrations** : Gérées via drizzle-kit
 - **Session Store** : connect-pg-simple 10.0.0 avec express-session 1.18.1
@@ -589,9 +589,10 @@ User Action
 3. **Preview Temps Réel**
    - À chaque changement → `generateBookPages(config)`
    - Filtrage images selon conditions
-   - Résolution variables texte
-   - Rendu Canvas (client-side)
+   - Résolution variables texte (`{TXTVAR_*}`, `{{childName}}`, `[childName]`)
+   - Rendu Canvas (client-side) avec fidélité InDesign (fonts custom, positions EPUB, lineHeight pt)
    - Affichage Flipbook (desktop) ou Single-page (mobile)
+   - Dédicace : fallback client dans `handleApplyChanges` si serveur Playwright indisponible
 
 4. **Validation et Ajout Panier**
    - Review final toutes pages
@@ -696,13 +697,21 @@ User Action
 
 #### Mode Client (Preview)
 - **Technologie** : HTML5 Canvas API
-- **Usage** : Preview rapide dans wizard
+- **Usage** : Preview rapide dans wizard + fallback si rendu serveur échoue
 - **Process** :
-  1. Créer canvas dimensions page
-  2. Dessiner images filtrées
-  3. Dessiner textes avec styles IDML
-  4. Export DataURL
+  1. Charger fonts custom via `FontFace API` depuis `/assets/books/{id}/font/` (avec cache statique)
+  2. Créer canvas aux dimensions de la page EPUB (`contentConfig.pages[0]`) × 4 (haute résolution)
+  3. Dessiner images filtrées (positions en px EPUB → canvas via ratio)
+  4. Dessiner textes avec styles IDML complets :
+     - `fontScale = (96/72) × 4` pour conversion pt→px canvas
+     - `lineHeight = pt × 4 × ratio` (basé sur pt, pas fontScale, pour fidélité InDesign)
+     - `topOffset` basé sur `actualBoundingBoxAscent` pour éviter rognage des ascendantes
+     - Clip de zone avec marge supérieure pour les ascendantes/accents
+     - Résolution variables `{TXTVAR_*}` dans les deux renderers (segments et classique)
+     - `strokeColor/strokeWeight/horizontalScale` hérités du `globalStyle`
+  5. Export DataURL JPEG
 - **Performance** : ~500ms par page
+- **Priorité** : Priorité 3 (après pages pré-rendues EPUB et rendu serveur Playwright)
 
 #### Mode Serveur (Production)
 - **Technologie** : Playwright + Chromium

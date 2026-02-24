@@ -390,61 +390,63 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     
     setIsApplying(true);
     setApplyProgress(20);
-    
-    // Update config with new values
     config.dedication = dedication;
     config.author = author;
     
+    let serverSuccess = false;
     try {
-      // Call API to regenerate pages
       const response = await fetch(`/api/books/${book.id}/render-pages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          config: {
-            childName: config.childName,
-            age: config.age,
-            dedication: config.dedication,
-            author: config.author,
-            gender: config.gender,
-          },
+          config: { childName: config.childName, age: config.age, dedication, author, gender: config.gender },
           characters: config.characters,
           combinationKey: currentCombinationKey,
           dedicationOnly: true,
         }),
       });
-      
       setApplyProgress(60);
-      
       if (response.ok) {
         const result = await response.json();
-        
         if (result.pages && result.pages.length > 0) {
-          setApplyProgress(90);
-          // Update generatedPages
           const cacheBust = Date.now();
           const updatedPages = { ...generatedPages };
           result.pages.forEach((p: { pageIndex: number; imageUrl: string }) => {
             updatedPages[p.pageIndex] = `${p.imageUrl}?t=${cacheBust}`;
           });
           setGeneratedPages(updatedPages);
-          
-          // Update initial values
           setInitialDedication(dedication);
           setInitialAuthor(author);
-          
-          // Force flipbook remount by changing key
           setFlipbookKey(prev => prev + 1);
           setApplyProgress(100);
           setApplySuccess(true);
+          serverSuccess = true;
         }
       }
     } catch (err) {
-      console.error('Failed to regenerate pages:', err);
-    } finally {
-      setIsApplying(false);
-      setApplyProgress(0);
+      console.error('Server render failed:', err);
     }
+
+    // Fallback client si le serveur a échoué
+    if (!serverSuccess) {
+      try {
+        setApplyProgress(50);
+        await document.fonts.ready;
+        const updatedConfig = { ...config, dedication, author };
+        const pages = await generateBookPages(book, updatedConfig, currentCombinationKey);
+        setGeneratedPages(pages);
+        setInitialDedication(dedication);
+        setInitialAuthor(author);
+        setFlipbookKey(prev => prev + 1);
+        setApplyProgress(100);
+        setApplySuccess(true);
+      } catch (clientErr) {
+        console.error('Client fallback failed:', clientErr);
+      }
+    }
+
+    setIsApplying(false);
+    setApplyProgress(0);
   };
 
   const handleAddToCart = () => {

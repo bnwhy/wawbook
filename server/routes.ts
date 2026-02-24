@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
-import { insertBookSchema, insertCustomerSchema, insertOrderSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema, type ImageElement } from "@shared/schema";
+import { insertBookSchema, insertCustomerSchema, insertShippingZoneSchema, insertPrinterSchema, insertMenuSchema, type ImageElement } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { registerObjectStorageRoutes, ObjectStorageService, objectStorageClient } from "./services/object_storage";
 import { stripeService } from "./stripeService";
@@ -11,7 +11,6 @@ import * as path from "path";
 import * as fs from "fs";
 import { extractFontsFromCss } from "./utils/fontExtractor";
 import { logger } from "./utils/logger";
-
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -989,99 +988,6 @@ ${textsHtml}
     }
   });
 
-  // ===== ORDERS =====
-  app.get("/api/orders/next-id", async (_req, res) => {
-    try {
-      const { pool } = await import("./storage");
-      const result = await pool.query("SELECT nextval('order_number_seq') as seq");
-      const seq = result.rows[0].seq;
-      const year = new Date().getFullYear().toString().slice(-2);
-      const orderId = `ORD-${year}-${String(seq).padStart(7, '0')}`;
-      return res.json({ orderId });
-    } catch (error) {
-      logger.error({ error }, "Error generating order ID");
-      return res.status(500).json({ error: "Failed to generate order ID" });
-    }
-  });
-
-  app.get("/api/orders", async (_req, res) => {
-    try {
-      const orders = await storage.getAllOrders();
-      return res.json(orders);
-    } catch (error) {
-      logger.error({ error }, "Error getting orders");
-      return res.status(500).json({ error: "Failed to get orders" });
-    }
-  });
-
-  app.get("/api/orders/:id", async (req, res) => {
-    try {
-      const order = await storage.getOrder(req.params.id);
-      if (!order) {
-        return res.status(404).json({ error: "Order not found" });
-      }
-      return res.json(order);
-    } catch (error) {
-      logger.error({ error }, "Error getting order");
-      return res.status(500).json({ error: "Failed to get order" });
-    }
-  });
-
-  app.get("/api/customers/:customerId/orders", async (req, res) => {
-    try {
-      const orders = await storage.getOrdersByCustomer(req.params.customerId);
-      return res.json(orders);
-    } catch (error) {
-      logger.error({ error }, "Error getting customer orders");
-      return res.status(500).json({ error: "Failed to get customer orders" });
-    }
-  });
-
-  app.post("/api/orders", async (req, res) => {
-    try {
-      const body = {
-        ...req.body,
-        totalAmount: req.body.totalAmount !== undefined ? String(req.body.totalAmount) : undefined,
-      };
-      const validationResult = insertOrderSchema.safeParse(body);
-      if (!validationResult.success) {
-        return res.status(400).json({ error: fromZodError(validationResult.error).message });
-      }
-      const order = await storage.createOrder(validationResult.data);
-      return res.status(201).json(order);
-    } catch (error) {
-      logger.error({ error }, "Error creating order");
-      return res.status(500).json({ error: "Failed to create order" });
-    }
-  });
-
-  app.patch("/api/orders/:id", async (req, res) => {
-    try {
-      const body = {
-        ...req.body,
-        totalAmount: req.body.totalAmount !== undefined ? String(req.body.totalAmount) : undefined,
-      };
-      const order = await storage.updateOrder(req.params.id, body);
-      if (!order) {
-        return res.status(404).json({ error: "Order not found" });
-      }
-      return res.json(order);
-    } catch (error) {
-      logger.error({ error }, "Error updating order");
-      return res.status(500).json({ error: "Failed to update order" });
-    }
-  });
-
-  app.delete("/api/orders/:id", async (req, res) => {
-    try {
-      await storage.deleteOrder(req.params.id);
-      return res.status(204).send();
-    } catch (error) {
-      logger.error({ error }, "Error deleting order");
-      return res.status(500).json({ error: "Failed to delete order" });
-    }
-  });
-
   // ===== SHIPPING ZONES =====
   app.get("/api/shipping-zones", async (_req, res) => {
     try {
@@ -1315,6 +1221,11 @@ ${textsHtml}
         return res.status(400).json({ error: "Customer email is required" });
       }
 
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customerEmail)) {
+        return res.status(400).json({ error: "Adresse email invalide. Veuillez saisir un email valide (ex: nom@domaine.com)" });
+      }
+
       const lineItems = items.map((item) => ({
         name: item.name || item.title || 'Livre personnalisé',
         description: item.description,
@@ -1375,50 +1286,6 @@ ${textsHtml}
     } catch (error) {
       logger.error({ error }, "Error verifying payment");
       return res.status(500).json({ error: "Failed to verify payment" });
-    }
-  });
-
-  // Get payment status for an order
-  app.get("/api/orders/:id/payment-status", async (req, res) => {
-    try {
-      const order = await storage.getOrder(req.params.id);
-      if (!order) {
-        return res.status(404).json({ error: "Order not found" });
-      }
-
-      // If we have a Stripe session ID, get fresh status from Stripe
-      if (order.stripeSessionId) {
-        try {
-          const paymentResult = await stripeService.getPaymentStatus(order.stripeSessionId);
-          
-          // Update if status changed
-          if (paymentResult.status !== order.paymentStatus) {
-            await storage.updateOrder(order.id, {
-              paymentStatus: paymentResult.status,
-              stripePaymentIntentId: paymentResult.paymentIntentId,
-            });
-          }
-          
-          return res.json({
-            paymentStatus: paymentResult.status,
-            stripeSessionId: order.stripeSessionId,
-            stripePaymentIntentId: paymentResult.paymentIntentId,
-          });
-        } catch (stripeError) {
-          // If Stripe fails, return stored status
-          return res.json({
-            paymentStatus: order.paymentStatus || 'pending',
-            stripeSessionId: order.stripeSessionId,
-          });
-        }
-      } else {
-        return res.json({
-          paymentStatus: order.paymentStatus || 'pending',
-        });
-      }
-    } catch (error) {
-      logger.error({ error }, "Error getting payment status");
-      return res.status(500).json({ error: "Failed to get payment status" });
     }
   });
 

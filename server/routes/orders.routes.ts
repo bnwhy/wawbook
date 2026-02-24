@@ -32,6 +32,20 @@ router.get("/", async (_req, res, next) => {
   }
 });
 
+// GET /api/orders/my-orders - Get orders for authenticated customer (protected)
+router.get("/my-orders", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new Error('User not found in request');
+    }
+    const orders = await storage.getOrdersByCustomer(req.user.id);
+    logger.info({ customerId: req.user.id, orderCount: orders.length }, 'Customer orders retrieved');
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/orders/:id
 router.get("/:id", async (req, res, next) => {
   try {
@@ -142,21 +156,6 @@ router.get("/:id/payment-status", async (req, res, next) => {
         paymentStatus: order.paymentStatus || 'pending',
       });
     }
-  } catch (error) {
-    next(error);
-  }
-});
-
-// GET /api/orders/my-orders - Get orders for authenticated customer (protected)
-router.get("/my-orders", requireAuth, async (req, res, next) => {
-  try {
-    if (!req.user) {
-      throw new Error('User not found in request');
-    }
-
-    const orders = await storage.getOrdersByCustomer(req.user.id);
-    logger.info({ customerId: req.user.id, orderCount: orders.length }, 'Customer orders retrieved');
-    res.json(orders);
   } catch (error) {
     next(error);
   }

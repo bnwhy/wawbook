@@ -40,18 +40,22 @@ const PublicApp: React.FC = () => {
   const [selectedBookTitle, setSelectedBookTitle] = useState<string | undefined>(undefined);
   const [initialSelections, setInitialSelections] = useState<Record<string, Record<string, any>> | undefined>(undefined);
   const [editingCartItemId, setEditingCartItemId] = useState<string | undefined>(undefined);
+  const [editingDedication, setEditingDedication] = useState<string | undefined>(undefined);
+  const [editingAuthor, setEditingAuthor] = useState<string | undefined>(undefined);
   const [_location, setLocation] = useLocation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [appState]);
 
-  const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string, selections?: Record<string, Record<string, any>>, editingId?: string) => {
+  const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string, selections?: Record<string, Record<string, any>>, editingId?: string, dedication?: string, author?: string) => {
     setInitialTheme(theme);
     setInitialActivity(activity);
     setSelectedBookTitle(bookTitle);
     setInitialSelections(selections);
     setEditingCartItemId(editingId);
+    setEditingDedication(dedication);
+    setEditingAuthor(author);
     setAppState('CREATE');
     setError(null);
   };
@@ -67,14 +71,22 @@ const PublicApp: React.FC = () => {
     setInitialActivity(undefined);
     setSelectedBookTitle(undefined);
     setInitialSelections(undefined);
+    setEditingDedication(undefined);
+    setEditingAuthor(undefined);
   };
 
   /**
    * handleConfigComplete - Passe directement à READING
    * BookPreview gère toute la génération (texte + pages) avec animation intégrée
+   * En mode édition, on réinjecte dedication et author depuis le panier
    */
   const handleConfigComplete = async (finalConfig: BookConfig, _context?: { theme?: Theme, productId?: string }) => {
-    setConfig(finalConfig);
+    const configWithMeta = {
+      ...finalConfig,
+      ...(editingDedication !== undefined && { dedication: editingDedication }),
+      ...(editingAuthor !== undefined && { author: editingAuthor }),
+    };
+    setConfig(configWithMeta);
     setAppState('READING');
   };
 
@@ -168,7 +180,9 @@ const PublicApp: React.FC = () => {
                       item.config.appearance?.activity, 
                       item.bookTitle, 
                       item.config.characters,
-                      item.id
+                      item.id,
+                      item.dedication || item.config.dedication,
+                      item.config.author,
                     );
                     setLocation('/');
                   }} />

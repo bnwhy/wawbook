@@ -152,28 +152,27 @@ const Wizard: React.FC<WizardProps> = (props) => {
   
   // Ref for wizard container
   const wizardContainerRef = React.useRef<HTMLDivElement>(null);
+  // Stable ref to initialSelections to avoid re-init on every parent render
+  const initialSelectionsRef = React.useRef(props.initialSelections);
 
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Initialize state when config loads
+  // Initialize state when config loads — uses initialSelectionsRef for stability
   useEffect(() => {
     if (wizardConfig && wizardConfig.tabs.length > 0) {
-      // Set initial active tab
       setActiveTabId(wizardConfig.tabs[0].id);
       
-      // Initialize default selections if empty
+      const savedSelections = initialSelectionsRef.current;
       const initialSelectionsState: Record<string, Record<string, any>> = {};
       wizardConfig.tabs.forEach(tab => {
         initialSelectionsState[tab.id] = {};
         tab.variants.forEach(variant => {
-          // Check if we have prop initialSelections for this field
-          if (props.initialSelections && props.initialSelections[tab.id] && props.initialSelections[tab.id][variant.id] !== undefined) {
-             initialSelectionsState[tab.id][variant.id] = props.initialSelections[tab.id][variant.id];
+          if (savedSelections && savedSelections[tab.id] && savedSelections[tab.id][variant.id] !== undefined) {
+             initialSelectionsState[tab.id][variant.id] = savedSelections[tab.id][variant.id];
           } else {
-             // Select random option if available, or empty string
              if ((variant.type === 'options' || variant.type === 'color') && variant.options && variant.options.length > 0) {
                const randomIndex = Math.floor(Math.random() * variant.options.length);
                initialSelectionsState[tab.id][variant.id] = variant.options[randomIndex].id;

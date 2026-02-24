@@ -156,6 +156,11 @@ export const bookConfigurationSchema = z.object({
   childName: z.string().optional(),
   theme: z.string().optional(),
   selections: z.record(z.record(z.string())).optional(),
+  author: z.string().optional(),
+  dedication: z.string().optional(),
+  age: z.number().optional(),
+  gender: z.string().optional(),
+  characters: z.record(z.record(z.string())).optional(),
 });
 
 export type WizardConfig = z.infer<typeof wizardConfigSchema>;

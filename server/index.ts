@@ -37,6 +37,18 @@ async function initDefaultSettings() {
       await storage.setSetting('defaultShippingRate', 5.99);
       logger.info('Created default shipping rate setting: 5.99€');
     }
+
+    const paymentSetting = await storage.getSetting('payment');
+    if (!paymentSetting) {
+      await storage.setSetting('payment', { stripeEnabled: false, stripeKey: '', stripeSecretKey: '', paypalEnabled: false, acceptedPaymentMethods: [] });
+      logger.info('Created default payment setting');
+    }
+
+    const homepageSetting = await storage.getSetting('homepage');
+    if (!homepageSetting) {
+      await storage.setSetting('homepage', null);
+      logger.info('Created default homepage setting');
+    }
     
     logger.info('Default settings initialized');
   } catch (error) {

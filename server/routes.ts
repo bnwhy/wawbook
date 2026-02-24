@@ -871,6 +871,7 @@ ${textsHtml}
 
           // Save HTML to temp file in public assets directory
           const tempHtmlPath = path.join(process.cwd(), 'server', 'assets', 'books', book.id, `render_${pageData.pageIndex}.html`);
+          await fs.promises.mkdir(path.dirname(tempHtmlPath), { recursive: true });
           await fs.promises.writeFile(tempHtmlPath, html, 'utf-8');
 
           // Load via HTTP URL instead of setContent for proper font loading

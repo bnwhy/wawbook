@@ -6439,7 +6439,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* Avatar EPUB Selector Modal */}
               {showAvatarEpubSelector && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                     <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50">
                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <CloudDownload size={20} className="text-purple-600" />
@@ -6600,7 +6600,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* EPUB + IDML Importer Modal */}
               {showIdmlImporter && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+                  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
                     <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50">
                       <h3 className="font-bold text-slate-800 flex items-center gap-2">
                         <FileCode size={20} className="text-purple-600" />

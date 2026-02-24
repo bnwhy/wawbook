@@ -592,16 +592,16 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
              </div>
              {/* END WIZARD FORM */}
-          </div>
 
-          {/* Mobile CTA — outside the card so it sits on the page background */}
-          <button
-            onClick={handleComplete}
-            className="lg:hidden w-full bg-[#0c4a6e] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-2 mt-4"
-          >
-            <Wand2 size={24} />
-            {props.isEditing ? "Mettre à jour" : "Créer le livre"}
-          </button>
+             {/* Mobile CTA — outside the overflow-hidden card but inside the left column */}
+             <button
+               onClick={handleComplete}
+               className="lg:hidden w-full bg-[#0c4a6e] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-2 mt-4"
+             >
+               <Wand2 size={24} />
+               {props.isEditing ? "Mettre à jour" : "Créer le livre"}
+             </button>
+          </div>
 
           {/* --- RIGHT COLUMN: PREVIEW --- */}
           <div className="hidden lg:flex flex-col gap-6 flex-1 relative items-center justify-start px-8 pb-8 pt-[53px]">

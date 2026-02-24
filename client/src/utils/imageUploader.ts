@@ -12,11 +12,17 @@ export interface ExtractZipResult {
   pageImages: PageImage[];
 }
 
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 export async function extractZipOnServer(file: File): Promise<ExtractZipResult> {
-  const arrayBuffer = await file.arrayBuffer();
-  const base64 = btoa(
-    new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-  );
+  const base64 = await blobToBase64(file);
   
   const response = await fetch('/api/uploads/extract-zip', {
     method: 'POST',
@@ -36,10 +42,7 @@ export async function uploadBlobToStorage(blobUrl: string, filename?: string): P
     const response = await fetch(blobUrl);
     const blob = await response.blob();
     
-    const arrayBuffer = await blob.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+    const base64 = await blobToBase64(blob);
     
     const uploadResponse = await fetch('/api/uploads/base64', {
       method: 'POST',
@@ -104,10 +107,7 @@ export function replaceBlobUrls<T extends { url?: string }>(
 
 export async function uploadFileToStorage(file: File, prefix?: string): Promise<string> {
   try {
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+    const base64 = await blobToBase64(file);
     
     const filename = prefix ? `${prefix}_${file.name}` : file.name;
     

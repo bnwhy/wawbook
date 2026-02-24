@@ -269,7 +269,10 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
       <Footer />
 
       <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
-        <DialogContent className="max-w-6xl w-full h-[90vh] p-0 overflow-hidden bg-stone-100 border-none">
+        <DialogContent
+          className="max-w-6xl w-full h-[90vh] p-0 overflow-hidden bg-stone-100 border-none"
+          style={{ position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+        >
             {previewItem && previewStory && (
                 <div className="h-full w-full overflow-y-auto">
                     <BookPreview 

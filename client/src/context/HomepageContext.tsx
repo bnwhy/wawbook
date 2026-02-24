@@ -82,7 +82,11 @@ export const HomepageProvider: React.FC<{ children: ReactNode }> = ({ children }
           throw new Error('Failed to fetch homepage config');
         }
         const data = await response.json();
-        return data.value as HomepageConfig;
+        const config = data.value as HomepageConfig;
+        if (!config || !config.hero || !config.sections) {
+          return generateDefaultConfig(books);
+        }
+        return config;
       } catch (error) {
         // En cas d'erreur, retourner la config par défaut
         return generateDefaultConfig(books);

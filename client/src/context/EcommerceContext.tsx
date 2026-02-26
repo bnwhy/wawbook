@@ -155,10 +155,7 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
       const response = await fetch('/api/shipping-zones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: `zone-${Date.now()}`,
-          ...zone,
-        }),
+        body: JSON.stringify({ id: `zone-${Date.now()}`, ...zone }),
       });
       if (!response.ok) throw new Error('Failed to add shipping zone');
       return response.json();
@@ -166,6 +163,9 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipping-zones'] });
       toast.success('Zone d\'expédition ajoutée');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la création de la zone');
     },
   });
 
@@ -182,6 +182,9 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shipping-zones'] });
       toast.success('Zone d\'expédition mise à jour');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la mise à jour de la zone');
     },
   });
 
@@ -291,9 +294,21 @@ export const EcommerceProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const updateOrderTracking = async (orderId: string, trackingNumber: string) => {
+    const order = orders.find(o => o.id === orderId);
+    const newLog = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      type: 'status_change' as const,
+      message: `Expédié avec le numéro de suivi: ${trackingNumber}`,
+      author: 'Admin',
+    };
     await updateOrderMutation.mutateAsync({
       id: orderId,
-      data: { trackingNumber },
+      data: {
+        trackingNumber,
+        status: 'shipped',
+        logs: [...(order?.logs || []), newLog],
+      },
     });
   };
 

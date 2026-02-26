@@ -8,9 +8,6 @@ import { Theme } from '../types';
 import BookFilters from '../components/BookFilters';
 import BookCard from '../components/BookCard';
 
-interface CataloguePageProps {
-  onSelectBook?: (title: string) => void;
-}
 
 export interface CatalogueFilters {
   search: string;
@@ -22,8 +19,8 @@ export interface CatalogueFilters {
   sortBy: 'price_asc' | 'price_desc' | 'name' | 'popular';
 }
 
-const CataloguePage: React.FC<CataloguePageProps> = ({ onSelectBook }) => {
-  const [_location, setLocation] = useLocation();
+const CataloguePage: React.FC = () => {
+  const [, setLocation] = useLocation();
   const { books } = useBooks();
   const { mainMenu } = useMenus();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -91,11 +88,7 @@ const CataloguePage: React.FC<CataloguePageProps> = ({ onSelectBook }) => {
   }, [books, filters]);
 
   const handleBookClick = (title: string) => {
-    if (onSelectBook) {
-      onSelectBook(title);
-    } else {
-      setLocation('/'); 
-    }
+    setLocation(`/create?bookTitle=${encodeURIComponent(title)}`);
   };
 
   const activeFiltersCount = 

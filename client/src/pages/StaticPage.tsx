@@ -23,19 +23,8 @@ const StaticPage: React.FC<StaticPageProps> = ({ title, category }) => {
     return books.filter(b => !b.isHidden && b.associatedPaths?.includes(location));
   }, [books, location]);
 
-  const handleBookClick = (_title: string) => {
-    setLocation('/');
-    // In a real app we might pass the title via URL param or context to pre-select it
-    // For now, redirecting to home is consistent with CategoryPage behavior in this mockup
-    // (Actual selection logic is in App.tsx via onSelectBook prop for CategoryPage, 
-    // but StaticPage doesn't have it yet. We'll just go home.)
-    // A better way would be to check if we can trigger the startCreation flow.
-    // But for this mockup, let's just go home.
-    setTimeout(() => {
-        // Find the "startCreation" equivalent or just let the user click on home
-        // Since we don't have access to startCreation here easily without prop drilling
-        // We will just redirect.
-    }, 100);
+  const handleBookClick = (title: string) => {
+    setLocation(`/create?bookTitle=${encodeURIComponent(title)}`);
   };
 
   const getCategoryIcon = () => {
@@ -83,7 +72,7 @@ const StaticPage: React.FC<StaticPageProps> = ({ title, category }) => {
           Contenu pour "{displayTitle}" en cours de rédaction.
         </p>
         <p>
-          Chez NuageBook, nous nous efforçons de créer les meilleures histoires pour vos enfants. 
+          Chez nuagebook, nous nous efforçons de créer les meilleures histoires pour vos enfants. 
           Cette page détaillera bientôt tout ce que vous devez savoir sur <strong>{displayTitle}</strong>.
         </p>
         <div className="p-6 bg-slate-50 rounded-xl border border-slate-200 my-8">

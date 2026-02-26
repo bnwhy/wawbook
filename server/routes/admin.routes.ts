@@ -1,14 +1,13 @@
 import express from "express";
 import { pool } from "../storage";
 import { logger } from "../utils/logger";
-import { requireAuth } from "../middleware/auth";
 
 const router = express.Router();
 
 // DELETE /api/admin/reset/all - Reset all data (dangerous!)
-router.delete("/reset/all", requireAuth, async (req, res, next) => {
+router.delete("/reset/all", async (req, res, next) => {
   try {
-    logger.warn({ userId: req.user?.id }, 'Admin requested full database reset');
+    logger.warn('Admin requested full database reset');
     
     // Delete all data in order (respecting foreign keys)
     await pool.query('DELETE FROM orders');
@@ -31,9 +30,9 @@ router.delete("/reset/all", requireAuth, async (req, res, next) => {
 });
 
 // DELETE /api/admin/reset/books - Reset only books
-router.delete("/reset/books", requireAuth, async (req, res, next) => {
+router.delete("/reset/books", async (req, res, next) => {
   try {
-    logger.warn({ userId: req.user?.id }, 'Admin requested books reset');
+    logger.warn('Admin requested books reset');
     
     await pool.query('DELETE FROM books');
     
@@ -46,9 +45,9 @@ router.delete("/reset/books", requireAuth, async (req, res, next) => {
 });
 
 // DELETE /api/admin/reset/customers - Reset only customers
-router.delete("/reset/customers", requireAuth, async (req, res, next) => {
+router.delete("/reset/customers", async (req, res, next) => {
   try {
-    logger.warn({ userId: req.user?.id }, 'Admin requested customers reset');
+    logger.warn('Admin requested customers reset');
     
     // Delete customers (will cascade to orders if foreign key is set up that way)
     await pool.query('DELETE FROM customers');
@@ -62,9 +61,9 @@ router.delete("/reset/customers", requireAuth, async (req, res, next) => {
 });
 
 // DELETE /api/admin/reset/orders - Reset only orders
-router.delete("/reset/orders", requireAuth, async (req, res, next) => {
+router.delete("/reset/orders", async (req, res, next) => {
   try {
-    logger.warn({ userId: req.user?.id }, 'Admin requested orders reset');
+    logger.warn('Admin requested orders reset');
     
     await pool.query('DELETE FROM orders');
     
@@ -80,7 +79,7 @@ router.delete("/reset/orders", requireAuth, async (req, res, next) => {
 });
 
 // GET /api/admin/stats - Get database statistics
-router.get("/stats", requireAuth, async (_req, res, next) => {
+router.get("/stats", async (_req, res, next) => {
   try {
     const booksCount = await pool.query('SELECT COUNT(*) FROM books');
     const customersCount = await pool.query('SELECT COUNT(*) FROM customers');

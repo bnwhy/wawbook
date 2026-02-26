@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle, ShoppingCart } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle, ShoppingCart, Eye, EyeOff } from 'lucide-react';
+import { useLocation, useSearch } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import PaymentBadges from '../components/PaymentBadges';
@@ -15,28 +15,37 @@ const CheckoutPage = () => {
   const { items, total, clearCart: _clearCart } = useCart();
   const { createOrder: _createOrder, shippingZones } = useEcommerce();
   const { isAuthenticated, user } = useAuth();
-  const [, setLocation] = useLocation();
-  const [step, setStep] = useState<'details' | 'payment' | 'confirmation'>('details');
+  const [_location, setLocation] = useLocation();
+  const searchString = useSearch(); // reactive sur les changements de query params
+  // Step driven by URL: /checkout → details, /checkout?step=payment → payment
+  const step = new URLSearchParams(searchString).get('step') === 'payment' ? 'payment' : 'details';
   const [isLoading, setIsLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string>('');
   const [orderNumber, _setOrderNumber] = useState<string>('');
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   const [_billingMode, _setBillingMode] = useState<'same' | 'different'>('same');
 
-  // Form states - pre-fill with user data if authenticated
-  const [formData, setFormData] = useState({
-    email: user?.email || '',
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    address: user?.address?.street || '',
-    apartment: '',
-    city: user?.address?.city || '',
-    zip: user?.address?.zipCode || '',
-    country: user?.address?.country || 'France',
-    phone: user?.phone || '',
+  // Form states - restore from sessionStorage (back navigation) or pre-fill from user
+  const [formData, setFormData] = useState(() => {
+    const saved = sessionStorage.getItem('checkout_form');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { /* fall through */ }
+    }
+    return {
+      email: user?.email || '',
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      address: user?.address?.street || '',
+      apartment: '',
+      city: user?.address?.city || '',
+      zip: user?.address?.zipCode || '',
+      country: user?.address?.country || 'France',
+      phone: user?.phone || '',
+    };
   });
 
   // Update form when user data changes
@@ -111,7 +120,8 @@ const CheckoutPage = () => {
         alert("Veuillez sélectionner un mode de livraison valide pour votre pays.");
         return;
     }
-    setStep('payment');
+    sessionStorage.setItem('checkout_form', JSON.stringify(formData));
+    setLocation('/checkout?step=payment');
     window.scrollTo(0, 0);
   };
 
@@ -162,16 +172,17 @@ const CheckoutPage = () => {
           grandTotal,
           shippingMethod: selectedMethod,
         }));
+        sessionStorage.removeItem('checkout_form');
         window.location.href = data.url;
-      } else if (data.error) {
-        setPaymentError(data.error);
+      } else if (data.error || data.message) {
+        setPaymentError(data.error || data.message);
         setIsLoading(false);
       } else {
         throw new Error('No checkout URL received');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      setPaymentError('Une erreur est survenue. Veuillez vérifier vos informations et réessayer.');
+      setPaymentError(error instanceof Error ? error.message : 'Une erreur est survenue. Veuillez vérifier vos informations et réessayer.');
       setIsLoading(false);
     }
   };
@@ -246,7 +257,7 @@ const CheckoutPage = () => {
                   {/* Step 2: Livraison */}
                   <div 
                     className={`flex flex-col items-center z-10 flex-1 ${step === 'payment' ? 'cursor-pointer group' : ''}`}
-                    onClick={() => step === 'payment' && setStep('details')}
+                    onClick={() => step === 'payment' && setLocation('/checkout')}
                   >
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transform transition-all ${
                       step === 'details' 
@@ -319,13 +330,18 @@ const CheckoutPage = () => {
                                                 className="w-full p-2 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm" 
                                                 placeholder="Email" 
                                             />
-                                            <input 
-                                                type="password" 
-                                                value={loginData.password} 
-                                                onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                                                className="w-full p-2 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm" 
-                                                placeholder="Mot de passe" 
-                                            />
+                                            <div className="relative">
+                                                <input 
+                                                    type={showLoginPassword ? 'text' : 'password'}
+                                                    value={loginData.password} 
+                                                    onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                                                    className="w-full p-2 pr-9 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm" 
+                                                    placeholder="Mot de passe" 
+                                                />
+                                                <button type="button" onClick={() => setShowLoginPassword(v => !v)} className="absolute inset-y-0 right-2 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
+                                                    {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={async () => {
@@ -352,11 +368,18 @@ const CheckoutPage = () => {
                                         </div>
                                     )}
                                     
-                                    <input required name="email" value={formData.email} onChange={handleInputChange} type="email" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow" placeholder="Email" />
-                                    <div className="flex items-center gap-2">
-                                        <input type="checkbox" id="newsletter" className="rounded border-stone-300 text-cloud-blue focus:ring-cloud-blue" />
-                                        <label htmlFor="newsletter" className="text-sm text-stone-600 cursor-pointer">M'envoyer les actualités et offres par e-mail</label>
-                                    </div>
+                                    {!isAuthenticated && (
+                                      <>
+                                        <div>
+                                          <label className="block text-sm font-medium text-stone-600 mb-1">Email <span className="text-red-500">*</span></label>
+                                          <input required name="email" value={formData.email} onChange={handleInputChange} type="email" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow" placeholder="votre@email.com" />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <input type="checkbox" id="newsletter" className="rounded border-stone-300 text-cloud-blue focus:ring-cloud-blue" />
+                                            <label htmlFor="newsletter" className="text-sm text-stone-600 cursor-pointer">M'envoyer les actualités et offres par e-mail</label>
+                                        </div>
+                                      </>
+                                    )}
                                 </div>
 
                                 {/* Delivery Section */}
@@ -364,38 +387,60 @@ const CheckoutPage = () => {
                                     <h2 className="font-bold text-lg text-stone-800">Livraison</h2>
                                     
                                     <div className="space-y-4">
-                                        <div className="relative">
-                                            <select 
-                                                name="country"
-                                                value={formData.country}
-                                                onChange={handleInputChange}
-                                                className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer"
-                                            >
-                                                {availableCountries.length > 0 ? (
-                                                    availableCountries.map(country => (
-                                                        <option key={country} value={country}>{country}</option>
-                                                    ))
-                                                ) : (
-                                                    <option value="">Aucun pays de livraison configuré</option>
-                                                )}
-                                            </select>
-                                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+                                        <div>
+                                            <label className="block text-sm font-medium text-stone-600 mb-1">Pays <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <select 
+                                                    required
+                                                    name="country"
+                                                    value={formData.country}
+                                                    onChange={handleInputChange}
+                                                    className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer"
+                                                >
+                                                    {availableCountries.length > 0 ? (
+                                                        availableCountries.map(country => (
+                                                            <option key={country} value={country}>{country}</option>
+                                                        ))
+                                                    ) : (
+                                                        <option value="">Aucun pays de livraison configuré</option>
+                                                    )}
+                                                </select>
+                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3">
-                                            <input required name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Prénom" />
-                                            <input required name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Nom" />
+                                            <div>
+                                                <label className="block text-sm font-medium text-stone-600 mb-1">Prénom <span className="text-red-500">*</span></label>
+                                                <input required name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-stone-600 mb-1">Nom <span className="text-red-500">*</span></label>
+                                                <input required name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                            </div>
                                         </div>
 
-                                        <input required name="address" value={formData.address} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Adresse" />
+                                        <div>
+                                            <label className="block text-sm font-medium text-stone-600 mb-1">Adresse <span className="text-red-500">*</span></label>
+                                            <input required name="address" value={formData.address} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                        </div>
                                         <input name="apartment" type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Appartement, suite, etc. (facultatif)" />
 
                                         <div className="grid grid-cols-2 gap-3">
-                                            <input required name="zip" value={formData.zip} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Code postal" />
-                                            <input required name="city" value={formData.city} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Ville" />
+                                            <div>
+                                                <label className="block text-sm font-medium text-stone-600 mb-1">Code postal <span className="text-red-500">*</span></label>
+                                                <input required name="zip" value={formData.zip} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-stone-600 mb-1">Ville <span className="text-red-500">*</span></label>
+                                                <input required name="city" value={formData.city} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                            </div>
                                         </div>
                                         
-                                        <input name="phone" type="tel" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Téléphone" />
+                                        <div>
+                                            <label className="block text-sm font-medium text-stone-600 mb-1">Téléphone <span className="text-stone-400 font-normal">(facultatif)</span></label>
+                                            <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -452,7 +497,7 @@ const CheckoutPage = () => {
                        </>
                     ) : (
                         <form id="payment-form" onSubmit={handlePaymentSubmit} className="bg-white rounded-2xl p-4 md:p-8 shadow-sm border border-stone-200 space-y-6 w-full max-w-lg md:max-w-xl">
-                             <div className="flex items-center gap-2 mb-6 cursor-pointer text-stone-500 hover:text-stone-800 transition-colors" onClick={() => setStep('details')}>
+                             <div className="flex items-center gap-2 mb-6 cursor-pointer text-stone-500 hover:text-stone-800 transition-colors" onClick={() => setLocation('/checkout')}>
                                 <ArrowLeft size={16} /> Retour aux détails
                             </div>
                             
@@ -484,14 +529,14 @@ const CheckoutPage = () => {
 
                 {/* Order Summary Sidebar */}
                 <div className="lg:col-span-1">
-                    <div className="bg-stone-100 rounded-2xl p-6 sticky top-32 border border-stone-200">
+                    <div className="bg-white rounded-2xl p-6 sticky top-32 border border-stone-200 w-full max-w-lg md:max-w-xl mx-auto lg:max-w-none">
                         <h3 className="font-display font-bold text-xl text-stone-800 mb-4">Votre commande</h3>
                         <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
                             {items.map(item => (
                                 <div key={item.id} className="flex gap-3">
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-stone-800 text-sm">{item.bookTitle}</h4>
-                                        <p className="text-xs text-stone-500">{item.format === 'hardcover' ? 'Rigide' : 'Souple'} x {item.quantity}</p>
+                                        <p className="text-xs text-stone-500">Couverture {item.format === 'hardcover' ? 'rigide' : 'souple'}</p>
                                     </div>
                                     <div className="font-bold text-stone-800 text-sm">
                                         {formatPrice(item.price * item.quantity)}

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Lock, Loader2 } from 'lucide-react';
+import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 
 const ResetPasswordPage = () => {
   const { resetPassword } = useAuth();
@@ -13,6 +13,8 @@ const ResetPasswordPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     // Get token from URL
@@ -86,16 +88,21 @@ const ResetPasswordPage = () => {
                   Nouveau mot de passe
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <Lock size={20} className="text-stone-400" />
+                  </span>
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
+                    className="w-full pl-11 pr-11 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
                     placeholder="••••••••"
                   />
+                  <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute inset-y-0 right-3 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
                 <p className="text-xs text-stone-500 mt-1">Minimum 8 caractères</p>
               </div>
@@ -105,16 +112,21 @@ const ResetPasswordPage = () => {
                   Confirmer le mot de passe
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <Lock size={20} className="text-stone-400" />
+                  </span>
                   <input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
+                    className="w-full pl-11 pr-11 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
                     placeholder="••••••••"
                   />
+                  <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute inset-y-0 right-3 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
               </div>
 

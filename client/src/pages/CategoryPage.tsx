@@ -5,11 +5,7 @@ import { useLocation } from 'wouter';
 import { useBooks } from '../context/BooksContext';
 import BookCard from '../components/BookCard';
 
-interface CategoryPageProps {
-  onSelectBook?: (title: string) => void;
-}
-
-const CategoryPage: React.FC<CategoryPageProps> = ({ onSelectBook }) => {
+const CategoryPage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { books } = useBooks();
   const category = decodeURIComponent(location.split('/').pop() || 'Catalogue');
@@ -43,11 +39,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ onSelectBook }) => {
   }, [books, location]);
 
   const handleBookClick = (title: string) => {
-    if (onSelectBook) {
-      onSelectBook(title);
-    } else {
-      setLocation('/'); 
-    }
+    setLocation(`/create?bookTitle=${encodeURIComponent(title)}`);
   };
 
   return (

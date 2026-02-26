@@ -539,11 +539,18 @@ export const generateBookPages = async (
     || ((generateBookPages as any)._loadedFonts = new Set<string>());
 
   const fontLoadPromises: Promise<void>[] = [];
+  const fontMappings: Record<string, string> = (book.contentConfig as any)?.fontMappings || {};
   for (const fontFamily of usedFontFamilies) {
     if (!fontFamily || fontFamily === 'serif' || fontFamily === 'sans-serif') continue;
     if (_loadedFonts.has(fontFamily)) continue; // déjà chargée avec succès
     const baseName = fontFamily.replace(/ /g, '');
-    const variants = [
+    const variants: string[] = [];
+    // Priorité 1 : proxy serveur (fonctionne en dev et prod, pas de CORS)
+    variants.push(`/api/books/${book.id}/fonts/${encodeURIComponent(fontFamily)}`);
+    // Priorité 2 : URL R2 directe depuis fontMappings (fallback si serveur indisponible)
+    if (fontMappings[fontFamily]) variants.push(fontMappings[fontFamily]);
+    // Priorité 3 : chemins locaux (dev)
+    variants.push(
       `/assets/books/${book.id}/font/${baseName}.ttf`,
       `/assets/books/${book.id}/font/${baseName}.otf`,
       `/assets/books/${book.id}/font/${baseName}-Regular.ttf`,
@@ -552,7 +559,7 @@ export const generateBookPages = async (
       `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '_')}-Regular.ttf`,
       `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '-')}.ttf`,
       `/assets/books/${book.id}/font/${fontFamily.replace(/ /g, '-')}-Regular.ttf`,
-    ];
+    );
     const tryLoad = async () => {
       for (const url of variants) {
         try {

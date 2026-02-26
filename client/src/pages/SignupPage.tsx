@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, Link } from 'wouter';
-import { Mail, Lock, Phone, Loader2, Package, BookOpen, Cloud } from 'lucide-react';
+import { Mail, Lock, Phone, Loader2, Package, BookOpen, Cloud, Eye, EyeOff } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 
@@ -19,6 +19,8 @@ const SignupPage = () => {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -304,17 +306,22 @@ const SignupPage = () => {
                     Mot de passe
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                    <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                      <Lock size={20} className="text-stone-400" />
+                    </span>
                     <input
                       id="password"
                       name="password"
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={handleChange}
                       required
-                      className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
+                      className="w-full pl-11 pr-11 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
                       placeholder="••••••••"
                     />
+                    <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute inset-y-0 right-3 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                   </div>
                   <p className="text-xs text-stone-500 mt-1">Minimum 8 caractères</p>
                 </div>
@@ -324,17 +331,22 @@ const SignupPage = () => {
                     Confirmer le mot de passe
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                    <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                      <Lock size={20} className="text-stone-400" />
+                    </span>
                     <input
                       id="confirmPassword"
                       name="confirmPassword"
-                      type="password"
+                      type={showConfirmPassword ? 'text' : 'password'}
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       required
-                      className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
+                      className="w-full pl-11 pr-11 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
                       placeholder="••••••••"
                     />
+                    <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute inset-y-0 right-3 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
+                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
                   </div>
                 </div>
 

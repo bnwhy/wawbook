@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Globe, Edit2, Trash2, X, Save, Filter, Package } from 'lucide-react';
+import { Plus, Globe, Edit2, Trash2, X, Filter, Package } from 'lucide-react';
 import { ShippingZone, ShippingMethod } from '../../types/ecommerce';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { formatPrice } from '../../utils/formatPrice';
+import { SaveButton } from './SaveButton';
 
 interface ShippingManagerProps {
   shippingZones: ShippingZone[];
@@ -20,21 +21,48 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
   addShippingZone, updateShippingZone, deleteShippingZone,
   editingZoneId, setEditingZoneId,
 }) => {
-  // Local draft state — edits stay local until "Enregistrer" is clicked
   const [localZones, setLocalZones] = useState<ShippingZone[]>([]);
+  const [originalZones, setOriginalZones] = useState<ShippingZone[]>([]);
+  const [savingZoneId, setSavingZoneId] = useState<string | null>(null);
+
+  // Default rate — local draft with explicit save
+  const [localRate, setLocalRate] = useState<number>(defaultShippingRate);
+  const [savingRate, setSavingRate] = useState(false);
 
   useEffect(() => {
     setLocalZones(JSON.parse(JSON.stringify(shippingZones)));
+    setOriginalZones(JSON.parse(JSON.stringify(shippingZones)));
   }, [shippingZones]);
+
+  useEffect(() => {
+    setLocalRate(defaultShippingRate);
+  }, [defaultShippingRate]);
 
   const updateLocalZone = (id: string, updates: Partial<ShippingZone>) => {
     setLocalZones(prev => prev.map(z => z.id === id ? { ...z, ...updates } : z));
   };
 
-  const handleSaveZone = (zone: ShippingZone) => {
-    const { id, ...updates } = zone;
-    updateShippingZone(id, updates);
-    setEditingZoneId(null);
+  const handleSaveZone = async (zone: ShippingZone) => {
+    setSavingZoneId(zone.id);
+    try {
+      await updateShippingZone(zone.id, {
+        name: zone.name,
+        countries: zone.countries,
+        methods: zone.methods,
+      });
+      setEditingZoneId(null);
+    } finally {
+      setSavingZoneId(null);
+    }
+  };
+
+  const handleSaveRate = async () => {
+    setSavingRate(true);
+    try {
+      await updateDefaultShippingRate(localRate);
+    } finally {
+      setSavingRate(false);
+    }
   };
 
   return (
@@ -58,12 +86,29 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
           <label className="text-xs font-bold text-slate-500 uppercase">Tarif par défaut:</label>
           <div className="relative w-24">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-            <input type="number" defaultValue={defaultShippingRate} onBlur={(e) => updateDefaultShippingRate(parseFloat(e.target.value) || 0)} className="w-full text-sm border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none text-right font-bold text-slate-800" placeholder="0.00" />
+            <input
+              type="number"
+              value={localRate}
+              onChange={(e) => setLocalRate(parseFloat(e.target.value) || 0)}
+              className="w-full text-sm border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none text-right font-bold text-slate-800"
+              placeholder="0.00"
+            />
           </div>
+          <SaveButton
+            hasChanges={localRate !== defaultShippingRate}
+            isSaving={savingRate}
+            onSave={handleSaveRate}
+            className="px-3 py-1 rounded-lg text-xs"
+            label="Sauvegarder"
+            savedLabel="Enregistré"
+          />
         </div>
       </div>
       <div className="divide-y divide-gray-100">
-        {localZones.map(zone => (
+        {localZones.map(zone => {
+          const original = originalZones.find(z => z.id === zone.id);
+          const hasZoneChanges = JSON.stringify(zone) !== JSON.stringify(original);
+          return (
           <div key={zone.id} className="p-6">
             {editingZoneId === zone.id ? (
               <div className="space-y-6 bg-slate-50 p-4 rounded-xl border border-indigo-100">
@@ -166,7 +211,14 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
 
                 <div className="flex justify-between items-center pt-2 border-t border-indigo-100">
                   <button onClick={() => { if (confirm('Êtes-vous sûr de vouloir supprimer cette zone ?')) { deleteShippingZone(zone.id); } }} className="text-red-500 text-xs font-bold flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded transition-colors"><Trash2 size={14} /> Supprimer la zone</button>
-                  <button onClick={() => handleSaveZone(zone)} className="px-4 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"><Save size={16} /> Enregistrer</button>
+                  <SaveButton
+                    hasChanges={hasZoneChanges}
+                    isSaving={savingZoneId === zone.id}
+                    onSave={() => handleSaveZone(zone)}
+                    label="Enregistrer"
+                    savedLabel="Enregistré"
+                    className="px-4 py-2 rounded-lg text-sm"
+                  />
                 </div>
               </div>
             ) : (
@@ -205,7 +257,8 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
               </>
             )}
           </div>
-        ))}
+          );
+        })}
         {localZones.length === 0 && (
           <div className="p-12 text-center">
             <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><Globe size={32} className="text-slate-300" /></div>

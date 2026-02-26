@@ -13,7 +13,7 @@ const Footer: React.FC<FooterProps> = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
         <div className="col-span-1 md:col-span-1">
           <div className="flex items-center gap-2 mb-6 text-white">
-            <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">NuageBook</span>
+            <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">nuagebook</span>
           </div>
           <p className="text-cloud-light/60 font-medium text-lg max-w-sm mb-8">
             Nous créons des moments magiques de lecture pour les enfants du monde entier.
@@ -60,7 +60,7 @@ const Footer: React.FC<FooterProps> = () => {
             <PaymentBadges size="small" />
           </div>
           <div className="text-center text-cloud-light/40 font-bold text-sm">
-            © 2024 NuageBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
+            © 2024 nuagebook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
           </div>
         </div>
       </div>

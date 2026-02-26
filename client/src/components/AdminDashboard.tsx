@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import HomeDashboard from './admin/HomeDashboard';
 import SettingsPanel from './admin/SettingsPanel';
 import AnalyticsPanel from './admin/AnalyticsPanel';
 import PrintersManager from './admin/PrintersManager';
 import ShippingManager from './admin/ShippingManager';
+import { SaveButton, CreateButton } from './admin/SaveButton';
 import { toast } from 'sonner';
 import { Home, BarChart3, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2 } from 'lucide-react';
 import { Theme } from '../types';
@@ -13,7 +14,7 @@ import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { useHomepage } from '../context/HomepageContext';
-import { HomepageSection } from '../types/homepage';
+import { HomepageSection, HomepageConfig } from '../types/homepage';
 import { MenuItem } from '../types/menu';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -245,6 +246,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
   const { homepageConfig, updateHomepageConfig, isLoading: homepageLoading } = useHomepage();
+  const [draftConfig, setDraftConfig] = useState<HomepageConfig | null>(null);
+  useEffect(() => {
+    if (homepageConfig && !draftConfig) setDraftConfig(homepageConfig);
+  }, [homepageConfig]);
   const { 
     customers, 
     orders, 
@@ -347,6 +352,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Fulfillment Tracking State
   const [fulfillmentTracking, setFulfillmentTracking] = useState('');
+  const [isConfirmingShipment, setIsConfirmingShipment] = useState(false);
 
   // Load EPUBs from bucket when modal opens
   const loadBucketEpubs = async () => {
@@ -909,18 +915,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Edit Customer State
   const [isEditingCustomer, setIsEditingCustomer] = useState(false);
-  const [editCustomerForm, setEditCustomerForm] = useState({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      address: {
-          street: '',
-          zipCode: '',
-          city: '',
-          country: ''
-      }
-  });
+  const emptyCustomerForm = { firstName: '', lastName: '', email: '', phone: '', address: { street: '', zipCode: '', city: '', country: '' } };
+  const [editCustomerForm, setEditCustomerForm] = useState(emptyCustomerForm);
+  const [originalEditCustomer, setOriginalEditCustomer] = useState(emptyCustomerForm);
   
   // New Order Form State
   const [newOrderForm, setNewOrderForm] = useState({
@@ -1408,34 +1405,36 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
 
   // SETTINGS STATE - loaded from API
-  const [settings, setSettings] = useState({
+  const defaultSettingsValue = {
     general: { storeName: '', supportEmail: '', currency: 'EUR', language: 'fr' },
     payment: { 
       stripeEnabled: false, 
       stripeKey: '', 
+      stripeSecretKey: '',
       paypalEnabled: false,
       acceptedPaymentMethods: ['visa', 'mastercard', 'amex', 'applepay', 'googlepay'] as string[]
     },
-    shipping: { freeShippingThreshold: 50, standardRate: 4.90, expressRate: 9.90 },
     notifications: { orderConfirmation: true, shippingUpdate: true }
-  });
+  };
+  const [settings, setSettings] = useState(defaultSettingsValue);
+  const [savedSettings, setSavedSettings] = useState(defaultSettingsValue);
 
   // Load settings from API
   React.useEffect(() => {
     const loadSettings = async () => {
       try {
-        const [general, payment, shipping, notifications] = await Promise.all([
+        const [general, payment, notifications] = await Promise.all([
           fetch('/api/settings/general').then(r => r.ok ? r.json() : null),
           fetch('/api/settings/payment').then(r => r.ok ? r.json() : null),
-          fetch('/api/settings/shipping').then(r => r.ok ? r.json() : null),
           fetch('/api/settings/notifications').then(r => r.ok ? r.json() : null)
         ]);
-        setSettings({
+        const loaded = {
           general: general?.value || settings.general,
           payment: payment?.value || settings.payment,
-          shipping: shipping?.value || settings.shipping,
           notifications: notifications?.value || settings.notifications
-        });
+        };
+        setSettings(loaded);
+        setSavedSettings(loaded);
       } catch (err) {
         console.error('Error loading settings:', err);
       }
@@ -1446,14 +1445,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleSaveSettings = async (section: string) => {
     try {
       const sectionKey = section === 'Général' ? 'general' : 
-                         section === 'Paiement' ? 'payment' :
-                         section === 'Expédition' ? 'shipping' : 'notifications';
+                         section === 'Paiement' ? 'payment' : 'notifications';
       const value = settings[sectionKey as keyof typeof settings];
       await fetch(`/api/settings/${sectionKey}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value })
       });
+      setSavedSettings(prev => ({ ...prev, [sectionKey]: value }));
       toast.success(`Réglages "${section}" sauvegardés avec succès`);
     } catch (err) {
       toast.error('Erreur lors de la sauvegarde');
@@ -1608,7 +1607,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       category: 'theme',
       coverImage: '',
       wizardConfig: { avatarStyle: 'watercolor', tabs: [] },
-      contentConfig: { pages: [], texts: [], images: [] }
+      contentConfig: { pages: [], texts: [], images: [] },
+      isHidden: 1,
     };
     addBook(newBook);
     setSelectedBookId(newBook.id);
@@ -2017,17 +2017,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        {hasUnsavedChanges || (draftBook && contextBook && JSON.stringify(draftBook) !== JSON.stringify(contextBook)) ? 'Sauvegarder' : 'Enregistré'}
                     </button>
 
-                     <button
-                        onClick={() => {
-                           if (selectedBookId && selectedBook) {
-                               window.open(`/?preview_book=${selectedBook.id}`, '_blank');
-                           }
-                        }}
-                        className="w-full font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-2 transition-colors shadow-sm bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer mt-3"
-                     >
-                        <Eye size={14} />
-                        Voir le site
-                     </button>
                  </div>
 
                  <div className="space-y-1">
@@ -2122,7 +2111,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
               {/* --- VIEW: SETTINGS --- */}
               {activeTab === 'settings' && (
-                <SettingsPanel settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} />
+                <SettingsPanel settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} savedSettings={savedSettings} />
               )}
               
 
@@ -2134,21 +2123,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                          <h2 className="text-2xl font-bold text-slate-800 mb-2">Gestion de la page d'accueil</h2>
                          <p className="text-slate-500">Personnalisez le contenu et l'apparence de votre page d'accueil.</p>
                       </div>
-                      <button 
-                         onClick={() => {
-                            if (homepageConfig) {
-                              updateHomepageConfig(homepageConfig);
-                            }
-                         }}
-                         disabled={homepageLoading}
-                         className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2 disabled:opacity-50"
-                      >
-                         <Save size={18} />
-                         Sauvegarder
-                      </button>
+                      <SaveButton
+                         hasChanges={!!draftConfig && !!homepageConfig && JSON.stringify(draftConfig) !== JSON.stringify(homepageConfig)}
+                         isSaving={homepageLoading}
+                         onSave={() => { if (draftConfig) updateHomepageConfig(draftConfig); }}
+                         className="px-6 py-3 rounded-lg text-sm"
+                      />
                    </div>
 
-                   {homepageLoading || !homepageConfig ? (
+                   {homepageLoading || !draftConfig ? (
                       <div className="flex items-center justify-center py-12">
                          <Loader2 className="animate-spin text-indigo-600" size={32} />
                       </div>
@@ -2167,13 +2150,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         id: `section-${Date.now()}`,
                                         title: 'Nouvelle section',
                                         subtitle: '',
-                                        isVisible: true,
+                                        isVisible: false,
                                         bookIds: [],
                                         badgeType: 'star'
                                      };
-                                     updateHomepageConfig({
-                                        ...homepageConfig,
-                                        sections: [...homepageConfig.sections, newSection]
+                                     setDraftConfig({
+                                        ...draftConfig,
+                                        sections: [...draftConfig.sections, newSection]
                                      });
                                   }}
                                   className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
@@ -2184,7 +2167,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             </div>
 
                             <div className="space-y-4">
-                               {homepageConfig.sections.map((section, sectionIdx) => (
+                               {draftConfig.sections.map((section, sectionIdx) => (
                                   <div key={section.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                                      <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1 space-y-3">
@@ -2193,9 +2176,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                  type="text"
                                                  value={section.title}
                                                  onChange={(e) => {
-                                                    const newSections = [...homepageConfig.sections];
+                                                    const newSections = [...draftConfig.sections];
                                                     newSections[sectionIdx] = { ...section, title: e.target.value };
-                                                    updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                    setDraftConfig({ ...draftConfig, sections: newSections });
                                                  }}
                                                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none"
                                                  placeholder="Titre de la section"
@@ -2205,9 +2188,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     type="checkbox"
                                                     checked={section.isVisible}
                                                     onChange={(e) => {
-                                                       const newSections = [...homepageConfig.sections];
+                                                       const newSections = [...draftConfig.sections];
                                                        newSections[sectionIdx] = { ...section, isVisible: e.target.checked };
-                                                       updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                       setDraftConfig({ ...draftConfig, sections: newSections });
                                                     }}
                                                     className="w-4 h-4"
                                                  />
@@ -2216,8 +2199,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               <button
                                                  onClick={() => {
                                                     if (confirm('Supprimer cette section ?')) {
-                                                       const newSections = homepageConfig.sections.filter((_, idx) => idx !== sectionIdx);
-                                                       updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                       const newSections = draftConfig.sections.filter((_, idx) => idx !== sectionIdx);
+                                                       setDraftConfig({ ...draftConfig, sections: newSections });
                                                     }
                                                  }}
                                                  className="text-red-600 hover:text-red-700 p-2"
@@ -2229,9 +2212,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               type="text"
                                               value={section.subtitle || ''}
                                               onChange={(e) => {
-                                                 const newSections = [...homepageConfig.sections];
+                                                 const newSections = [...draftConfig.sections];
                                                  newSections[sectionIdx] = { ...section, subtitle: e.target.value };
-                                                 updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                 setDraftConfig({ ...draftConfig, sections: newSections });
                                               }}
                                               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-600 focus:ring-2 focus:ring-purple-500 outline-none"
                                               placeholder="Sous-titre (optionnel)"
@@ -2254,9 +2237,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                  const oldIndex = section.bookIds.indexOf(active.id as string);
                                                  const newIndex = section.bookIds.indexOf(over.id as string);
                                                  const newBookIds = arrayMove(section.bookIds, oldIndex, newIndex);
-                                                 const newSections = [...homepageConfig.sections];
+                                                 const newSections = [...draftConfig.sections];
                                                  newSections[sectionIdx] = { ...section, bookIds: newBookIds };
-                                                 updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                 setDraftConfig({ ...draftConfig, sections: newSections });
                                               }
                                            }}
                                         >
@@ -2272,7 +2255,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           book={book}
                                                           badge={section.bookBadges?.[bookId]}
                                                           onBadgeChange={(badge) => {
-                                                             const newSections = [...homepageConfig.sections];
+                                                             const newSections = [...draftConfig.sections];
                                                              newSections[sectionIdx] = {
                                                                 ...section,
                                                                 bookBadges: {
@@ -2280,10 +2263,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                    [bookId]: badge
                                                                 }
                                                              };
-                                                             updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                             setDraftConfig({ ...draftConfig, sections: newSections });
                                                           }}
                                                           onRemove={() => {
-                                                             const newSections = [...homepageConfig.sections];
+                                                             const newSections = [...draftConfig.sections];
                                                              const newBookBadges = { ...section.bookBadges };
                                                              delete newBookBadges[bookId];
                                                              newSections[sectionIdx] = {
@@ -2291,7 +2274,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 bookIds: section.bookIds.filter(id => id !== bookId),
                                                                 bookBadges: newBookBadges
                                                              };
-                                                             updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                             setDraftConfig({ ...draftConfig, sections: newSections });
                                                           }}
                                                        />
                                                     );
@@ -2308,12 +2291,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                  <div
                                                     key={book.id}
                                                     onClick={() => {
-                                                       const newSections = [...homepageConfig.sections];
+                                                       const newSections = [...draftConfig.sections];
                                                        newSections[sectionIdx] = {
                                                           ...section,
                                                           bookIds: [...section.bookIds, book.id]
                                                        };
-                                                       updateHomepageConfig({ ...homepageConfig, sections: newSections });
+                                                       setDraftConfig({ ...draftConfig, sections: newSections });
                                                     }}
                                                     className="cursor-pointer hover:bg-purple-50 rounded-lg border border-gray-200 p-2 transition-colors"
                                                  >
@@ -2982,9 +2965,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         })()} €
                                     </span>
                                 </div>
-                                <button 
-                                    onClick={submitNewOrder}
-                                    disabled={!(
+                                <CreateButton
+                                    canSubmit={!!(
                                         newOrderForm.customer.firstName && 
                                         newOrderForm.customer.lastName && 
                                         newOrderForm.customer.email && 
@@ -2995,11 +2977,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         newOrderForm.items[0].bookId && 
                                         newOrderForm.items[0].quantity > 0
                                     )}
-                                    className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-slate-900"
-                                >
-                                    <Save size={18} />
-                                    Créer la commande
-                                </button>
+                                    isSaving={false}
+                                    label="Créer la commande"
+                                    onSubmit={submitNewOrder}
+                                    className="w-full py-3 rounded-xl"
+                                />
                             </div>
                         </div>
                     </div>
@@ -3536,25 +3518,27 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       <div className="flex justify-between text-sm font-medium text-slate-900 mb-6">
                                          <span>{order.items.length} sur {order.items.length} articles</span>
                                       </div>
-                                      <button 
-                                         onClick={() => {
-                                            if (fulfillmentTracking) {
-                                               updateOrderTracking(order.id, fulfillmentTracking);
+                                      <SaveButton
+                                         hasChanges={!!fulfillmentTracking && fulfillmentTracking !== (order.trackingNumber || '')}
+                                         isSaving={isConfirmingShipment}
+                                         onSave={async () => {
+                                            if (!fulfillmentTracking) {
+                                               toast.error("Veuillez entrer un numéro de suivi");
+                                               return;
+                                            }
+                                            setIsConfirmingShipment(true);
+                                            try {
+                                               await updateOrderTracking(order.id, fulfillmentTracking);
                                                toast.success(`Commande expédiée avec le suivi ${fulfillmentTracking}`);
                                                setShowFulfillment(false);
-                                            } else {
-                                               toast.error("Veuillez entrer un numéro de suivi");
+                                            } finally {
+                                               setIsConfirmingShipment(false);
                                             }
                                          }}
-                                         disabled={!fulfillmentTracking}
-                                         className={`w-full py-2.5 rounded-lg font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 ${
-                                            !fulfillmentTracking 
-                                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                            : 'bg-slate-900 text-white hover:bg-slate-800'
-                                         }`}
-                                      >
-                                         Confirmer l'expédition
-                                      </button>
+                                         label="Confirmer l'expédition"
+                                         savedLabel="Expédition enregistrée"
+                                         className="w-full py-2.5 rounded-lg text-sm"
+                                      />
                                    </div>
                                 </div>
                              </div>
@@ -3566,7 +3550,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
               {/* --- VIEW: CREATE CUSTOMER --- */}
               {activeTab === 'customers' && isCreatingCustomer && (
-                  <div className="max-w-4xl mx-auto space-y-6">
+                  <div className="max-w-lg mx-auto space-y-6">
                     <div className="flex items-center gap-4 mb-4">
                        <button onClick={() => setIsCreatingCustomer(false)} className="text-slate-400 hover:text-slate-600">
                           <ArrowUp className="-rotate-90" size={20} />
@@ -3588,7 +3572,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         type="text" 
                                         value={newCustomerForm.firstName}
                                         onChange={(e) => setNewCustomerForm({...newCustomerForm, firstName: e.target.value})}
-                                        className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                        className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                     />
                                 </div>
                                 <div>
@@ -3597,7 +3581,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         type="text" 
                                         value={newCustomerForm.lastName}
                                         onChange={(e) => setNewCustomerForm({...newCustomerForm, lastName: e.target.value})}
-                                        className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                        className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                     />
                                 </div>
                             </div>
@@ -3608,7 +3592,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     type="email" 
                                     value={newCustomerForm.email}
                                     onChange={(e) => setNewCustomerForm({...newCustomerForm, email: e.target.value})}
-                                    className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                    className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                 />
                             </div>
 
@@ -3618,7 +3602,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     type="tel" 
                                     value={newCustomerForm.phone}
                                     onChange={(e) => setNewCustomerForm({...newCustomerForm, phone: e.target.value})}
-                                    className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                    className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                 />
                             </div>
 
@@ -3634,7 +3618,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="text" 
                                             value={newCustomerForm.address.street}
                                             onChange={(e) => setNewCustomerForm({...newCustomerForm, address: {...newCustomerForm.address, street: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -3644,7 +3628,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 type="text" 
                                                 value={newCustomerForm.address.zipCode}
                                                 onChange={(e) => setNewCustomerForm({...newCustomerForm, address: {...newCustomerForm.address, zipCode: e.target.value}})}
-                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                                className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                             />
                                         </div>
                                         <div>
@@ -3653,7 +3637,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 type="text" 
                                                 value={newCustomerForm.address.city}
                                                 onChange={(e) => setNewCustomerForm({...newCustomerForm, address: {...newCustomerForm.address, city: e.target.value}})}
-                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                                className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                             />
                                         </div>
                                     </div>
@@ -3662,7 +3646,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <select 
                                             value={newCustomerForm.address.country}
                                             onChange={(e) => setNewCustomerForm({...newCustomerForm, address: {...newCustomerForm.address, country: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         >
                                             <option value="France">France</option>
                                             <option value="Belgique">Belgique</option>
@@ -3681,17 +3665,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             >
                                 Annuler
                             </button>
-                            <button 
-                                onClick={submitNewCustomer}
-                                disabled={!newCustomerForm.firstName || !newCustomerForm.lastName || !newCustomerForm.email || !newCustomerForm.phone || !newCustomerForm.address.street || !newCustomerForm.address.zipCode || !newCustomerForm.address.city}
-                                className={`px-6 py-2.5 rounded-lg font-bold transition-colors shadow-lg shadow-indigo-500/20 ${
-                                  !newCustomerForm.firstName || !newCustomerForm.lastName || !newCustomerForm.email || !newCustomerForm.phone || !newCustomerForm.address.street || !newCustomerForm.address.zipCode || !newCustomerForm.address.city
-                                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                                  : 'bg-slate-900 text-white hover:bg-slate-800'
-                                }`}
-                            >
-                                Créer le client
-                            </button>
+                            <CreateButton
+                                canSubmit={!!(newCustomerForm.firstName && newCustomerForm.lastName && newCustomerForm.email && newCustomerForm.phone && newCustomerForm.address.street && newCustomerForm.address.zipCode && newCustomerForm.address.city)}
+                                isSaving={false}
+                                label="Créer le client"
+                                onSubmit={submitNewCustomer}
+                                className="px-6 py-2.5 rounded-lg"
+                            />
                         </div>
                     </div>
                   </div>
@@ -3796,6 +3776,18 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 <button 
                                                     onClick={() => {
                                                         setEditCustomerForm({
+                                                            firstName: customer.firstName,
+                                                            lastName: customer.lastName,
+                                                            email: customer.email,
+                                                            phone: customer.phone || '',
+                                                            address: {
+                                                                street: customer.address?.street || '',
+                                                                zipCode: customer.address?.zipCode || '',
+                                                                city: customer.address?.city || '',
+                                                                country: customer.address?.country || ''
+                                                            }
+                                                        });
+                                                        setOriginalEditCustomer({
                                                             firstName: customer.firstName,
                                                             lastName: customer.lastName,
                                                             email: customer.email,
@@ -3931,8 +3923,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 >
                                                     Annuler
                                                 </button>
-                                                <button 
-                                                    onClick={() => {
+                                                <SaveButton
+                                                    hasChanges={
+                                                        (!!editCustomerForm.firstName && !!editCustomerForm.lastName && !!editCustomerForm.email) &&
+                                                        JSON.stringify(editCustomerForm) !== JSON.stringify(originalEditCustomer)
+                                                    }
+                                                    isSaving={false}
+                                                    onSave={() => {
                                                         updateCustomer(customer.id, {
                                                             firstName: editCustomerForm.firstName,
                                                             lastName: editCustomerForm.lastName,
@@ -3943,15 +3940,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         setIsEditingCustomer(false);
                                                         toast.success("Profil client mis à jour");
                                                     }}
-                                                    disabled={!editCustomerForm.firstName || !editCustomerForm.lastName || !editCustomerForm.email}
-                                                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                                                        !editCustomerForm.firstName || !editCustomerForm.lastName || !editCustomerForm.email
-                                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                                    }`}
-                                                >
-                                                    Enregistrer
-                                                </button>
+                                                    className="flex-1 px-3 py-2 rounded-lg text-sm"
+                                                />
                                             </div>
                                        </div>
                                    )}
@@ -4272,17 +4262,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   )}
                                   
                                   <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
-                                      <button 
-                                          onClick={() => handleSaveMenu(idx)}
-                                          disabled={JSON.stringify(menu) === JSON.stringify(mainMenu[idx] || {})}
-                                          className={`px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors shadow-sm ${
-                                              JSON.stringify(menu) !== JSON.stringify(mainMenu[idx] || {})
-                                                  ? 'bg-slate-900 text-white hover:bg-slate-800' 
-                                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                          }`}
-                                      >
-                                          <Save size={16} /> Enregistrer le menu
-                                      </button>
+                                      <SaveButton
+                                          hasChanges={JSON.stringify(menu) !== JSON.stringify(mainMenu[idx] || {})}
+                                          isSaving={false}
+                                          onSave={() => handleSaveMenu(idx)}
+                                          className="px-6 py-2.5 rounded-lg text-sm"
+                                          label="Enregistrer le menu"
+                                          savedLabel="Menu enregistré"
+                                      />
                                   </div>
                               </div>
                           </div>
@@ -6421,18 +6408,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        >
                           Annuler
                        </button>
-                       <button 
-                          onClick={() => {
+                       <SaveButton
+                          hasChanges={true}
+                          isSaving={false}
+                          onSave={() => {
                              if (selectedOrderId) {
                                 updateOrderStatus(selectedOrderId, draftStatus as any);
                                 setDraftStatus(null);
                                 toast.success("Statut de la commande mis à jour");
                              }
                           }}
-                          className="bg-brand-coral hover:bg-red-500 text-white px-4 py-1.5 rounded-full font-bold text-sm transition-colors shadow-lg shadow-brand-coral/20"
-                       >
-                          Enregistrer
-                       </button>
+                          label="Enregistrer"
+                          savedLabel="Enregistré"
+                          className="px-4 py-1.5 rounded-full text-sm"
+                       />
                     </div>
                  </div>
               )}

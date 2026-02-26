@@ -38,7 +38,7 @@ export function Navbar() {
                 <span className="text-2xl">📚</span>
               </div>
               <span className="font-serif text-4xl text-primary drop-shadow-sm tracking-wide">
-                NuageBook
+                nuagebook
               </span>
             </a>
           </Link>

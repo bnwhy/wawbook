@@ -14,6 +14,7 @@ import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import passport from 'passport';
 import { configurePassport } from "./config/passport";
+import { initEmailLogo } from "./services/emailService";
 
 const app = express();
 const httpServer = createServer(app);
@@ -51,6 +52,7 @@ async function initDefaultSettings() {
     }
     
     logger.info('Default settings initialized');
+    await initEmailLogo();
   } catch (error) {
     logger.error({ err: error }, 'Failed to initialize default settings');
   }

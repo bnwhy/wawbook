@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, Loader2, Lock } from 'lucide-react';
+import { CheckCircle, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { formatPrice } from '../utils/formatPrice';
@@ -23,6 +23,8 @@ const CheckoutSuccessPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const processedRef = React.useRef(false);
 
   useEffect(() => {
@@ -197,29 +199,39 @@ const CheckoutSuccessPage = () => {
                 <label htmlFor="password" className="block text-sm font-bold text-stone-700 mb-1">
                   Choisir un mot de passe
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm"
-                  placeholder="Minimum 8 caractères"
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 pr-11 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm"
+                    placeholder="Minimum 8 caractères"
+                  />
+                  <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute inset-y-0 right-3 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-bold text-stone-700 mb-1">
                   Confirmer le mot de passe
                 </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm"
-                  placeholder="Répéter le mot de passe"
-                />
+                <div className="relative">
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 pr-11 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm"
+                    placeholder="Répéter le mot de passe"
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute inset-y-0 right-3 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button

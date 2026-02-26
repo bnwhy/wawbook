@@ -13,11 +13,11 @@ import { formatPrice } from '../utils/formatPrice';
 
 import { useEcommerce } from '../context/EcommerceContext';
 
-interface CartPageProps {
-  onEdit?: (item: CartItem) => void;
+function encodeBase64(obj: unknown): string {
+  return btoa(encodeURIComponent(JSON.stringify(obj)));
 }
 
-const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
+const CartPage: React.FC = () => {
   const { items, removeFromCart, updateQuantity: _updateQuantity, total } = useCart();
   const { defaultShippingRate } = useEcommerce();
   const { books } = useBooks();
@@ -158,7 +158,18 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                     
                     <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-gray-50">
                         <button 
-                            onClick={() => onEdit && onEdit(item)}
+                            onClick={() => {
+                              const p = new URLSearchParams();
+                              p.set('bookTitle', encodeURIComponent(item.bookTitle));
+                              if (item.config.theme) p.set('theme', encodeURIComponent(item.config.theme));
+                              if (item.config.appearance?.activity) p.set('activity', encodeURIComponent(item.config.appearance.activity));
+                              if (item.id) p.set('editingId', encodeURIComponent(item.id));
+                              const dedication = item.dedication || item.config.dedication;
+                              if (dedication) p.set('dedication', encodeURIComponent(dedication));
+                              if (item.config.author) p.set('author', encodeURIComponent(item.config.author));
+                              if (item.config.characters) p.set('selections', encodeBase64(item.config.characters));
+                              setLocation(`/create?${p.toString()}`);
+                            }}
                             className="flex items-center gap-1 text-sm font-bold text-cloud-blue hover:text-cloud-deep transition-colors"
                         >
                             <Edit2 size={14} /> Modifier
@@ -204,7 +215,7 @@ const CartPage: React.FC<CartPageProps> = ({ onEdit }) => {
                         <span className="font-bold text-cloud-dark">{formatPrice(total)}</span>
                     </div>
                     <div className="flex justify-between text-stone-600 text-sm font-medium">
-                        <span>Expédition :</span>
+                        <span>Livraison (Standard) :</span>
                         <span className="font-bold text-cloud-dark">{formatPrice(defaultShippingRate)}</span>
                     </div>
                     {discount > 0 && (

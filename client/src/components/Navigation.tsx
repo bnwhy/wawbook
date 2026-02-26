@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Sparkles, ChevronDown, Menu, X, ShoppingCart, User, LogOut, Package } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
@@ -45,7 +45,19 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
   const [expandedMobileItem, setExpandedMobileItem] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userMenuOpen]);
 
   const handleLogout = async () => {
     await logout();
@@ -106,7 +118,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
                 </button>
 
                 {/* Dropdown Panel */}
-                <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-4 w-max min-w-[200px] transition-all duration-200 origin-top ${hoveredIndex === idx ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}>
+                <div className={`absolute top-full left-0 pt-4 w-max min-w-[200px] transition-all duration-200 origin-top ${hoveredIndex === idx ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'}`}>
                   <div className="bg-white rounded-2xl shadow-cloud border-4 border-cloud-lightest p-2 overflow-hidden">
                   
                   {/* Simple List Type */}
@@ -170,7 +182,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
         {/* Desktop User Menu & Cart */}
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
-            <div className="relative">
+            <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-cloud-lightest transition-colors"
@@ -183,28 +195,30 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-stone-200 py-2 z-50">
-                  <Link href="/account">
-                    <a onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-cloud-lightest transition-colors text-stone-700 hover:text-cloud-blue">
-                      <User size={18} />
-                      <span className="font-medium">Mon compte</span>
-                    </a>
-                  </Link>
-                  <Link href="/account/orders">
-                    <a onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-cloud-lightest transition-colors text-stone-700 hover:text-cloud-blue">
-                      <Package size={18} />
-                      <span className="font-medium">Mes commandes</span>
-                    </a>
-                  </Link>
-                  <div className="border-t border-stone-200 my-2"></div>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-red-600 hover:text-red-700"
-                  >
-                    <LogOut size={18} />
-                    <span className="font-medium">Déconnexion</span>
-                  </button>
-                </div>
+                <>
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-stone-200 py-2 z-50">
+                    <Link href="/account">
+                      <a onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-cloud-lightest transition-colors text-stone-700 hover:text-cloud-blue">
+                        <User size={18} />
+                        <span className="font-medium">Mon compte</span>
+                      </a>
+                    </Link>
+                    <Link href="/account/orders">
+                      <a onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 hover:bg-cloud-lightest transition-colors text-stone-700 hover:text-cloud-blue">
+                        <Package size={18} />
+                        <span className="font-medium">Mes commandes</span>
+                      </a>
+                    </Link>
+                    <div className="border-t border-stone-200 my-2"></div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-red-600 hover:text-red-700"
+                    >
+                      <LogOut size={18} />
+                      <span className="font-medium">Déconnexion</span>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           ) : (

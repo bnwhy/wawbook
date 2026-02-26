@@ -6,6 +6,7 @@ import { NotFoundError, ValidationError } from "../utils/errors";
 import { logger } from "../utils/logger";
 import { stripeService } from "../stripeService";
 import { requireAuth } from "../middleware/auth";
+import { sendOrderConfirmation, sendShippingConfirmation } from "../services/emailService";
 
 const router = express.Router();
 
@@ -82,6 +83,9 @@ router.post("/", async (req, res, next) => {
     }
     const order = await storage.createOrder(validationResult.data);
     logger.info({ orderId: order.id }, 'Order created');
+    sendOrderConfirmation(order).catch(err =>
+      logger.warn({ err, orderId: order.id }, 'Failed to send order confirmation email')
+    );
     res.status(201).json(order);
   } catch (error) {
     next(error);
@@ -95,11 +99,17 @@ router.patch("/:id", async (req, res, next) => {
       ...req.body,
       totalAmount: req.body.totalAmount !== undefined ? String(req.body.totalAmount) : undefined,
     };
+    const prevOrder = await storage.getOrder(req.params.id);
     const order = await storage.updateOrder(req.params.id, body);
     if (!order) {
       throw new NotFoundError('Order', req.params.id);
     }
     logger.info({ orderId: order.id }, 'Order updated');
+    if (body.status === 'shipped' && prevOrder?.status !== 'shipped') {
+      sendShippingConfirmation(order).catch(err =>
+        logger.warn({ err, orderId: order.id }, 'Failed to send shipping confirmation email')
+      );
+    }
     res.json(order);
   } catch (error) {
     next(error);

@@ -346,7 +346,18 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
                 {/* Connecting Line (Desktop) */}
-                <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-1 bg-white border-b-2 border-dashed border-cloud-sky z-0"></div>
+                <div className="hidden md:block absolute z-0 overflow-visible pointer-events-none" style={{ top: '0px', left: '16%', right: '16%', height: '96px' }}>
+                  <svg width="100%" height="100%" viewBox="0 0 600 96" preserveAspectRatio="none" overflow="visible">
+                    <path
+                      d="M 0,48 C 30,44 55,30 90,33 C 125,36 140,58 175,55 C 210,52 230,36 270,40 C 310,44 325,62 360,58 C 395,54 415,36 455,38 C 495,40 520,53 560,50 C 580,48 592,47 600,48"
+                      fill="none"
+                      stroke="#B3E5FC"
+                      strokeWidth="3"
+                      strokeDasharray="10 6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
 
                 {STEPS.map((step, i) => (
                   <div key={i} className="flex flex-col items-center text-center relative z-10">
@@ -444,7 +455,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
            <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
               <div className="col-span-1 md:col-span-2">
                  <div className="flex items-center gap-2 mb-6 text-white">
-                    <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">NuageBook</span>
+                    <Cloud fill="currentColor" /> <span className="font-display font-black text-2xl">nuagebook</span>
                  </div>
                  <p className="text-cloud-light/60 font-medium text-lg max-w-sm mb-8">
                     Nous créons des moments magiques de lecture pour les enfants du monde entier.
@@ -482,7 +493,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
                   <PaymentBadges size="small" />
                 </div>
                 <div className="text-center text-cloud-light/40 font-bold text-sm">
-                  © 2024 NuageBook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
+                  © 2024 nuagebook. Fait avec <Heart size={14} className="inline mx-1 text-accent-melon" fill="currentColor" /> pour les rêveurs.
                 </div>
               </div>
            </div>

@@ -17,6 +17,7 @@ import { Story, BookConfig, Theme } from '../types';
 import { BookProduct, TextElement } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useCart } from '../context/CartContext';
+import { useEcommerce } from '../context/EcommerceContext';
 import { generateBookPages, getCombinationKey as getCombinationKeyUtil } from '../utils/imageGenerator';
 import { generateStoryText } from '../services/geminiService';
 import Navigation from './Navigation';
@@ -44,57 +45,42 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({ progress, message }
     if (progress < 90) return <Image className="w-16 h-16" />;
     return <Sparkles className="w-16 h-16" />;
   };
-  
-  const getCurrentColor = () => {
-    return "#0EA5E9"; // Bleu clair du site (cloud-blue)
-  };
-  
+
   return (
     <div className="relative flex flex-col items-center justify-center">
-      {/* Contenu centré */}
       <div className="relative z-10 flex flex-col items-center">
-        {/* Icône animée qui change selon la progression */}
-        <div 
+        <div
           className="mb-6"
-          style={{ 
-            color: getCurrentColor(),
+          style={{
+            color: "#0EA5E9",
             animation: progress < 20 ? 'book-flip 2s ease-in-out infinite' : 'bounce 1s ease-in-out infinite'
           }}
         >
           {getCurrentIcon()}
         </div>
-        
+
         <h3 className="text-xl font-semibold text-slate-800 mb-4 font-display text-center drop-shadow-sm">
           {message}
         </h3>
-        
-        {/* Bandeau de chargement (barre de progression) */}
+
         <div className="w-80 max-w-md mb-4">
           <div className="h-3 bg-white/40 backdrop-blur-sm rounded-full overflow-hidden relative shadow-inner">
-            {/* Effet shimmer pour donner l'impression de mouvement */}
-            <div 
+            <div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-              style={{
-                animation: 'shimmer 2s ease-in-out infinite'
-              }}
-            ></div>
-            
-            {/* Barre de progression réelle */}
-            <div 
+              style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+            />
+            <div
               className="h-full bg-gradient-to-r from-cloud-blue via-cloud-sky to-cloud-lighter rounded-full transition-all duration-500 relative overflow-hidden"
               style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
             >
-              {/* Effet de brillance qui se déplace */}
-              <div 
+              <div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                style={{
-                  animation: 'slide-shine 1.5s ease-in-out infinite'
-                }}
-              ></div>
+                style={{ animation: 'slide-shine 1.5s ease-in-out infinite' }}
+              />
             </div>
           </div>
         </div>
-        
+
         <p className="text-slate-600 font-hand text-lg font-medium text-center drop-shadow-sm">
           Un instant, la magie opère !
         </p>
@@ -118,10 +104,12 @@ interface BookPreviewProps {
 const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, onReset: _onReset, onStart, editingCartItemId, isModal = false, bookTitle, initialTheme }) => {
   const { books } = useBooks();
   const { addToCart, updateItem } = useCart();
+  const { defaultShippingRate } = useEcommerce();
   const [, setLocation] = useLocation();
   const [localStory, setLocalStory] = useState<Story | undefined>(story);
   const currentStory = localStory || story;
   const book = bookProduct || books.find(b => b.name === currentStory?.title || b.name === bookTitle);
+  const bookBasePrice = Number(book?.price ?? 44.99);
   
 
   const [, setCurrentView] = useState(0);
@@ -459,7 +447,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       config,
       dedication,
       format: selectedFormat,
-      price: selectedFormat === 'hardcover' ? 44.99 : 34.99,
+      price: selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10,
       quantity: 1,
       coverImage: capturedCoverImage
     };
@@ -829,7 +817,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                     <div className="absolute inset-0 flex items-center justify-center z-50">
                       <LoadingAnimation 
                         progress={applyProgress} 
-                        message={applyProgress < 50 ? "Application de vos modifications..." : applyProgress < 95 ? "Mise à jour des pages..." : "Terminé !"} 
+                        message={applyProgress < 50 ? "Application de vos modifications..." : applyProgress < 95 ? "Mise à jour des pages..." : "Terminé !"}
                       />
                     </div>
                   )}
@@ -926,7 +914,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                <div className="flex flex-col flex-1">
                                    <span className="font-bold text-cloud-dark text-sm">Couverture rigide</span>
                                    <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-2">Notre préféré</span>
-                                   <span className="font-black text-cloud-dark">€44.99</span>
+                                   <span className="font-black text-cloud-dark">{formatPrice(bookBasePrice)}</span>
                                </div>
                                {selectedFormat === 'hardcover' && (
                                    <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
@@ -950,7 +938,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                <div className="flex flex-col flex-1">
                                    <span className="font-bold text-cloud-dark text-sm">Couverture souple</span>
                                    <span className="text-[10px] text-transparent font-black uppercase tracking-wider mb-2 select-none">Standard</span>
-                                   <span className="font-black text-cloud-dark">€ 34,99</span>
+                                   <span className="font-black text-cloud-dark">{formatPrice(bookBasePrice - 10)}</span>
                                </div>
                                {selectedFormat === 'softcover' && (
                                    <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
@@ -968,17 +956,17 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-6">
                             <div className="flex justify-between items-center mb-2 text-sm">
                                 <span className="text-gray-500">Livre personnalisé</span>
-                                <span className="font-bold text-cloud-dark">{selectedFormat === 'hardcover' ? '€ 44,99' : '€ 34,99'}</span>
+                                <span className="font-bold text-cloud-dark">{formatPrice(selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10)}</span>
                             </div>
                             <div className="flex justify-between items-center mb-4 text-sm">
-                                <span className="text-gray-500">Livraison</span>
-                                <span className="font-bold text-cloud-dark">€ 9,99</span>
+                                <span className="text-gray-500">Livraison (Standard)</span>
+                                <span className="font-bold text-cloud-dark">{formatPrice(defaultShippingRate)}</span>
                             </div>
                             <div className="h-px bg-gray-200 w-full mb-4"></div>
                             <div className="flex justify-between items-center text-lg">
                                 <span className="font-black text-cloud-dark">Total</span>
                                 <span className="font-black text-brand-coral">
-                                    {formatPrice(selectedFormat === 'hardcover' ? 44.99 + 9.99 : 34.99 + 9.99)}
+                                    {formatPrice((selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10) + defaultShippingRate)}
                                 </span>
                             </div>
                        </div>

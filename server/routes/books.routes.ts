@@ -174,4 +174,52 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
+// GET /api/books/:id/fonts/:fontName — proxy R2 font for client-side renderer
+router.get("/:id/fonts/:fontName", async (req, res, next) => {
+  try {
+    const book = await storage.getBook(req.params.id);
+    if (!book) throw new NotFoundError('Book', req.params.id);
+
+    const fontName = req.params.fontName;
+    const fontMappings: Record<string, string> = (book.contentConfig as any)?.fontMappings || {};
+    const bucket = objectStorageClient.bucket();
+    let r2Key: string | null = null;
+
+    // 1. fontMappings lookup — only use if pointing to R2 (/objects/... format)
+    const storedUrl = fontMappings[fontName];
+    if (storedUrl && storedUrl.startsWith('/objects/')) {
+      const match = storedUrl.match(/\/objects\/[^/]+\/(.+)$/);
+      if (match) r2Key = match[1];
+    } else if (storedUrl && (storedUrl.startsWith('http://') || storedUrl.startsWith('https://'))) {
+      // Full public CDN URL — redirect directly
+      return res.redirect(storedUrl);
+    }
+    // Note: local paths (../font/...) are skipped — not reliable in Docker
+
+    // 2. Fallback: list R2 by bookId prefix (compatible with all books)
+    if (!r2Key) {
+      const [files] = await bucket.getFiles({ prefix: `public/fonts/${req.params.id}_` });
+      const searchName = fontName.toLowerCase().replace(/[\s\-_]/g, '');
+      const found = files.find(f => {
+        const basename = (f.name.split('/').pop() || '').replace(/^\d+_(?:[a-f0-9]+_)?/i, '');
+        const normalized = basename.toLowerCase().replace(/[\s\-_]/g, '').replace(/\.(ttf|otf)$/i, '').replace(/regular$/i, '');
+        return normalized.includes(searchName) || searchName.includes(normalized);
+      });
+      if (found) r2Key = found.name;
+    }
+
+    if (!r2Key) {
+      return res.status(404).json({ error: 'Font not found' });
+    }
+
+    const [buffer] = await bucket.file(r2Key).download();
+    const ext = r2Key.endsWith('.otf') ? 'otf' : 'ttf';
+    res.setHeader('Content-Type', ext === 'otf' ? 'font/otf' : 'font/ttf');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(buffer);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

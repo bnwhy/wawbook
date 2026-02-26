@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Hero from '../components/Hero';
-import Wizard from '../components/Wizard';
-import BookPreview from '../components/BookPreview';
 import CartPage from '../pages/CartPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import CheckoutSuccessPage from '../pages/CheckoutSuccessPage';
 import CheckoutCancelPage from '../pages/CheckoutCancelPage';
-import { AppState, BookConfig, Story, Theme, Activity } from '../types';
+import CreatePage from '../pages/CreatePage';
+import PreviewPage from '../pages/PreviewPage';
 import { Switch, Route, useLocation } from 'wouter';
 import StaticPage from '../pages/StaticPage';
 import CataloguePage from '../pages/CataloguePage';
@@ -31,72 +30,7 @@ import TermsPage from '../pages/TermsPage';
 import PrivacyPage from '../pages/PrivacyPage';
 
 const PublicApp: React.FC = () => {
-  const [appState, setAppState] = useState<AppState>('HOME');
-  const [config, setConfig] = useState<BookConfig | null>(null);
-  const [story, setStory] = useState<Story | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [initialTheme, setInitialTheme] = useState<Theme | undefined>(undefined);
-  const [initialActivity, setInitialActivity] = useState<Activity | undefined>(undefined);
-  const [selectedBookTitle, setSelectedBookTitle] = useState<string | undefined>(undefined);
-  const [initialSelections, setInitialSelections] = useState<Record<string, Record<string, any>> | undefined>(undefined);
-  const [editingCartItemId, setEditingCartItemId] = useState<string | undefined>(undefined);
-  const [editingDedication, setEditingDedication] = useState<string | undefined>(undefined);
-  const [editingAuthor, setEditingAuthor] = useState<string | undefined>(undefined);
-  const [_location, setLocation] = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [appState]);
-
-  const startCreation = (theme?: Theme, activity?: Activity, bookTitle?: string, selections?: Record<string, Record<string, any>>, editingId?: string, dedication?: string, author?: string) => {
-    setInitialTheme(theme);
-    setInitialActivity(activity);
-    setSelectedBookTitle(bookTitle);
-    setInitialSelections(selections);
-    setEditingCartItemId(editingId);
-    setEditingDedication(dedication);
-    setEditingAuthor(author);
-    setAppState('CREATE');
-    setError(null);
-  };
-
-  const cancelCreation = () => {
-    if (editingCartItemId) {
-      setLocation('/cart');
-      setEditingCartItemId(undefined);
-    }
-    setAppState('HOME');
-    setConfig(null);
-    setInitialTheme(undefined);
-    setInitialActivity(undefined);
-    setSelectedBookTitle(undefined);
-    setInitialSelections(undefined);
-    setEditingDedication(undefined);
-    setEditingAuthor(undefined);
-  };
-
-  /**
-   * handleConfigComplete - Passe directement à READING
-   * BookPreview gère toute la génération (texte + pages) avec animation intégrée
-   * En mode édition, on réinjecte dedication et author depuis le panier
-   */
-  const handleConfigComplete = async (finalConfig: BookConfig, _context?: { theme?: Theme, productId?: string }) => {
-    const configWithMeta = {
-      ...finalConfig,
-      ...(editingDedication !== undefined && { dedication: editingDedication }),
-      ...(editingAuthor !== undefined && { author: editingAuthor }),
-    };
-    setConfig(configWithMeta);
-    setAppState('READING');
-  };
-
-  const handleReset = () => {
-    setAppState('HOME');
-    setConfig(null);
-    setStory(null);
-    setInitialTheme(undefined);
-    setInitialActivity(undefined);
-  };
+  const [, setLocation] = useLocation();
 
   return (
     <AuthProvider>
@@ -137,75 +71,34 @@ const PublicApp: React.FC = () => {
                   </Route>
 
                   <Route path="/">
-                    {appState === 'HOME' && <Hero onStart={startCreation} />}
-                  
-                  {appState === 'CREATE' && (
-                    <Wizard 
-                      onComplete={handleConfigComplete} 
-                      onCancel={cancelCreation}
-                      initialTheme={initialTheme}
-                      initialActivity={initialActivity}
-                      bookTitle={selectedBookTitle}
-                      initialSelections={initialSelections}
-                      isEditing={!!editingCartItemId}
-                    />
-                  )}
+                    <Hero onStart={(theme, activity, bookTitle) => {
+                      const p = new URLSearchParams();
+                      if (bookTitle) p.set('bookTitle', encodeURIComponent(bookTitle));
+                      if (theme) p.set('theme', encodeURIComponent(theme));
+                      if (activity) p.set('activity', encodeURIComponent(activity));
+                      setLocation(`/create?${p.toString()}`);
+                    }} />
+                  </Route>
 
-                  {appState === 'READING' && config && (
-                    <BookPreview 
-                      story={story ?? undefined}
-                      config={config} 
-                      onReset={handleReset}
-                      onStart={() => startCreation(config.theme, undefined, story?.title || selectedBookTitle, config.characters, editingCartItemId)}
-                      editingCartItemId={editingCartItemId}
-                      bookTitle={selectedBookTitle}
-                      initialTheme={initialTheme}
-                    />
-                  )}
-                </Route>
+                  <Route path="/create" component={CreatePage} />
+                  <Route path="/preview" component={PreviewPage} />
 
                 <Route path="/catalogue">
-                  <CataloguePage 
-                    onSelectBook={(title) => {
-                      startCreation(undefined, undefined, title);
-                      setLocation('/');
-                    }} 
-                  />
+                  <CataloguePage />
                 </Route>
 
                 <Route path="/cart">
-                  <CartPage onEdit={(item) => {
-                    startCreation(
-                      item.config.theme, 
-                      item.config.appearance?.activity, 
-                      item.bookTitle, 
-                      item.config.characters,
-                      item.id,
-                      item.dedication || item.config.dedication,
-                      item.config.author,
-                    );
-                    setLocation('/');
-                  }} />
+                  <CartPage />
                 </Route>
                 <Route path="/checkout" component={CheckoutPage} />
                 <Route path="/checkout/success" component={CheckoutSuccessPage} />
                 <Route path="/checkout/cancel" component={CheckoutCancelPage} />
 
                 <Route path="/products/:category">
-                  <CataloguePage 
-                    onSelectBook={(title) => {
-                      startCreation(undefined, undefined, title);
-                      setLocation('/');
-                    }} 
-                  />
+                  <CataloguePage />
                 </Route>
                 <Route path="/occasion/:occasion">
-                  <CataloguePage 
-                    onSelectBook={(title) => {
-                      startCreation(undefined, undefined, title);
-                      setLocation('/');
-                    }} 
-                  />
+                  <CataloguePage />
                 </Route>
                 
                 <Route path="/for/:audience">
@@ -226,15 +119,6 @@ const PublicApp: React.FC = () => {
                 <Route component={NotFound} />
               </Switch>
 
-              {error && (
-                <div className="fixed bottom-4 right-4 bg-white border-l-4 border-brand-coral text-slate-700 px-6 py-4 rounded shadow-card z-50">
-                  <strong className="font-bold text-brand-coral block mb-1">Oups !</strong>
-                  <span className="block text-sm">{error}</span>
-                  <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-600" onClick={() => setError(null)}>
-                    &times;
-                  </button>
-                </div>
-              )}
                 </div>
               </EcommerceProvider>
             </CartProvider>

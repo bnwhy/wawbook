@@ -71,11 +71,11 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
   return (
   <div className="mb-4" onClick={(e) => e.stopPropagation()}>
     <details className="group/info">
-      <summary className="cursor-pointer text-[11px] font-bold text-cloud-dark/60 hover:text-cloud-blue flex items-center justify-between transition-colors list-none outline-none select-none py-1">
+      <summary className="cursor-pointer text-sm font-bold text-cloud-dark/60 hover:text-cloud-blue flex items-center justify-between transition-colors list-none outline-none select-none py-1">
          <span>Plus d'informations</span>
          <ChevronDown size={14} className="group-open/info:rotate-180 transition-transform" />
       </summary>
-      <div className="mt-2 text-[10px] text-cloud-dark/60 space-y-2 pb-2 border-t border-dashed border-gray-200 pt-2 leading-relaxed animate-fade-in cursor-text">
+      <div className="mt-2 text-sm text-cloud-dark/60 space-y-2 pb-2 border-t border-dashed border-gray-200 pt-2 leading-relaxed animate-fade-in cursor-text">
          {features.languages && features.languages.length > 0 && (
            <div>
              <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>

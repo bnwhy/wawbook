@@ -62,6 +62,8 @@ router.patch("/:id", async (req, res, next) => {
       ...rest,
       price: rest.price != null ? String(rest.price) : (rest.price === null ? null : undefined),
       oldPrice: rest.oldPrice != null ? String(rest.oldPrice) : (rest.oldPrice === null ? null : undefined),
+      // Convertit boolean → integer (colonne is_hidden est de type integer 0/1)
+      isHidden: rest.isHidden != null ? (rest.isHidden ? 1 : 0) : undefined,
     };
     
     logger.debug({ 

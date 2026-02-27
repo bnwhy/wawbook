@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Printer, Globe, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Printer, Globe, Edit2, Trash2 } from 'lucide-react';
 import type { Printer as PrinterType } from '../../types/admin';
 import { SaveButton } from './SaveButton';
+import CountrySelector from './CountrySelector';
 import { toast } from 'sonner';
+import { useConfirm } from '../../hooks/useConfirm';
 
 interface PrintersManagerProps {
   printers: PrinterType[];
@@ -20,6 +22,7 @@ const PrintersManager: React.FC<PrintersManagerProps> = ({
   // track which printers are newly created (not yet persisted)
   const [newPrinterIds, setNewPrinterIds] = useState<Set<string>>(new Set());
   const [originalPrinters, setOriginalPrinters] = useState<PrinterType[]>([]);
+  const { confirm: confirmDialog, ConfirmDialog } = useConfirm();
   const [savingPrinterId, setSavingPrinterId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,7 +65,7 @@ const PrintersManager: React.FC<PrintersManagerProps> = ({
   };
 
   const handleDeletePrinter = async (id: string) => {
-    if (!confirm('Supprimer cet imprimeur ?')) return;
+    if (!await confirmDialog('Supprimer cet imprimeur ?')) return;
     try {
       if (!newPrinterIds.has(id)) {
         await fetch(`/api/printers/${id}`, { method: 'DELETE' });
@@ -75,6 +78,7 @@ const PrintersManager: React.FC<PrintersManagerProps> = ({
   };
 
   return (
+  <>
   <div className="max-w-4xl mx-auto space-y-6">
     <div className="flex justify-between items-center">
       <div>
@@ -114,18 +118,12 @@ const PrintersManager: React.FC<PrintersManagerProps> = ({
                 </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Pays supportés (codes ISO)</label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {printer.countryCodes.map(code => (
-                    <span key={code} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                      {code}
-                      <button onClick={() => setPrinters(printers.map(p => p.id === printer.id ? {...p, countryCodes: p.countryCodes.filter(c => c !== code)} : p))}><X size={12} /></button>
-                    </span>
-                  ))}
-                  <input type="text" placeholder="+ AJOUTER (Ex: FR)" className="bg-transparent border border-dashed border-gray-300 rounded px-2 py-1 text-xs uppercase w-32 focus:w-40 transition-all outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                    onKeyDown={(e) => { if (e.key === 'Enter') { const code = e.currentTarget.value.toUpperCase(); if (code && !printer.countryCodes.includes(code)) { setPrinters(printers.map(p => p.id === printer.id ? {...p, countryCodes: [...p.countryCodes, code]} : p)); e.currentTarget.value = ''; } } }} />
-                </div>
-                <p className="text-xs text-slate-400">Appuyez sur Entrée pour ajouter un code pays.</p>
+                <label className="text-xs font-bold text-slate-400 uppercase mb-1 block">Pays supportés</label>
+                <CountrySelector
+                  selected={printer.countryCodes}
+                  onChange={(codes) => setPrinters(printers.map(p => p.id === printer.id ? {...p, countryCodes: codes} : p))}
+                  useCodes={true}
+                />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
@@ -184,6 +182,8 @@ const PrintersManager: React.FC<PrintersManagerProps> = ({
       })}
     </div>
   </div>
+  {ConfirmDialog}
+  </>
   );
 };
 

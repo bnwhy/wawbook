@@ -954,19 +954,18 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                        <h3 className="font-display font-black text-xl text-cloud-dark mb-6">3. Finaliser votre commande</h3>
                        
                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-6">
-                            <div className="flex justify-between items-center mb-2 text-sm">
-                                <span className="text-gray-500">Livre personnalisé</span>
-                                <span className="font-bold text-cloud-dark">{formatPrice(selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10)}</span>
+                            <div className="flex justify-between items-center mb-3">
+                                <span className="font-black text-cloud-dark text-base">Livre personnalisé</span>
+                                <span className="font-black text-cloud-dark text-base">{formatPrice(selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10)}</span>
                             </div>
                             <div className="flex justify-between items-center mb-4 text-sm">
-                                <span className="text-gray-500">Livraison (Standard)</span>
-                                <span className="font-bold text-cloud-dark">{formatPrice(defaultShippingRate)}</span>
+                                <span className="text-gray-500">{selectedFormat === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}</span>
                             </div>
                             <div className="h-px bg-gray-200 w-full mb-4"></div>
                             <div className="flex justify-between items-center text-lg">
                                 <span className="font-black text-cloud-dark">Total</span>
                                 <span className="font-black text-brand-coral">
-                                    {formatPrice((selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10) + defaultShippingRate)}
+                                    {formatPrice(selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10)}
                                 </span>
                             </div>
                        </div>

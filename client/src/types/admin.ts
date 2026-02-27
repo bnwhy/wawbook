@@ -1,5 +1,31 @@
 import { Theme } from '../types';
 
+export interface FeatureSection {
+  title: string;
+  text: string;
+  imageUrl: string;
+  reverse: boolean;
+}
+
+export interface ReviewItem {
+  name: string;
+  comment: string;
+  rating: number; // 1–5
+}
+
+export interface FaqItem {
+  sectionTitle?: string; // vide ou absent = pas de titre affiché
+  question: string;
+  answer: string;
+  order: number;
+}
+
+export interface ProductPageConfig {
+  featureSections?: FeatureSection[];
+  reviews?: ReviewItem[];
+  faqItems?: FaqItem[];
+}
+
 export interface GalleryImage {
   url: string;
   use3DEffect: boolean;
@@ -45,6 +71,7 @@ export interface BookProduct {
   };
   wizardConfig: WizardConfiguration;
   contentConfig: ContentConfiguration;
+  productPage?: ProductPageConfig;
 }
 
 export interface WizardConfiguration {
@@ -176,6 +203,32 @@ export interface RawHtmlPage {
   html: string;
   width: number;
   height: number;
+}
+
+export interface FeatureSection {
+  title: string;
+  text: string;
+  imageUrl: string;
+  reverse: boolean;
+}
+
+export interface ReviewItem {
+  name: string;
+  comment: string;
+  rating: number; // 1–5
+}
+
+export interface FaqItem {
+  sectionTitle?: string; // vide ou absent = pas de titre affiché
+  question: string;
+  answer: string;
+  order: number;
+}
+
+export interface ProductPageConfig {
+  featureSections?: FeatureSection[];
+  reviews?: ReviewItem[];
+  faqItems?: FaqItem[];
 }
 
 export interface Printer {

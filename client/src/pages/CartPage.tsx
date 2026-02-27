@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useConfirm } from '../hooks/useConfirm';
 import { useCart, CartItem } from '../context/CartContext';
 import { useBooks } from '../context/BooksContext';
 import { Plus, Lock, Edit2, Eye, X } from 'lucide-react';
@@ -7,6 +8,7 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import PaymentBadges from '../components/PaymentBadges';
 import BookPreview from '../components/BookPreview';
+import BookCover3D from '../components/BookCover3D';
 import { generateStoryText } from '../services/geminiService';
 import { Story } from '../types';
 import { formatPrice } from '../utils/formatPrice';
@@ -22,6 +24,7 @@ const CartPage: React.FC = () => {
   const { defaultShippingRate } = useEcommerce();
   const { books } = useBooks();
   const [, setLocation] = useLocation();
+  const { confirm: confirmDialog, ConfirmDialog } = useConfirm();
   const [previewItem, setPreviewItem] = useState<CartItem | null>(null);
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
   
@@ -78,6 +81,7 @@ const CartPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 font-sans">
+      {ConfirmDialog}
       <Navigation onStart={() => setLocation('/')} />
       
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
@@ -94,8 +98,16 @@ const CartPage: React.FC = () => {
                 
                 {/* Remove Button (Top Right) */}
                 <button 
-                    onClick={() => removeFromCart(item.id)}
-                    className="absolute top-4 right-4 w-8 h-8 bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full flex items-center justify-center transition-colors"
+                    onClick={async () => {
+                      if (await confirmDialog('', {
+                        title: 'Supprimer cet article personnalisé ?',
+                        description: 'Toute votre configuration sera perdue. Vous devrez recommencer la personnalisation.',
+                        cancelLabel: 'Conserver l\'article',
+                        confirmLabel: 'Oui, supprimer',
+                        variant: 'front',
+                      })) removeFromCart(item.id);
+                    }}
+                    className="absolute top-4 right-4 w-8 h-8 bg-stone-200 hover:bg-red-50 text-stone-600 hover:text-red-500 rounded-full flex items-center justify-center transition-colors"
                 >
                     <X size={16} strokeWidth={3} />
                 </button>
@@ -122,32 +134,35 @@ const CartPage: React.FC = () => {
                             <h3 className="font-display font-black text-xl text-cloud-dark mb-1">{item.bookTitle}</h3>
                             
                             <div className="space-y-1 text-sm text-stone-600">
-                                {/* Dynamic Text Fields from Wizard Config */}
-                                {book?.wizardConfig?.tabs.flatMap(tab => 
-                                    tab.variants
-                                        .filter(v => v.type === 'text')
-                                        .map(v => {
-                                            const val = item.config.characters?.[tab.id]?.[v.id];
-                                            if (!val) return null;
-                                            return (
-                                                <p key={`${tab.id}-${v.id}`}>
-                                                    <span className="font-medium">{v.label}:</span> <span className="font-bold text-cloud-dark">{val}</span>
-                                                </p>
-                                            );
-                                        })
-                                )}
-
-                                {/* Fallback for legacy items without wizard config mapping */}
-                                {!book?.wizardConfig && item.config.childName && (
-                                    <p>
-                                        <span className="font-medium">Nom:</span> <span className="font-bold text-cloud-dark">
-                                            {item.config.childName}
-                                        </span>
-                                    </p>
-                                )}
+                                {/* Noms des personnages regroupés */}
+                                {(() => {
+                                    const names: { name: string; role: string }[] = [];
+                                    if (book?.wizardConfig) {
+                                        book.wizardConfig.tabs.forEach(tab => {
+                                            tab.variants.filter(v => v.type === 'text').forEach(v => {
+                                                const val = item.config.characters?.[tab.id]?.[v.id];
+                                                if (val) names.push({ name: val, role: tab.label });
+                                            });
+                                        });
+                                    } else if (item.config.childName) {
+                                        names.push({ name: item.config.childName, role: 'Personnage' });
+                                    }
+                                    if (!names.length) return null;
+                                    return (
+                                        <p>
+                                            <span className="font-medium">Nom{names.length > 1 ? 's' : ''}:</span>{' '}
+                                            <span className="font-bold text-cloud-dark">
+                                                {names.map((n, i) => (
+                                                    <span key={i}>{i > 0 && ', '}{n.name} <span className="font-normal text-stone-400">({n.role})</span></span>
+                                                ))}
+                                            </span>
+                                        </p>
+                                    );
+                                })()}
 
                                 <p><span className="font-medium">Langue:</span> Français</p>
                                 <p><span className="font-medium">Format:</span> {item.format === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}</p>
+                                {item.config.author && <p><span className="font-medium">Créé par:</span> <span className="font-bold text-cloud-dark">{item.config.author}</span></p>}
                             </div>
                         </div>
                         
@@ -198,8 +213,35 @@ const CartPage: React.FC = () => {
             </div>
             
             <div className="mt-12">
-                <h3 className="font-display font-black text-2xl text-cloud-dark mb-6">Cherchez-vous d'autres cadeaux personnalisés ?</h3>
-                {/* Placeholder for upsell items */}
+                <h3 className="font-display font-black text-2xl text-cloud-dark mb-6 text-center">Cherchez-vous d'autres cadeaux personnalisés ?</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {books.filter(b => !b.isHidden && !items.some(i => i.productId === b.id || i.bookTitle === b.name)).slice(0, 3).map(book => (
+                        <div
+                            key={book.id}
+                            onClick={() => setLocation(`/create?bookTitle=${encodeURIComponent(book.name)}`)}
+                            className="bg-white rounded-xl border border-stone-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden group"
+                        >
+                            <div className="aspect-square relative overflow-visible flex items-center justify-center p-2" style={{ background: book.thumbnailBackground || 'linear-gradient(135deg, #fef1f7 0%, #faf5ff 100%)' }}>
+                                <div className="w-[90%] h-[90%] relative">
+                                    {(() => {
+                                        const imgs = (book.galleryImages && book.galleryImages.length > 0)
+                                            ? book.galleryImages.map((img: any) => typeof img === 'string' ? { url: img, use3DEffect: false } : img)
+                                            : book.coverImage ? [{ url: book.coverImage, use3DEffect: true }] : [];
+                                        const img = imgs[0];
+                                        if (!img) return <span className="text-cloud-blue text-xs font-bold text-center">{book.name}</span>;
+                                        return img.use3DEffect
+                                            ? <BookCover3D imageUrl={img.url} alt={book.name} />
+                                            : <img src={img.url} alt={book.name} className="w-full h-full object-cover rounded-lg shadow-lg" />;
+                                    })()}
+                                </div>
+                            </div>
+                            <div className="p-3">
+                                <p className="font-bold text-cloud-dark text-sm leading-tight">{book.name}</p>
+                                {book.price && <p className="text-xs text-stone-400 mt-0.5">{formatPrice(book.price)}</p>}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
           </div>
@@ -215,8 +257,15 @@ const CartPage: React.FC = () => {
                         <span className="font-bold text-cloud-dark">{formatPrice(total)}</span>
                     </div>
                     <div className="flex justify-between text-stone-600 text-sm font-medium">
-                        <span>Livraison (Standard) :</span>
-                        <span className="font-bold text-cloud-dark">{formatPrice(defaultShippingRate)}</span>
+                        <span>Livraison :</span>
+                        {items.length >= 2 ? (
+                            <span className="font-bold text-green-600">OFFERTE</span>
+                        ) : (
+                            <span className="font-bold text-cloud-dark text-right leading-tight">
+                                {formatPrice(defaultShippingRate)}<br />
+                                <span className="text-xs font-normal text-stone-400">Gratuite à partir de 2 livres</span>
+                            </span>
+                        )}
                     </div>
                     {discount > 0 && (
                         <div className="flex justify-between text-sm font-medium text-brand-coral">
@@ -227,7 +276,7 @@ const CartPage: React.FC = () => {
                     
                     <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center">
                         <span className="font-bold text-lg text-cloud-dark">Total :</span>
-                        <span className="font-black text-2xl text-cloud-dark">{formatPrice(total + defaultShippingRate - discount)}</span>
+                        <span className="font-black text-2xl text-cloud-dark">{formatPrice(total + (items.length >= 2 ? 0 : defaultShippingRate) - discount)}</span>
                     </div>
                 </div>
                 

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, jsonb, integer, decimal, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, jsonb, integer, decimal, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -189,6 +189,7 @@ export const books = pgTable("books", {
   oldPrice: decimal("old_price", { precision: 10, scale: 2 }),
   isHidden: integer("is_hidden").default(0), // 0 = false, 1 = true
   features: jsonb("features"),
+  productPage: jsonb("product_page"),
   wizardConfig: jsonb("wizard_config").notNull().$type<WizardConfig>(),
   contentConfig: jsonb("content_config").notNull().$type<ContentConfig>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -344,6 +345,8 @@ export const menus = pgTable("menus", {
     title: string;
     items: string[];
   }>>(),
+  position: integer("position").default(0).notNull(),
+  visible: boolean("visible").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

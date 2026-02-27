@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { env } from "./config/env";
@@ -285,7 +285,7 @@ export class DbStorage implements IStorage {
 
   // ===== MENUS =====
   async getAllMenus(): Promise<Menu[]> {
-    return await db.select().from(menus);
+    return await db.select().from(menus).orderBy(asc(menus.position));
   }
 
   async getMenu(id: string): Promise<Menu | undefined> {
@@ -299,7 +299,8 @@ export class DbStorage implements IStorage {
   }
 
   async updateMenu(id: string, menu: Partial<InsertMenu>): Promise<Menu | undefined> {
-    const result = await db.update(menus).set(menu as any).where(eq(menus.id, id)).returning();
+    const { id: _id, createdAt: _createdAt, ...updateData } = menu as any;
+    const result = await db.update(menus).set(updateData as any).where(eq(menus.id, id)).returning();
     return result[0];
   }
 

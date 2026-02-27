@@ -6,10 +6,11 @@ import AnalyticsPanel from './admin/AnalyticsPanel';
 import PrintersManager from './admin/PrintersManager';
 import ShippingManager from './admin/ShippingManager';
 import { SaveButton, CreateButton } from './admin/SaveButton';
+import { useConfirm } from '../hooks/useConfirm';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2 } from 'lucide-react';
+import { Home, BarChart3, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2, GripVertical, LayoutTemplate, Star } from 'lucide-react';
 import { Theme } from '../types';
-import { BookProduct, WizardTab, Printer as PrinterType } from '../types/admin';
+import { BookProduct, WizardTab, Printer as PrinterType, FeatureSection, ReviewItem, FaqItem, ProductPageConfig } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
@@ -242,9 +243,29 @@ const SortableBookItem: React.FC<SortableBookItemProps> = ({ id, book, onRemove,
   );
 };
 
+// Sortable wrapper for top-level menu cards (drag to reorder menus)
+const SortableMenuCard: React.FC<{
+  id: string;
+  children: (dragHandleProps: React.HTMLAttributes<HTMLElement>) => React.ReactNode;
+}> = ({ id, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ ...attributes, ...listeners })}
+    </div>
+  );
+};
+
 const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { books, addBook, updateBook, deleteBook } = useBooks();
   const { mainMenu, updateMenuItem, addMenuItem, deleteMenuItem } = useMenus();
+  const { confirm: confirmDialog, ConfirmDialog } = useConfirm();
   const { homepageConfig, updateHomepageConfig, isLoading: homepageLoading } = useHomepage();
   const [draftConfig, setDraftConfig] = useState<HomepageConfig | null>(null);
   useEffect(() => {
@@ -278,7 +299,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     })
   );
 
-  const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping' | 'homepage'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'productpage' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping' | 'homepage'>('home');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [_isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -911,6 +932,33 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const handleSaveMenu = async (idx: number) => {
     await updateMenuItem(idx, localMainMenu[idx]);
+  };
+
+  const [collapsedMenus, setCollapsedMenus] = useState<Set<string>>(new Set());
+
+  // Collapse all menus by default when data loads
+  React.useEffect(() => {
+    if (mainMenu.length > 0) {
+      setCollapsedMenus(new Set(mainMenu.map(m => m.id)));
+    }
+  }, [mainMenu.length]);
+
+  const toggleMenuCollapse = (menuId: string) => {
+    setCollapsedMenus(prev => {
+      const next = new Set(prev);
+      next.has(menuId) ? next.delete(menuId) : next.add(menuId);
+      return next;
+    });
+  };
+
+  const handleMenuCardDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = localMainMenu.findIndex(m => m.id === String(active.id));
+    const newIndex = localMainMenu.findIndex(m => m.id === String(over.id));
+    const reordered = arrayMove(localMainMenu, oldIndex, newIndex).map((m, i) => ({ ...m, position: i }));
+    setLocalMainMenu(reordered);
+    await Promise.all(reordered.map((m, i) => updateMenuItem(i, m)));
   };
 
   // Edit Customer State
@@ -1701,67 +1749,60 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     toast.success('Configuration Contenu exportée (Pages, Textes, Images)');
   };
 
-    const handleImportContent = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImportContent = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedBook) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string;
-        let importedData: any;
+    try {
+      const content = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
 
-        // Try to detect if it's our HTML master template
-        if (content.trim().toLowerCase().startsWith('<!doctype html') || content.includes('<html')) {
-             const parser = new DOMParser();
-             const doc = parser.parseFromString(content, 'text/html');
-             const scriptContent = doc.getElementById('book-config')?.textContent;
-             
-             if (scriptContent) {
-                 importedData = JSON.parse(scriptContent);
-                 toast.success('Configuration extraite du Template HTML Maître');
-             } else {
-                 throw new Error('Script JSON #book-config introuvable dans le fichier HTML');
-             }
+      let importedData: any;
+
+      if (content.trim().toLowerCase().startsWith('<!doctype html') || content.includes('<html')) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        const scriptContent = doc.getElementById('book-config')?.textContent;
+        if (scriptContent) {
+          importedData = JSON.parse(scriptContent);
+          toast.success('Configuration extraite du Template HTML Maître');
         } else {
-            // Assume standard JSON file
-            importedData = JSON.parse(content);
+          throw new Error('Script JSON #book-config introuvable dans le fichier HTML');
         }
-
-        // Validation: Check if contentConfig exists
-        if (!importedData.contentConfig) {
-          toast.error('Format invalide : Ce fichier ne contient pas une configuration de contenu valide');
-          return;
-        }
-
-        if (confirm('Attention : Cette action va remplacer la configuration du CONTENU (Pages, Textes, Images). Le Wizard (Personnages) ne sera PAS modifié. Voulez-vous continuer ?')) {
-          
-          handleSaveBook({
-            ...selectedBook,
-            // ONLY Update Content + Features (Layout related only)
-            contentConfig: importedData.contentConfig,
-            features: {
-                ...selectedBook.features, // Preserve existing features (languages, formats, customization)
-                ...(importedData.features ? {
-                    dimensions: importedData.features.dimensions,
-                    printConfig: importedData.features.printConfig
-                } : {})
-            },
-            
-            // PRESERVE Wizard
-            wizardConfig: selectedBook.wizardConfig
-          });
-          toast.success('Configuration Contenu importée avec succès');
-        }
-      } catch (error) {
-        console.error('Import error:', error);
-        toast.error('Erreur lors de l\'import du fichier : ' + (error as Error).message);
+      } else {
+        importedData = JSON.parse(content);
       }
-      
-      // Reset input
+
+      if (!importedData.contentConfig) {
+        toast.error('Format invalide : Ce fichier ne contient pas une configuration de contenu valide');
+        return;
+      }
+
+      if (await confirmDialog('Attention : Cette action va remplacer la configuration du CONTENU (Pages, Textes, Images). Le Wizard (Personnages) ne sera PAS modifié. Voulez-vous continuer ?')) {
+        handleSaveBook({
+          ...selectedBook,
+          contentConfig: importedData.contentConfig,
+          features: {
+            ...selectedBook.features,
+            ...(importedData.features ? {
+              dimensions: importedData.features.dimensions,
+              printConfig: importedData.features.printConfig
+            } : {})
+          },
+          wizardConfig: selectedBook.wizardConfig
+        });
+        toast.success('Configuration Contenu importée avec succès');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error('Erreur lors de l\'import du fichier : ' + (error as Error).message);
+    } finally {
       if (event.target) event.target.value = '';
-    };
-    reader.readAsText(file);
+    }
   };
 
   // --- WIZARD HANDLERS (Scoped to Wizard Tab) ---
@@ -1784,30 +1825,30 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       toast.success('Configuration Wizard exportée');
   };
 
-  const handleImportWizard = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportWizard = async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file || !selectedBook) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-          try {
-              const imported = JSON.parse(e.target?.result as string);
-              if (!imported.wizardConfig) {
-                  toast.error('Format invalide (wizardConfig manquant)');
-                  return;
-              }
-              if (confirm('Remplacer toute la configuration du Wizard (Personnages, Variantes) ?')) {
-                  handleSaveBook({
-                      ...selectedBook,
-                      wizardConfig: imported.wizardConfig
-                  });
-                  toast.success('Configuration Wizard importée');
-              }
-          } catch (err) {
-              toast.error('Erreur de lecture du fichier');
-          }
-          if (event.target) event.target.value = '';
-      };
-      reader.readAsText(file);
+      try {
+        const content = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
+        const imported = JSON.parse(content);
+        if (!imported.wizardConfig) {
+          toast.error('Format invalide (wizardConfig manquant)');
+          return;
+        }
+        if (await confirmDialog('Remplacer toute la configuration du Wizard (Personnages, Variantes) ?')) {
+          handleSaveBook({ ...selectedBook, wizardConfig: imported.wizardConfig });
+          toast.success('Configuration Wizard importée');
+        }
+      } catch (err) {
+        toast.error('Erreur de lecture du fichier');
+      } finally {
+        if (event.target) event.target.value = '';
+      }
   };
 
   // Composant pour uploader les fichiers de police par famille
@@ -1881,6 +1922,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   return (
      <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+     {ConfirmDialog}
         {/* SIDEBAR */}
         <div className="w-64 bg-slate-900 text-slate-300 flex flex-col shadow-2xl z-20 shrink-0">
           <div className="p-6 border-b border-slate-800 flex items-center gap-3">
@@ -2051,6 +2093,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       <Layers size={16} />
                       <span>Contenu</span>
                    </button>
+
+                   <button
+                     onClick={() => setActiveTab('productpage')}
+                     className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'productpage' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
+                   >
+                      <LayoutTemplate size={16} />
+                      <span>Page produit</span>
+                   </button>
                  </div>
                </div>
              )}
@@ -2078,6 +2128,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                    activeTab === 'books' ? 'Produits' :
                    activeTab === 'orders' ? 'Commandes' :
                    activeTab === 'customers' ? 'Clients' :
+                   activeTab === 'productpage' ? 'Page produit' :
                    activeTab === 'menus' ? 'Menus' :
                    activeTab === 'homepage' ? 'Page d\'accueil' :
                    activeTab === 'shipping' ? 'Expédition' :
@@ -2192,13 +2243,13 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                        newSections[sectionIdx] = { ...section, isVisible: e.target.checked };
                                                        setDraftConfig({ ...draftConfig, sections: newSections });
                                                     }}
-                                                    className="w-4 h-4"
+                                                    className="w-4 h-4 rounded border border-gray-300"
                                                  />
                                                  <span className="text-sm text-slate-600">Visible</span>
                                               </label>
                                               <button
-                                                 onClick={() => {
-                                                    if (confirm('Supprimer cette section ?')) {
+                                                 onClick={async () => {
+                                                    if (await confirmDialog('Supprimer cette section ?')) {
                                                        const newSections = draftConfig.sections.filter((_, idx) => idx !== sectionIdx);
                                                        setDraftConfig({ ...draftConfig, sections: newSections });
                                                     }
@@ -2368,8 +2419,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 Configurer
                               </button>
                               <button 
-                                onClick={() => {
-                                   if (confirm('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
+                                onClick={async () => {
+                                   if (await confirmDialog('Êtes-vous sûr de vouloir supprimer ce livre ?')) {
                                       deleteBook(book.id);
                                    }
                                 }}
@@ -2467,7 +2518,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                      <th className="px-4 py-3 w-8">
                                         <input 
                                            type="checkbox" 
-                                           className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                           className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral"
                                            checked={orders.length > 0 && orders.every(o => selectedOrderIds.has(o.id))}
                                            onChange={(e) => {
                                               if (e.target.checked) {
@@ -2589,7 +2640,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                               <input 
                                                  type="checkbox" 
-                                                 className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                                 className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral"
                                                  checked={selectedOrderIds.has(order.id)}
                                                  onChange={(e) => {
                                                     e.stopPropagation(); // Prevent row click
@@ -2683,7 +2734,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     readOnly
                                                     placeholder="Sélectionner un client..."
                                                     value={newOrderForm.customer.email ? `${newOrderForm.customer.firstName} ${newOrderForm.customer.lastName}` : ''}
-                                                    className="w-full text-sm border-gray-300 rounded-lg pl-10 pr-3 py-2 bg-slate-50 focus:ring-brand-coral focus:border-brand-coral cursor-pointer"
+                                                    className="w-full text-sm border border-gray-300 rounded-lg pl-10 pr-3 py-2 bg-slate-50 focus:ring-brand-coral focus:border-brand-coral cursor-pointer"
                                                     onClick={() => setIsCustomerSearchOpen(true)}
                                                 />
                                             </div>
@@ -2715,7 +2766,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             value={customerSearch}
                                                             onChange={(e) => setCustomerSearch(e.target.value)}
                                                             autoFocus
-                                                            className="w-full border-gray-200 bg-slate-50 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-base shadow-sm outline-none"
+                                                            className="w-full border border-gray-200 bg-slate-50 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-base shadow-sm outline-none"
                                                         />
                                                     </div>
                                                 </div>
@@ -2810,7 +2861,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="text" 
                                             value={newOrderForm.customer.firstName}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, firstName: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div>
@@ -2819,7 +2870,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="text" 
                                             value={newOrderForm.customer.lastName}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, lastName: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div className="col-span-2">
@@ -2828,7 +2879,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="email" 
                                             value={newOrderForm.customer.email}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, email: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div className="col-span-2">
@@ -2837,7 +2888,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="tel" 
                                             value={newOrderForm.customer.phone}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, phone: e.target.value}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                 </div>
@@ -2855,7 +2906,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             type="text" 
                                             value={newOrderForm.customer.address.street}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, street: e.target.value}}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -2865,7 +2916,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 type="text" 
                                                 value={newOrderForm.customer.address.zipCode}
                                                 onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, zipCode: e.target.value}}})}
-                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                                className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                             />
                                         </div>
                                         <div>
@@ -2874,7 +2925,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 type="text" 
                                                 value={newOrderForm.customer.address.city}
                                                 onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, city: e.target.value}}})}
-                                                className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                                className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                             />
                                         </div>
                                     </div>
@@ -2883,7 +2934,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <select 
                                             value={newOrderForm.customer.address.country}
                                             onChange={(e) => setNewOrderForm({...newOrderForm, customer: {...newOrderForm.customer, address: {...newOrderForm.customer.address, country: e.target.value}}})}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         >
                                             <option value="France">France</option>
                                             <option value="Belgique">Belgique</option>
@@ -2912,7 +2963,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 newItems[0].bookId = e.target.value;
                                                 setNewOrderForm({...newOrderForm, items: newItems});
                                             }}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         >
                                             <option value="">Sélectionner un livre...</option>
                                             {books.map(book => (
@@ -2931,7 +2982,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 newItems[0].quantity = parseInt(e.target.value) || 1;
                                                 setNewOrderForm({...newOrderForm, items: newItems});
                                             }}
-                                            className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
+                                            className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2"
                                         />
                                     </div>
                                     
@@ -2940,7 +2991,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <div className="space-y-3">
                                             <textarea
                                                 rows={5}
-                                                className="w-full text-sm font-mono border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2 bg-slate-50"
+                                                className="w-full text-sm font-mono border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2 bg-slate-50"
                                                 value={typeof newOrderForm.items[0].config === 'string' ? newOrderForm.items[0].config : JSON.stringify(newOrderForm.items[0].config, null, 2)}
                                                 onChange={(e) => {
                                                     const newItems = [...newOrderForm.items];
@@ -3335,7 +3386,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             <input 
                                                type="text" 
                                                placeholder="Ajouter un commentaire..." 
-                                               className="w-full text-sm border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                                    className="w-full text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                                                value={newComment}
                                                onChange={(e) => setNewComment(e.target.value)}
                                                onKeyDown={(e) => {
@@ -3479,7 +3530,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          <h4 className="font-bold text-slate-800 mb-4 text-sm">Notifier le client de l'expédition</h4>
                                          <div className="flex items-start gap-3">
                                             <div className="pt-0.5">
-                                               <input type="checkbox" defaultChecked id="notify-check" className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral" />
+                                               <input type="checkbox" defaultChecked id="notify-check" className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral" />
                                             </div>
                                             <label htmlFor="notify-check" className="text-sm text-slate-600">
                                                Envoyer les détails d'expédition à votre client maintenant
@@ -3843,7 +3894,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         type="text" 
                                                         value={editCustomerForm.firstName}
                                                         onChange={(e) => setEditCustomerForm({...editCustomerForm, firstName: e.target.value})}
-                                                        className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                                     />
                                                 </div>
                                                 <div>
@@ -3852,7 +3903,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         type="text" 
                                                         value={editCustomerForm.lastName}
                                                         onChange={(e) => setEditCustomerForm({...editCustomerForm, lastName: e.target.value})}
-                                                        className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                                     />
                                                 </div>
                                             </div>
@@ -3863,7 +3914,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     type="email" 
                                                     value={editCustomerForm.email}
                                                     onChange={(e) => setEditCustomerForm({...editCustomerForm, email: e.target.value})}
-                                                    className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                                 />
                                             </div>
 
@@ -3873,7 +3924,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     type="tel" 
                                                     value={editCustomerForm.phone}
                                                     onChange={(e) => setEditCustomerForm({...editCustomerForm, phone: e.target.value})}
-                                                    className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                                 />
                                             </div>
 
@@ -3885,7 +3936,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         placeholder="Rue"
                                                         value={editCustomerForm.address.street}
                                                         onChange={(e) => setEditCustomerForm({...editCustomerForm, address: {...editCustomerForm.address, street: e.target.value}})}
-                                                        className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                                     />
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <input 
@@ -3893,20 +3944,20 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             placeholder="Code Postal"
                                                             value={editCustomerForm.address.zipCode}
                                                             onChange={(e) => setEditCustomerForm({...editCustomerForm, address: {...editCustomerForm.address, zipCode: e.target.value}})}
-                                                            className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                            className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                                         />
                                                         <input 
                                                             type="text" 
                                                             placeholder="Ville"
                                                             value={editCustomerForm.address.city}
                                                             onChange={(e) => setEditCustomerForm({...editCustomerForm, address: {...editCustomerForm.address, city: e.target.value}})}
-                                                            className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                            className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                                         />
                                                     </div>
                                                     <select 
                                                         value={editCustomerForm.address.country}
                                                         onChange={(e) => setEditCustomerForm({...editCustomerForm, address: {...editCustomerForm.address, country: e.target.value}})}
-                                                        className="w-full text-sm border-gray-300 rounded px-2 py-1.5"
+                                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                                     >
                                                         <option value="France">France</option>
                                                         <option value="Belgique">Belgique</option>
@@ -4010,6 +4061,155 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  </div>
               )}
 
+              {/* --- VIEW: PAGE PRODUIT --- */}
+              {activeTab === 'productpage' && selectedBookId && selectedBook && (() => {
+                const pp = selectedBook.productPage ?? {};
+                const featureSections = pp.featureSections ?? [];
+                const reviews = pp.reviews ?? [];
+                const faqItems = [...(pp.faqItems ?? [])].sort((a, b) => a.order - b.order);
+
+                const updatePP = (patch: Partial<typeof pp>) => {
+                  handleSaveBook({ ...selectedBook, productPage: { ...pp, ...patch } });
+                };
+
+                const moveItem = <T,>(arr: T[], from: number, to: number): T[] => {
+                  const next = [...arr];
+                  const [item] = next.splice(from, 1);
+                  next.splice(to, 0, item);
+                  return next;
+                };
+
+                return (
+                  <div className="max-w-4xl mx-auto space-y-6">
+
+                    {/* Carte 1 — Sections de présentation */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                      <h3 className="text-lg font-bold text-slate-800 mb-4">Sections de présentation</h3>
+                      <div className="space-y-4">
+                        {featureSections.map((s, i) => (
+                          <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-slate-600">Section {i + 1}</span>
+                              <div className="flex items-center gap-1">
+                                <button disabled={i === 0} onClick={() => updatePP({ featureSections: moveItem(featureSections, i, i - 1) })} className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"><ArrowUp size={14} /></button>
+                                <button disabled={i === featureSections.length - 1} onClick={() => updatePP({ featureSections: moveItem(featureSections, i, i + 1) })} className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"><ArrowDown size={14} /></button>
+                                <button onClick={() => updatePP({ featureSections: featureSections.filter((_, j) => j !== i) })} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                              </div>
+                            </div>
+                            <input
+                              type="text" placeholder="Titre" value={s.title}
+                              onChange={e => { const next = [...featureSections]; next[i] = { ...s, title: e.target.value }; updatePP({ featureSections: next }); }}
+                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                            />
+                            <textarea
+                              placeholder="Texte" value={s.text} rows={3}
+                              onChange={e => { const next = [...featureSections]; next[i] = { ...s, text: e.target.value }; updatePP({ featureSections: next }); }}
+                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                            />
+                            <input
+                              type="text" placeholder="URL de l'image" value={s.imageUrl}
+                              onChange={e => { const next = [...featureSections]; next[i] = { ...s, imageUrl: e.target.value }; updatePP({ featureSections: next }); }}
+                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                            />
+                            <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                              <input type="checkbox" checked={s.reverse} onChange={e => { const next = [...featureSections]; next[i] = { ...s, reverse: e.target.checked }; updatePP({ featureSections: next }); }} className="w-4 h-4 border border-gray-300" />
+                              Image à droite (texte à gauche)
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => updatePP({ featureSections: [...featureSections, { title: '', text: '', imageUrl: '', reverse: false }] })}
+                        className="mt-4 flex items-center gap-2 text-sm text-brand-coral hover:text-red-600 font-semibold"
+                      >
+                        <Plus size={16} /> Ajouter une section
+                      </button>
+                    </div>
+
+                    {/* Carte 2 — Avis clients */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                      <h3 className="text-lg font-bold text-slate-800 mb-4">Avis clients</h3>
+                      <div className="space-y-4">
+                        {reviews.map((r, i) => (
+                          <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-slate-600">Avis {i + 1}</span>
+                              <button onClick={() => updatePP({ reviews: reviews.filter((_, j) => j !== i) })} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <input
+                                type="text" placeholder="Nom" value={r.name}
+                                onChange={e => { const next = [...reviews]; next[i] = { ...r, name: e.target.value }; updatePP({ reviews: next }); }}
+                                className="border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                              />
+                              <select
+                                value={r.rating}
+                                onChange={e => { const next = [...reviews]; next[i] = { ...r, rating: Number(e.target.value) }; updatePP({ reviews: next }); }}
+                                className="border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                              >
+                                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n} ⭐</option>)}
+                              </select>
+                            </div>
+                            <textarea
+                              placeholder="Commentaire" value={r.comment} rows={3}
+                              onChange={e => { const next = [...reviews]; next[i] = { ...r, comment: e.target.value }; updatePP({ reviews: next }); }}
+                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => updatePP({ reviews: [...reviews, { name: '', comment: '', rating: 5 }] })}
+                        className="mt-4 flex items-center gap-2 text-sm text-brand-coral hover:text-red-600 font-semibold"
+                      >
+                        <Plus size={16} /> Ajouter un avis
+                      </button>
+                    </div>
+
+                    {/* Carte 3 — FAQ */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                      <h3 className="text-lg font-bold text-slate-800 mb-4">FAQ</h3>
+                      <div className="space-y-4">
+                        {faqItems.map((f, i) => (
+                          <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-slate-600">Question {i + 1}</span>
+                              <div className="flex items-center gap-1">
+                                <button disabled={i === 0} onClick={() => { const next = moveItem(faqItems, i, i - 1).map((x, idx) => ({ ...x, order: idx })); updatePP({ faqItems: next }); }} className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"><ArrowUp size={14} /></button>
+                                <button disabled={i === faqItems.length - 1} onClick={() => { const next = moveItem(faqItems, i, i + 1).map((x, idx) => ({ ...x, order: idx })); updatePP({ faqItems: next }); }} className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"><ArrowDown size={14} /></button>
+                                <button onClick={() => { const next = faqItems.filter((_, j) => j !== i).map((x, idx) => ({ ...x, order: idx })); updatePP({ faqItems: next }); }} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                              </div>
+                            </div>
+                            <input
+                              type="text" placeholder="Titre de section (laisser vide = pas de titre)" value={f.sectionTitle ?? ''}
+                              onChange={e => { const next = [...faqItems]; next[i] = { ...f, sectionTitle: e.target.value }; updatePP({ faqItems: next }); }}
+                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                            />
+                            <input
+                              type="text" placeholder="Question" value={f.question}
+                              onChange={e => { const next = [...faqItems]; next[i] = { ...f, question: e.target.value }; updatePP({ faqItems: next }); }}
+                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral font-semibold"
+                            />
+                            <textarea
+                              placeholder="Réponse" value={f.answer} rows={3}
+                              onChange={e => { const next = [...faqItems]; next[i] = { ...f, answer: e.target.value }; updatePP({ faqItems: next }); }}
+                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => updatePP({ faqItems: [...faqItems, { sectionTitle: '', question: '', answer: '', order: faqItems.length }] })}
+                        className="mt-4 flex items-center gap-2 text-sm text-brand-coral hover:text-red-600 font-semibold"
+                      >
+                        <Plus size={16} /> Ajouter une question
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })()}
+
               {/* --- VIEW: MENUS --- */}
               {activeTab === 'menus' && (
                 <div className="max-w-4xl mx-auto space-y-8">
@@ -4024,6 +4224,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               label: 'Nouveau Menu',
                               type: 'simple',
                               basePath: '/',
+                              position: localMainMenu.length,
+                              visible: false,
                               items: []
                           })}
                           className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-md"
@@ -4032,249 +4234,278 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       </button>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-8">
-                      {localMainMenu.map((menu, idx) => (
-                          <div key={menu.id || idx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                              <div className="p-6 border-b border-gray-100 flex justify-between items-start">
-                                  <div className="flex-1 space-y-4">
-                                      <div>
-                                          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Titre du menu</label>
-                                          <input 
-                                              type="text" 
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleMenuCardDragEnd}>
+                    <SortableContext items={localMainMenu.map(m => m.id)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-4">
+                        {localMainMenu.map((menu, idx) => {
+                          const isCollapsed = collapsedMenus.has(menu.id);
+                          const originalMenu = mainMenu.find(m => m.id === menu.id);
+                          return (
+                            <SortableMenuCard key={menu.id} id={menu.id}>
+                              {(dragHandleProps) => (
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                  {/* Summary header — always visible */}
+                                  <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-gray-200">
+                                    <div
+                                      {...dragHandleProps}
+                                      className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200 transition-colors shrink-0"
+                                    >
+                                      <GripVertical size={18} />
+                                    </div>
+                                    <button
+                                      onClick={() => toggleMenuCollapse(menu.id)}
+                                      className="flex-1 flex items-center gap-2 text-left min-w-0"
+                                    >
+                                      {isCollapsed
+                                        ? <ChevronRight size={16} className="text-slate-400 shrink-0" />
+                                        : <ChevronDown size={16} className="text-slate-400 shrink-0" />
+                                      }
+                                      <span className="font-bold text-slate-800 truncate">{menu.label}</span>
+                                      <span className="text-xs bg-white border border-gray-200 text-slate-500 px-2 py-0.5 rounded-md shrink-0">
+                                        {menu.type === 'simple' ? 'Liste' : menu.type === 'grid' ? 'Grille' : 'Colonnes'}
+                                      </span>
+                                      <span className="text-xs text-slate-400 font-mono shrink-0 hidden sm:inline">{menu.basePath}</span>
+                                    </button>
+                                    <label
+                                      className="flex items-center gap-1.5 shrink-0 cursor-pointer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      title={menu.visible !== false ? 'Visible dans la navigation' : 'Masqué de la navigation'}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={menu.visible !== false}
+                                        onChange={(e) => {
+                                          const updated = { ...menu, visible: e.target.checked };
+                                          setLocalMenuItem(idx, updated);
+                                        }}
+                                        className="w-4 h-4 rounded border border-gray-300"
+                                      />
+                                      <span className="text-xs text-slate-500 hidden sm:inline">Visible</span>
+                                    </label>
+                                    <button
+                                      onClick={async () => { if(await confirmDialog('Êtes-vous sûr de vouloir supprimer ce menu ?')) deleteMenuItem(idx); }}
+                                      className="text-slate-400 hover:text-red-500 p-1.5 transition-colors hover:bg-red-50 rounded-lg shrink-0"
+                                      title="Supprimer le menu"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+
+                                  {/* Expanded content */}
+                                  {!isCollapsed && (
+                                    <>
+                                      <div className="p-6 border-b border-gray-100">
+                                        <div className="space-y-4">
+                                          <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Titre du menu</label>
+                                            <input
+                                              type="text"
                                               value={menu.label}
                                               onChange={(e) => setLocalMenuItem(idx, { ...menu, label: e.target.value })}
                                               className="font-bold text-xl text-slate-800 bg-transparent border border-gray-200 rounded px-3 py-2 w-full max-w-md focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral transition-all"
-                                          />
-                                      </div>
-                                      <div className="flex items-center gap-6">
-                                          <div className="flex flex-col gap-1">
+                                            />
+                                          </div>
+                                          <div className="flex items-center gap-6">
+                                            <div className="flex flex-col gap-1">
                                               <span className="text-xs font-bold text-slate-500 uppercase">Type d'affichage</span>
                                               <div className="flex bg-slate-100 p-1 rounded-lg">
-                                                  {['simple', 'grid', 'columns'].map((type) => (
-                                                      <button
-                                                          key={type}
-                                                          onClick={() => setLocalMenuItem(idx, { ...menu, type: type as any })}
-                                                          className={`px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-all ${
-                                                              menu.type === type 
-                                                                  ? 'bg-white text-slate-900 shadow-sm' 
-                                                                  : 'text-slate-500 hover:text-slate-700'
-                                                          }`}
-                                                      >
-                                                          {type === 'simple' ? 'Liste' : type === 'grid' ? 'Grille' : 'Colonnes'}
-                                                      </button>
-                                                  ))}
+                                                {['simple', 'grid', 'columns'].map((type) => (
+                                                  <button
+                                                    key={type}
+                                                    onClick={() => setLocalMenuItem(idx, { ...menu, type: type as any })}
+                                                    className={`px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-all ${menu.type === type ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                                  >
+                                                    {type === 'simple' ? 'Liste' : type === 'grid' ? 'Grille' : 'Colonnes'}
+                                                  </button>
+                                                ))}
                                               </div>
-                                          </div>
-                                          <div className="flex flex-col gap-1">
+                                            </div>
+                                            <div className="flex flex-col gap-1">
                                               <span className="text-xs font-bold text-slate-500 uppercase">Chemin de base</span>
-                                              <input 
-                                                  type="text" 
-                                                  value={menu.basePath}
-                                                  onChange={(e) => setLocalMenuItem(idx, { ...menu, basePath: e.target.value })}
-                                                  className="text-sm border border-gray-200 rounded px-3 py-1.5 focus:ring-brand-coral focus:border-brand-coral font-mono text-slate-600 w-48"
+                                              <input
+                                                type="text"
+                                                value={menu.basePath}
+                                                onChange={(e) => setLocalMenuItem(idx, { ...menu, basePath: e.target.value })}
+                                                className="text-sm border border-gray-200 rounded px-3 py-1.5 focus:ring-brand-coral focus:border-brand-coral font-mono text-slate-600 w-48"
                                               />
+                                            </div>
                                           </div>
+                                        </div>
                                       </div>
-                                  </div>
-                                  <button 
-                                      onClick={() => {
-                                          if(confirm('Êtes-vous sûr de vouloir supprimer ce menu ?')) {
-                                              deleteMenuItem(idx);
-                                          }
-                                      }}
-                                      className="text-slate-400 hover:text-red-500 p-2 transition-colors hover:bg-red-50 rounded-lg"
-                                      title="Supprimer le menu"
-                                  >
-                                      <Trash2 size={20} />
-                                  </button>
-                              </div>
-                              
-                              <div className="p-6 bg-white">
-                                  <div className="mb-4 flex justify-between items-center">
-                                      <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Éléments du menu</h3>
-                                  </div>
 
-                                  {menu.type === 'columns' ? (
-                                      <div className="space-y-6">
-                                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                      <div className="p-6 bg-white">
+                                        <div className="mb-4 flex justify-between items-center">
+                                          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Éléments du menu</h3>
+                                        </div>
+
+                                        {menu.type === 'columns' ? (
+                                          <div className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                               {(menu.columns || []).map((col, colIdx) => (
-                                                  <div key={colIdx} className="border border-gray-200 rounded-xl bg-slate-50 overflow-hidden">
-                                                      <div className="p-3 border-b border-gray-200 bg-white flex justify-between items-center">
-                                                          <input 
-                                                              type="text"
-                                                              value={col.title}
-                                                              onChange={(e) => {
-                                                                  const newCols = [...(menu.columns || [])];
-                                                                  newCols[colIdx] = { ...col, title: e.target.value };
-                                                                  setLocalMenuItem(idx, { ...menu, columns: newCols });
-                                                              }}
-                                                              className="font-bold text-sm bg-transparent border-none p-0 focus:ring-0 text-slate-800 w-full"
-                                                              placeholder="Titre de la colonne"
-                                                          />
-                                                          <button 
-                                                              onClick={() => {
-                                                                  const newCols = (menu.columns || []).filter((_, i) => i !== colIdx);
-                                                                  setLocalMenuItem(idx, { ...menu, columns: newCols });
-                                                              }}
-                                                              className="text-slate-400 hover:text-red-500"
-                                                          >
-                                                              <X size={16} />
-                                                          </button>
-                                                      </div>
-                                                      <div className="p-3">
-                                                          <DndContext 
-                                                              sensors={sensors}
-                                                              collisionDetection={closestCenter}
-                                                              onDragEnd={(e) => handleDragEnd(e, idx, colIdx)}
-                                                          >
-                                                              <SortableContext 
-                                                                  items={col.items}
-                                                                  strategy={verticalListSortingStrategy}
-                                                              >
-                                                                  <div className="space-y-2">
-                                                                      {col.items.map((item, itemIdx) => (
-                                                                          <SortableItem key={item} id={item} className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm flex items-center gap-3 shadow-sm">
-                                                                              <input 
-                                                                                  type="text"
-                                                                                  value={item}
-                                                                                  onChange={(e) => {
-                                                                                      const newItems = [...col.items];
-                                                                                      newItems[itemIdx] = e.target.value;
-                                                                                      const newCols = [...(menu.columns || [])];
-                                                                                      newCols[colIdx] = { ...col, items: newItems };
-                                                                                      setLocalMenuItem(idx, { ...menu, columns: newCols });
-                                                                                  }}
-                                                                                  className="flex-1 border-none p-0 text-sm focus:ring-0 bg-transparent"
-                                                                                  onPointerDown={(e) => e.stopPropagation()}
-                                                                                  onKeyDown={(e) => e.stopPropagation()}
-                                                                              />
-                                                                              <button 
-                                                                                  onClick={() => {
-                                                                                      const newItems = col.items.filter((_, i) => i !== itemIdx);
-                                                                                      const newCols = [...(menu.columns || [])];
-                                                                                      newCols[colIdx] = { ...col, items: newItems };
-                                                                                      setLocalMenuItem(idx, { ...menu, columns: newCols });
-                                                                                  }}
-                                                                                  className="text-slate-300 hover:text-red-400"
-                                                                                  onPointerDown={(e) => e.stopPropagation()}
-                                                                              >
-                                                                                  <X size={14} />
-                                                                              </button>
-                                                                          </SortableItem>
-                                                                      ))}
-                                                                  </div>
-                                                              </SortableContext>
-                                                          </DndContext>
-                                                          <button 
-                                                              onClick={() => {
-                                                                  const newItems = [...col.items, 'Nouveau lien'];
+                                                <div key={colIdx} className="border border-gray-200 rounded-xl bg-slate-50 overflow-hidden">
+                                                  <div className="p-3 border-b border-gray-200 bg-white flex justify-between items-center">
+                                                    <input
+                                                      type="text"
+                                                      value={col.title}
+                                                      onChange={(e) => {
+                                                        const newCols = [...(menu.columns || [])];
+                                                        newCols[colIdx] = { ...col, title: e.target.value };
+                                                        setLocalMenuItem(idx, { ...menu, columns: newCols });
+                                                      }}
+                                                      className="font-bold text-sm bg-transparent border-none p-0 focus:ring-0 text-slate-800 w-full"
+                                                      placeholder="Titre de la colonne"
+                                                    />
+                                                    <button
+                                                      onClick={() => {
+                                                        const newCols = (menu.columns || []).filter((_, i) => i !== colIdx);
+                                                        setLocalMenuItem(idx, { ...menu, columns: newCols });
+                                                      }}
+                                                      className="text-slate-400 hover:text-red-500"
+                                                    >
+                                                      <X size={16} />
+                                                    </button>
+                                                  </div>
+                                                  <div className="p-3">
+                                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, idx, colIdx)}>
+                                                      <SortableContext items={col.items} strategy={verticalListSortingStrategy}>
+                                                        <div className="space-y-2">
+                                                          {col.items.map((item, itemIdx) => (
+                                                            <SortableItem key={item} id={item} className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm flex items-center gap-3 shadow-sm">
+                                                              <input
+                                                                type="text"
+                                                                value={item}
+                                                                onChange={(e) => {
+                                                                  const newItems = [...col.items];
+                                                                  newItems[itemIdx] = e.target.value;
                                                                   const newCols = [...(menu.columns || [])];
                                                                   newCols[colIdx] = { ...col, items: newItems };
                                                                   setLocalMenuItem(idx, { ...menu, columns: newCols });
-                                                              }}
-                                                              className="mt-3 w-full py-2 border border-dashed border-gray-300 rounded-lg text-slate-500 hover:text-brand-coral hover:border-brand-coral text-xs font-bold transition-colors flex items-center justify-center gap-1"
-                                                          >
-                                                              <Plus size={14} /> Ajouter un lien
-                                                          </button>
-                                                      </div>
-                                                  </div>
-                                              ))}
-                                              
-                                              <button 
-                                                  onClick={() => {
-                                                      const newCols = [...(menu.columns || []), { title: 'Nouvelle Colonne', items: [] }];
-                                                      setLocalMenuItem(idx, { ...menu, columns: newCols });
-                                                  }}
-                                                  className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center text-slate-400 hover:text-brand-coral hover:border-brand-coral hover:bg-slate-50 transition-all min-h-[200px]"
-                                              >
-                                                  <Columns size={32} className="mb-2 opacity-50" />
-                                                  <span className="font-bold">Ajouter une colonne</span>
-                                              </button>
-                                          </div>
-                                      </div>
-                                  ) : (
-                                      // Simple or Grid (List of items)
-                                      (<div className="max-w-3xl">
-                                          <div className="bg-slate-50 rounded-lg border border-gray-200 overflow-hidden">
-                                              <DndContext 
-                                                  sensors={sensors}
-                                                  collisionDetection={closestCenter}
-                                                  onDragEnd={(e) => handleDragEnd(e, idx)}
-                                              >
-                                                  <SortableContext 
-                                                      items={menu.items || []}
-                                                      strategy={verticalListSortingStrategy}
-                                                  >
-                                                      <div className="divide-y divide-gray-200">
-                                                         {(menu.items || []).map((item, itemIdx) => (
-                                                             <SortableItem key={item} id={item} className="bg-white p-3 flex items-center gap-4 group hover:bg-slate-50 transition-colors">
-                                                                 <div className="flex-1">
-                                                                    <input 
-                                                                        type="text"
-                                                                        value={item}
-                                                                        onChange={(e) => {
-                                                                            const newItems = [...(menu.items || [])];
-                                                                            newItems[itemIdx] = e.target.value;
-                                                                            setLocalMenuItem(idx, { ...menu, items: newItems });
-                                                                        }}
-                                                                        className="w-full bg-transparent border-none p-0 focus:ring-0 text-slate-700 font-medium"
-                                                                        placeholder="Nom du lien"
-                                                                        onPointerDown={(e) => e.stopPropagation()}
-                                                                        onKeyDown={(e) => e.stopPropagation()}
-                                                                    />
-                                                                 </div>
-                                                                 <button 
-                                                                     onClick={() => {
-                                                                         const newItems = (menu.items || []).filter((_, i) => i !== itemIdx);
-                                                                         setLocalMenuItem(idx, { ...menu, items: newItems });
-                                                                     }}
-                                                                     className="text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-2"
-                                                                     onPointerDown={(e) => e.stopPropagation()}
-                                                                     title="Supprimer"
-                                                                 >
-                                                                     <Trash2 size={16} />
-                                                                 </button>
-                                                             </SortableItem>
-                                                         ))}
-                                                      </div>
-                                                  </SortableContext>
-                                              </DndContext>
-                                              
-                                              {(!menu.items || menu.items.length === 0) && (
-                                                  <div className="p-8 text-center text-slate-400 text-sm">
-                                                      Aucun élément dans ce menu.
-                                                  </div>
-                                              )}
-                                              
-                                              <div className="p-3 bg-slate-50 border-t border-gray-200">
-                                                  <button 
+                                                                }}
+                                                                className="flex-1 border-none p-0 text-sm focus:ring-0 bg-transparent"
+                                                                onPointerDown={(e) => e.stopPropagation()}
+                                                                onKeyDown={(e) => e.stopPropagation()}
+                                                              />
+                                                              <button
+                                                                onClick={() => {
+                                                                  const newItems = col.items.filter((_, i) => i !== itemIdx);
+                                                                  const newCols = [...(menu.columns || [])];
+                                                                  newCols[colIdx] = { ...col, items: newItems };
+                                                                  setLocalMenuItem(idx, { ...menu, columns: newCols });
+                                                                }}
+                                                                className="text-slate-300 hover:text-red-400"
+                                                                onPointerDown={(e) => e.stopPropagation()}
+                                                              >
+                                                                <X size={14} />
+                                                              </button>
+                                                            </SortableItem>
+                                                          ))}
+                                                        </div>
+                                                      </SortableContext>
+                                                    </DndContext>
+                                                    <button
                                                       onClick={() => {
-                                                          const newItems = [...(menu.items || []), 'Nouveau lien'];
-                                                          setLocalMenuItem(idx, { ...menu, items: newItems });
+                                                        const newItems = [...col.items, 'Nouveau lien'];
+                                                        const newCols = [...(menu.columns || [])];
+                                                        newCols[colIdx] = { ...col, items: newItems };
+                                                        setLocalMenuItem(idx, { ...menu, columns: newCols });
                                                       }}
-                                                      className="text-brand-coral font-bold text-sm flex items-center gap-2 hover:underline px-2"
-                                                  >
-                                                      <Plus size={16} /> Ajouter un élément de menu
-                                                  </button>
-                                              </div>
+                                                      className="mt-3 w-full py-2 border border-dashed border-gray-300 rounded-lg text-slate-500 hover:text-brand-coral hover:border-brand-coral text-xs font-bold transition-colors flex items-center justify-center gap-1"
+                                                    >
+                                                      <Plus size={14} /> Ajouter un lien
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              ))}
+                                              <button
+                                                onClick={() => {
+                                                  const newCols = [...(menu.columns || []), { title: 'Nouvelle Colonne', items: [] }];
+                                                  setLocalMenuItem(idx, { ...menu, columns: newCols });
+                                                }}
+                                                className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center text-slate-400 hover:text-brand-coral hover:border-brand-coral hover:bg-slate-50 transition-all min-h-[200px]"
+                                              >
+                                                <Columns size={32} className="mb-2 opacity-50" />
+                                                <span className="font-bold">Ajouter une colonne</span>
+                                              </button>
+                                            </div>
                                           </div>
-                                      </div>)
+                                        ) : (
+                                          <div className="max-w-3xl">
+                                            <div className="bg-slate-50 rounded-lg border border-gray-200 overflow-hidden">
+                                              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, idx)}>
+                                                <SortableContext items={menu.items || []} strategy={verticalListSortingStrategy}>
+                                                  <div className="divide-y divide-gray-200">
+                                                    {(menu.items || []).map((item, itemIdx) => (
+                                                      <SortableItem key={item} id={item} className="bg-white p-3 flex items-center gap-4 group hover:bg-slate-50 transition-colors">
+                                                        <div className="flex-1">
+                                                          <input
+                                                            type="text"
+                                                            value={item}
+                                                            onChange={(e) => {
+                                                              const newItems = [...(menu.items || [])];
+                                                              newItems[itemIdx] = e.target.value;
+                                                              setLocalMenuItem(idx, { ...menu, items: newItems });
+                                                            }}
+                                                            className="w-full bg-transparent border-none p-0 focus:ring-0 text-slate-700 font-medium"
+                                                            placeholder="Nom du lien"
+                                                            onPointerDown={(e) => e.stopPropagation()}
+                                                            onKeyDown={(e) => e.stopPropagation()}
+                                                          />
+                                                        </div>
+                                                        <button
+                                                          onClick={() => {
+                                                            const newItems = (menu.items || []).filter((_, i) => i !== itemIdx);
+                                                            setLocalMenuItem(idx, { ...menu, items: newItems });
+                                                          }}
+                                                          className="text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-2"
+                                                          onPointerDown={(e) => e.stopPropagation()}
+                                                          title="Supprimer"
+                                                        >
+                                                          <Trash2 size={16} />
+                                                        </button>
+                                                      </SortableItem>
+                                                    ))}
+                                                  </div>
+                                                </SortableContext>
+                                              </DndContext>
+                                              {(!menu.items || menu.items.length === 0) && (
+                                                <div className="p-8 text-center text-slate-400 text-sm">Aucun élément dans ce menu.</div>
+                                              )}
+                                              <div className="p-3 bg-slate-50 border-t border-gray-200">
+                                                <button
+                                                  onClick={() => {
+                                                    const newItems = [...(menu.items || []), 'Nouveau lien'];
+                                                    setLocalMenuItem(idx, { ...menu, items: newItems });
+                                                  }}
+                                                  className="text-brand-coral font-bold text-sm flex items-center gap-2 hover:underline px-2"
+                                                >
+                                                  <Plus size={16} /> Ajouter un élément de menu
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
+                                          <SaveButton
+                                            hasChanges={JSON.stringify(menu) !== JSON.stringify(originalMenu || {})}
+                                            isSaving={false}
+                                            onSave={() => handleSaveMenu(idx)}
+                                            className="px-6 py-2.5 rounded-lg text-sm"
+                                            label="Enregistrer le menu"
+                                            savedLabel="Menu enregistré"
+                                          />
+                                        </div>
+                                      </div>
+                                    </>
                                   )}
-                                  
-                                  <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
-                                      <SaveButton
-                                          hasChanges={JSON.stringify(menu) !== JSON.stringify(mainMenu[idx] || {})}
-                                          isSaving={false}
-                                          onSave={() => handleSaveMenu(idx)}
-                                          className="px-6 py-2.5 rounded-lg text-sm"
-                                          label="Enregistrer le menu"
-                                          savedLabel="Menu enregistré"
-                                      />
-                                  </div>
-                              </div>
-                          </div>
-                      ))}
-                  </div>
+                                </div>
+                              )}
+                            </SortableMenuCard>
+                          );
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 </div>
               )}
 
@@ -4422,12 +4653,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        </div>
                        <div>
                           <label className="block text-sm font-bold text-slate-700 mb-2">Prix (€)</label>
-                          <input 
-                            type="number" 
-                            value={selectedBook.price}
-                            onChange={(e) => handleSaveBook({...selectedBook, price: parseFloat(e.target.value)})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none"
-                          />
+                          <div className="flex items-center gap-1 border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-brand-coral bg-white">
+                            <input 
+                              type="number" 
+                              value={selectedBook.price}
+                              onChange={(e) => handleSaveBook({...selectedBook, price: parseFloat(e.target.value)})}
+                              className="flex-1 outline-none text-center font-bold"
+                            />
+                            <span className="text-gray-400 text-sm leading-none shrink-0">€</span>
+                          </div>
                        </div>
                        <div>
                           <label className="block text-sm font-bold text-slate-700 mb-2">Code Promo (Optionnel)</label>
@@ -4663,7 +4897,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               }
                                               handleSaveBook({...selectedBook, associatedPaths: newPaths});
                                           }}
-                                          className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                          className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral"
                                       />
                                       <span className="text-xs font-medium text-slate-600 truncate" title={option.label}>
                                           {option.label}
@@ -4996,7 +5230,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         newTabs[idx].variants[vIdx].type = e.target.value as 'options' | 'text' | 'checkbox' | 'color';
                                                         handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                      }}
-                                                     className="w-full text-xs border-gray-200 rounded-md py-1.5 pl-3 pr-8 bg-white text-slate-600 font-medium focus:ring-indigo-500 focus:border-indigo-500"
+                                                     className="w-full text-xs border border-gray-200 rounded-md py-1.5 pl-3 pr-8 bg-white text-slate-600 font-medium focus:ring-indigo-500 focus:border-indigo-500"
                                                   >
                                                      <option value="options">Choix (Options)</option>
                                                      <option value="text">Texte (Libre)</option>
@@ -5015,7 +5249,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               newTabs[idx].variants[vIdx].showLabel = e.target.checked;
                                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                            }}
-                                                           className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                           className="w-4 h-4 rounded border border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                                         />
                                                         <label htmlFor={`show-label-${variant.id}`} className="text-[10px] text-gray-600 cursor-pointer">
                                                            Afficher le texte dans le Wizard
@@ -5035,7 +5269,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  newTabs[idx].variants[vIdx].minLength = parseInt(e.target.value) || undefined;
                                                                  handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                               }}
-                                                              className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
+                                                              className="w-full text-[10px] border border-gray-200 rounded px-2 py-1"
                                                               title="Longueur minimum"
                                                            />
                                                            <input 
@@ -5047,7 +5281,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                  newTabs[idx].variants[vIdx].maxLength = parseInt(e.target.value) || undefined;
                                                                  handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                               }}
-                                                              className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
+                                                              className="w-full text-[10px] border border-gray-200 rounded px-2 py-1"
                                                               title="Longueur maximum"
                                                            />
                                                         </div>
@@ -5060,7 +5294,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                               newTabs[idx].variants[vIdx].unit = e.target.value;
                                                               handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: newTabs}});
                                                            }}
-                                                           className="w-full text-[10px] border-gray-200 rounded px-2 py-1"
+                                                           className="w-full text-[10px] border border-gray-200 rounded px-2 py-1"
                                                            title="Unité affichée dans le wizard"
                                                         />
                                                      </div>
@@ -5338,7 +5572,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                type="checkbox"
                                                checked={field.enabled}
                                                onChange={() => handleTogglePreviewField(field.id)}
-                                               className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                               className="w-5 h-5 rounded border border-gray-300 text-purple-600 focus:ring-purple-500"
                                             />
                                          </label>
 
@@ -5606,8 +5840,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                           
                                                           {existingAvatar && (
                                                               <button 
-                                                                  onClick={() => {
-                                                                      if (confirm('Supprimer cette image ?')) {
+                                                                  onClick={async () => {
+                                                                      if (await confirmDialog('Supprimer cette image ?')) {
                                                                           const newMappings = { ...(selectedBook.wizardConfig.avatarMappings || {}) };
                                                                           // Delete both scoped and legacy keys
                                                                           const scopedKey = `${targetTab.id}:${combo.key}`;
@@ -5695,8 +5929,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   <FileCode size={18} />
                               </button>
                               <button
-                                  onClick={() => {
-                                      if (confirm('Voulez-vous réinitialiser le storyboard ?\nCela supprimera le template EPUB généré (pages, textes, images).\nLe wizard sera conservé.\nCette action est irréversible.')) {
+                                  onClick={async () => {
+                                      if (await confirmDialog('Voulez-vous réinitialiser le storyboard ?\nCela supprimera le template EPUB généré (pages, textes, images).\nLe wizard sera conservé.\nCette action est irréversible.')) {
                                           handleSaveBook({
                                               ...selectedBook,
                                               contentConfig: { pages: [], texts: [], images: [], imageElements: [], pageImages: [] }

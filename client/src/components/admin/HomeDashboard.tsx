@@ -21,28 +21,6 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
   setActiveTab,
   setSelectedOrderId,
 }) => {
-  const now = new Date();
-  const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const previous30Days = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-  const recentOrders = orders.filter(order => new Date(order.createdAt) >= last30Days);
-  const previousOrders = orders.filter(order => {
-    const d = new Date(order.createdAt);
-    return d >= previous30Days && d < last30Days;
-  });
-
-  const recentTotal = recentOrders.reduce((acc, o) => acc + Number(o.totalAmount), 0);
-  const recentOrdersCount = recentOrders.length;
-  const recentAverage = recentOrdersCount > 0 ? recentTotal / recentOrdersCount : 0;
-
-  const previousTotal = previousOrders.reduce((acc, o) => acc + Number(o.totalAmount), 0);
-  const previousOrdersCount = previousOrders.length;
-  const previousAverage = previousOrdersCount > 0 ? previousOrders.reduce((acc, o) => acc + Number(o.totalAmount), 0) / previousOrdersCount : 0;
-
-  const salesChange = previousTotal > 0 ? ((recentTotal - previousTotal) / previousTotal * 100) : 0;
-  const ordersChange = previousOrdersCount > 0 ? ((recentOrdersCount - previousOrdersCount) / previousOrdersCount * 100) : 0;
-  const avgChange = previousAverage > 0 ? ((recentAverage - previousAverage) / previousAverage * 100) : 0;
-
   const totalSales = orders.reduce((acc, o) => acc + Number(o.totalAmount), 0);
   const totalOrders = orders.length;
   const avgOrder = totalOrders > 0 ? totalSales / totalOrders : 0;
@@ -53,13 +31,6 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Ventes Totales</h3>
-            {!ordersLoading && (previousTotal > 0 ? (
-              <div className={`${salesChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
-                {salesChange >= 0 ? '+' : ''}{salesChange.toFixed(1)}%
-              </div>
-            ) : recentTotal > 0 ? (
-              <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">Nouveau</div>
-            ) : null)}
           </div>
           {ordersLoading ? (
             <div className="animate-pulse space-y-2">
@@ -68,8 +39,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
             </div>
           ) : (
             <>
-              <div className="text-3xl font-bold text-slate-900 mb-1">{totalSales.toFixed(2)} €</div>
-              <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
+              <div className="text-3xl font-bold text-slate-900">{totalSales.toFixed(2)} €</div>
             </>
           )}
         </div>
@@ -77,13 +47,6 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Commandes</h3>
-            {!ordersLoading && (previousOrdersCount > 0 ? (
-              <div className={`${ordersChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
-                {ordersChange >= 0 ? '+' : ''}{ordersChange.toFixed(1)}%
-              </div>
-            ) : recentOrdersCount > 0 ? (
-              <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">Nouveau</div>
-            ) : null)}
           </div>
           {ordersLoading ? (
             <div className="animate-pulse space-y-2">
@@ -92,8 +55,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
             </div>
           ) : (
             <>
-              <div className="text-3xl font-bold text-slate-900 mb-1">{totalOrders}</div>
-              <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
+              <div className="text-3xl font-bold text-slate-900">{totalOrders}</div>
             </>
           )}
         </div>
@@ -101,13 +63,6 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Panier Moyen</h3>
-            {!ordersLoading && (previousAverage > 0 ? (
-              <div className={`${avgChange >= 0 ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50'} px-2 py-1 rounded text-xs font-bold`}>
-                {avgChange >= 0 ? '+' : ''}{avgChange.toFixed(1)}%
-              </div>
-            ) : recentAverage > 0 ? (
-              <div className="text-blue-500 bg-blue-50 px-2 py-1 rounded text-xs font-bold">Nouveau</div>
-            ) : null)}
           </div>
           {ordersLoading ? (
             <div className="animate-pulse space-y-2">
@@ -116,8 +71,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
             </div>
           ) : (
             <>
-              <div className="text-3xl font-bold text-slate-900 mb-1">{avgOrder.toFixed(2)} €</div>
-              <div className="text-xs text-slate-400">Sur les 30 derniers jours</div>
+              <div className="text-3xl font-bold text-slate-900">{avgOrder.toFixed(2)} €</div>
             </>
           )}
         </div>

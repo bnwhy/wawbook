@@ -9,6 +9,25 @@ import Footer from '../components/Footer';
 import PaymentBadges from '../components/PaymentBadges';
 import { ALL_COUNTRIES } from '../data/countries';
 import { formatPrice, formatPriceWithFree } from '../utils/formatPrice';
+import type { ShippingMethod } from '../types/ecommerce';
+
+function methodMatchesCondition(method: ShippingMethod, cartTotal: number, cartQty: number): boolean {
+  const c = method.condition;
+  if (!c || c.type === 'none') return true;
+  const val = c.type === 'price' ? cartTotal : cartQty;
+  if (c.operator === 'greater_than') return val > c.value;
+  if (c.operator === 'less_than') return val < c.value;
+  if (c.operator === 'between') return val >= c.value && val <= (c.maxValue ?? Infinity);
+  return true;
+}
+
+// Retourne le prix effectif : offerPrice si la condition Offre est remplie, sinon price
+function getEffectivePrice(method: ShippingMethod, cartTotal: number, cartQty: number): number {
+  if (method.offerPrice !== undefined && methodMatchesCondition(method, cartTotal, cartQty)) {
+    return method.offerPrice;
+  }
+  return method.price;
+}
 import { formatDate } from '../utils/formatDate';
 
 const CheckoutPage = () => {
@@ -94,20 +113,24 @@ const CheckoutPage = () => {
       z.countries.some(c => c.toLowerCase() === formData.country.toLowerCase())
   );
 
+  // Toutes les méthodes de la zone sont disponibles ; la condition détermine le prix (offerPrice)
+  const eligibleMethods = useMemo(() => {
+      return applicableZone?.methods ?? [];
+  }, [applicableZone]);
+
   // Set default shipping method when zone changes
   useEffect(() => {
-      if (applicableZone && applicableZone.methods.length > 0) {
-          // Keep current if valid, otherwise select first
-          if (!selectedShippingMethodId || !applicableZone.methods.find(m => m.id === selectedShippingMethodId)) {
-              setSelectedShippingMethodId(applicableZone.methods[0].id);
+      if (eligibleMethods.length > 0) {
+          if (!selectedShippingMethodId || !eligibleMethods.find(m => m.id === selectedShippingMethodId)) {
+              setSelectedShippingMethodId(eligibleMethods[0].id);
           }
       } else {
           setSelectedShippingMethodId(null);
       }
   }, [applicableZone?.id, formData.country]);
 
-  const selectedMethod = applicableZone?.methods.find(m => m.id === selectedShippingMethodId);
-  const shippingCost = selectedMethod ? selectedMethod.price : 0;
+  const selectedMethod = eligibleMethods.find(m => m.id === selectedShippingMethodId);
+  const shippingCost = selectedMethod ? getEffectivePrice(selectedMethod, total, items.length) : 0;
   const grandTotal = total + shippingCost;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -451,9 +474,9 @@ const CheckoutPage = () => {
                                     </h2>
                                     
                                     {applicableZone ? (
-                                        applicableZone.methods.length > 0 ? (
+                                        eligibleMethods.length > 0 ? (
                                             <div className="border border-stone-300 rounded-lg overflow-hidden">
-                                                {applicableZone.methods.map((method) => (
+                                                {eligibleMethods.map((method) => (
                                                     <label key={method.id} className="flex items-center justify-between p-4 cursor-pointer hover:bg-stone-50 transition-colors border-b border-stone-200 last:border-b-0">
                                                         <div className="flex items-center gap-3">
                                                             <input 
@@ -468,9 +491,20 @@ const CheckoutPage = () => {
                                                                 {method.estimatedDelay && <div className="text-xs text-stone-500">{method.estimatedDelay}</div>}
                                                             </div>
                                                         </div>
-                                                        <span className="text-sm font-bold text-stone-800">
-                                                            {formatPriceWithFree(method.price)}
-                                                        </span>
+                                                        <div className="text-right">
+                                                            {(() => {
+                                                              const effective = getEffectivePrice(method, total, items.length);
+                                                              const hasOffer = method.offerPrice !== undefined && methodMatchesCondition(method, total, items.length) && method.offerPrice !== method.price;
+                                                              return hasOffer ? (
+                                                                <span className="flex flex-col items-end">
+                                                                  <span className="text-xs text-stone-400 line-through">{formatPrice(method.price)}</span>
+                                                                  <span className="text-sm font-bold text-green-600">{formatPriceWithFree(effective)}</span>
+                                                                </span>
+                                                              ) : (
+                                                                <span className="text-sm font-bold text-stone-800">{formatPriceWithFree(effective)}</span>
+                                                              );
+                                                            })()}
+                                                        </div>
                                                     </label>
                                                 ))}
                                             </div>
@@ -533,12 +567,12 @@ const CheckoutPage = () => {
                         <h3 className="font-display font-bold text-xl text-stone-800 mb-4">Votre commande</h3>
                         <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
                             {items.map(item => (
-                                <div key={item.id} className="flex gap-3">
+                                <div key={item.id} className="flex justify-between items-start gap-3">
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-stone-800 text-sm">{item.bookTitle}</h4>
                                         <p className="text-xs text-stone-500">Couverture {item.format === 'hardcover' ? 'rigide' : 'souple'}</p>
                                     </div>
-                                    <div className="font-bold text-stone-800 text-sm">
+                                    <div className="font-bold text-stone-800 text-sm shrink-0 text-right">
                                         {formatPrice(item.price * item.quantity)}
                                     </div>
                                 </div>

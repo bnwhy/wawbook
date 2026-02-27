@@ -59,14 +59,15 @@ export interface OrderLog {
 export interface ShippingMethod {
   id: string;
   name: string;
-  price: number;
+  price: number;        // Prix de base (toujours)
+  offerPrice?: number;  // Prix quand la condition Offre est remplie
   description?: string;
   estimatedDelay?: string;
   condition?: {
     type: 'weight' | 'price' | 'quantity' | 'none';
     operator: 'greater_than' | 'less_than' | 'between';
     value: number;
-    maxValue?: number; // Only for 'between'
+    maxValue?: number;
   };
 }
 

@@ -63,15 +63,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings, ha
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nom de la boutique</label>
-              <input type="text" value={settings.general.storeName} onChange={(e) => setSettings({...settings, general: {...settings.general, storeName: e.target.value}})} className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2" />
+              <input type="text" value={settings.general.storeName} onChange={(e) => setSettings({...settings, general: {...settings.general, storeName: e.target.value}})} className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email de contact</label>
-              <input type="email" value={settings.general.supportEmail} onChange={(e) => setSettings({...settings, general: {...settings.general, supportEmail: e.target.value}})} className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2" />
+              <input type="email" value={settings.general.supportEmail} onChange={(e) => setSettings({...settings, general: {...settings.general, supportEmail: e.target.value}})} className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Devise</label>
-              <select value={settings.general.currency} onChange={(e) => setSettings({...settings, general: {...settings.general, currency: e.target.value}})} className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2">
+              <select value={settings.general.currency} onChange={(e) => setSettings({...settings, general: {...settings.general, currency: e.target.value}})} className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2">
                 <option value="EUR">Euro (€)</option>
                 <option value="USD">Dollar ($)</option>
                 <option value="GBP">Livre (£)</option>
@@ -97,7 +97,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings, ha
         <div className="p-6 space-y-6">
           <div className="flex items-start gap-4">
             <div className="pt-1">
-              <input type="checkbox" checked={settings.payment.stripeEnabled} onChange={(e) => setSettings({...settings, payment: {...settings.payment, stripeEnabled: e.target.checked}})} className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4" />
+              <input type="checkbox" checked={settings.payment.stripeEnabled} onChange={(e) => setSettings({...settings, payment: {...settings.payment, stripeEnabled: e.target.checked}})} className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4" />
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-slate-700">Stripe</h4>
@@ -119,7 +119,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings, ha
           <div className="w-full h-px bg-gray-100"></div>
           <div className="flex items-start gap-4">
             <div className="pt-1">
-              <input type="checkbox" checked={settings.payment.paypalEnabled} onChange={(e) => setSettings({...settings, payment: {...settings.payment, paypalEnabled: e.target.checked}})} className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4" />
+              <input type="checkbox" checked={settings.payment.paypalEnabled} onChange={(e) => setSettings({...settings, payment: {...settings.payment, paypalEnabled: e.target.checked}})} className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4" />
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-slate-700">PayPal</h4>
@@ -135,7 +135,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings, ha
               <div className="grid grid-cols-2 gap-3">
                 {[{id:'visa',label:'Visa'},{id:'mastercard',label:'Mastercard'},{id:'amex',label:'American Express'},{id:'discover',label:'Discover'}].map(method => (
                   <label key={method.id} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={settings.payment.acceptedPaymentMethods?.includes(method.id)||false} onChange={(e) => { const methods=settings.payment.acceptedPaymentMethods||[]; setSettings({...settings,payment:{...settings.payment,acceptedPaymentMethods:e.target.checked?[...methods,method.id]:methods.filter(m=>m!==method.id)}}); }} className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral" />
+                    <input type="checkbox" checked={settings.payment.acceptedPaymentMethods?.includes(method.id)||false} onChange={(e) => { const methods=settings.payment.acceptedPaymentMethods||[]; setSettings({...settings,payment:{...settings.payment,acceptedPaymentMethods:e.target.checked?[...methods,method.id]:methods.filter(m=>m!==method.id)}}); }} className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral" />
                     <span className="text-sm text-slate-700">{method.label}</span>
                   </label>
                 ))}
@@ -144,7 +144,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings, ha
               <div className="grid grid-cols-2 gap-3">
                 {[{id:'applepay',label:'Apple Pay'},{id:'googlepay',label:'Google Pay'}].map(method => (
                   <label key={method.id} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={settings.payment.acceptedPaymentMethods?.includes(method.id)||false} onChange={(e) => { const methods=settings.payment.acceptedPaymentMethods||[]; setSettings({...settings,payment:{...settings.payment,acceptedPaymentMethods:e.target.checked?[...methods,method.id]:methods.filter(m=>m!==method.id)}}); }} className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral" />
+                    <input type="checkbox" checked={settings.payment.acceptedPaymentMethods?.includes(method.id)||false} onChange={(e) => { const methods=settings.payment.acceptedPaymentMethods||[]; setSettings({...settings,payment:{...settings.payment,acceptedPaymentMethods:e.target.checked?[...methods,method.id]:methods.filter(m=>m!==method.id)}}); }} className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral" />
                     <span className="text-sm text-slate-700">{method.label}</span>
                   </label>
                 ))}
@@ -153,7 +153,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings, ha
               <div className="grid grid-cols-2 gap-3">
                 {[{id:'paypal',label:'PayPal'},{id:'klarna',label:'Klarna'}].map(method => (
                   <label key={method.id} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={settings.payment.acceptedPaymentMethods?.includes(method.id)||false} onChange={(e) => { const methods=settings.payment.acceptedPaymentMethods||[]; setSettings({...settings,payment:{...settings.payment,acceptedPaymentMethods:e.target.checked?[...methods,method.id]:methods.filter(m=>m!==method.id)}}); }} className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral" />
+                    <input type="checkbox" checked={settings.payment.acceptedPaymentMethods?.includes(method.id)||false} onChange={(e) => { const methods=settings.payment.acceptedPaymentMethods||[]; setSettings({...settings,payment:{...settings.payment,acceptedPaymentMethods:e.target.checked?[...methods,method.id]:methods.filter(m=>m!==method.id)}}); }} className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral" />
                     <span className="text-sm text-slate-700">{method.label}</span>
                   </label>
                 ))}
@@ -179,7 +179,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings, ha
         <div className="p-6 space-y-4">
           <div className="flex items-start gap-4">
             <div className="pt-1">
-              <input type="checkbox" checked={settings.notifications.orderConfirmation} onChange={(e) => setSettings({...settings,notifications:{...settings.notifications,orderConfirmation:e.target.checked}})} className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4" />
+              <input type="checkbox" checked={settings.notifications.orderConfirmation} onChange={(e) => setSettings({...settings,notifications:{...settings.notifications,orderConfirmation:e.target.checked}})} className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4" />
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-slate-700">Confirmation de commande</h4>
@@ -188,7 +188,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ settings, setSettings, ha
           </div>
           <div className="flex items-start gap-4">
             <div className="pt-1">
-              <input type="checkbox" checked={settings.notifications.shippingUpdate} onChange={(e) => setSettings({...settings,notifications:{...settings.notifications,shippingUpdate:e.target.checked}})} className="rounded border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4" />
+              <input type="checkbox" checked={settings.notifications.shippingUpdate} onChange={(e) => setSettings({...settings,notifications:{...settings.notifications,shippingUpdate:e.target.checked}})} className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral w-4 h-4" />
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-slate-700">Mise à jour d'expédition</h4>

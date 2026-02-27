@@ -28,6 +28,7 @@ import AccountOrdersPage from '../pages/AccountOrdersPage';
 import AccountOrderDetailPage from '../pages/AccountOrderDetailPage';
 import TermsPage from '../pages/TermsPage';
 import PrivacyPage from '../pages/PrivacyPage';
+import ProductPage from '../pages/ProductPage';
 
 const PublicApp: React.FC = () => {
   const [, setLocation] = useLocation();
@@ -72,12 +73,19 @@ const PublicApp: React.FC = () => {
 
                   <Route path="/">
                     <Hero onStart={(theme, activity, bookTitle) => {
-                      const p = new URLSearchParams();
-                      if (bookTitle) p.set('bookTitle', encodeURIComponent(bookTitle));
-                      if (theme) p.set('theme', encodeURIComponent(theme));
-                      if (activity) p.set('activity', encodeURIComponent(activity));
-                      setLocation(`/create?${p.toString()}`);
+                      if (bookTitle) {
+                        setLocation(`/book/${encodeURIComponent(bookTitle)}`);
+                      } else {
+                        const p = new URLSearchParams();
+                        if (theme) p.set('theme', encodeURIComponent(theme));
+                        if (activity) p.set('activity', encodeURIComponent(activity));
+                        setLocation(`/create?${p.toString()}`);
+                      }
                     }} />
+                  </Route>
+
+                  <Route path="/book/:bookTitle">
+                    {(params) => <ProductPage bookTitle={params.bookTitle} />}
                   </Route>
 
                   <Route path="/create" component={CreatePage} />

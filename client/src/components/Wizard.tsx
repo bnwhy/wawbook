@@ -5,7 +5,6 @@ import { BookConfig, Theme, Activity } from '../types';
 import Navigation from './Navigation';
 import { useBooks } from '../context/BooksContext';
 import Footer from './Footer';
-import { formatPrice } from '../utils/formatPrice';
 
 interface WizardProps {
   onComplete: (config: BookConfig, context?: { theme?: Theme, productId?: string }) => void;
@@ -356,7 +355,7 @@ const Wizard: React.FC<WizardProps> = (props) => {
       `}</style>
 
       {/* NAVIGATION */}
-      <Navigation onStart={() => {}} />
+      <Navigation onStart={() => {}} onLogoClick={onCancel} />
 
       {/* MOBILE AVATAR - STICKY (positioned outside overflow container) */}
       <div className="lg:hidden flex justify-center py-4 backdrop-blur-sm border-b border-white/50 transition-all duration-300 w-full sticky top-[60px] z-30" style={{
@@ -604,39 +603,25 @@ const Wizard: React.FC<WizardProps> = (props) => {
 
           {/* --- RIGHT COLUMN: PREVIEW --- */}
           <div className="hidden lg:flex flex-col gap-6 flex-1 relative items-center justify-start px-8 pb-8 pt-[53px]">
-             
-             {/* Avatar Visualization (Above Book) */}
-             <div className="flex flex-col items-center animate-drop-in z-20 -ml-24">
-                <div className="w-72 h-72 rounded-full bg-white/70 backdrop-blur-md border border-gray-300 overflow-hidden relative shadow-2xl flex-shrink-0">
-                   {renderCharacterAvatar(
-                     activeTab?.type === 'character' 
-                       ? activeTabId 
-                       : (wizardConfig.tabs.find(t => t.type === 'character')?.id || 'child')
-                   )}
-                </div>
-                
-                {/* Book Info */}
-                {book && (
-                  <div className="mt-16 text-left max-w-md">
-                    <h2 className="text-3xl font-bold text-cloud-dark mb-2">{book.name}</h2>
-                    <div className="flex items-center justify-start gap-3 mb-4">
-                      {book.oldPrice && (
-                        <span className="text-lg text-gray-400 line-through whitespace-nowrap">{formatPrice(book.oldPrice)}</span>
-                      )}
-                      <span className="text-2xl font-black text-accent-melon whitespace-nowrap">{formatPrice(book.price)}</span>
-                    </div>
-                    <p className="text-lg text-gray-600 mb-6">{book.description}</p>
-                    
-                    <button 
-                      onClick={handleComplete}
-                      className="bg-[#0c4a6e] text-white px-8 py-4 rounded-xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2 ml-auto"
-                    >
-                      <Wand2 size={32} />
-                      {props.isEditing ? "Mettre à jour" : "Créer le livre"}
-                    </button>
-                  </div>
-                )}
+
+             {/* Avatar + bouton en dessous */}
+             <div className="flex flex-col items-center animate-drop-in z-20 flex-shrink-0 gap-16 -ml-24">
+               <div className="w-72 h-72 rounded-full bg-white/70 backdrop-blur-md border border-gray-300 overflow-hidden relative shadow-2xl">
+                 {renderCharacterAvatar(
+                   activeTab?.type === 'character'
+                     ? activeTabId
+                     : (wizardConfig.tabs.find(t => t.type === 'character')?.id || 'child')
+                 )}
+               </div>
+               <button
+                 onClick={handleComplete}
+                 className="bg-[#0c4a6e] text-white px-14 py-4 rounded-xl font-bold text-lg hover:bg-cloud-blue transition-all shadow-lg flex items-center gap-2"
+               >
+                 <Wand2 size={20} />
+                 {props.isEditing ? "Mettre à jour" : "Créer le livre"}
+               </button>
              </div>
+
           </div>
 
         </div>

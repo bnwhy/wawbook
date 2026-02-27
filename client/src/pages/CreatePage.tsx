@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import Wizard from '../components/Wizard';
 import { BookConfig, Theme, Activity } from '../types';
@@ -50,10 +50,24 @@ const CreatePage: React.FC = () => {
   const handleCancel = () => {
     if (editingId) {
       setLocation('/cart');
+    } else if (bookTitle) {
+      setLocation(`/book/${encodeURIComponent(bookTitle)}`);
     } else {
       setLocation('/');
     }
   };
+
+  // Interception de la flèche retour navigateur → page produit
+  useEffect(() => {
+    if (!bookTitle) return;
+    // Pousse un état pour pouvoir intercepter le popstate
+    window.history.pushState(null, '', window.location.href);
+    const handlePop = () => {
+      setLocation(`/book/${encodeURIComponent(bookTitle)}`);
+    };
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, [bookTitle, setLocation]);
 
   // Fallback if bookTitle is missing
   if (!bookTitle) {

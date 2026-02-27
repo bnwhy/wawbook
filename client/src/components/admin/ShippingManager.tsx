@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Globe, Edit2, Trash2, X, Filter, Package } from 'lucide-react';
+import { Plus, Globe, Edit2, Trash2, Tag, Package } from 'lucide-react';
 import { ShippingZone, ShippingMethod } from '../../types/ecommerce';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { formatPrice } from '../../utils/formatPrice';
 import { SaveButton } from './SaveButton';
+import CountrySelector from './CountrySelector';
+import { useConfirm } from '../../hooks/useConfirm';
 
 interface ShippingManagerProps {
   shippingZones: ShippingZone[];
@@ -24,6 +25,7 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
   const [localZones, setLocalZones] = useState<ShippingZone[]>([]);
   const [originalZones, setOriginalZones] = useState<ShippingZone[]>([]);
   const [savingZoneId, setSavingZoneId] = useState<string | null>(null);
+  const { confirm: confirmDialog, ConfirmDialog } = useConfirm();
 
   // Default rate — local draft with explicit save
   const [localRate, setLocalRate] = useState<number>(defaultShippingRate);
@@ -45,10 +47,17 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
   const handleSaveZone = async (zone: ShippingZone) => {
     setSavingZoneId(zone.id);
     try {
+      // Normalise offerPrice : si une condition est présente et offerPrice n'est pas défini, l'initialiser à 0
+      const normalizedMethods = zone.methods.map(m => ({
+        ...m,
+        offerPrice: m.condition && m.condition.type !== 'none'
+          ? (m.offerPrice ?? 0)
+          : undefined,
+      }));
       await updateShippingZone(zone.id, {
         name: zone.name,
         countries: zone.countries,
-        methods: zone.methods,
+        methods: normalizedMethods,
       });
       setEditingZoneId(null);
     } finally {
@@ -66,6 +75,7 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
   };
 
   return (
+  <>
   <div className="max-w-4xl mx-auto space-y-8">
     <div className="flex justify-between items-center">
       <div>
@@ -79,30 +89,31 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
       </div>
     </div>
 
+    <div className="flex items-center gap-2">
+      <label className="text-xs font-bold text-slate-500 uppercase">Tarif par défaut:</label>
+      <div className="flex items-center gap-1 border border-gray-300 rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-indigo-500 bg-white">
+        <input
+          type="number"
+          value={localRate}
+          onChange={(e) => setLocalRate(parseFloat(e.target.value) || 0)}
+          className="w-16 text-sm outline-none text-center font-bold text-slate-800"
+          placeholder="0.00"
+        />
+        <span className="text-gray-400 text-sm leading-none">€</span>
+      </div>
+      <SaveButton
+        hasChanges={localRate !== defaultShippingRate}
+        isSaving={savingRate}
+        onSave={handleSaveRate}
+        className="px-3 py-1 rounded-lg text-xs"
+        label="Sauvegarder"
+        savedLabel="Enregistré"
+      />
+    </div>
+
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-6 border-b border-gray-100 bg-slate-50/50 flex justify-between items-center">
         <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><Globe size={20} className="text-indigo-600" />Zones d'expédition</h3>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-bold text-slate-500 uppercase">Tarif par défaut:</label>
-          <div className="relative w-24">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-            <input
-              type="number"
-              value={localRate}
-              onChange={(e) => setLocalRate(parseFloat(e.target.value) || 0)}
-              className="w-full text-sm border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-2 focus:ring-indigo-500 outline-none text-right font-bold text-slate-800"
-              placeholder="0.00"
-            />
-          </div>
-          <SaveButton
-            hasChanges={localRate !== defaultShippingRate}
-            isSaving={savingRate}
-            onSave={handleSaveRate}
-            className="px-3 py-1 rounded-lg text-xs"
-            label="Sauvegarder"
-            savedLabel="Enregistré"
-          />
-        </div>
       </div>
       <div className="divide-y divide-gray-100">
         {localZones.map(zone => {
@@ -111,24 +122,19 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
           return (
           <div key={zone.id} className="p-6">
             {editingZoneId === zone.id ? (
-              <div className="space-y-6 bg-slate-50 p-4 rounded-xl border border-indigo-100">
+              <div className="space-y-6 bg-slate-50 p-4 rounded-xl border border-indigo-100 max-w-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Nom de la zone</label>
-                    <input type="text" value={zone.name} onChange={(e) => updateLocalZone(zone.id, { name: e.target.value })} className="w-full text-sm border border-gray-300 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ex: France Métropolitaine" />
+                    <input type="text" value={zone.name} onChange={(e) => updateLocalZone(zone.id, { name: e.target.value })} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="Ex: France Métropolitaine" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Pays (Codes ISO ou Noms)</label>
-                    <div className="flex flex-wrap gap-2 mb-2 p-2 bg-white border border-gray-300 rounded min-h-[42px]">
-                      {zone.countries.map(country => (
-                        <span key={country} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                          {country}
-                          <button onClick={() => updateLocalZone(zone.id, { countries: zone.countries.filter(c => c !== country) })}><X size={12} /></button>
-                        </span>
-                      ))}
-                      <input type="text" placeholder={zone.countries.length === 0 ? "Ajouter (Entrée)" : ""} className="bg-transparent border-none p-0 text-sm focus:ring-0 min-w-[100px] flex-1"
-                        onKeyDown={(e) => { if (e.key === 'Enter') { const val = e.currentTarget.value.trim(); if (val && !zone.countries.includes(val)) { updateLocalZone(zone.id, { countries: [...zone.countries, val] }); e.currentTarget.value = ''; } } }} />
-                    </div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Pays</label>
+                    <CountrySelector
+                      selected={zone.countries}
+                      onChange={(countries) => updateLocalZone(zone.id, { countries })}
+                      useCodes={false}
+                    />
                   </div>
                 </div>
 
@@ -140,77 +146,87 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
                     </button>
                   </div>
                   <div className="space-y-3">
-                    {zone.methods.map((method, mIdx) => (
-                      <div key={method.id} className="flex flex-col md:flex-row gap-3 bg-white p-3 rounded border border-gray-200 items-start md:items-center">
-                        <div className="flex-1 w-full">
-                          <div className="flex items-center gap-2 mb-2">
-                            <input type="text" value={method.name} onChange={(e) => { const nm=[...zone.methods]; nm[mIdx]={...method,name:e.target.value}; updateLocalZone(zone.id,{methods:nm}); }} className="flex-1 text-sm font-bold border-none p-0 focus:ring-0 text-slate-800 placeholder-gray-400" placeholder="Nom de la méthode" />
-                            {method.condition && method.condition.type !== 'none' && (
-                              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 whitespace-nowrap">
-                                {method.condition.type === 'price' ? 'Prix' : method.condition.type === 'weight' ? 'Poids' : 'Quantité'} {method.condition.operator === 'greater_than' ? '> ' : method.condition.operator === 'less_than' ? '< ' : ''}{method.condition.value}{method.condition.operator === 'between' ? ` - ${method.condition.maxValue}` : ''}{method.condition.type === 'price' ? '€' : method.condition.type === 'weight' ? 'kg' : ''}
-                              </span>
-                            )}
+                    {zone.methods.map((method, mIdx) => {
+                      const hasCondition = method.condition && method.condition.type !== 'none';
+                      const conditionSummary = hasCondition ? (() => {
+                        const c = method.condition!;
+                        const typeLabel = c.type === 'price' ? 'prix' : 'quantité';
+                        const unit = c.type === 'price' ? ' €' : '';
+                        if (c.operator === 'greater_than') return `Si ${typeLabel} > ${c.value}${unit}`;
+                        if (c.operator === 'less_than') return `Si ${typeLabel} < ${c.value}${unit}`;
+                        if (c.operator === 'between') return `Si ${typeLabel} entre ${c.value}${unit} et ${c.maxValue ?? '?'}${unit}`;
+                        return '';
+                      })() : null;
+
+                      return (
+                      <div key={method.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        {/* Ligne principale : Nom / Délai / Prix / Supprimer */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">Nom</label>
+                            <input type="text" value={method.name} onChange={(e) => { const nm=[...zone.methods]; nm[mIdx]={...method,name:e.target.value}; updateLocalZone(zone.id,{methods:nm}); }} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="Nom de la méthode" />
                           </div>
-                          <input type="text" value={method.estimatedDelay || ''} onChange={(e) => { const nm=[...zone.methods]; nm[mIdx]={...method,estimatedDelay:e.target.value}; updateLocalZone(zone.id,{methods:nm}); }} className="w-full text-xs text-slate-500 border-none p-0 focus:ring-0 placeholder-gray-300" placeholder="Délai estimé (ex: 48h)" />
-                        </div>
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                          <div className="relative">
-                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-                            <input type="number" value={method.price} onChange={(e) => { const nm=[...zone.methods]; nm[mIdx]={...method,price:parseFloat(e.target.value)||0}; updateLocalZone(zone.id,{methods:nm}); }} className="w-20 text-sm border border-gray-200 rounded pl-6 pr-2 py-1 focus:ring-indigo-500 focus:border-indigo-500 text-right font-bold" />
+                          <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">Délai estimé</label>
+                            <input type="text" value={method.estimatedDelay || ''} onChange={(e) => { const nm=[...zone.methods]; nm[mIdx]={...method,estimatedDelay:e.target.value}; updateLocalZone(zone.id,{methods:nm}); }} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white" placeholder="ex: 2-3 jours" />
                           </div>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button className={`p-1.5 rounded transition-colors ${method.condition?.type && method.condition.type !== 'none' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-300 hover:text-slate-500'}`}><Filter size={16} /></button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80 p-4 bg-white">
-                              <div className="space-y-4">
-                                <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2"><Filter size={14} /> Condition d'application</h4>
-                                <div className="space-y-3">
-                                  <div>
-                                    <label className="text-xs font-bold text-slate-500 mb-1 block">Type de condition</label>
-                                    <select className="w-full text-sm border border-gray-200 rounded p-2" value={method.condition?.type || 'none'} onChange={(e) => { const nm=[...zone.methods]; const type=e.target.value as any; nm[mIdx]={...method,condition:type==='none'?undefined:{type,operator:'greater_than',value:0}}; updateLocalZone(zone.id,{methods:nm}); }}>
-                                      <option value="none">Aucune condition (Toujours appliquer)</option>
-                                      <option value="price">Basé sur le prix de la commande</option>
-                                      <option value="weight">Basé sur le poids de la commande</option>
-                                      <option value="quantity">Basé sur la quantité d'articles</option>
-                                    </select>
-                                  </div>
-                                  {method.condition && method.condition.type !== 'none' && (
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <div>
-                                        <label className="text-xs font-bold text-slate-500 mb-1 block">Opérateur</label>
-                                        <select className="w-full text-sm border border-gray-200 rounded p-2" value={method.condition.operator} onChange={(e) => { const nm=[...zone.methods]; if(nm[mIdx].condition){(nm[mIdx].condition as any).operator=e.target.value; updateLocalZone(zone.id,{methods:nm});} }}>
-                                          <option value="greater_than">Supérieur à ({'>'}</option>
-                                          <option value="less_than">Inférieur à ({'<'})</option>
-                                          <option value="between">Entre</option>
-                                        </select>
-                                      </div>
-                                      <div>
-                                        <label className="text-xs font-bold text-slate-500 mb-1 block">Valeur {method.condition.type === 'price' ? '(€)' : method.condition.type === 'weight' ? '(kg)' : '(Qté)'}</label>
-                                        <input type="number" className="w-full text-sm border border-gray-200 rounded p-2" value={method.condition.value} onChange={(e) => { const nm=[...zone.methods]; if(nm[mIdx].condition){nm[mIdx].condition.value=parseFloat(e.target.value)||0; updateLocalZone(zone.id,{methods:nm});} }} />
-                                      </div>
-                                    </div>
-                                  )}
-                                  {method.condition && method.condition.operator === 'between' && (
-                                    <div>
-                                      <label className="text-xs font-bold text-slate-500 mb-1 block">Valeur Max {method.condition.type === 'price' ? '(€)' : method.condition.type === 'weight' ? '(kg)' : '(Qté)'}</label>
-                                      <input type="number" className="w-full text-sm border border-gray-200 rounded p-2" value={method.condition.maxValue || 0} onChange={(e) => { const nm=[...zone.methods]; if(nm[mIdx].condition){nm[mIdx].condition.maxValue=parseFloat(e.target.value)||0; updateLocalZone(zone.id,{methods:nm});} }} />
-                                    </div>
-                                  )}
-                                </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">Prix</label>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-500 bg-white flex-1">
+                                <input type="number" value={method.price} onChange={(e) => { const nm=[...zone.methods]; nm[mIdx]={...method,price:parseFloat(e.target.value)||0}; updateLocalZone(zone.id,{methods:nm}); }} className="w-full text-sm outline-none text-center font-bold" />
+                                <span className="text-gray-400 text-sm leading-none shrink-0">€</span>
                               </div>
-                            </PopoverContent>
-                          </Popover>
-                          <button onClick={() => updateLocalZone(zone.id, { methods: zone.methods.filter((_, i) => i !== mIdx) })} className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                              <button onClick={async () => { if (await confirmDialog('Supprimer cette méthode de livraison ?')) { updateLocalZone(zone.id, { methods: zone.methods.filter((_, i) => i !== mIdx) }); } }} className="text-gray-400 hover:text-red-500 transition-colors shrink-0"><Trash2 size={16} /></button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Section condition inline */}
+                        <div className="border-t border-gray-100 bg-slate-50 px-3 py-2">
+                          <details open={!!hasCondition}>
+                            <summary className="cursor-pointer text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-2 select-none list-none outline-none">
+                              <Tag size={12} />
+                              Offre
+                              {conditionSummary && (
+                                <span className="ml-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">{conditionSummary}</span>
+                              )}
+                            </summary>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <select className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-indigo-500" value={method.condition?.type || 'none'} onChange={(e) => { const nm=[...zone.methods]; const type=e.target.value as any; nm[mIdx]={...method, condition: type==='none'?undefined:{type,operator:'greater_than',value:0}, offerPrice: type==='none'?undefined:(method.offerPrice ?? 0)}; updateLocalZone(zone.id,{methods:nm}); }}>
+                                <option value="none">Toujours proposée</option>
+                                <option value="price">Si prix commande</option>
+                                <option value="quantity">Si nb articles</option>
+                              </select>
+                              {method.condition && method.condition.type !== 'none' && (<>
+                                <select className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-indigo-500" value={method.condition.operator} onChange={(e) => { const nm=[...zone.methods]; if(nm[mIdx].condition){(nm[mIdx].condition as any).operator=e.target.value; updateLocalZone(zone.id,{methods:nm});} }}>
+                                  <option value="greater_than">&gt;</option>
+                                  <option value="less_than">&lt;</option>
+                                  <option value="between">entre</option>
+                                </select>
+                                <input type="number" className="w-20 text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-indigo-500 text-center" value={method.condition.value} onChange={(e) => { const nm=[...zone.methods]; if(nm[mIdx].condition){nm[mIdx].condition.value=parseFloat(e.target.value)||0; updateLocalZone(zone.id,{methods:nm});} }} />
+                                {method.condition.operator === 'between' && (<>
+                                  <span className="text-xs text-slate-400">et</span>
+                                  <input type="number" className="w-20 text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-indigo-500 text-center" value={method.condition.maxValue || 0} onChange={(e) => { const nm=[...zone.methods]; if(nm[mIdx].condition){nm[mIdx].condition.maxValue=parseFloat(e.target.value)||0; updateLocalZone(zone.id,{methods:nm});} }} />
+                                </>)}
+                                <span className="text-xs font-bold text-slate-400 mx-1">alors</span>
+                                <div className="flex items-center gap-1 border border-emerald-300 rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-emerald-400 bg-white">
+                                  <input type="number" className="w-12 text-xs outline-none text-center font-bold text-emerald-700" value={method.offerPrice ?? 0} onChange={(e) => { const nm=[...zone.methods]; nm[mIdx]={...method,offerPrice:parseFloat(e.target.value)||0}; updateLocalZone(zone.id,{methods:nm}); }} />
+                                  <span className="text-xs text-emerald-500 leading-none shrink-0">€</span>
+                                </div>
+                              </>)}
+                            </div>
+                          </details>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                     {zone.methods.length === 0 && <p className="text-sm text-gray-400 italic text-center py-2">Aucune méthode configurée pour cette zone.</p>}
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center pt-2 border-t border-indigo-100">
-                  <button onClick={() => { if (confirm('Êtes-vous sûr de vouloir supprimer cette zone ?')) { deleteShippingZone(zone.id); } }} className="text-red-500 text-xs font-bold flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded transition-colors"><Trash2 size={14} /> Supprimer la zone</button>
+                  <button onClick={async () => { if (await confirmDialog('Êtes-vous sûr de vouloir supprimer cette zone ?')) { deleteShippingZone(zone.id); } }} className="text-red-500 text-xs font-bold flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded transition-colors"><Trash2 size={14} /> Supprimer la zone</button>
                   <SaveButton
                     hasChanges={hasZoneChanges}
                     isSaving={savingZoneId === zone.id}
@@ -278,13 +294,15 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">Poids par livre (g)</label>
-            <input type="number" className="w-full text-sm border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2" defaultValue={350} />
+            <input type="number" className="w-full text-sm border border-gray-300 rounded-lg focus:ring-brand-coral focus:border-brand-coral px-3 py-2" defaultValue={350} />
             <p className="text-xs text-slate-500 mt-1">Poids moyen utilisé pour le calcul des frais de port.</p>
           </div>
         </div>
       </div>
     </div>
   </div>
+  {ConfirmDialog}
+  </>
   );
 };
 

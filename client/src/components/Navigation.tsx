@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 
 interface NavigationProps {
   onStart: () => void;
+  onLogoClick?: () => void;
 }
 
 const CloudLogo = () => (
@@ -36,7 +37,7 @@ const CloudLogo = () => (
   </div>
 );
 
-const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
+const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
   const { mainMenu } = useMenus();
   const { itemCount } = useCart();
   const { isAuthenticated, user, logout } = useAuth();
@@ -91,8 +92,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
         
         {/* Logo */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => {
-          setLocation('/');
-          window.location.reload(); 
+          if (onLogoClick) { onLogoClick(); } else { setLocation('/'); window.location.reload(); }
         }}>
           <CloudLogo />
           <span className="text-3xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
@@ -102,7 +102,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
 
         {/* Desktop Menu */}
         <div className="flex items-center gap-1">
-          {mainMenu.filter(menu => menu.id !== 'help').map((menu, idx) => {
+          {mainMenu.filter(menu => menu.id !== 'help' && menu.visible !== false).map((menu, idx) => {
             const hasSubMenu = (menu.items && menu.items.length > 0) || (menu.columns && menu.columns.length > 0);
             
             return hasSubMenu ? (
@@ -251,10 +251,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
         </button>
 
         {/* Center: Logo */}
-        <div className="flex items-center gap-2 cursor-pointer group absolute left-1/2 -translate-x-1/2" onClick={() => {
-          setLocation('/');
-          window.location.reload(); 
-        }}>
+        <div className="flex items-center gap-2 cursor-pointer group absolute left-1/2 -translate-x-1/2" onClick={() => onLogoClick ? onLogoClick() : (setLocation('/'), window.location.reload())}>
           <CloudLogo />
           <span className="text-2xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
             nuagebook
@@ -333,7 +330,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart }) => {
             </div>
 
             <div className="p-4 flex flex-col gap-2">
-               {mainMenu.filter(menu => menu.id !== 'help').map((menu, idx) => {
+               {mainMenu.filter(menu => menu.id !== 'help' && menu.visible !== false).map((menu, idx) => {
                  const hasSubMenu = (menu.items && menu.items.length > 0) || (menu.columns && menu.columns.length > 0);
                  
                  return hasSubMenu ? (

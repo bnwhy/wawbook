@@ -1,17 +1,17 @@
 /**
- * Format a price to the French format: € NN,NN
+ * Format a price to the French format: NN,NN €
  * @param price - The price as a number
  * @returns Formatted price string
  */
 export const formatPrice = (price: number | undefined | null): string => {
   if (price === undefined || price === null) {
-    return '€ 0,00';
+    return '0,00 €';
   }
   const numPrice = typeof price === 'number' ? price : parseFloat(String(price));
   if (isNaN(numPrice)) {
-    return '€ 0,00';
+    return '0,00 €';
   }
-  return `€ ${numPrice.toFixed(2).replace('.', ',')}`;
+  return `${numPrice.toFixed(2).replace('.', ',')} €`;
 };
 
 /**

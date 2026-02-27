@@ -9,6 +9,8 @@ const INITIAL_MENU: MenuItem[] = [
     label: "Produits",
     type: "simple",
     basePath: "/catalogue",
+    position: 0,
+    visible: true,
     items: [
       "Voir tout le catalogue"
     ]
@@ -18,6 +20,8 @@ const INITIAL_MENU: MenuItem[] = [
     label: "Pour qui ?",
     type: "columns",
     basePath: "/for",
+    position: 1,
+    visible: true,
     columns: [
       {
         title: "Enfants",
@@ -34,6 +38,8 @@ const INITIAL_MENU: MenuItem[] = [
     label: "Occasions",
     type: "grid",
     basePath: "/occasion",
+    position: 2,
+    visible: true,
     items: [
       "Naissance", "Anniversaire", "Fête des Pères", "Fête des Mères", 
       "Noël", "Baptême", "Rentrée", "Pâques", 
@@ -45,6 +51,8 @@ const INITIAL_MENU: MenuItem[] = [
     label: "À propos",
     type: "simple",
     basePath: "/about",
+    position: 3,
+    visible: true,
     items: [
       "L'entreprise", "Parrainage", "Carrières", "Offres", 
       "Nos Valeurs", "Programme écologie", "Blog"
@@ -55,6 +63,8 @@ const INITIAL_MENU: MenuItem[] = [
     label: "Aide",
     type: "simple",
     basePath: "/help",
+    position: 4,
+    visible: true,
     items: [
       "FAQ", "Contact", "Service client", "Mentions légales"
     ]
@@ -112,6 +122,9 @@ export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menus'] });
       toast.success('Menu mis à jour');
+    },
+    onError: () => {
+      toast.error('Erreur lors de la sauvegarde du menu');
     },
   });
 

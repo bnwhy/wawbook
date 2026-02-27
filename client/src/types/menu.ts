@@ -12,6 +12,8 @@ export interface MenuItem {
   basePath: string;
   items?: string[];
   columns?: MenuColumn[];
+  position?: number;
+  visible?: boolean;
 }
 
 export interface MenuContextType {

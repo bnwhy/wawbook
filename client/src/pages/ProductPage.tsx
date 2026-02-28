@@ -125,10 +125,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-20">
 
           {/* LEFT — Images */}
-          <div className="flex gap-3 bg-gray-50 rounded-xl p-3">
+          <div className="flex gap-3">
             {/* Thumbnails verticales à gauche */}
             {images.length > 1 && (
-              <div className="flex flex-col gap-2">
+              <div className="hidden md:flex flex-col gap-2 justify-center">
                 {images.map((img, i) => (
                   <button
                     key={i}
@@ -148,14 +148,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
               <div className="aspect-square flex items-center justify-center p-6">
                 {images[selectedImage] ? (
                   images[selectedImage].use3DEffect ? (
-                    <div className="w-[80%] h-[80%]">
+                    <div className="w-[92%] h-[92%]">
                       <BookCover3D imageUrl={images[selectedImage].url} alt={book.name} />
                     </div>
                   ) : (
                     <img
                       src={images[selectedImage].url}
                       alt={book.name}
-                      className="w-[80%] h-[80%] object-cover rounded-xl shadow-lg"
+                      className="w-[92%] h-[92%] object-cover rounded-xl shadow-lg"
                     />
                   )
                 ) : (
@@ -192,7 +192,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
           </div>
 
           {/* RIGHT — Info */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
             {/* Badge */}
             {book.badgeText && (
               <span className="inline-flex items-center gap-1.5 self-start bg-accent-sun/10 text-accent-sun text-xs font-bold px-3 py-1 rounded-full">
@@ -201,7 +201,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
               </span>
             )}
 
-            <h1 className="text-4xl font-display font-black text-cloud-dark leading-tight">{book.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-display font-black text-cloud-dark leading-tight">{book.name}</h1>
 
             {/* Stars */}
             <div className="flex gap-0.5">
@@ -211,57 +211,62 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
             {/* Price */}
             <div className="flex items-baseline gap-3">
               {book.oldPrice && (
-                <span className="text-xl text-gray-400 line-through">{formatPrice(book.oldPrice)}</span>
+                <span className="text-base text-gray-400 line-through">{formatPrice(book.oldPrice)}</span>
               )}
-              <span className="text-4xl font-black text-accent-melon">{formatPrice(book.price)}</span>
+              {book.features?.coverTypes && book.features.coverTypes.length > 0 ? (
+                <span className="text-2xl font-black text-accent-melon">
+                  {book.features.coverTypes.length > 1 ? 'À partir de ' : ''}
+                  {formatPrice(Math.min(...book.features.coverTypes.map(c => c.price)))}
+                </span>
+              ) : (
+                <span className="text-2xl font-black text-accent-melon">{formatPrice(book.price)}</span>
+              )}
             </div>
 
-            <p className="text-gray-600 leading-relaxed">{book.description}</p>
-
-            {/* Language selector */}
-            {book.features?.languages && book.features.languages.length > 0 && (
-              <div>
-                <label className="text-sm font-bold text-cloud-dark/70 mb-2 block">Langue du livre</label>
-                <div className="relative">
-                  <select
-                    value={selectedLanguage || (book.features.languages[0] ? (typeof book.features.languages[0] === 'string' ? book.features.languages[0] : book.features.languages[0].code) : '')}
-                    onChange={e => setSelectedLanguage(e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 pr-10 text-sm text-cloud-dark font-medium focus:outline-none focus:border-cloud-blue appearance-none cursor-pointer"
-                  >
-                    {book.features.languages.map((l: any) => {
-                      const code = typeof l === 'string' ? l : l.code;
-                      const label = typeof l === 'string' ? l : l.label;
-                      return <option key={code} value={code}>{label}</option>;
-                    })}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            )}
+            <p className="text-sm text-gray-600 leading-relaxed pb-3 border-b border-dashed border-gray-200">{book.description}</p>
 
             {/* Other features */}
-            {book.features && (book.features.customization?.length || book.features.pages || book.features.formats?.length) && (
-              <div className="bg-white/60 rounded-2xl p-4 space-y-2 text-sm text-cloud-dark/80">
+            {book.features && (book.features.customization?.length || book.features.pages || book.features.coverTypes?.length || book.features.languages?.length) && (
+              <div className="space-y-4 text-sm text-cloud-dark/80">
                 {book.features.customization && book.features.customization.length > 0 && (
                   <div className="flex gap-2">
-                    <span className="font-bold text-cloud-dark/60 w-36 shrink-0">Personnalisation :</span>
+                    <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Personnalisation :</span>
                     <span>{book.features.customization.join(', ')}</span>
                   </div>
                 )}
                 {book.features.pages && (
                   <div className="flex gap-2">
-                    <span className="font-bold text-cloud-dark/60 w-36 shrink-0">Pages :</span>
+                    <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Nombre de pages :</span>
                     <span>{book.features.pages}</span>
                   </div>
                 )}
-                {book.features.formats && book.features.formats.length > 0 && (
+                {book.features.coverTypes && book.features.coverTypes.length > 0 && (
                   <div className="flex gap-2">
-                    <span className="font-bold text-cloud-dark/60 w-36 shrink-0">Format :</span>
-                    <span>{book.features.formats.join(', ')}</span>
+                    <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Format :</span>
+                    <span>{book.features.coverTypes.map(ct => ct.label).join(', ')}</span>
+                  </div>
+                )}
+                {book.features.languages && book.features.languages.length > 0 && (
+                  <div className="flex gap-2 items-center">
+                    <span className="font-bold text-cloud-dark/80 w-40 shrink-0">Langue du livre :</span>
+                    <div className="relative">
+                      <select
+                        value={selectedLanguage || (book.features.languages[0] ? (typeof book.features.languages[0] === 'string' ? book.features.languages[0] : book.features.languages[0].code) : '')}
+                        onChange={e => setSelectedLanguage(e.target.value)}
+                        className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 pr-8 text-sm text-cloud-dark font-medium focus:outline-none focus:border-cloud-blue appearance-none cursor-pointer"
+                      >
+                        {book.features.languages.map((l: any) => {
+                          const code = typeof l === 'string' ? l : l.code;
+                          const label = typeof l === 'string' ? l : l.label;
+                          return <option key={code} value={code}>{label}</option>;
+                        })}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                        <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -270,45 +275,102 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
             {/* CTA */}
             <button
               onClick={handleCreate}
-              className="mt-2 bg-[#0c4a6e] text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-3"
+              className="mt-3 bg-[#0c4a6e] text-white px-14 py-3.5 rounded-2xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg inline-flex items-center gap-3 self-center"
             >
               <Wand2 size={22} />
               Personnaliser ce livre
             </button>
 
+            {/* ── FAQ inline (sous le CTA) ── */}
+            {faqItems.length > 0 && (
+              <div className="mt-8">
+                {book.productPage?.faqTitle?.trim() && (
+                  <h2 className="text-base font-bold text-cloud-dark mb-4">{book.productPage.faqTitle}</h2>
+                )}
+                <div className="divide-y divide-gray-300 border-b border-gray-300">
+                  {faqItems.map((item, i) => (
+                    <div key={i}>
+                      <button
+                        onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                        className="w-full flex items-center justify-between py-4 text-left"
+                      >
+                        <span className="font-semibold text-slate-800 text-sm">{item.question}</span>
+                        <svg
+                          className={`w-4 h-4 flex-shrink-0 ml-4 transition-transform duration-200 text-teal-700 ${openFaq === i ? 'rotate-180' : ''}`}
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {openFaq === i && (
+                        <div className="pb-4">
+                          <p className="text-sm text-gray-500 leading-relaxed whitespace-pre-line">{item.answer}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
 
-        {/* ── FAQ ── */}
-        {faqItems.length > 0 && (
+        {/* ── BADGES DE CONFIANCE ── */}
+        <section className="mb-16">
+          <div className="flex flex-col sm:flex-row gap-8 justify-center">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-cloud-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              </div>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Paiement sécurisé</p>
+                <p className="text-xs text-gray-500 mt-0.5">Transactions protégées SSL</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-cloud-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+              </div>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Livraison soignée</p>
+                <p className="text-xs text-gray-500 mt-0.5">Emballage protecteur garanti</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-cloud-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+              </div>
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Satisfait ou remboursé</p>
+                <p className="text-xs text-gray-500 mt-0.5">14 jours pour changer d'avis</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── AVIS MIS EN AVANT ── */}
+        {book.productPage?.featuredReview?.text && (
           <section className="mb-16">
-            <div className="max-w-2xl mx-auto space-y-3">
-              {faqItems.map((item, i) => (
-                <div key={i}>
-                  {item.sectionTitle?.trim() && (
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-cloud-blue/70 mb-2 mt-4 px-1">{item.sectionTitle}</h3>
-                  )}
-                  <div className="bg-white/80 rounded-2xl border border-gray-100 overflow-hidden">
-                    <button
-                      onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                      className="w-full flex items-center justify-between px-6 py-4 text-left font-semibold text-cloud-dark hover:bg-sky-50/50 transition-colors"
-                    >
-                      <span>{item.question}</span>
-                      <svg
-                        className={`w-5 h-5 text-gray-400 flex-shrink-0 ml-4 transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`}
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {openFaq === i && (
-                      <div className="px-6 pb-5 border-t border-gray-100 pt-4">
-                        <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{item.answer}</p>
+            <div className="bg-sky-50 rounded-[3rem] p-10 md:p-14 relative overflow-hidden">
+              {/* Déco */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-cloud-blue/10 rounded-full -mr-20 -mt-20 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent-melon/10 rounded-full -ml-10 -mb-10 pointer-events-none" />
+
+              <div className="relative z-10 flex justify-center">
+                <div className="bg-white rounded-[2rem] p-8 shadow-cloud border-4 border-cloud-lightest max-w-lg w-full">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-accent-melon rounded-full flex-shrink-0" />
+                    <div>
+                      <div className="font-bold text-cloud-dark">{book.productPage.featuredReview.author}</div>
+                      <div className="flex text-accent-sun">
+                        {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="currentColor" />)}
                       </div>
-                    )}
+                    </div>
                   </div>
+                  <p className="text-lg text-cloud-dark/70 italic font-medium">"{book.productPage.featuredReview.text}"</p>
                 </div>
-              ))}
+              </div>
             </div>
           </section>
         )}
@@ -326,8 +388,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                   />
                 </div>
                 <div className="md:w-1/2 space-y-4">
-                  <h3 className="font-display font-black text-2xl text-cloud-dark">{s.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{s.text}</p>
+                  <h3 className="font-display font-black text-xl text-cloud-dark">{s.title}</h3>
+                  <div className="text-gray-600 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: s.text }} />
                 </div>
               </div>
             ))}
@@ -337,6 +399,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
         {/* ── REVIEWS ── */}
         {reviews.length > 0 && (
           <section>
+            <h2 className="text-xl font-display font-black text-cloud-dark text-center mb-6">Recommandé par nos clients</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {reviews.map((r, i) => (
                 <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

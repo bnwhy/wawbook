@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useBooks } from "../../context/BooksContext";
 import { BookOpen } from "lucide-react";
-import { formatPrice } from "../../utils/formatPrice";
+import { formatPrice, getMinCoverPrice } from "../../utils/formatPrice";
 import BookCover3D from "../BookCover3D";
 
 export function ProductGrid() {
@@ -72,7 +72,7 @@ export function ProductGrid() {
                     {book.description || "Une histoire personnalisée pour votre enfant"}
                   </p>
                   <div className="font-serif text-2xl text-primary">
-                    {book.price ? formatPrice(book.price) : "€ 29,99"}
+                    {(() => { const { price, hasMultiple } = getMinCoverPrice(book); return (hasMultiple ? 'À partir de ' : '') + formatPrice(price); })()}
                   </div>
                 </CardContent>
                 <CardFooter className="p-6 pt-0 bg-white/50 backdrop-blur-sm">
@@ -86,7 +86,7 @@ export function ProductGrid() {
         </div>
 
         <div className="text-center mt-16">
-          <Button variant="ghost" size="lg" className="rounded-full px-10 h-14 text-xl font-serif text-gray-400 hover:text-primary hover:bg-primary/5">
+          <Button variant="ghost" size="lg" className="rounded-lg px-10 h-14 text-xl font-serif text-gray-400 hover:text-primary hover:bg-primary/5">
             Voir toute la bibliothèque
           </Button>
         </div>

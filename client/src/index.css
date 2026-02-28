@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -32,6 +33,11 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+
+  /* Boutons moins arrondis globalement */
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 1rem;
 
   /* Custom Colors from WawBook Design */
   --color-brand-cream: #FDFBF7;
@@ -125,6 +131,14 @@
     @apply font-sans antialiased bg-background text-foreground selection:bg-primary/30;
   }
   /* Apply fonts to global elements if needed, but utility classes handle most */
+}
+
+/* Boutons texte : jamais complètement ronds (ne touche pas les div décoratifs) */
+@layer utilities {
+  button.rounded-full:not(.aspect-square):not([style*="width"]),
+  a.rounded-full {
+    border-radius: 0.5rem !important;
+  }
 }
 
 @layer utilities {

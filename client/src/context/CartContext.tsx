@@ -7,7 +7,7 @@ export interface CartItem {
   bookTitle: string;
   config: BookConfig;
   dedication?: string;
-  format: 'hardcover' | 'softcover';
+  format: string;
   price: number;
   quantity: number;
   coverImage?: string;

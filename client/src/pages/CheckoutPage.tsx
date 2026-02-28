@@ -156,7 +156,7 @@ const CheckoutPage = () => {
     try {
       const lineItems: Array<{ name: string; description?: string; price: number; quantity: number }> = items.map(item => ({
         name: item.bookTitle || 'Livre personnalisé',
-        description: item.format === 'hardcover' ? 'Couverture rigide' : 'Couverture souple',
+        description: item.format,
         price: item.price,
         quantity: item.quantity,
       }));
@@ -245,7 +245,7 @@ const CheckoutPage = () => {
           </div>
           <button 
             onClick={() => window.location.href = '/'}
-            className="bg-cloud-blue text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-cloud-deep transition-colors"
+            className="bg-cloud-blue text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-cloud-deep transition-colors"
           >
             Retour à l'accueil
           </button>
@@ -570,7 +570,7 @@ const CheckoutPage = () => {
                                 <div key={item.id} className="flex justify-between items-start gap-3">
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-stone-800 text-sm">{item.bookTitle}</h4>
-                                        <p className="text-xs text-stone-500">Couverture {item.format === 'hardcover' ? 'rigide' : 'souple'}</p>
+                                        <p className="text-xs text-stone-500">{item.format}</p>
                                     </div>
                                     <div className="font-bold text-stone-800 text-sm shrink-0 text-right">
                                         {formatPrice(item.price * item.quantity)}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookOpen, Star } from 'lucide-react';
 import { BookProduct } from '../types/admin';
-import { formatPrice } from '../utils/formatPrice';
+import { formatPrice, getMinCoverPrice } from '../utils/formatPrice';
 import BookCover3D from './BookCover3D';
 
 interface BookCardProps {
@@ -46,7 +46,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
         </p>
         
         <div className="mt-4 pt-4 border-t border-gray-100">
-          <span className="font-black text-accent-melon text-xl">{formatPrice(book.price)}</span>
+          {(() => { const { price, hasMultiple } = getMinCoverPrice(book); return <span className="font-black text-accent-melon text-xl">{(hasMultiple ? 'À partir de ' : '') + formatPrice(price)}</span>; })()}
         </div>
       </div>
     </div>

@@ -228,7 +228,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
             </Link>
           )}
 
-          <Link href="/cart" className="flex px-5 py-2.5 bg-accent-sun text-yellow-900 rounded-full font-display font-black text-base hover:scale-105 hover:shadow-lg transition-all shadow-md items-center gap-2">
+          <Link href="/cart" className="flex px-5 py-2.5 bg-accent-sun text-yellow-900 rounded-full font-display font-black text-base transition-all shadow-md items-center gap-2">
                <ShoppingCart size={20} />
                <span>Panier</span>
                {itemCount > 0 && (
@@ -241,17 +241,19 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
       </div>
 
       {/* Mobile Navigation - Menu left, Logo center, User & Cart right */}
-      <div className="lg:hidden flex items-center justify-between px-4">
+      <div className="lg:hidden flex items-center px-4">
         {/* Left: Menu Button */}
-        <button 
-          className="p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors"
-          onClick={() => setMobileMenuOpen(true)}
-        >
-          <Menu size={28} />
-        </button>
+        <div className="flex-1 flex justify-start">
+          <button
+            className="p-2 text-cloud-dark hover:bg-cloud-lightest rounded-full transition-colors"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <Menu size={28} />
+          </button>
+        </div>
 
         {/* Center: Logo */}
-        <div className="flex items-center gap-2 cursor-pointer group absolute left-1/2 -translate-x-1/2" onClick={() => onLogoClick ? onLogoClick() : (setLocation('/'), window.location.reload())}>
+        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => onLogoClick ? onLogoClick() : (setLocation('/'), window.location.reload())}>
           <CloudLogo />
           <span className="text-2xl font-display font-black text-cloud-blue tracking-tight group-hover:text-cloud-deep transition-colors pb-1 lowercase">
             nuagebook
@@ -259,7 +261,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
         </div>
 
         {/* Right: User & Cart Icons */}
-        <div className="flex items-center gap-1">
+        <div className="flex-1 flex justify-end items-center gap-1">
           {isAuthenticated ? (
             <div className="relative">
               <button

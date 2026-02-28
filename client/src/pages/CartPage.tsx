@@ -69,7 +69,7 @@ const CartPage: React.FC = () => {
           <p className="text-stone-500 mb-8 text-center max-w-md">Il semble que vous n'ayez pas encore créé d'histoire magique. Commencez l'aventure maintenant !</p>
           <button 
             onClick={() => setLocation('/')}
-            className="bg-cloud-blue text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-cloud-deep transition-colors"
+            className="bg-cloud-blue text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-cloud-deep transition-colors"
           >
             Créer un livre
           </button>
@@ -161,7 +161,7 @@ const CartPage: React.FC = () => {
                                 })()}
 
                                 <p><span className="font-medium">Langue:</span> Français</p>
-                                <p><span className="font-medium">Format:</span> {item.format === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}</p>
+                                <p><span className="font-medium">Format:</span> {item.format}</p>
                                 {item.config.author && <p><span className="font-medium">Créé par:</span> <span className="font-bold text-cloud-dark">{item.config.author}</span></p>}
                             </div>
                         </div>

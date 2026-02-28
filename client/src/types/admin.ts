@@ -50,7 +50,7 @@ export interface BookProduct {
     languages?: { code: string; label: string; }[];
     customization?: string[];
     pages?: number;
-    formats?: string[];
+    coverTypes?: { label: string; price: number }[];
     dimensions?: { width: number; height: number }; // Dimensions in mm (width x height)
     printConfig?: {
         bindingType: 'hardcover' | 'softcover' | 'saddle_stitch' | 'coil';
@@ -225,10 +225,17 @@ export interface FaqItem {
   order: number;
 }
 
+export interface FeaturedReview {
+  author: string;
+  text: string;
+}
+
 export interface ProductPageConfig {
   featureSections?: FeatureSection[];
   reviews?: ReviewItem[];
   faqItems?: FaqItem[];
+  faqTitle?: string;
+  featuredReview?: FeaturedReview;
 }
 
 export interface Printer {

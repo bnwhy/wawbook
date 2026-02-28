@@ -103,21 +103,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const setPassword = async (email: string, password: string) => {
-    const response = await fetch('/api/auth/set-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    let response: Response;
+    try {
+      response = await fetch('/api/auth/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal,
+      });
+    } catch (fetchErr: any) {
+      if (fetchErr?.name === 'AbortError') {
+        throw new Error('La requête a expiré. Veuillez réessayer.');
+      }
+      throw new Error('Erreur réseau. Veuillez réessayer.');
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Échec de la définition du mot de passe');
+      let errorMessage = 'Échec de la création du compte';
+      try {
+        const error = await response.json();
+        errorMessage = error.error || error.message || errorMessage;
+      } catch {}
+      throw new Error(errorMessage);
     }
 
     const userData = await response.json();
     setUser(userData);
-    toast.success('Compte créé avec succès');
   };
 
   const forgotPassword = async (email: string) => {

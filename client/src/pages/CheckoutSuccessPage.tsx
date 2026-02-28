@@ -8,7 +8,6 @@ import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { formatPrice } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
-import { toast } from 'sonner';
 
 const CheckoutSuccessPage = () => {
   const [, setLocation] = useLocation();
@@ -25,6 +24,7 @@ const CheckoutSuccessPage = () => {
   const [accountCreated, setAccountCreated] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [accountError, setAccountError] = useState('');
   const processedRef = React.useRef(false);
 
   useEffect(() => {
@@ -41,12 +41,15 @@ const CheckoutSuccessPage = () => {
       
       processedRef.current = true;
       
-      const pendingOrder = localStorage.getItem('pendingOrder');
+      const pendingOrderRaw = localStorage.getItem('pendingOrder');
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('session_id');
 
-      if (pendingOrder) {
-        const data = JSON.parse(pendingOrder);
+      if (pendingOrderRaw) {
+        // Suppression immédiate pour éviter toute duplication en cas de refresh
+        localStorage.removeItem('pendingOrder');
+
+        const data = JSON.parse(pendingOrderRaw);
         setOrderData(data);
         
         try {
@@ -74,9 +77,7 @@ const CheckoutSuccessPage = () => {
           }
 
           clearCart();
-          localStorage.removeItem('pendingOrder');
 
-          // Show account creation if not authenticated
           if (!isAuthenticated) {
             setShowAccountCreation(true);
           }
@@ -92,14 +93,15 @@ const CheckoutSuccessPage = () => {
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAccountError('');
 
     if (password !== confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas');
+      setAccountError('Les mots de passe ne correspondent pas');
       return;
     }
 
     if (password.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      setAccountError('Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
 
@@ -110,7 +112,7 @@ const CheckoutSuccessPage = () => {
       setAccountCreated(true);
       setShowAccountCreation(false);
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la création du compte');
+      setAccountError(err.message || 'Erreur lors de la création du compte');
     } finally {
       setIsCreatingAccount(false);
     }
@@ -186,27 +188,40 @@ const CheckoutSuccessPage = () => {
         </div>
         {/* Post-purchase account creation */}
         {showAccountCreation && !accountCreated && (
-          <div className="bg-cloud-lightest/50 rounded-xl p-6 max-w-md w-full mb-6">
-            <h3 className="font-bold text-lg text-stone-900 mb-2 flex items-center gap-2">
-              <Lock size={20} className="text-cloud-blue" />
-              Créer un compte pour suivre vos commandes
-            </h3>
-            <p className="text-sm text-stone-600 mb-4">
-              Retrouvez facilement vos livres personnalisés et passez commande plus rapidement.
-            </p>
-            <form onSubmit={handleCreateAccount} className="space-y-3">
+          <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8 max-w-md w-full mb-6 text-left">
+            <div className="mb-6 text-center">
+              <h3 className="font-display font-black text-3xl text-cloud-dark leading-tight mb-2">
+                Rejoindre le nuage<span className="text-cloud-blue relative inline-block">club
+                  <svg className="absolute w-full h-4 -bottom-1 left-0 text-accent-sun" viewBox="0 0 100 10" preserveAspectRatio="none">
+                    <path d="M0 5 Q 50 15 100 5" stroke="currentColor" strokeWidth="6" fill="none" strokeLinecap="round" />
+                  </svg>
+                </span>
+              </h3>
+              <p className="text-sm text-stone-500 mt-3">
+                Suivez vos commandes et commandez plus vite
+              </p>
+            </div>
+            <form onSubmit={handleCreateAccount} className="space-y-4">
+              {accountError && (
+                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+                  {accountError}
+                </div>
+              )}
               <div>
-                <label htmlFor="password" className="block text-sm font-bold text-stone-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-bold text-stone-700 mb-2">
                   Choisir un mot de passe
                 </label>
                 <div className="relative">
+                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <Lock size={18} className="text-stone-400" />
+                  </span>
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     required
-                    className="w-full px-4 py-2 pr-11 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm"
+                    className="w-full pl-10 pr-11 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
                     placeholder="Minimum 8 caractères"
                   />
                   <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute inset-y-0 right-3 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
@@ -215,17 +230,20 @@ const CheckoutSuccessPage = () => {
                 </div>
               </div>
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-bold text-stone-700 mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-bold text-stone-700 mb-2">
                   Confirmer le mot de passe
                 </label>
                 <div className="relative">
+                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <Lock size={18} className="text-stone-400" />
+                  </span>
                   <input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    className="w-full px-4 py-2 pr-11 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-sm"
+                    className="w-full pl-10 pr-11 py-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow"
                     placeholder="Répéter le mot de passe"
                   />
                   <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute inset-y-0 right-3 flex items-center text-stone-400 hover:text-stone-600 transition-colors">
@@ -233,29 +251,27 @@ const CheckoutSuccessPage = () => {
                   </button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={isCreatingAccount}
-                  className="flex-1 bg-cloud-blue text-white font-bold py-2 px-4 rounded-lg hover:bg-cloud-deep transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
-                >
-                  {isCreatingAccount ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Création...
-                    </>
-                  ) : (
-                    'Créer mon compte'
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAccountCreation(false)}
-                  className="px-4 py-2 text-stone-600 hover:text-stone-900 font-medium text-sm"
-                >
-                  Non merci
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={isCreatingAccount}
+                className="w-full bg-cloud-blue text-white font-bold py-3 px-4 rounded-lg hover:bg-cloud-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isCreatingAccount ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Création...
+                  </>
+                ) : (
+                  'Créer mon compte'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAccountCreation(false)}
+                className="w-full text-center text-stone-500 hover:text-stone-700 font-medium text-sm transition-colors"
+              >
+                Non merci
+              </button>
             </form>
           </div>
         )}

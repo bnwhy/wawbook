@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import RichTextEditor from './RichTextEditor';
 import { createPortal } from 'react-dom';
 import HomeDashboard from './admin/HomeDashboard';
 import SettingsPanel from './admin/SettingsPanel';
@@ -300,6 +301,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   );
 
   const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'productpage' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping' | 'homepage'>('home');
+  const [ppCollapsed, setPpCollapsed] = useState<Record<string, boolean>>({ features: true, reviews: true, faq: true });
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [_isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -3091,7 +3093,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   <h4 className="font-bold text-slate-900">{item.bookTitle}</h4>
                                                   <span className="font-bold">{formatPrice(item.price)}</span>
                                                </div>
-                                               <p className="text-sm text-slate-500 mb-1">Quantité: {item.quantity}</p>
+                                               <p className="text-sm text-slate-500 mb-1">
+                                                  Quantité: {item.quantity}
+                                                  {(item as any).format && <span className="ml-2">· {(item as any).format}</span>}
+                                               </p>
                                                <pre className="text-xs text-slate-600 bg-slate-50 p-2 rounded max-w-md overflow-x-auto whitespace-pre-wrap">
                                                   {JSON.stringify(item.configuration || (item as any).config, null, 2)}
                                                </pre>
@@ -4084,8 +4089,12 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                     {/* Carte 1 — Sections de présentation */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                      <h3 className="text-lg font-bold text-slate-800 mb-4">Sections de présentation</h3>
-                      <div className="space-y-4">
+                      <button onClick={() => setPpCollapsed(s => ({ ...s, features: !s.features }))} className="w-full flex items-center justify-between">
+                        <h3 className="text-lg font-bold text-slate-800">Sections de présentation</h3>
+                        <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${ppCollapsed.features ? '' : 'rotate-180'}`} />
+                      </button>
+                      {!ppCollapsed.features && <>
+                      <div className="space-y-4 mt-4">
                         {featureSections.map((s, i) => (
                           <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
                             <div className="flex items-center justify-between">
@@ -4101,16 +4110,49 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               onChange={e => { const next = [...featureSections]; next[i] = { ...s, title: e.target.value }; updatePP({ featureSections: next }); }}
                               className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
                             />
-                            <textarea
-                              placeholder="Texte" value={s.text} rows={3}
-                              onChange={e => { const next = [...featureSections]; next[i] = { ...s, text: e.target.value }; updatePP({ featureSections: next }); }}
-                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                            <RichTextEditor
+                              value={s.text}
+                              placeholder="Texte"
+                              onChange={html => { const next = [...featureSections]; next[i] = { ...s, text: html }; updatePP({ featureSections: next }); }}
                             />
-                            <input
-                              type="text" placeholder="URL de l'image" value={s.imageUrl}
-                              onChange={e => { const next = [...featureSections]; next[i] = { ...s, imageUrl: e.target.value }; updatePP({ featureSections: next }); }}
-                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
-                            />
+                            <div className="flex gap-2 items-center">
+                              <input
+                                type="text" placeholder="URL de l'image" value={s.imageUrl}
+                                onChange={e => { const next = [...featureSections]; next[i] = { ...s, imageUrl: e.target.value }; updatePP({ featureSections: next }); }}
+                                className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                              />
+                              <label className="flex-shrink-0 flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded cursor-pointer border border-gray-300 transition-colors">
+                                <Upload size={13} />
+                                Parcourir
+                                <input
+                                  type="file" accept="image/*" className="hidden"
+                                  onChange={async e => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const reader = new FileReader();
+                                    reader.onload = async ev => {
+                                      const base64 = (ev.target?.result as string).split(',')[1];
+                                      try {
+                                        const res = await fetch('/api/uploads/base64', {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ data: base64, contentType: file.type, filename: file.name.replace(/\.[^.]+$/, '') }),
+                                        });
+                                        const json = await res.json();
+                                        if (json.objectPath) {
+                                          const next = [...featureSections];
+                                          next[i] = { ...s, imageUrl: json.objectPath };
+                                          updatePP({ featureSections: next });
+                                        }
+                                      } catch { /* silencieux */ }
+                                    };
+                                    reader.readAsDataURL(file);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                            </div>
+                            {s.imageUrl && <img src={s.imageUrl} alt="" className="w-full max-h-64 object-contain rounded border border-gray-200 mt-1 bg-gray-50" onError={e => (e.currentTarget.style.display='none')} onLoad={e => (e.currentTarget.style.display='')} />}
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                               <input type="checkbox" checked={s.reverse} onChange={e => { const next = [...featureSections]; next[i] = { ...s, reverse: e.target.checked }; updatePP({ featureSections: next }); }} className="w-4 h-4 border border-gray-300" />
                               Image à droite (texte à gauche)
@@ -4124,12 +4166,17 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       >
                         <Plus size={16} /> Ajouter une section
                       </button>
+                      </>}
                     </div>
 
                     {/* Carte 2 — Avis clients */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                      <h3 className="text-lg font-bold text-slate-800 mb-4">Avis clients</h3>
-                      <div className="space-y-4">
+                      <button onClick={() => setPpCollapsed(s => ({ ...s, reviews: !s.reviews }))} className="w-full flex items-center justify-between">
+                        <h3 className="text-lg font-bold text-slate-800">Avis clients</h3>
+                        <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${ppCollapsed.reviews ? '' : 'rotate-180'}`} />
+                      </button>
+                      {!ppCollapsed.reviews && <>
+                      <div className="space-y-4 mt-4">
                         {reviews.map((r, i) => (
                           <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
                             <div className="flex items-center justify-between">
@@ -4164,12 +4211,49 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       >
                         <Plus size={16} /> Ajouter un avis
                       </button>
+                      </>}
+                    </div>
+
+                    {/* Carte — Avis mis en avant */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                      <button onClick={() => setPpCollapsed(s => ({ ...s, featuredReview: !s.featuredReview }))} className="w-full flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-slate-800">Avis mis en avant</h3>
+                        <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${ppCollapsed.featuredReview ? '' : 'rotate-180'}`} />
+                      </button>
+                      {!ppCollapsed.featuredReview && (
+                        <div className="space-y-3">
+                          <input
+                            type="text" placeholder="Auteur (ex : Sophie, maman de Léo)"
+                            value={pp.featuredReview?.author ?? ''}
+                            onChange={e => updatePP({ featuredReview: { ...pp.featuredReview, author: e.target.value, text: pp.featuredReview?.text ?? '' } })}
+                            className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                          />
+                          <textarea
+                            placeholder="Texte de l'avis" rows={3}
+                            value={pp.featuredReview?.text ?? ''}
+                            onChange={e => updatePP({ featuredReview: { ...pp.featuredReview, text: e.target.value, author: pp.featuredReview?.author ?? '' } })}
+                            className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Carte 3 — FAQ */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                      <h3 className="text-lg font-bold text-slate-800 mb-4">FAQ</h3>
-                      <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          placeholder="Titre de la section FAQ (ex : Questions fréquentes)"
+                          value={draftBook.productPage?.faqTitle ?? ''}
+                          onChange={e => updatePP({ faqTitle: e.target.value })}
+                          className="flex-1 text-lg font-bold text-slate-800 border-b border-gray-200 pb-2 outline-none focus:border-brand-coral bg-transparent"
+                        />
+                        <button onClick={() => setPpCollapsed(s => ({ ...s, faq: !s.faq }))} className="flex-shrink-0 text-slate-400 hover:text-slate-600 pb-2">
+                          <ChevronDown size={18} className={`transition-transform duration-200 ${ppCollapsed.faq ? '' : 'rotate-180'}`} />
+                        </button>
+                      </div>
+                      {!ppCollapsed.faq && <>
+                      <div className="space-y-4 mt-4">
                         {faqItems.map((f, i) => (
                           <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
                             <div className="flex items-center justify-between">
@@ -4180,11 +4264,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <button onClick={() => { const next = faqItems.filter((_, j) => j !== i).map((x, idx) => ({ ...x, order: idx })); updatePP({ faqItems: next }); }} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
                               </div>
                             </div>
-                            <input
-                              type="text" placeholder="Titre de section (laisser vide = pas de titre)" value={f.sectionTitle ?? ''}
-                              onChange={e => { const next = [...faqItems]; next[i] = { ...f, sectionTitle: e.target.value }; updatePP({ faqItems: next }); }}
-                              className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
-                            />
                             <input
                               type="text" placeholder="Question" value={f.question}
                               onChange={e => { const next = [...faqItems]; next[i] = { ...f, question: e.target.value }; updatePP({ faqItems: next }); }}
@@ -4204,6 +4283,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       >
                         <Plus size={16} /> Ajouter une question
                       </button>
+                      </>}
                     </div>
 
                   </div>
@@ -4702,15 +4782,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              <label className="block text-sm font-bold text-slate-800 mb-1">Visibilité du livre</label>
                              <p className="text-xs text-slate-500">Si masqué, le livre ne sera pas visible dans la boutique.</p>
                           </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                             <input 
-                                type="checkbox" 
-                                checked={!selectedBook.isHidden} 
-                                onChange={(e) => handleSaveBook({...selectedBook, isHidden: !e.target.checked})}
-                                className="sr-only peer" 
-                             />
-                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-coral/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                             <span className="ml-3 text-sm font-medium text-slate-700">{selectedBook.isHidden ? 'Masqué' : 'Visible'}</span>
+                          <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!selectedBook.isHidden}
+                              onChange={(e) => handleSaveBook({...selectedBook, isHidden: !e.target.checked})}
+                              className="w-4 h-4 border border-gray-300 rounded"
+                            />
+                            {selectedBook.isHidden ? 'Masqué' : 'Visible'}
                           </label>
                        </div>
                     </div>
@@ -4724,7 +4803,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                        <div className="grid grid-cols-2 gap-6">
                           <div className="col-span-2 md:col-span-1">
-                             <label className="block text-sm font-bold text-slate-700 mb-2">Langues disponibles</label>
+                             <div className="flex items-center justify-between mb-2">
+                               <label className="text-sm font-bold text-slate-700">Langues disponibles</label>
+                               <button
+                                 type="button"
+                                 onClick={() => {
+                                      const newLangs = [...(selectedBook.features?.languages || [])];
+                                      newLangs.push({ code: '', label: '' });
+                                      handleSaveBook({
+                                          ...selectedBook,
+                                          features: { ...selectedBook.features, languages: newLangs as any }
+                                      });
+                                 }}
+                                 className="text-xs text-brand-coral font-bold flex items-center gap-1 hover:text-red-600 transition-colors"
+                               >
+                                 <Plus size={12} /> Ajouter
+                               </button>
+                             </div>
                              <div className="border border-gray-300 rounded-lg p-3 h-48 overflow-y-auto bg-white space-y-2">
                                 {(!selectedBook.features?.languages || selectedBook.features.languages.length === 0) && (
                                     <div className="text-gray-400 text-xs italic p-2 text-center">Aucune langue configurée</div>
@@ -4788,19 +4883,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     );
                                 })}
                              </div>
-                             <button 
-                                onClick={() => {
-                                     const newLangs = [...(selectedBook.features?.languages || [])];
-                                     newLangs.push({ code: '', label: '' });
-                                     handleSaveBook({
-                                         ...selectedBook,
-                                         features: { ...selectedBook.features, languages: newLangs as any }
-                                     });
-                                }}
-                                className="mt-2 text-xs text-brand-coral font-bold flex items-center gap-1 hover:text-red-600 transition-colors"
-                             >
-                                <Plus size={14} /> Ajouter une langue
-                             </button>
                           </div>
                           
                           <div className="col-span-2 md:col-span-1">
@@ -4823,7 +4905,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              <label className="block text-sm font-bold text-slate-700 mb-2">Nombre de Pages</label>
                              <input 
                                type="number"
-                               value={selectedBook.features?.pages || 40}
+                               value={selectedBook.features?.pages ?? ''}
                                onChange={(e) => {
                                   handleSaveBook({
                                      ...selectedBook, 
@@ -4834,21 +4916,66 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              />
                           </div>
 
-                          <div>
-                             <label className="block text-sm font-bold text-slate-700 mb-2">Formats (séparés par virgule)</label>
-                             <input 
-                               type="text"
-                               value={selectedBook.features?.formats?.join(', ') || ''}
-                               onChange={(e) => {
-                                  const formats = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                                  handleSaveBook({
-                                     ...selectedBook, 
-                                     features: { ...selectedBook.features, formats: formats }
-                                  });
-                               }}
-                               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none"
-                               placeholder="Broché : 21x21 cm, Relié..."
-                             />
+                          <div className="col-span-2 md:col-span-1">
+                             <div className="flex items-center justify-between mb-2">
+                               <label className="text-sm font-bold text-slate-700">Types de couverture</label>
+                               <button
+                                 type="button"
+                                 onClick={() => {
+                                   const updated = [...(selectedBook.features?.coverTypes || []), { label: '', price: 0 }];
+                                   handleSaveBook({ ...selectedBook, features: { ...selectedBook.features, coverTypes: updated } });
+                                 }}
+                                 className="text-xs text-brand-coral font-bold flex items-center gap-1 hover:text-red-600 transition-colors"
+                               >
+                                 <Plus size={12} /> Ajouter
+                               </button>
+                             </div>
+                             <div className="border border-gray-300 rounded-lg p-3 bg-white space-y-2">
+                               {(!selectedBook.features?.coverTypes || selectedBook.features.coverTypes.length === 0) && (
+                                 <div className="text-gray-400 text-xs italic p-2 text-center">Aucun type configuré</div>
+                               )}
+                               {(selectedBook.features?.coverTypes || []).map((ct, idx) => (
+                                 <div key={idx} className="flex items-center gap-2">
+                                   <input
+                                     type="text"
+                                     value={ct.label}
+                                     onChange={(e) => {
+                                       const updated = [...(selectedBook.features?.coverTypes || [])];
+                                       updated[idx] = { ...updated[idx], label: e.target.value };
+                                       handleSaveBook({ ...selectedBook, features: { ...selectedBook.features, coverTypes: updated } });
+                                     }}
+                                     className="w-48 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-coral outline-none"
+                                     placeholder="Ex: Couverture rigide"
+                                   />
+                                   <div className="flex items-center gap-1 border border-gray-200 rounded px-2 py-1 focus-within:ring-1 focus-within:ring-brand-coral bg-white w-24 shrink-0">
+                                     <input
+                                       type="number"
+                                       value={ct.price}
+                                       step="0.01"
+                                       min="0"
+                                       onChange={(e) => {
+                                         const updated = [...(selectedBook.features?.coverTypes || [])];
+                                         updated[idx] = { ...updated[idx], price: parseFloat(e.target.value) || 0 };
+                                         handleSaveBook({ ...selectedBook, features: { ...selectedBook.features, coverTypes: updated } });
+                                       }}
+                                       className="flex-1 outline-none text-center font-bold text-xs w-0"
+                                       placeholder="0.00"
+                                     />
+                                     <span className="text-gray-400 text-xs leading-none shrink-0">€</span>
+                                   </div>
+                                   <button
+                                     onClick={() => {
+                                       const updated = (selectedBook.features?.coverTypes || []).filter((_, i) => i !== idx);
+                                       handleSaveBook({ ...selectedBook, features: { ...selectedBook.features, coverTypes: updated } });
+                                     }}
+                                     className="text-gray-400 hover:text-red-500 p-1"
+                                     title="Supprimer"
+                                   >
+                                     <Trash2 size={14} />
+                                   </button>
+                                 </div>
+                               ))}
+                             </div>
                           </div>
                        </div>
 

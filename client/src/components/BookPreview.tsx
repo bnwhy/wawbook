@@ -110,14 +110,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   const currentStory = localStory || story;
   const book = bookProduct || books.find(b => b.name === currentStory?.title || b.name === bookTitle);
   const bookBasePrice = Number(book?.price ?? 44.99);
-  
+  const coverTypes = (book?.features?.coverTypes && book.features.coverTypes.length > 0)
+    ? book.features.coverTypes
+    : [{ label: 'Standard', price: bookBasePrice }];
 
   const [, setCurrentView] = useState(0);
   const [dedication, setDedication] = useState(config.dedication || '');
   const [author, setAuthor] = useState(config.author || '');
   const [initialDedication, setInitialDedication] = useState(config.dedication || '');
   const [initialAuthor, setInitialAuthor] = useState(config.author || '');
-  const [selectedFormat, setSelectedFormat] = useState<'hardcover' | 'softcover'>('hardcover');
+  const [selectedFormat, setSelectedFormat] = useState<number>(0);
   const [generatedPages, setGeneratedPages] = useState<Record<number, string>>({});
   const [flipbookKey, setFlipbookKey] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -446,8 +448,8 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
       bookTitle: currentStory?.title || bookTitle || '',
       config,
       dedication,
-      format: selectedFormat,
-      price: selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10,
+      format: coverTypes[selectedFormat]?.label ?? '',
+      price: coverTypes[selectedFormat]?.price ?? bookBasePrice,
       quantity: 1,
       coverImage: capturedCoverImage
     };
@@ -899,53 +901,28 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                        <h3 className="font-display font-black text-xl text-cloud-dark mb-6">2. Le format de votre livre</h3>
                        
                        <div className="space-y-4">
-                           {/* Hardcover Option */}
-                           <div 
-                               onClick={() => setSelectedFormat('hardcover')}
-                               className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === 'hardcover' ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-                           >
+                           {coverTypes.map((ct, idx) => (
+                             <div
+                               key={idx}
+                               onClick={() => setSelectedFormat(idx)}
+                               className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === idx ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                             >
                                <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0 flex items-center justify-center">
-                                   {hardcoverIcon ? (
-                                     <img src={hardcoverIcon} alt="Couverture rigide" className="w-full h-full object-cover" />
-                                   ) : (
-                                     <BookOpen size={32} className="text-gray-300" />
-                                   )}
+                                 <BookOpen size={32} className="text-gray-300" />
                                </div>
                                <div className="flex flex-col flex-1">
-                                   <span className="font-bold text-cloud-dark text-sm">Couverture rigide</span>
-                                   <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-2">Notre préféré</span>
-                                   <span className="font-black text-cloud-dark">{formatPrice(bookBasePrice)}</span>
+                                 <span className="font-bold text-cloud-dark text-sm">{ct.label}</span>
+                                 {idx === 0 && <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-2">Notre préféré</span>}
+                                 {idx !== 0 && <span className="text-[10px] text-transparent font-black uppercase tracking-wider mb-2 select-none">-</span>}
+                                 <span className="font-black text-cloud-dark">{formatPrice(ct.price)}</span>
                                </div>
-                               {selectedFormat === 'hardcover' && (
-                                   <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
-                                       <Check size={12} strokeWidth={4} />
-                                   </div>
+                               {selectedFormat === idx && (
+                                 <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
+                                   <Check size={12} strokeWidth={4} />
+                                 </div>
                                )}
-                           </div>
-
-                           {/* Softcover Option */}
-                           <div 
-                               onClick={() => setSelectedFormat('softcover')}
-                               className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === 'softcover' ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-                           >
-                               <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0 flex items-center justify-center">
-                                   {softcoverIcon ? (
-                                     <img src={softcoverIcon} alt="Couverture souple" className="w-full h-full object-cover" />
-                                   ) : (
-                                     <BookOpen size={32} className="text-gray-300" />
-                                   )}
-                               </div>
-                               <div className="flex flex-col flex-1">
-                                   <span className="font-bold text-cloud-dark text-sm">Couverture souple</span>
-                                   <span className="text-[10px] text-transparent font-black uppercase tracking-wider mb-2 select-none">Standard</span>
-                                   <span className="font-black text-cloud-dark">{formatPrice(bookBasePrice - 10)}</span>
-                               </div>
-                               {selectedFormat === 'softcover' && (
-                                   <div className="absolute top-0 right-0 bg-cloud-blue text-white p-1 rounded-bl-lg">
-                                       <Check size={12} strokeWidth={4} />
-                                   </div>
-                               )}
-                           </div>
+                             </div>
+                           ))}
                        </div>
                    </div>
 
@@ -956,16 +933,16 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-6">
                             <div className="flex justify-between items-center mb-3">
                                 <span className="font-black text-cloud-dark text-base">Livre personnalisé</span>
-                                <span className="font-black text-cloud-dark text-base">{formatPrice(selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10)}</span>
+                                <span className="font-black text-cloud-dark text-base">{formatPrice(coverTypes[selectedFormat]?.price)}</span>
                             </div>
                             <div className="flex justify-between items-center mb-4 text-sm">
-                                <span className="text-gray-500">{selectedFormat === 'hardcover' ? 'Couverture rigide' : 'Couverture souple'}</span>
+                                <span className="text-gray-500">{coverTypes[selectedFormat]?.label}</span>
                             </div>
                             <div className="h-px bg-gray-200 w-full mb-4"></div>
                             <div className="flex justify-between items-center text-lg">
                                 <span className="font-black text-cloud-dark">Total</span>
                                 <span className="font-black text-brand-coral">
-                                    {formatPrice(selectedFormat === 'hardcover' ? bookBasePrice : bookBasePrice - 10)}
+                                    {formatPrice(coverTypes[selectedFormat]?.price)}
                                 </span>
                             </div>
                        </div>

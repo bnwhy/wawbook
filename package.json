@@ -24,6 +24,10 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.992.0",
     "@aws-sdk/s3-request-presigner": "^3.992.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "@tiptap/extension-link": "^3.20.0",
+    "@tiptap/react": "^3.20.0",
+    "@tiptap/starter-kit": "^3.20.0",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.1.2",
     "compression": "^1.7.4",

@@ -6,7 +6,7 @@ import Banner from './Banner';
 import BookCover3D from './BookCover3D';
 import { useBooks } from '../context/BooksContext';
 import { useHomepage } from '../context/HomepageContext';
-import { formatPrice } from '../utils/formatPrice';
+import { formatPrice, getMinCoverPrice } from '../utils/formatPrice';
 import PaymentBadges from './PaymentBadges';
 
 interface HeroProps {
@@ -55,7 +55,7 @@ interface BookCardInfoProps {
     languages?: (string | { code: string; label: string })[];
     customization?: string[];
     pages?: number;
-    formats?: string[];
+    coverTypes?: { label: string; price: number }[];
     dimensions?: { width: number; height: number };
     printConfig?: any;
   };
@@ -71,36 +71,35 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
   return (
   <div className="mb-4" onClick={(e) => e.stopPropagation()}>
     <details className="group/info">
-      <summary className="cursor-pointer text-sm font-bold text-cloud-dark/60 hover:text-cloud-blue flex items-center justify-between transition-colors list-none outline-none select-none py-1">
+      <summary className="cursor-pointer text-sm font-bold text-cloud-dark/80 hover:text-cloud-blue flex items-center justify-between transition-colors list-none outline-none select-none py-1">
          <span>Plus d'informations</span>
          <ChevronDown size={14} className="group-open/info:rotate-180 transition-transform" />
       </summary>
-      <div className="mt-2 text-sm text-cloud-dark/60 space-y-2 pb-2 border-t border-dashed border-gray-200 pt-2 leading-relaxed animate-fade-in cursor-text">
+      <div className="mt-2 text-sm text-cloud-dark/80 space-y-1 pb-2 border-t border-dashed border-gray-200 pt-2 leading-relaxed animate-fade-in cursor-text">
          {features.languages && features.languages.length > 0 && (
-           <div>
-             <span className="font-bold block text-cloud-dark/80 mb-0.5">Langues:</span>
-             {getLanguageLabels(features.languages)}
+           <div className="flex gap-2">
+             <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Langues :</span>
+             <span>{getLanguageLabels(features.languages)}</span>
            </div>
          )}
          {features.customization && features.customization.length > 0 && (
-           <div>
-             <span className="font-bold block text-cloud-dark/80 mb-0.5">Personnalisation:</span>
-             {features.customization.join(', ')}
+           <div className="flex gap-2">
+             <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Personnalisation :</span>
+             <span>{features.customization.join(', ')}</span>
            </div>
          )}
-         <div className="grid grid-cols-2 gap-2">
-             {features.pages && (
-               <div>
-                 <span className="font-bold block text-cloud-dark/80 mb-0.5">Pages:</span> {features.pages}
-               </div>
-             )}
-             {features.formats && features.formats.length > 0 && (
-               <div>
-                 <span className="font-bold block text-cloud-dark/80 mb-0.5">Format:</span>
-                 {features.formats.map((f, i) => <div key={i}>{f}</div>)}
-               </div>
-             )}
-         </div>
+         {features.pages && (
+           <div className="flex gap-2">
+             <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Nombre de pages :</span>
+             <span>{features.pages}</span>
+           </div>
+         )}
+         {features.coverTypes && features.coverTypes.length > 0 && (
+           <div className="flex gap-2">
+             <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Format :</span>
+             <span>{features.coverTypes.map(ct => ct.label).join(', ')}</span>
+           </div>
+         )}
       </div>
     </details>
   </div>
@@ -220,7 +219,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
                     {section.title}
                   </h2>
                   {section.subtitle && (
-                    <p className="text-xl text-cloud-dark/60 font-medium">{section.subtitle}</p>
+                    <p className="text-xl text-cloud-dark/80 font-medium">{section.subtitle}</p>
                   )}
                 </div>
 
@@ -303,7 +302,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
                   {/* Content */}
                   <div className="p-5 flex flex-col flex-grow">
                      <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
-                     <p className="text-cloud-dark/60 text-sm font-medium mb-4 leading-relaxed">
+                     <p className="text-cloud-dark/80 text-sm font-medium mb-4 leading-relaxed">
                         {card.description}
                      </p>
                      
@@ -312,7 +311,9 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
                         <div className="flex flex-col">
                             <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && formatPrice(card.oldPrice)}</span>
-                            <span className="text-xl font-black text-accent-melon">{formatPrice(card.price)}</span>
+                            <span className="text-xl font-black text-accent-melon">
+                              {(() => { const { price, hasMultiple } = getMinCoverPrice(card); return (hasMultiple ? 'À partir de ' : '') + formatPrice(price); })()}
+                            </span>
                         </div>
                         <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
                             <PenTool size={14} />
@@ -341,7 +342,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
           <div className="max-w-7xl mx-auto relative z-10 pt-10">
              <div className="text-center mb-20">
                <h2 className="text-4xl md:text-5xl font-display font-black text-cloud-dark mb-4" style={{ fontSize: '35px' }}>C'est facile comme tout !</h2>
-               <p className="text-xl text-cloud-dark/60 font-medium">Trois petites étapes et l'histoire commence.</p>
+               <p className="text-xl text-cloud-dark/80 font-medium">Trois petites étapes et l'histoire commence.</p>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
@@ -365,7 +366,7 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
                         {step.icon}
                      </div>
                      <h3 className="text-2xl font-display font-black text-cloud-dark mb-3">{step.title}</h3>
-                     <p className="text-lg text-cloud-dark/60 font-bold leading-relaxed max-w-xs">{step.desc}</p>
+                     <p className="text-lg text-cloud-dark/80 font-bold leading-relaxed max-w-xs">{step.desc}</p>
                   </div>
                 ))}
              </div>
@@ -387,21 +388,21 @@ const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => 
                            <div className="bg-white p-3 rounded-xl shadow-sm h-fit"><ShieldCheck className="text-cloud-blue" /></div>
                            <div>
                               <h4 className="font-bold text-xl text-cloud-dark mb-1">Contenu Bienveillant</h4>
-                              <p className="text-cloud-dark/60 font-medium">Nos histoires sont soigneusement écrites pour être positives, douces et adaptées aux enfants.</p>
+                              <p className="text-cloud-dark/80 font-medium">Nos histoires sont soigneusement écrites pour être positives, douces et adaptées aux enfants.</p>
                            </div>
                         </div>
                         <div className="flex gap-4">
                            <div className="bg-white p-3 rounded-xl shadow-sm h-fit"><Heart className="text-accent-melon" /></div>
                            <div>
                               <h4 className="font-bold text-xl text-cloud-dark mb-1">Estime de soi</h4>
-                              <p className="text-cloud-dark/60 font-medium">Chacun est au cœur de l'histoire, ce qui renforce le plaisir de la lecture.</p>
+                              <p className="text-cloud-dark/80 font-medium">Chacun est au cœur de l'histoire, ce qui renforce le plaisir de la lecture.</p>
                            </div>
                         </div>
                         <div className="flex gap-4">
                            <div className="bg-white p-3 rounded-xl shadow-sm h-fit"><Zap className="text-accent-sun" /></div>
                            <div>
                               <h4 className="font-bold text-xl text-cloud-dark mb-1">Magie Instantanée</h4>
-                              <p className="text-cloud-dark/60 font-medium">Pas besoin d'attendre la livraison. L'histoire est prête à lire tout de suite.</p>
+                              <p className="text-cloud-dark/80 font-medium">Pas besoin d'attendre la livraison. L'histoire est prête à lire tout de suite.</p>
                            </div>
                         </div>
                      </div>

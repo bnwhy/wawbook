@@ -160,7 +160,7 @@ router.post("/set-password", strictLimiter, async (req, res, next) => {
     // Check if customer already has a password
     const customerWithPassword = await storage.getCustomerByEmailWithPassword(email);
     if (customerWithPassword?.password) {
-      throw new ValidationError("Ce compte a déjà un mot de passe. Veuillez vous connecter.");
+      throw new ValidationError("Un compte existe déjà avec cette adresse mail. Veuillez vous connecter.");
     }
 
     // Hash and set password

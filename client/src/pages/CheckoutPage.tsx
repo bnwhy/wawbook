@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle, ShoppingCart, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Truck, ShieldCheck, Lock, ChevronDown, AlertCircle, ShoppingCart, Eye, EyeOff, Tag } from 'lucide-react';
 import { useLocation, useSearch } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -31,10 +31,10 @@ function getEffectivePrice(method: ShippingMethod, cartTotal: number, cartQty: n
 import { formatDate } from '../utils/formatDate';
 
 const CheckoutPage = () => {
-  const { items, total, clearCart: _clearCart } = useCart();
-  const { createOrder: _createOrder, shippingZones } = useEcommerce();
+  const { items, total } = useCart();
+  const { shippingZones } = useEcommerce();
   const { isAuthenticated, user } = useAuth();
-  const [_location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const searchString = useSearch(); // reactive sur les changements de query params
   // Step driven by URL: /checkout → details, /checkout?step=payment → payment
   const step = new URLSearchParams(searchString).get('step') === 'payment' ? 'payment' : 'details';
@@ -45,8 +45,6 @@ const CheckoutPage = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-
-  const [_billingMode, _setBillingMode] = useState<'same' | 'different'>('same');
 
   // Form states - restore from sessionStorage (back navigation) or pre-fill from user
   const [formData, setFormData] = useState(() => {
@@ -83,6 +81,13 @@ const CheckoutPage = () => {
       }));
     }
   }, [user]);
+
+  // Lire le promo appliqué depuis le panier (sessionStorage)
+  const cartPromo = (() => {
+    try { return JSON.parse(sessionStorage.getItem('checkout_promo') || 'null'); } catch { return null; }
+  })();
+  const appliedPromo: { code: string } | null = cartPromo?.promo ?? null;
+  const discount: number = cartPromo?.discount ?? 0;
 
   // Shipping State
   const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<string | null>(null);
@@ -131,7 +136,7 @@ const CheckoutPage = () => {
 
   const selectedMethod = eligibleMethods.find(m => m.id === selectedShippingMethodId);
   const shippingCost = selectedMethod ? getEffectivePrice(selectedMethod, total, items.length) : 0;
-  const grandTotal = total + shippingCost;
+  const grandTotal = Math.max(0, total - discount + shippingCost);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -319,7 +324,7 @@ const CheckoutPage = () => {
                                 {/* Contact Section */}
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
-                                        <h2 className="font-bold text-lg text-stone-800">Contact</h2>
+                                        <h2 className="font-bold text-lg text-cloud-dark">Contact</h2>
                                         <div className="text-sm text-stone-600">
                                             {isAuthenticated ? (
                                                 <span>Connecté en tant que <strong>{user?.email}</strong></span>
@@ -394,7 +399,7 @@ const CheckoutPage = () => {
                                     {!isAuthenticated && (
                                       <>
                                         <div>
-                                          <label className="block text-sm font-medium text-stone-600 mb-1">Email <span className="text-red-500">*</span></label>
+                                          <label className="block text-sm font-medium text-cloud-dark mb-1">Email <span className="text-red-500">*</span></label>
                                           <input required name="email" value={formData.email} onChange={handleInputChange} type="email" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none transition-shadow" placeholder="votre@email.com" />
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -407,18 +412,18 @@ const CheckoutPage = () => {
 
                                 {/* Delivery Section */}
                                 <div className="space-y-4">
-                                    <h2 className="font-bold text-lg text-stone-800">Livraison</h2>
+                                    <h2 className="font-bold text-lg text-cloud-dark">Livraison</h2>
                                     
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-stone-600 mb-1">Pays <span className="text-red-500">*</span></label>
+                                            <label className="block text-sm font-medium text-cloud-dark mb-1">Pays <span className="text-red-500">*</span></label>
                                             <div className="relative">
                                                 <select 
                                                     required
                                                     name="country"
                                                     value={formData.country}
                                                     onChange={handleInputChange}
-                                                    className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer"
+                                                    className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer text-cloud-dark"
                                                 >
                                                     {availableCountries.length > 0 ? (
                                                         availableCountries.map(country => (
@@ -434,42 +439,42 @@ const CheckoutPage = () => {
 
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="block text-sm font-medium text-stone-600 mb-1">Prénom <span className="text-red-500">*</span></label>
-                                                <input required name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                                <label className="block text-sm font-medium text-cloud-dark mb-1">Prénom <span className="text-red-500">*</span></label>
+                                                <input required name="firstName" value={formData.firstName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-cloud-dark" />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-stone-600 mb-1">Nom <span className="text-red-500">*</span></label>
-                                                <input required name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                                <label className="block text-sm font-medium text-cloud-dark mb-1">Nom <span className="text-red-500">*</span></label>
+                                                <input required name="lastName" value={formData.lastName} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-cloud-dark" />
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-stone-600 mb-1">Adresse <span className="text-red-500">*</span></label>
-                                            <input required name="address" value={formData.address} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                            <label className="block text-sm font-medium text-cloud-dark mb-1">Adresse <span className="text-red-500">*</span></label>
+                                            <input required name="address" value={formData.address} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-cloud-dark" />
                                         </div>
                                         <input name="apartment" type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" placeholder="Appartement, suite, etc. (facultatif)" />
 
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="block text-sm font-medium text-stone-600 mb-1">Code postal <span className="text-red-500">*</span></label>
-                                                <input required name="zip" value={formData.zip} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                                <label className="block text-sm font-medium text-cloud-dark mb-1">Code postal <span className="text-red-500">*</span></label>
+                                                <input required name="zip" value={formData.zip} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-cloud-dark" />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-stone-600 mb-1">Ville <span className="text-red-500">*</span></label>
-                                                <input required name="city" value={formData.city} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                                <label className="block text-sm font-medium text-cloud-dark mb-1">Ville <span className="text-red-500">*</span></label>
+                                                <input required name="city" value={formData.city} onChange={handleInputChange} type="text" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-cloud-dark" />
                                             </div>
                                         </div>
                                         
                                         <div>
-                                            <label className="block text-sm font-medium text-stone-600 mb-1">Téléphone <span className="text-stone-400 font-normal">(facultatif)</span></label>
-                                            <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none" />
+                                            <label className="block text-sm font-medium text-cloud-dark mb-1">Téléphone <span className="text-cloud-dark/50 font-normal">(facultatif)</span></label>
+                                            <input name="phone" value={formData.phone} onChange={handleInputChange} type="tel" className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none text-cloud-dark" />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Shipping Method */}
                                 <div className="space-y-4">
-                                    <h2 className="font-bold text-lg text-stone-800 flex items-center gap-2">
+                                    <h2 className="font-bold text-lg text-cloud-dark flex items-center gap-2">
                                         Mode d'expédition
                                     </h2>
                                     
@@ -564,35 +569,41 @@ const CheckoutPage = () => {
                 {/* Order Summary Sidebar */}
                 <div className="lg:col-span-1">
                     <div className="bg-white rounded-2xl p-6 sticky top-32 border border-stone-200 w-full max-w-lg md:max-w-xl mx-auto lg:max-w-none">
-                        <h3 className="font-display font-bold text-xl text-stone-800 mb-4">Votre commande</h3>
-                        <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
+                        <h3 className="font-display font-bold text-xl text-cloud-dark mb-4">Votre commande</h3>
+                        <div className="space-y-3 mb-4 max-h-[300px] overflow-y-auto pr-2">
                             {items.map(item => (
                                 <div key={item.id} className="flex justify-between items-start gap-3">
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="font-bold text-stone-800 text-sm">{item.bookTitle}</h4>
+                                        <h4 className="font-bold text-cloud-dark text-sm">{item.bookTitle}</h4>
                                         <p className="text-xs text-stone-500">{item.format}</p>
                                     </div>
-                                    <div className="font-bold text-stone-800 text-sm shrink-0 text-right">
+                                    <span className="font-bold text-cloud-dark text-sm shrink-0">
                                         {formatPrice(item.price * item.quantity)}
-                                    </div>
+                                    </span>
                                 </div>
                             ))}
                         </div>
-                        
+
                         <div className="border-t border-stone-200 pt-4 space-y-2">
-                             <div className="flex justify-between text-stone-600 text-sm">
-                                <span>Sous-total</span>
-                                <span className="font-bold">{formatPrice(total)}</span>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-stone-600">Sous-total</span>
+                                <span className="font-bold text-cloud-dark">{formatPrice(total)}</span>
                             </div>
-                            <div className="flex justify-between text-stone-600 text-sm">
-                                <span>Livraison</span>
-                                <span className={shippingCost === 0 ? "text-green-600 font-bold" : "font-bold text-stone-800"}>
-                                    {shippingCost === 0 ? "Gratuite" : formatPrice(shippingCost)}
+                            {discount > 0 && (
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-green-600">Réduction ({appliedPromo?.code})</span>
+                                    <span className="font-bold text-green-600">-{formatPrice(discount)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between text-sm">
+                                <span className="text-stone-600">Livraison</span>
+                                <span className={shippingCost === 0 ? 'font-bold text-green-600' : 'font-bold text-cloud-dark'}>
+                                    {shippingCost === 0 ? 'Gratuite' : formatPrice(shippingCost)}
                                 </span>
                             </div>
-                            <div className="border-t border-stone-200 pt-4 mt-4 flex justify-between items-center">
+                            <div className="border-t border-stone-200 pt-3 mt-2 flex justify-between items-center">
                                 <span className="font-bold text-stone-800">Total</span>
-                                <span className="font-black text-2xl text-brand-coral">{formatPrice(grandTotal)}</span>
+                                <span className="font-black text-xl text-cloud-dark">{formatPrice(grandTotal)}</span>
                             </div>
                         </div>
                         

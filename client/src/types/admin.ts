@@ -1,31 +1,5 @@
 import { Theme } from '../types';
 
-export interface FeatureSection {
-  title: string;
-  text: string;
-  imageUrl: string;
-  reverse: boolean;
-}
-
-export interface ReviewItem {
-  name: string;
-  comment: string;
-  rating: number; // 1–5
-}
-
-export interface FaqItem {
-  sectionTitle?: string; // vide ou absent = pas de titre affiché
-  question: string;
-  answer: string;
-  order: number;
-}
-
-export interface ProductPageConfig {
-  featureSections?: FeatureSection[];
-  reviews?: ReviewItem[];
-  faqItems?: FaqItem[];
-}
-
 export interface GalleryImage {
   url: string;
   use3DEffect: boolean;
@@ -36,7 +10,6 @@ export interface BookProduct {
   name: string;
   description: string;
   price: number;
-  promoCode?: string;
   coverImage: string; // Deprecated - utiliser galleryImages[0]
   galleryImages?: GalleryImage[]; // Toutes les images avec option effet 3D
   theme: Theme;
@@ -128,13 +101,6 @@ export interface ContentConfiguration {
   imageElements?: ImageElement[];
   cssContent?: string;
   pageImages?: PageImage[];
-}
-
-export interface PageDefinition {
-  id: string;
-  pageNumber: number;
-  label: string; // e.g. "Page 1", "Cover"
-  description?: string; // e.g. "Introduction in the bedroom"
 }
 
 export interface ConditionalSegment {
@@ -230,12 +196,32 @@ export interface FeaturedReview {
   text: string;
 }
 
+export interface TrustBadge {
+  icon: string; // SVG path data (utilisé si pas d'imageUrl)
+  title: string;
+  subtitle: string;
+  imageUrl?: string; // Image uploadée (prioritaire sur icon)
+}
+
 export interface ProductPageConfig {
+  longDescription?: string;
   featureSections?: FeatureSection[];
   reviews?: ReviewItem[];
   faqItems?: FaqItem[];
   faqTitle?: string;
   featuredReview?: FeaturedReview;
+  trustBadges?: TrustBadge[];
+}
+
+export interface PromoCode {
+  id: string;
+  code: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  scope: 'all' | 'category' | 'product';
+  targetCategory?: 'family' | 'theme' | 'activity' | 'occasion';
+  targetProductId?: string;
+  isActive: boolean;
 }
 
 export interface Printer {

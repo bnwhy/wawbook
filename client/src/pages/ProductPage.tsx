@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Wand2, BookOpen, Cloud, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, BookOpen, Cloud, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -223,11 +223,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
               )}
             </div>
 
-            <p className="text-sm text-gray-600 leading-relaxed pb-3 border-b border-dashed border-gray-200">{book.description}</p>
+            {book.productPage?.longDescription ? (
+              <div
+                className="prose prose-sm max-w-none text-base text-gray-600 leading-relaxed pb-3 border-b border-dashed border-gray-200"
+                dangerouslySetInnerHTML={{ __html: book.productPage.longDescription }}
+              />
+            ) : (
+              <p className="text-base text-gray-600 leading-relaxed pb-3 border-b border-dashed border-gray-200">{book.description}</p>
+            )}
 
             {/* Other features */}
             {book.features && (book.features.customization?.length || book.features.pages || book.features.coverTypes?.length || book.features.languages?.length) && (
-              <div className="space-y-4 text-sm text-cloud-dark/80">
+              <div className="space-y-4 text-base text-cloud-dark/80">
                 {book.features.customization && book.features.customization.length > 0 && (
                   <div className="flex gap-2">
                     <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Personnalisation :</span>
@@ -235,25 +242,25 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                   </div>
                 )}
                 {book.features.pages && (
-                  <div className="flex gap-2">
-                    <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Nombre de pages :</span>
+                  <div className="flex gap-2 items-center">
+                    <span className="font-bold text-cloud-dark/80 w-44 shrink-0">Nombre de pages :</span>
                     <span>{book.features.pages}</span>
                   </div>
                 )}
                 {book.features.coverTypes && book.features.coverTypes.length > 0 && (
-                  <div className="flex gap-2">
-                    <span className="font-bold text-cloud-dark/80 w-36 shrink-0">Format :</span>
+                  <div className="flex gap-2 items-center">
+                    <span className="font-bold text-cloud-dark/80 w-44 shrink-0">Format :</span>
                     <span>{book.features.coverTypes.map(ct => ct.label).join(', ')}</span>
                   </div>
                 )}
                 {book.features.languages && book.features.languages.length > 0 && (
                   <div className="flex gap-2 items-center">
-                    <span className="font-bold text-cloud-dark/80 w-40 shrink-0">Langue du livre :</span>
-                    <div className="relative">
+                    <span className="font-bold text-cloud-dark/80 w-44 shrink-0">Langue du livre :</span>
+                    <div className="relative flex-1">
                       <select
                         value={selectedLanguage || (book.features.languages[0] ? (typeof book.features.languages[0] === 'string' ? book.features.languages[0] : book.features.languages[0].code) : '')}
                         onChange={e => setSelectedLanguage(e.target.value)}
-                        className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 pr-8 text-sm text-cloud-dark font-medium focus:outline-none focus:border-cloud-blue appearance-none cursor-pointer"
+                        className="w-full bg-white border border-gray-300 rounded-xl px-3 py-1.5 pr-8 text-base text-cloud-dark font-medium focus:outline-none focus:border-cloud-blue appearance-none cursor-pointer"
                       >
                         {book.features.languages.map((l: any) => {
                           const code = typeof l === 'string' ? l : l.code;
@@ -275,9 +282,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
             {/* CTA */}
             <button
               onClick={handleCreate}
-              className="mt-3 bg-[#0c4a6e] text-white px-14 py-3.5 rounded-2xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg inline-flex items-center gap-3 self-center"
+              className="mt-3 bg-[#0c4a6e] text-white px-14 py-3.5 rounded-2xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-3 w-full"
             >
-              <Wand2 size={22} />
               Personnaliser ce livre
             </button>
 
@@ -294,7 +300,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                         onClick={() => setOpenFaq(openFaq === i ? null : i)}
                         className="w-full flex items-center justify-between py-4 text-left"
                       >
-                        <span className="font-semibold text-slate-800 text-sm">{item.question}</span>
+                        <span className="font-semibold text-slate-800 text-base">{item.question}</span>
                         <svg
                           className={`w-4 h-4 flex-shrink-0 ml-4 transition-transform duration-200 text-teal-700 ${openFaq === i ? 'rotate-180' : ''}`}
                           fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -304,7 +310,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                       </button>
                       {openFaq === i && (
                         <div className="pb-4">
-                          <p className="text-sm text-gray-500 leading-relaxed whitespace-pre-line">{item.answer}</p>
+                          <p className="text-base text-gray-500 leading-relaxed whitespace-pre-line">{item.answer}</p>
                         </div>
                       )}
                     </div>
@@ -317,37 +323,31 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
         </div>
 
         {/* ── BADGES DE CONFIANCE ── */}
-        <section className="mb-16">
-          <div className="flex flex-col sm:flex-row gap-8 justify-center">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6 text-cloud-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+        {(() => {
+          const defaultBadges = [
+            { icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z", title: "Paiement sécurisé", subtitle: "Transactions protégées SSL" },
+            { icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4", title: "Livraison soignée", subtitle: "Emballage protecteur garanti" },
+            { icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z", title: "Fait avec amour", subtitle: "Chaque livre est unique, créé pour votre enfant" },
+          ];
+          const badges = book.productPage?.trustBadges?.length ? book.productPage.trustBadges : defaultBadges;
+          return (
+            <section className="mb-16">
+              <div className="flex flex-col sm:flex-row gap-8 justify-center">
+                {badges.map((badge, i) => (
+                  <div key={i} className="flex flex-col items-center text-center gap-3">
+                    {badge.imageUrl && (
+                      <img src={badge.imageUrl} alt={badge.title} className="w-24 h-24 object-contain" />
+                    )}
+                    <div>
+                      <p className="font-bold text-slate-800 text-base">{badge.title}</p>
+                      <p className="text-base text-gray-500 mt-0.5">{badge.subtitle}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <p className="font-bold text-slate-800 text-sm">Paiement sécurisé</p>
-                <p className="text-xs text-gray-500 mt-0.5">Transactions protégées SSL</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6 text-cloud-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 text-sm">Livraison soignée</p>
-                <p className="text-xs text-gray-500 mt-0.5">Emballage protecteur garanti</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6 text-cloud-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-              </div>
-              <div>
-                <p className="font-bold text-slate-800 text-sm">Satisfait ou remboursé</p>
-                <p className="text-xs text-gray-500 mt-0.5">14 jours pour changer d'avis</p>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          );
+        })()}
 
         {/* ── AVIS MIS EN AVANT ── */}
         {book.productPage?.featuredReview?.text && (
@@ -389,7 +389,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                 </div>
                 <div className="md:w-1/2 space-y-4">
                   <h3 className="font-display font-black text-xl text-cloud-dark">{s.title}</h3>
-                  <div className="text-gray-600 leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: s.text }} />
+                  <div className="text-base text-gray-600 leading-relaxed prose prose-base max-w-none" dangerouslySetInnerHTML={{ __html: s.text }} />
                 </div>
               </div>
             ))}
@@ -406,8 +406,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                   <div className="flex gap-0.5 mb-3">
                     {Array.from({ length: r.rating ?? 5 }).map((_, j) => <Star key={j} size={16} className="fill-yellow-400 text-yellow-400" />)}
                   </div>
-                  <p className="text-sm text-gray-600 mb-4 italic leading-relaxed">"{r.comment}"</p>
-                  <p className="text-sm font-bold text-cloud-dark">{r.name}</p>
+                  <p className="text-base text-gray-600 mb-4 italic leading-relaxed">"{r.comment}"</p>
+                  <p className="text-base font-bold text-cloud-dark">{r.name}</p>
                 </div>
               ))}
             </div>

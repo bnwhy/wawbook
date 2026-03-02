@@ -11,7 +11,6 @@ import PaymentBadges from './PaymentBadges';
 
 interface HeroProps {
   onStart: (theme?: Theme, activity?: Activity, bookTitle?: string) => void;
-  onAdminClick?: () => void;
 }
 
 const FAQS = [
@@ -106,7 +105,7 @@ const BookCardInfo: React.FC<BookCardInfoProps> = ({ features }) => {
   );
 };
 
-const Hero: React.FC<HeroProps> = ({ onStart, onAdminClick: _onAdminClick }) => {
+const Hero: React.FC<HeroProps> = ({ onStart }) => {
   const { books } = useBooks();
   const { homepageConfig, isLoading } = useHomepage();
   const [openFaq, setOpenFaq] = useState<number | null>(null);

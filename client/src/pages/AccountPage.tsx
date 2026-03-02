@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation, Link } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { User, Package, LogOut, ChevronRight, Loader2, BookOpen, Gift, Cloud } from 'lucide-react';
+import { User, Package, LogOut, ChevronRight, Loader2, Gift, Cloud } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
 
@@ -69,7 +69,6 @@ const AccountPage = () => {
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '?';
 
-  const memberSince = user?.createdAt ? formatDate(user.createdAt) : '—';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -122,8 +121,8 @@ const AccountPage = () => {
                   <div className="w-8 h-8 bg-sky-50 rounded-lg flex items-center justify-center group-hover:bg-sky-100 transition-colors">
                     <User size={16} className="text-cloud-blue" />
                   </div>
-                  <span className="font-semibold text-sm text-stone-700 group-hover:text-cloud-blue">Mon profil</span>
-                  <ChevronRight size={15} className="ml-auto text-stone-300 group-hover:text-cloud-blue" />
+                  <span className="font-semibold text-base text-stone-700 group-hover:text-cloud-blue">Mon profil</span>
+                  <ChevronRight size={16} className="ml-auto text-stone-300 group-hover:text-cloud-blue" />
                 </a>
               </Link>
 
@@ -131,11 +130,11 @@ const AccountPage = () => {
 
               <Link href="/account/orders">
                 <a className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sky-50 hover:text-cloud-blue transition-colors group">
-                  <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                    <Package size={16} className="text-accent-melon" />
+                  <div className="w-8 h-8 bg-sky-50 rounded-lg flex items-center justify-center group-hover:bg-sky-100 transition-colors">
+                    <Package size={17} className="text-cloud-blue" />
                   </div>
-                  <span className="font-semibold text-sm text-stone-700 group-hover:text-cloud-blue">Mes commandes</span>
-                  <ChevronRight size={15} className="ml-auto text-stone-300 group-hover:text-cloud-blue" />
+                  <span className="font-semibold text-base text-stone-700 group-hover:text-cloud-blue">Mes commandes</span>
+                  <ChevronRight size={16} className="ml-auto text-stone-300 group-hover:text-cloud-blue" />
                 </a>
               </Link>
 
@@ -145,34 +144,34 @@ const AccountPage = () => {
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors group"
               >
-                <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                  <LogOut size={16} className="text-red-500" />
+                <div className="w-8 h-8 bg-sky-50 rounded-lg flex items-center justify-center group-hover:bg-sky-100 transition-colors">
+                  <LogOut size={17} className="text-cloud-blue" />
                 </div>
-                <span className="font-semibold text-sm text-stone-700 group-hover:text-red-600">Déconnexion</span>
+                <span className="font-semibold text-base text-stone-700 group-hover:text-cloud-blue">Déconnexion</span>
               </button>
             </div>
           </div>
 
           {/* Avantages */}
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-4">Vos avantages nuageclub</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-stone-400 mb-4">Vos avantages nuageclub</p>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 bg-sky-50 rounded-xl flex items-center justify-center shrink-0">
                   <Package size={17} className="text-cloud-blue" />
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-stone-900">Suivi en temps réel</div>
-                  <div className="text-xs text-stone-400 leading-relaxed">Suivez chaque étape de vos créations</div>
+                  <div className="font-bold text-base text-stone-900">Suivi en temps réel</div>
+                  <div className="text-base text-stone-400 leading-relaxed">Suivez chaque étape de vos créations</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Gift size={17} className="text-green-600" />
+                <div className="w-9 h-9 bg-sky-50 rounded-xl flex items-center justify-center shrink-0">
+                  <Gift size={17} className="text-cloud-blue" />
                 </div>
                 <div>
-                  <div className="font-bold text-sm text-stone-900">Promotions exclusives</div>
-                  <div className="text-xs text-stone-400 leading-relaxed">Offres réservées aux membres du club</div>
+                  <div className="font-bold text-base text-stone-900">Promotions exclusives</div>
+                  <div className="text-base text-stone-400 leading-relaxed">Offres réservées aux membres du club</div>
                 </div>
               </div>
             </div>
@@ -193,10 +192,10 @@ const AccountPage = () => {
                 <Gift size={20} className="text-cloud-blue" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-display font-black text-cloud-dark text-base leading-tight">-15% sur votre prochain livre</div>
-                <div className="text-cloud-dark/70 text-sm mt-0.5">Code exclusif membre : <span className="font-black text-cloud-blue">CLUB15</span> — valable jusqu'au 31 mars</div>
+                <div className="font-display font-black text-cloud-dark text-lg leading-tight">-15% sur votre prochain livre</div>
+                <div className="text-cloud-dark/70 text-base mt-0.5">Code exclusif membre : <span className="font-black text-cloud-blue">CLUB15</span> — valable jusqu'au 31 mars</div>
               </div>
-              <Link href="/" className="shrink-0 bg-cloud-blue hover:bg-cloud-blue/80 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors">
+              <Link href="/" className="shrink-0 bg-cloud-blue hover:bg-cloud-blue/80 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors">
                 Utiliser
               </Link>
             </div>
@@ -206,7 +205,7 @@ const AccountPage = () => {
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-display font-bold text-xl text-stone-900">Commandes récentes</h2>
-              <Link href="/account/orders" className="text-cloud-blue hover:underline font-bold text-sm">
+              <Link href="/account/orders" className="text-cloud-blue hover:underline font-bold text-base">
                 Voir toutes
               </Link>
             </div>
@@ -218,8 +217,8 @@ const AccountPage = () => {
             ) : orders.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="w-14 h-14 text-stone-200 mx-auto mb-4" />
-                <p className="text-stone-500 mb-5 text-sm">Vous n'avez pas encore de commandes</p>
-                <Link href="/" className="inline-block bg-cloud-blue text-white font-bold py-2.5 px-6 rounded-lg hover:bg-cloud-deep transition-colors text-sm">
+                <p className="text-stone-500 mb-5 text-base">Vous n'avez pas encore de commandes</p>
+                <Link href="/" className="inline-block bg-cloud-blue text-white font-bold py-2.5 px-6 rounded-lg hover:bg-cloud-deep transition-colors text-base">
                   Découvrir nos livres
                 </Link>
               </div>
@@ -229,12 +228,12 @@ const AccountPage = () => {
                   <Link key={order.id} href={`/account/orders/${order.id}`}>
                     <a className="flex items-center gap-4 p-4 border border-stone-200 rounded-xl hover:border-cloud-blue hover:shadow-sm transition-all">
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold text-sm text-stone-900 truncate">Commande #{order.id}</div>
-                        <div className="text-xs text-stone-400 mt-0.5">{formatDate(order.createdAt)}</div>
+                        <div className="font-bold text-base text-stone-900 truncate">Commande #{order.id}</div>
+                        <div className="text-base text-stone-400 mt-0.5">{formatDate(order.createdAt)}</div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="font-bold text-sm text-stone-900">{formatPrice(Number(order.totalAmount))}</div>
-                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full mt-1 inline-block ${getStatusColor(order.status)}`}>
+                        <div className="font-bold text-base text-stone-900">{formatPrice(Number(order.totalAmount))}</div>
+                        <span className={`text-base font-bold px-2.5 py-0.5 rounded-full mt-1 inline-block ${getStatusColor(order.status)}`}>
                           {getStatusLabel(order.status)}
                         </span>
                       </div>

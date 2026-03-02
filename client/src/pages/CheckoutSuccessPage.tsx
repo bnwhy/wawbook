@@ -198,7 +198,7 @@ const CheckoutSuccessPage = () => {
                 </span>
               </h3>
               <p className="text-sm text-stone-500 mt-3">
-                Suivez vos commandes et commandez plus vite
+                Suivez vos commandes et profitez de promotions exclusives
               </p>
             </div>
             <form onSubmit={handleCreateAccount} className="space-y-4">

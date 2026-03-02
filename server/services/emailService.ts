@@ -193,6 +193,65 @@ function buildOrderConfirmationHtml(order: Order): string {
   return emailWrapper(content);
 }
 
+function buildPasswordResetHtml(firstName: string, resetLink: string): string {
+  const content = `
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#0f172a;">Réinitialisez votre mot de passe</h2>
+    <p style="margin:0 0 24px;font-size:15px;color:#475569;">
+      Bonjour ${firstName || 'là'},<br>
+      Vous avez demandé à réinitialiser votre mot de passe nuagebook. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.
+    </p>
+
+    <!-- Bouton CTA -->
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;">
+      <tr>
+        <td style="background:#0EA5E9;border-radius:10px;padding:14px 32px;text-align:center;">
+          <a href="${resetLink}" style="font-size:16px;font-weight:800;color:#ffffff;text-decoration:none;font-family:'Nunito',Arial,Helvetica,sans-serif;display:block;white-space:nowrap;">
+            Réinitialiser mon mot de passe
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Info expiration -->
+    <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;padding:14px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-size:13px;color:#92400e;">
+        Ce lien est valable <strong>1 heure</strong>. Passé ce délai, vous devrez faire une nouvelle demande.
+      </p>
+    </div>
+
+    <!-- Lien de secours -->
+    <p style="margin:0 0 8px;font-size:13px;color:#94a3b8;">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :</p>
+    <p style="margin:0 0 24px;font-size:12px;color:#0EA5E9;word-break:break-all;">${resetLink}</p>
+
+    <p style="margin:0;font-size:13px;color:#94a3b8;">
+      Si vous n'avez pas demandé cette réinitialisation, ignorez simplement cet email. Votre mot de passe actuel reste inchangé.
+    </p>
+  `;
+  return emailWrapper(content);
+}
+
+export async function sendPasswordResetEmail(
+  email: string,
+  token: string,
+  firstName: string
+): Promise<void> {
+  if (!resend) return;
+  const baseUrl = process.env.APP_URL || 'http://localhost:5000';
+  const resetLink = `${baseUrl}/reset-password?token=${token}`;
+  try {
+    await resend.emails.send({
+      from: FROM,
+      to: email,
+      subject: 'Réinitialisation de votre mot de passe nuagebook',
+      html: buildPasswordResetHtml(firstName, resetLink),
+    });
+    logger.info({ to: email }, 'Password reset email sent');
+  } catch (err) {
+    logger.error({ err, to: email }, 'Failed to send password reset email');
+    throw err;
+  }
+}
+
 function buildShippingHtml(order: Order): string {
   const content = `
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#0f172a;">Votre commande est en route ! 🚀</h2>

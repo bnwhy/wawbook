@@ -3,15 +3,16 @@ import RichTextEditor from './RichTextEditor';
 import { createPortal } from 'react-dom';
 import HomeDashboard from './admin/HomeDashboard';
 import SettingsPanel from './admin/SettingsPanel';
-import AnalyticsPanel from './admin/AnalyticsPanel';
+import PromotionsPanel from './admin/PromotionsPanel';
 import PrintersManager from './admin/PrintersManager';
 import ShippingManager from './admin/ShippingManager';
+import LanguageSelector from './admin/LanguageSelector';
 import { SaveButton, CreateButton } from './admin/SaveButton';
 import { useConfirm } from '../hooks/useConfirm';
 import { toast } from 'sonner';
-import { Home, BarChart3, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2, GripVertical, LayoutTemplate, Star } from 'lucide-react';
+import { Home, Tag, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2, GripVertical, LayoutTemplate } from 'lucide-react';
 import { Theme } from '../types';
-import { BookProduct, WizardTab, Printer as PrinterType, FeatureSection, ReviewItem, FaqItem, ProductPageConfig } from '../types/admin';
+import { BookProduct, WizardTab, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
 import { useMenus } from '../context/MenuContext';
 import { useEcommerce } from '../context/EcommerceContext';
@@ -301,7 +302,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   );
 
   const [activeTab, setActiveTab] = useState<'home' | 'books' | 'wizard' | 'avatars' | 'content' | 'productpage' | 'menus' | 'customers' | 'orders' | 'printers' | 'settings' | 'analytics' | 'shipping' | 'homepage'>('home');
-  const [ppCollapsed, setPpCollapsed] = useState<Record<string, boolean>>({ features: true, reviews: true, faq: true });
+  const [ppCollapsed, setPpCollapsed] = useState<Record<string, boolean>>({ longDescription: true, features: true, reviews: true, faq: true, featuredReview: true, trustBadges: true });
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [_isEditing, setIsEditing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -994,7 +995,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   // Order Filters State
   const [orderFilter, setOrderFilter] = useState<string | null>(null);
+  const [orderSearch, setOrderSearch] = useState('');
+  const [customerListSearch, setCustomerListSearch] = useState('');
+  const [customerSortConfig, setCustomerSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+
+  const handleCustomerSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (customerSortConfig && customerSortConfig.key === key && customerSortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setCustomerSortConfig({ key, direction });
+  };
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
   
   // Customer Creation State
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
@@ -1036,7 +1049,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const handleExportCustomers = () => {
-    const customersToExport = customers;
+    const customersToExport = selectedCustomerIds.size > 0
+      ? customers.filter(c => selectedCustomerIds.has(c.id))
+      : customers;
     
     const csvContent = "data:text/csv;charset=utf-8," 
       + "ID,Nom,Email,Téléphone,Ville,Commandes,Total Dépensé\n"
@@ -2009,8 +2024,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                onClick={() => { setActiveTab('analytics'); setSelectedBookId(null); setIsEditing(false); }}
                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${activeTab === 'analytics' ? 'bg-slate-800 text-white font-medium' : 'hover:bg-slate-800/50 text-slate-400 hover:text-white'}`}
              >
-                <BarChart3 size={18} />
-                <span>Analyses</span>
+                <Tag size={18} />
+                <span>Promotions</span>
              </button>
 
              <button 
@@ -2136,7 +2151,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                    activeTab === 'shipping' ? 'Expédition' :
                    activeTab === 'printers' ? 'Imprimeurs' :
                    activeTab === 'settings' ? 'Paramètres' : 
-                   activeTab === 'analytics' ? 'Analyses' : 'Admin'
+                   activeTab === 'analytics' ? 'Promotions' : 'Admin'
                  )}
               </h1>
               <div className="flex items-center gap-4">
@@ -2159,8 +2174,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
               
 
-              {/* --- VIEW: ANALYTICS --- */}
-              {activeTab === 'analytics' && <AnalyticsPanel />}
+              {/* --- VIEW: PROMOTIONS --- */}
+              {activeTab === 'analytics' && <PromotionsPanel books={books} />}
 
               {/* --- VIEW: SETTINGS --- */}
               {activeTab === 'settings' && (
@@ -2212,7 +2227,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         sections: [...draftConfig.sections, newSection]
                                      });
                                   }}
-                                  className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                                  className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium shadow-sm"
                                >
                                   <Plus size={16} />
                                   Nouvelle section
@@ -2507,6 +2522,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                <input 
                                   type="text" 
                                   placeholder="Rechercher..." 
+                                  value={orderSearch}
+                                  onChange={(e) => setOrderSearch(e.target.value)}
                                   className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-48 outline-none focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral transition-all"
                                />
                             </div>
@@ -2586,6 +2603,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                <tbody className="divide-y divide-gray-50">
                                   {orders
                                      .filter(order => !orderFilter || order.status === orderFilter)
+                                     .filter(order => {
+                                        if (!orderSearch.trim()) return true;
+                                        const q = orderSearch.toLowerCase();
+                                        return (
+                                           order.customerName?.toLowerCase().includes(q) ||
+                                           order.customerEmail?.toLowerCase().includes(q) ||
+                                           order.id?.toLowerCase().includes(q)
+                                        );
+                                     })
                                      .sort((a, b) => {
                                         if (!sortConfig) {
                                            // Default: sort by date descending (newest first)
@@ -2659,7 +2685,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                            <td className="px-4 py-3 font-bold text-slate-900 group-hover:underline">#{order.id}</td>
                                            <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                                               {formatDate(order.createdAt)}
-                                              <span className="text-slate-400 ml-1 text-[10px]">{new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                              <span className="text-slate-400 ml-1 text-[10px]">{new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}</span>
                                            </td>
                                            <td className="px-4 py-3">
                                               <div className="font-medium text-slate-900">{order.customerName}</div>
@@ -3108,7 +3134,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       {(() => {
                                           const subtotal = order.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
                                           const shipping = 4.90;
-                                          const discount = 0; // Pour l'instant, pas de gestion de réduction dans le modèle
 
                                           return (
                                               <>
@@ -3120,15 +3145,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      <span className="text-slate-500">Livraison</span>
                                                      <span className="font-medium text-slate-900">{shipping.toFixed(2)} €</span>
                                                   </div>
-                                                  {discount > 0 && (
-                                                      <div className="flex justify-between text-sm">
-                                                         <span className="text-slate-500">Réduction</span>
-                                                         <span className="font-medium text-green-600">-{discount.toFixed(2)} €</span>
-                                                      </div>
-                                                  )}
                                                   <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                                                      <span className="font-bold text-slate-800">Total</span>
-                                                     <span className="text-2xl font-bold text-slate-900">{(subtotal + shipping - discount).toFixed(2)} €</span>
+                                                     <span className="text-2xl font-bold text-slate-900">{(subtotal + shipping).toFixed(2)} €</span>
                                                   </div>
                                               </>
                                           );
@@ -3743,7 +3762,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                className="bg-white border border-gray-300 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-slate-50 flex items-center gap-2"
                             >
                                <Download size={16} />
-                               Exporter
+                               Exporter {selectedCustomerIds.size > 0 ? `(${selectedCustomerIds.size})` : ''}
                             </button>
                             <button 
                                onClick={handleCreateCustomer}
@@ -3755,26 +3774,102 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                          </div>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                       <table className="w-full text-left text-sm">
-                          <thead className="bg-slate-50 border-b border-gray-200 text-slate-500 font-medium">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
+                       {/* Search Bar */}
+                       <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-2 px-2">
+                          <div />
+                          <div className="relative">
+                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                             <input
+                                type="text"
+                                placeholder="Rechercher..."
+                                value={customerListSearch}
+                                onChange={(e) => setCustomerListSearch(e.target.value)}
+                                className="pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg w-48 outline-none focus:ring-2 focus:ring-brand-coral/20 focus:border-brand-coral transition-all"
+                             />
+                          </div>
+                       </div>
+
+                       {/* Table */}
+                       <div className="overflow-x-auto">
+                       <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-gray-100">
                              <tr>
-                                <th className="px-6 py-4">Nom</th>
-                                <th className="px-6 py-4">Type</th>
-                                <th className="px-6 py-4">Contact</th>
-                                <th className="px-6 py-4">Ville</th>
-                                <th className="px-6 py-4 text-center">Commandes</th>
-                                <th className="px-6 py-4 text-right">Total dépensé</th>
+                                <th className="px-4 py-3 w-8">
+                                   <input
+                                      type="checkbox"
+                                      className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                      checked={customers.length > 0 && customers.every(c => selectedCustomerIds.has(c.id))}
+                                      onChange={(e) => {
+                                         if (e.target.checked) setSelectedCustomerIds(new Set(customers.map(c => c.id)));
+                                         else setSelectedCustomerIds(new Set());
+                                      }}
+                                   />
+                                </th>
+                                <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleCustomerSort('firstName')}>
+                                   <div className="flex items-center gap-1">Nom {customerSortConfig?.key === 'firstName' && (customerSortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}</div>
+                                </th>
+                                <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleCustomerSort('hasAccount')}>
+                                   <div className="flex items-center gap-1">Type {customerSortConfig?.key === 'hasAccount' && (customerSortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}</div>
+                                </th>
+                                <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleCustomerSort('email')}>
+                                   <div className="flex items-center gap-1">Contact {customerSortConfig?.key === 'email' && (customerSortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}</div>
+                                </th>
+                                <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleCustomerSort('city')}>
+                                   <div className="flex items-center gap-1">Ville {customerSortConfig?.key === 'city' && (customerSortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}</div>
+                                </th>
+                                <th className="px-4 py-3 font-semibold text-center cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleCustomerSort('orderCount')}>
+                                   <div className="flex items-center justify-center gap-1">Commandes {customerSortConfig?.key === 'orderCount' && (customerSortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}</div>
+                                </th>
+                                <th className="px-4 py-3 font-semibold text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleCustomerSort('totalSpent')}>
+                                   <div className="flex items-center justify-end gap-1">Total dépensé {customerSortConfig?.key === 'totalSpent' && (customerSortConfig.direction === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}</div>
+                                </th>
                              </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-100">
-                             {[...customers].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(customer => (
-                                <tr key={customer.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => setSelectedCustomerId(customer.id)}>
-                                   <td className="px-6 py-4">
+                          <tbody className="divide-y divide-gray-50">
+                             {[...customers]
+                               .filter(customer => {
+                                 if (!customerListSearch.trim()) return true;
+                                 const q = customerListSearch.toLowerCase();
+                                 return (
+                                   `${customer.firstName} ${customer.lastName}`.toLowerCase().includes(q) ||
+                                   customer.email?.toLowerCase().includes(q) ||
+                                   customer.address?.city?.toLowerCase().includes(q)
+                                 );
+                               })
+                               .sort((a, b) => {
+                                 if (!customerSortConfig) return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                                 const { key, direction } = customerSortConfig;
+                                 let aVal: any, bVal: any;
+                                 if (key === 'firstName') { aVal = `${a.firstName} ${a.lastName}`; bVal = `${b.firstName} ${b.lastName}`; }
+                                 else if (key === 'city') { aVal = a.address?.city || ''; bVal = b.address?.city || ''; }
+                                 else if (key === 'orderCount') { aVal = Number(a.orderCount); bVal = Number(b.orderCount); }
+                                 else if (key === 'totalSpent') { aVal = Number(a.totalSpent); bVal = Number(b.totalSpent); }
+                                 else if (key === 'hasAccount') { aVal = (a as any).hasAccount ? 1 : 0; bVal = (b as any).hasAccount ? 1 : 0; }
+                                 else { aVal = (a as any)[key] || ''; bVal = (b as any)[key] || ''; }
+                                 if (typeof aVal === 'number') return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                                 return direction === 'asc' ? String(aVal).localeCompare(String(bVal)) : String(bVal).localeCompare(String(aVal));
+                               })
+                               .map(customer => (
+                                <tr key={customer.id} className={`hover:bg-slate-50 transition-colors group cursor-pointer ${selectedCustomerIds.has(customer.id) ? 'bg-indigo-50/30' : ''}`} onClick={() => setSelectedCustomerId(customer.id)}>
+                                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                                      <input
+                                         type="checkbox"
+                                         className="rounded border border-gray-300 text-brand-coral focus:ring-brand-coral"
+                                         checked={selectedCustomerIds.has(customer.id)}
+                                         onChange={(e) => {
+                                            const newSelected = new Set(selectedCustomerIds);
+                                            if (e.target.checked) newSelected.add(customer.id);
+                                            else newSelected.delete(customer.id);
+                                            setSelectedCustomerIds(newSelected);
+                                         }}
+                                      />
+                                   </td>
+                                   <td className="px-4 py-3">
                                       <div className="font-bold text-slate-900">{customer.firstName} {customer.lastName}</div>
                                       <div className="text-xs text-slate-400">Inscrit le {formatDate(customer.createdAt)}</div>
                                    </td>
-                                   <td className="px-6 py-4">
+                                   <td className="px-4 py-3">
                                       {(customer as any).hasAccount ? (
                                         <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
                                           Compte
@@ -3785,23 +3880,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         </span>
                                       )}
                                    </td>
-                                   <td className="px-6 py-4">
+                                   <td className="px-4 py-3">
                                       <div className="text-slate-600">{customer.email}</div>
                                       <div className="text-xs text-slate-400">{customer.phone || '-'}</div>
                                    </td>
-                                   <td className="px-6 py-4 text-slate-600">
+                                   <td className="px-4 py-3 text-slate-600">
                                       {customer.address?.city || '-'}
                                    </td>
-                                   <td className="px-6 py-4 text-center font-medium text-slate-900">
+                                   <td className="px-4 py-3 text-center font-medium text-slate-900">
                                       {customer.orderCount}
                                    </td>
-                                   <td className="px-6 py-4 text-right font-bold text-slate-900">
+                                   <td className="px-4 py-3 text-right font-bold text-slate-900">
                                       {Number(customer.totalSpent).toFixed(2)} €
                                    </td>
                                 </tr>
                              ))}
                           </tbody>
                        </table>
+                       </div>
                     </div>
                  </div>
               )}
@@ -4072,6 +4168,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 const featureSections = pp.featureSections ?? [];
                 const reviews = pp.reviews ?? [];
                 const faqItems = [...(pp.faqItems ?? [])].sort((a, b) => a.order - b.order);
+                const trustBadges = pp.trustBadges ?? [
+                  { icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z", title: "Paiement sécurisé", subtitle: "Transactions protégées SSL" },
+                  { icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4", title: "Livraison soignée", subtitle: "Emballage protecteur garanti" },
+                  { icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z", title: "Fait avec amour", subtitle: "Chaque livre est unique, créé pour votre enfant" },
+                ];
 
                 const updatePP = (patch: Partial<typeof pp>) => {
                   handleSaveBook({ ...selectedBook, productPage: { ...pp, ...patch } });
@@ -4086,6 +4187,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                 return (
                   <div className="max-w-4xl mx-auto space-y-6">
+
+                    {/* Carte 0 — Description longue */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                      <button onClick={() => setPpCollapsed(s => ({ ...s, longDescription: !s.longDescription }))} className="w-full flex items-center justify-between">
+                        <h3 className="text-lg font-bold text-slate-800">Description du produit</h3>
+                        <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${ppCollapsed.longDescription ? '' : 'rotate-180'}`} />
+                      </button>
+                      {!ppCollapsed.longDescription && (
+                        <div className="mt-4">
+                          <p className="text-xs text-slate-500 mb-2">Cette description remplace la description courte sur la page produit. La description courte reste utilisée sur la page d'accueil.</p>
+                          <RichTextEditor
+                            value={pp.longDescription ?? ''}
+                            onChange={html => updatePP({ longDescription: html })}
+                            placeholder="Description complète du produit..."
+                          />
+                        </div>
+                      )}
+                    </div>
 
                     {/* Carte 1 — Sections de présentation */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
@@ -4237,6 +4356,93 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </div>
                       )}
                     </div>
+
+                    {/* Carte — Badges de confiance */}
+                    {(() => {
+                      const DEFAULT_BADGES = [
+                        { icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', title: 'Paiement sécurisé', subtitle: 'Transactions protégées SSL', imageUrl: '' },
+                        { icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', title: 'Livraison soignée', subtitle: 'Emballage protecteur garanti', imageUrl: '' },
+                        { icon: 'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z', title: 'Fait avec amour', subtitle: 'Chaque livre est unique, créé pour votre enfant', imageUrl: '' },
+                      ];
+                      const badges = pp.trustBadges ?? DEFAULT_BADGES;
+                      const updateBadge = (i: number, patch: object) => {
+                        const next = [...badges];
+                        next[i] = { ...next[i], ...patch };
+                        updatePP({ trustBadges: next });
+                      };
+                      return (
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                          <button onClick={() => setPpCollapsed(s => ({ ...s, trustBadges: !s.trustBadges }))} className="w-full flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-slate-800">Badges de confiance</h3>
+                            <ChevronDown size={18} className={`text-slate-400 transition-transform duration-200 ${ppCollapsed.trustBadges ? '' : 'rotate-180'}`} />
+                          </button>
+                          {!ppCollapsed.trustBadges && <>
+                            <div className="space-y-4 mt-4">
+                              {badges.map((badge, i) => (
+                                <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-bold text-slate-600">Badge {i + 1}</span>
+                                    <div className="flex items-center gap-1">
+                                      <button type="button" disabled={i === 0} onClick={() => updatePP({ trustBadges: moveItem(badges, i, i - 1) })} className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"><ArrowUp size={14} /></button>
+                                      <button type="button" disabled={i === badges.length - 1} onClick={() => updatePP({ trustBadges: moveItem(badges, i, i + 1) })} className="p-1 rounded hover:bg-slate-100 disabled:opacity-30"><ArrowDown size={14} /></button>
+                                      <button type="button" onClick={() => updatePP({ trustBadges: badges.filter((_, j) => j !== i) })} className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                                    </div>
+                                  </div>
+                                  <input
+                                    type="text" placeholder="Titre"
+                                    value={badge.title}
+                                    onChange={e => updateBadge(i, { title: e.target.value })}
+                                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                                  />
+                                  <input
+                                    type="text" placeholder="Sous-titre"
+                                    value={badge.subtitle}
+                                    onChange={e => updateBadge(i, { subtitle: e.target.value })}
+                                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                                  />
+                                  <div className="flex gap-2 items-center">
+                                    <input
+                                      type="text" placeholder="URL de l'image (optionnel)"
+                                      value={(badge as any).imageUrl ?? ''}
+                                      onChange={e => updateBadge(i, { imageUrl: e.target.value })}
+                                      className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-coral"
+                                    />
+                                    <label className="flex-shrink-0 flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded cursor-pointer border border-gray-300 transition-colors">
+                                      <Upload size={13} />
+                                      Parcourir
+                                      <input type="file" accept="image/*" className="hidden"
+                                        onChange={async e => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          const reader = new FileReader();
+                                          reader.onload = async ev => {
+                                            const base64 = (ev.target?.result as string).split(',')[1];
+                                            try {
+                                              const res = await fetch('/api/uploads/base64', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: base64, contentType: file.type, filename: file.name.replace(/\.[^.]+$/, '') }) });
+                                              const json = await res.json();
+                                              if (json.objectPath) updateBadge(i, { imageUrl: json.objectPath });
+                                            } catch { /* silencieux */ }
+                                          };
+                                          reader.readAsDataURL(file);
+                                          e.target.value = '';
+                                        }}
+                                      />
+                                    </label>
+                                  </div>
+                                  {(badge as any).imageUrl && <img src={(badge as any).imageUrl} alt="" className="w-16 h-16 object-contain rounded border border-gray-200 bg-gray-50" onError={e => (e.currentTarget.style.display='none')} />}
+                                </div>
+                              ))}
+                            </div>
+                            <button type="button"
+                              onClick={() => updatePP({ trustBadges: [...badges, { icon: '', title: '', subtitle: '', imageUrl: '' }] })}
+                              className="mt-4 flex items-center gap-2 text-sm text-brand-coral hover:text-red-600 font-semibold"
+                            >
+                              <Plus size={16} /> Ajouter un badge
+                            </button>
+                          </>}
+                        </div>
+                      );
+                    })()}
 
                     {/* Carte 3 — FAQ */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
@@ -4604,6 +4810,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* --- VIEW: EDIT BOOK GENERAL --- */}
               {activeTab === 'books' && selectedBookId && selectedBook && (
                  <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200 mb-6">
+                       <div className="flex-1">
+                          <label className="block text-sm font-bold text-slate-800 mb-1">Visibilité du livre</label>
+                          <p className="text-xs text-slate-500">Si masqué, le livre ne sera pas visible dans la boutique.</p>
+                       </div>
+                       <div className="flex items-center gap-3">
+                         <button
+                           type="button"
+                           onClick={() => handleSaveBook({...selectedBook, isHidden: !selectedBook.isHidden})}
+                           className={`relative w-10 h-6 rounded-full transition-colors ${!selectedBook.isHidden ? 'bg-green-500' : 'bg-gray-300'}`}
+                         >
+                           <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${!selectedBook.isHidden ? 'left-5' : 'left-1'}`} />
+                         </button>
+                         <span className={`text-xs font-semibold ${!selectedBook.isHidden ? 'text-green-600' : 'text-slate-400'}`}>
+                           {selectedBook.isHidden ? 'Masqué' : 'Visible'}
+                         </span>
+                       </div>
+                    </div>
                     <h2 className="text-2xl font-bold mb-6 text-slate-800 border-b border-gray-100 pb-4">Informations Générales</h2>
                     
                     <div className="grid grid-cols-2 gap-6 mb-6">
@@ -4743,16 +4967,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             <span className="text-gray-400 text-sm leading-none shrink-0">€</span>
                           </div>
                        </div>
-                       <div>
-                          <label className="block text-sm font-bold text-slate-700 mb-2">Code Promo (Optionnel)</label>
-                          <input 
-                            type="text" 
-                            value={selectedBook.promoCode || ''}
-                            onChange={(e) => handleSaveBook({...selectedBook, promoCode: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand-coral outline-none"
-                            placeholder="ex: PROMO2024"
-                          />
-                       </div>
                        
                        <div className="col-span-2">
                           <label className="block text-sm font-bold text-slate-700 mb-2">Fond de la Miniature (Optionnel)</label>
@@ -4777,21 +4991,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           <p className="text-xs text-slate-500 mt-1">Utilisez le sélecteur de couleur ou entrez un dégradé CSS (ex: linear-gradient(135deg, #fef1f7 0%, #faf5ff 100%))</p>
                        </div>
 
-                       <div className="col-span-2 flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                          <div className="flex-1">
-                             <label className="block text-sm font-bold text-slate-800 mb-1">Visibilité du livre</label>
-                             <p className="text-xs text-slate-500">Si masqué, le livre ne sera pas visible dans la boutique.</p>
-                          </div>
-                          <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={!selectedBook.isHidden}
-                              onChange={(e) => handleSaveBook({...selectedBook, isHidden: !e.target.checked})}
-                              className="w-4 h-4 border border-gray-300 rounded"
-                            />
-                            {selectedBook.isHidden ? 'Masqué' : 'Visible'}
-                          </label>
-                       </div>
                     </div>
 
                     {/* Features Editor */}
@@ -4803,86 +5002,16 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                        
                        <div className="grid grid-cols-2 gap-6">
                           <div className="col-span-2 md:col-span-1">
-                             <div className="flex items-center justify-between mb-2">
-                               <label className="text-sm font-bold text-slate-700">Langues disponibles</label>
-                               <button
-                                 type="button"
-                                 onClick={() => {
-                                      const newLangs = [...(selectedBook.features?.languages || [])];
-                                      newLangs.push({ code: '', label: '' });
-                                      handleSaveBook({
-                                          ...selectedBook,
-                                          features: { ...selectedBook.features, languages: newLangs as any }
-                                      });
-                                 }}
-                                 className="text-xs text-brand-coral font-bold flex items-center gap-1 hover:text-red-600 transition-colors"
-                               >
-                                 <Plus size={12} /> Ajouter
-                               </button>
-                             </div>
-                             <div className="border border-gray-300 rounded-lg p-3 h-48 overflow-y-auto bg-white space-y-2">
-                                {(!selectedBook.features?.languages || selectedBook.features.languages.length === 0) && (
-                                    <div className="text-gray-400 text-xs italic p-2 text-center">Aucune langue configurée</div>
-                                )}
-                                
-                                {(selectedBook.features?.languages || []).map((lang, idx) => {
-                                    // Safety check if we still have strings during migration
-                                    const code = typeof lang === 'string' ? '??' : lang.code;
-                                    const label = typeof lang === 'string' ? lang : lang.label;
-                                    
-                                    return (
-                                      <div key={idx} className="flex items-center gap-2">
-                                          <input 
-                                              type="text" 
-                                              value={code} 
-                                              onChange={(e) => {
-                                                  const newLangs = [...(selectedBook.features?.languages || [])];
-                                                  // @ts-ignore
-                                                  if (typeof newLangs[idx] === 'string') newLangs[idx] = { code: e.target.value, label: newLangs[idx] };
-                                                  else newLangs[idx] = { ...newLangs[idx], code: e.target.value };
-                                                  
-                                                  handleSaveBook({
-                                                      ...selectedBook,
-                                                      features: { ...selectedBook.features, languages: newLangs as any }
-                                                  });
-                                              }}
-                                              className="w-16 border border-gray-200 rounded px-2 py-1 text-xs font-mono uppercase focus:ring-1 focus:ring-brand-coral outline-none"
-                                              placeholder="FR"
-                                          />
-                                          <input 
-                                              type="text" 
-                                              value={label}
-                                              onChange={(e) => {
-                                                  const newLangs = [...(selectedBook.features?.languages || [])];
-                                                  // @ts-ignore
-                                                  if (typeof newLangs[idx] === 'string') newLangs[idx] = { code: '??', label: e.target.value };
-                                                  else newLangs[idx] = { ...newLangs[idx], label: e.target.value };
-                                                  
-                                                  handleSaveBook({
-                                                      ...selectedBook,
-                                                      features: { ...selectedBook.features, languages: newLangs as any }
-                                                  });
-                                              }}
-                                              className="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-coral outline-none"
-                                              placeholder="Nom de la langue"
-                                          />
-                                          <button 
-                                              onClick={() => {
-                                                  const newLangs = (selectedBook.features?.languages || []).filter((_, i) => i !== idx);
-                                                  handleSaveBook({
-                                                      ...selectedBook,
-                                                      features: { ...selectedBook.features, languages: newLangs }
-                                                  });
-                                              }}
-                                              className="text-gray-400 hover:text-red-500 p-1"
-                                              title="Supprimer"
-                                          >
-                                              <Trash2 size={14} />
-                                          </button>
-                                      </div>
-                                    );
-                                })}
-                             </div>
+                             <label className="block text-sm font-bold text-slate-700 mb-2">Langues disponibles</label>
+                             <LanguageSelector
+                               selected={(selectedBook.features?.languages || []).map((l: any) =>
+                                 typeof l === 'string' ? { code: l, label: l } : l
+                               )}
+                               onChange={(langs) => handleSaveBook({
+                                 ...selectedBook,
+                                 features: { ...selectedBook.features, languages: langs as any }
+                               })}
+                             />
                           </div>
                           
                           <div className="col-span-2 md:col-span-1">

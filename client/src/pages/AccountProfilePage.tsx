@@ -115,7 +115,6 @@ const AccountProfilePage = () => {
                   className="w-full pl-11 pr-4 py-3 border border-stone-300 rounded-lg bg-stone-100 text-stone-500 cursor-not-allowed"
                 />
               </div>
-              <p className="text-xs text-stone-500 mt-1">L'email ne peut pas être modifié</p>
             </div>
 
             <div>

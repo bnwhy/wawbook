@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useConfirm } from '../hooks/useConfirm';
 import { useCart, CartItem } from '../context/CartContext';
 import { useBooks } from '../context/BooksContext';
-import { Plus, Lock, Edit2, Eye, X } from 'lucide-react';
+import { Plus, Lock, Edit2, Eye, X, Tag, ChevronDown } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -12,42 +12,72 @@ import BookCover3D from '../components/BookCover3D';
 import { generateStoryText } from '../services/geminiService';
 import { Story } from '../types';
 import { formatPrice } from '../utils/formatPrice';
+import { PromoCode } from '../types/admin';
 
 import { useEcommerce } from '../context/EcommerceContext';
 
 function encodeBase64(obj: unknown): string {
-  return btoa(encodeURIComponent(JSON.stringify(obj)));
+  return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
 }
 
 const CartPage: React.FC = () => {
-  const { items, removeFromCart, updateQuantity: _updateQuantity, total } = useCart();
+  const { items, removeFromCart, total } = useCart();
   const { defaultShippingRate } = useEcommerce();
   const { books } = useBooks();
   const [, setLocation] = useLocation();
   const { confirm: confirmDialog, ConfirmDialog } = useConfirm();
   const [previewItem, setPreviewItem] = useState<CartItem | null>(null);
   const [previewStory, setPreviewStory] = useState<Story | null>(null);
-  
-  // Promo Code State
-  const [promoCode, setPromoCode] = useState('');
-  const [isPromoInputVisible, setIsPromoInputVisible] = useState(false);
-  const [discount, setDiscount] = useState(0);
+
+  // Promo code state
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
+  const [discount, setDiscount] = useState(0);
+  const [promoOpen, setPromoOpen] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings/promoCodes')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => { if (data?.value) setPromoCodes(data.value); })
+      .catch(() => {});
+  }, []);
 
   const handleApplyPromo = () => {
-    if (!promoCode.trim()) return;
-    
-    // Mock promo logic
-    if (promoCode.toUpperCase() === 'YOUPI40') {
-        setDiscount(18.00);
-        setPromoError('');
-    } else if (promoCode.toUpperCase() === 'BOOK30') {
-        setDiscount(total * 0.3); // 30% off
-        setPromoError('');
-    } else {
-        setDiscount(0);
-        setPromoError('Code promo invalide');
+    const match = promoCodes.find(p => p.isActive && p.code === promoInput.toUpperCase().trim());
+    if (!match) {
+      setPromoError('Code promo invalide ou expiré.');
+      setDiscount(0);
+      setAppliedPromo(null);
+      sessionStorage.removeItem('checkout_promo');
+      return;
     }
+    const eligible = items.filter(item => {
+      if (match.scope === 'all') return true;
+      if (match.scope === 'category') {
+        const book = books.find(b => b.id === item.productId || b.name === item.bookTitle);
+        return book?.category === match.targetCategory;
+      }
+      if (match.scope === 'product') return item.productId === match.targetProductId;
+      return false;
+    });
+    const eligibleTotal = eligible.reduce((s, i) => s + i.price * i.quantity, 0);
+    const amount = match.type === 'percentage'
+      ? eligibleTotal * match.value / 100
+      : Math.min(match.value, eligibleTotal);
+    setDiscount(amount);
+    setAppliedPromo(match);
+    setPromoError('');
+    sessionStorage.setItem('checkout_promo', JSON.stringify({ promo: match, discount: amount }));
+  };
+
+  const removePromo = () => {
+    setAppliedPromo(null);
+    setDiscount(0);
+    setPromoInput('');
+    setPromoError('');
+    sessionStorage.removeItem('checkout_promo');
   };
 
   const handlePreview = async (item: CartItem) => {
@@ -202,8 +232,6 @@ const CartPage: React.FC = () => {
             })}
             
             <div className="text-center py-4">
-                 <p className="text-cloud-dark font-medium mb-6">Nous vous offrons 30 % de réduction sur votre deuxième livre avec le code <span className="font-black">BOOK30</span></p>
-                 
                  <button 
                     onClick={() => setLocation('/')}
                     className="inline-flex items-center gap-2 px-6 py-3 border-2 border-cloud-dark/20 rounded-lg text-cloud-dark font-bold hover:bg-white hover:border-cloud-dark/50 transition-colors"
@@ -267,16 +295,52 @@ const CartPage: React.FC = () => {
                             </span>
                         )}
                     </div>
-                    {discount > 0 && (
-                        <div className="flex justify-between text-sm font-medium text-brand-coral">
-                            <span>Réduction :</span>
-                            <span className="font-bold">-{formatPrice(discount)}</span>
+
+                    {/* Promo code */}
+                    {!appliedPromo ? (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setPromoOpen(o => !o)}
+                          className="flex items-center gap-1.5 text-xs text-cloud-blue font-semibold hover:underline"
+                        >
+                          <Tag size={13} /> Ajouter un code promo
+                          <ChevronDown size={13} className={`transition-transform ${promoOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {promoOpen && (
+                          <div className="mt-2 flex gap-2">
+                            <input
+                              type="text"
+                              value={promoInput}
+                              onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(''); }}
+                              placeholder="Code promo"
+                              className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-mono uppercase focus:ring-2 focus:ring-cloud-blue outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleApplyPromo}
+                              className="bg-cloud-blue hover:bg-cloud-deep text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              Appliquer
+                            </button>
+                          </div>
+                        )}
+                        {promoError && <p className="text-xs text-red-500 mt-1">{promoError}</p>}
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <Tag size={13} className="text-green-600" />
+                          <span className="font-mono font-bold text-green-700">{appliedPromo.code}</span>
+                          <button type="button" onClick={removePromo} className="text-stone-400 hover:text-red-500 ml-1"><X size={13} /></button>
                         </div>
+                        <span className="font-bold text-green-600">-{formatPrice(discount)}</span>
+                      </div>
                     )}
-                    
+
                     <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center">
                         <span className="font-bold text-lg text-cloud-dark">Total :</span>
-                        <span className="font-black text-2xl text-cloud-dark">{formatPrice(total + (items.length >= 2 ? 0 : defaultShippingRate) - discount)}</span>
+                        <span className="font-black text-2xl text-cloud-dark">{formatPrice(Math.max(0, total + (items.length >= 2 ? 0 : defaultShippingRate) - discount))}</span>
                     </div>
                 </div>
                 
@@ -291,35 +355,6 @@ const CartPage: React.FC = () => {
                     <PaymentBadges size="small" />
                 </div>
                 
-                <div className="mt-2">
-                    {!isPromoInputVisible ? (
-                        <button 
-                            onClick={() => setIsPromoInputVisible(true)}
-                            className="w-full text-sm text-stone-500 underline hover:text-cloud-blue transition-colors text-center"
-                        >
-                            Vous avez un code promo?
-                        </button>
-                    ) : (
-                        <div className="space-y-2">
-                             <div className="flex gap-2">
-                                <input 
-                                    type="text" 
-                                    value={promoCode}
-                                    onChange={(e) => setPromoCode(e.target.value)}
-                                    placeholder="Code promo"
-                                    className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-cloud-blue uppercase"
-                                />
-                                <button 
-                                    onClick={handleApplyPromo}
-                                    className="bg-white border border-cloud-dark/20 text-cloud-dark font-bold text-xs px-4 rounded hover:bg-gray-50 transition-colors uppercase"
-                                >
-                                    Appliquer
-                                </button>
-                             </div>
-                             {promoError && <p className="text-red-500 text-xs">{promoError}</p>}
-                        </div>
-                    )}
-                </div>
             </div>
           </div>
         </div>

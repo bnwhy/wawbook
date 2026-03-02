@@ -45,6 +45,9 @@ const envSchema = z.object({
   // Logging
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).optional(),
   
+  // App URL (used for email links, e.g. password reset)
+  APP_URL: z.string().url().optional(),
+
   // Optional services
   REDIS_URL: z.string().url().optional(),
   HOME: z.string().optional(),

@@ -7,6 +7,7 @@ import { ValidationError } from "../utils/errors";
 import { logger } from "../utils/logger";
 import { strictLimiter, authLimiter } from "../middleware/rate-limit";
 import { z } from "zod";
+import { sendPasswordResetEmail } from "../services/emailService";
 
 const router = express.Router();
 
@@ -195,7 +196,7 @@ router.post("/forgot-password", strictLimiter, async (req, res, next) => {
     // Always return success (security: don't reveal if email exists)
     // But only send reset link if customer exists
     const customer = await storage.getCustomerByEmailWithPassword(email);
-    
+
     if (customer && customer.password) {
       // Generate reset token
       const resetToken = crypto.randomBytes(32).toString('hex');
@@ -207,9 +208,8 @@ router.post("/forgot-password", strictLimiter, async (req, res, next) => {
         resetPasswordExpires: resetExpires,
       });
 
-      // TODO: Send email with reset link
-      // For now, just log that a reset was requested (link should be sent via email)
-      logger.info({ customerId: customer.id }, 'Password reset requested');
+      await sendPasswordResetEmail(customer.email, resetToken, customer.firstName || '');
+      logger.info({ customerId: customer.id }, 'Password reset email sent');
     }
 
     // Always return success

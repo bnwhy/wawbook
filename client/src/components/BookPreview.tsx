@@ -25,9 +25,6 @@ import FlipbookViewer from './FlipbookViewer';
 import Footer from './Footer';
 import { formatPrice } from '../utils/formatPrice';
 
-const hardcoverIcon = null;
-const softcoverIcon = null;
-
 /**
  * LoadingAnimation - Affichée au centre pendant isGenerating=true
  * Icônes : BookOpen (flip 3D) → PenTool → Image → Sparkles
@@ -101,7 +98,7 @@ interface BookPreviewProps {
   initialTheme?: Theme;
 }
 
-const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, onReset: _onReset, onStart, editingCartItemId, isModal = false, bookTitle, initialTheme }) => {
+const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, onStart, editingCartItemId, isModal = false, bookTitle, initialTheme }) => {
   const { books } = useBooks();
   const { addToCart, updateItem } = useCart();
   const { defaultShippingRate } = useEcommerce();
@@ -908,7 +905,11 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === idx ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                              >
                                <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0 flex items-center justify-center">
-                                 <BookOpen size={32} className="text-gray-300" />
+                                 <img
+                                   src={ct.label.toLowerCase().includes('souple') ? '/cover-souple.png' : '/cover-rigide.png'}
+                                   alt={ct.label}
+                                   className="w-full h-full object-contain"
+                                 />
                                </div>
                                <div className="flex flex-col flex-1">
                                  <span className="font-bold text-cloud-dark text-sm">{ct.label}</span>

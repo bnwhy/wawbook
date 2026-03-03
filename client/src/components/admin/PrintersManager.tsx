@@ -87,7 +87,12 @@ const PrintersManager: React.FC<PrintersManagerProps> = ({
       </div>
       <button
         onClick={() => {
-          const newPrinter: PrinterType = { id: `PRT-${Date.now()}`, name: 'Nouvel Imprimeur', countryCodes: [], contactEmail: '', productionDelayDays: 3 };
+          const maxNum = printers.reduce((max, p) => {
+            const m = p.id.match(/^PRT-(\d+)$/);
+            return m ? Math.max(max, parseInt(m[1])) : max;
+          }, 0);
+          const newId = `PRT-${String(maxNum + 1).padStart(3, '0')}`;
+          const newPrinter: PrinterType = { id: newId, name: 'Nouvel Imprimeur', countryCodes: [], contactEmail: '', productionDelayDays: 3 };
           setPrinters([...printers, newPrinter]);
           setNewPrinterIds(prev => new Set([...prev, newPrinter.id]));
           setEditingPrinterId(newPrinter.id);

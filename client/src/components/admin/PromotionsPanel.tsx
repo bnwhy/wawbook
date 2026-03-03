@@ -231,6 +231,46 @@ const PromotionsPanel: React.FC<PromotionsPanelProps> = ({ books }) => {
                   </span>
                 </div>
               )}
+
+              {/* Bannière membre */}
+              <div className="border-t border-gray-100 pt-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => patch(p.id, { showInMemberBanner: !p.showInMemberBanner })}
+                    className={`relative w-10 h-6 rounded-full transition-colors ${p.showInMemberBanner ? 'bg-green-500' : 'bg-gray-300'}`}
+                  >
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${p.showInMemberBanner ? 'left-5' : 'left-1'}`} />
+                  </button>
+                  <span className={`text-xs font-semibold ${p.showInMemberBanner ? 'text-green-600' : 'text-slate-400'}`}>
+                    Afficher dans la bannière membre
+                  </span>
+                </div>
+                {p.showInMemberBanner && (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Titre de la bannière</label>
+                      <input
+                        type="text"
+                        value={p.memberBannerTitle ?? ''}
+                        onChange={e => patch(p.id, { memberBannerTitle: e.target.value })}
+                        placeholder={`Ex: -${p.value}% sur votre prochain livre`}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cloud-blue/30 focus:border-cloud-blue"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Sous-titre de la bannière</label>
+                      <input
+                        type="text"
+                        value={p.memberBannerText ?? ''}
+                        onChange={e => patch(p.id, { memberBannerText: e.target.value })}
+                        placeholder={`Ex: Code exclusif membre : ${p.code || 'CODE'} — valable jusqu'au 31 mars`}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cloud-blue/30 focus:border-cloud-blue"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>

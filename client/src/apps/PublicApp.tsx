@@ -17,6 +17,8 @@ import { CartProvider } from '../context/CartContext';
 import { EcommerceProvider } from '../context/EcommerceContext';
 import { HomepageProvider } from '../context/HomepageContext';
 import ScrollToTop from '../components/ScrollToTop';
+import AnnouncementBanner from '../components/AnnouncementBanner';
+import { useHomepage } from '../context/HomepageContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
 import SignupPage from '../pages/SignupPage';
@@ -30,18 +32,14 @@ import TermsPage from '../pages/TermsPage';
 import PrivacyPage from '../pages/PrivacyPage';
 import ProductPage from '../pages/ProductPage';
 
-const PublicApp: React.FC = () => {
-  const [, setLocation] = useLocation();
-
+const AppContent: React.FC<{ setLocation: (path: string) => void }> = ({ setLocation }) => {
   return (
-    <AuthProvider>
-      <BooksProvider>
-        <HomepageProvider>
-          <MenuProvider>
-            <CartProvider>
-              <EcommerceProvider>
-                <div className="font-sans text-slate-900 min-h-screen" style={{ background: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)' }}>
-                <ScrollToTop />
+    <div
+      className="font-sans text-slate-900 min-h-screen"
+      style={{ background: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)' }}
+    >
+      <AnnouncementBanner />
+      <ScrollToTop />
                 <Switch>
                   {/* Auth routes */}
                   <Route path="/login" component={LoginPage} />
@@ -126,8 +124,21 @@ const PublicApp: React.FC = () => {
 
                 <Route component={NotFound} />
               </Switch>
+    </div>
+  );
+};
 
-                </div>
+const PublicApp: React.FC = () => {
+  const [, setLocation] = useLocation();
+
+  return (
+    <AuthProvider>
+      <BooksProvider>
+        <HomepageProvider>
+          <MenuProvider>
+            <CartProvider>
+              <EcommerceProvider>
+                <AppContent setLocation={setLocation} />
               </EcommerceProvider>
             </CartProvider>
           </MenuProvider>

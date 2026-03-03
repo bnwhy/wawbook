@@ -168,7 +168,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
         {/* --- BANNER --- */}
         <Banner />
         {/* --- HERO SECTION --- */}
-        <header className="pt-11 pb-[90px] px-6 max-w-7xl mx-auto w-full relative">
+        <header className="pb-[90px] px-6 max-w-7xl mx-auto w-full relative" style={{ paddingTop: '44px' }}>
           {/* Floating Clouds Decoration */}
           <div className="absolute top-32 left-10 text-white opacity-60 animate-float pointer-events-none"><Cloud size={100} fill="currentColor" /></div>
           <div className="absolute top-52 right-20 text-white opacity-40 animate-float-delayed pointer-events-none"><Cloud size={80} fill="currentColor" /></div>
@@ -300,23 +300,19 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
 
                   {/* Content */}
                   <div className="p-5 flex flex-col flex-grow">
-                     <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-2">{card.name}</h3>
+                     <h3 className="text-2xl font-display font-black text-cloud-dark leading-tight mb-3">{card.name}</h3>
                      <p className="text-cloud-dark/80 text-sm font-medium mb-4 leading-relaxed">
                         {card.description}
                      </p>
                      
                      <BookCardInfo features={card.features} />
                      
-                     <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-400 font-bold line-through">{card.oldPrice && formatPrice(card.oldPrice)}</span>
-                            <span className="text-xl font-black text-accent-melon">
-                              {(() => { const { price, hasMultiple } = getMinCoverPrice(card); return (hasMultiple ? 'À partir de ' : '') + formatPrice(price); })()}
+                     <div className="mt-auto pt-4 border-t border-gray-50 w-full">
+                        <button className="w-full bg-cloud-deep text-white px-4 py-3 rounded-xl font-bold hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex flex-col items-center justify-center gap-0.5">
+                            <span className="text-lg">Personnaliser</span>
+                            <span className="text-base font-medium text-white whitespace-nowrap">
+                              {(() => { const { price, hasMultiple } = getMinCoverPrice(card); return (hasMultiple ? 'Dès ' : '') + formatPrice(price); })()}
                             </span>
-                        </div>
-                        <button className="bg-[#0c4a6e] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-cloud-blue transition-all shadow-lg group-hover:shadow-cloud-hover flex items-center gap-2">
-                            <PenTool size={14} />
-                            Créer
                         </button>
                      </div>
                   </div>
@@ -372,7 +368,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
           </div>
         </section>
         {/* --- FEATURES / REASSURANCE --- */}
-        <section className="py-24 px-6 bg-white">
+        <section className="pt-24 pb-12 px-6 bg-white">
           <div className="max-w-5xl mx-auto">
             <div className="bg-cloud-lightest rounded-[3rem] p-12 md:p-16 relative overflow-hidden">
                {/* Decor */}
@@ -423,7 +419,7 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
           </div>
         </section>
         {/* --- FAQ SECTION --- */}
-        <section className="py-24 px-6 bg-white relative">
+        <section className="pt-12 pb-24 px-6 bg-white relative">
           <div className="max-w-3xl mx-auto">
              <div className="text-center mb-16">
                 <h2 className="text-4xl font-display font-black text-cloud-dark mb-4">Petites Curiosités</h2>

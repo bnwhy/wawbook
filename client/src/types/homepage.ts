@@ -15,9 +15,17 @@ export interface HeroConfig {
   badgeText: string;
 }
 
+export interface BannerConfig {
+  text: string;
+  backgroundColor: string;
+  textColor: string;
+  isVisible: boolean;
+}
+
 export interface HomepageConfig {
   hero: HeroConfig;
   sections: HomepageSection[];
+  banner: BannerConfig;
   showHowItWorks: boolean;
   showFaq: boolean;
   showReassurance: boolean;

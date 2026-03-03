@@ -904,13 +904,13 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                                onClick={() => setSelectedFormat(idx)}
                                className={`w-full p-4 border-2 rounded-xl flex gap-4 cursor-pointer relative overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedFormat === idx ? 'border-cloud-blue bg-cloud-lightest/30' : 'border-gray-200 bg-white hover:border-gray-300'}`}
                              >
-                               <div className="w-16 h-20 rounded-lg shadow-sm border border-gray-100 overflow-hidden bg-white shrink-0 flex items-center justify-center">
+                              <div className="w-16 h-20 shrink-0 flex items-center justify-center">
                                  <img
                                    src={ct.label.toLowerCase().includes('souple') ? '/cover-souple.png' : '/cover-rigide.png'}
                                    alt={ct.label}
                                    className="w-full h-full object-contain"
                                  />
-                               </div>
+                              </div>
                                <div className="flex flex-col flex-1">
                                  <span className="font-bold text-cloud-dark text-sm">{ct.label}</span>
                                  {idx === 0 && <span className="text-[10px] text-accent-melon font-black uppercase tracking-wider mb-2">Notre préféré</span>}

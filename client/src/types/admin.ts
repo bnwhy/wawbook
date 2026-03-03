@@ -222,6 +222,9 @@ export interface PromoCode {
   targetCategory?: 'family' | 'theme' | 'activity' | 'occasion';
   targetProductId?: string;
   isActive: boolean;
+  showInMemberBanner?: boolean;
+  memberBannerTitle?: string;
+  memberBannerText?: string;
 }
 
 export interface Printer {

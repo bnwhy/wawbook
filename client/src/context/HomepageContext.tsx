@@ -19,7 +19,7 @@ const generateDefaultConfig = (books: any[]): HomepageConfig => {
   return {
     hero: {
       title: "Des livres personnalisés pour petits et grands",
-      subtitle: "Choisissez un univers, créez son avatar, et hop ! Une histoire magique s'écrit sous vos yeux.",
+      subtitle: "Choisissez un univers, créez vos personnages, et découvrez une histoire magique personnalisée qui prend vie sous vos yeux.",
       buttonText: "Commencer l'aventure",
       badgeText: "La magie de la lecture"
     },
@@ -57,6 +57,12 @@ const generateDefaultConfig = (books: any[]): HomepageConfig => {
         bookBadges: {}
       }
     ],
+    banner: {
+      text: '',
+      backgroundColor: '#0c2340',
+      textColor: '#ffffff',
+      isVisible: false,
+    },
     showHowItWorks: true,
     showFaq: true,
     showReassurance: true
@@ -85,6 +91,10 @@ export const HomepageProvider: React.FC<{ children: ReactNode }> = ({ children }
         const config = data.value as HomepageConfig;
         if (!config || !config.hero || !config.sections) {
           return generateDefaultConfig(books);
+        }
+        // Rétrocompatibilité : ajouter banner si absent
+        if (!config.banner) {
+          config.banner = { text: '', backgroundColor: '#0c2340', textColor: '#ffffff', isVisible: false };
         }
         return config;
       } catch (error) {

@@ -78,7 +78,7 @@ const LoginPage = () => {
             {/* Social Proof - Remonté */}
             <div className="flex flex-wrap justify-center gap-4 mb-10">
               <span className="flex items-center gap-2 bg-white/60 px-5 py-2.5 rounded-full text-sm font-bold text-cloud-dark/70 shadow-sm border border-accent-mint/20">
-                <Package size={18} className="text-accent-mint" /> 1M+ Livres créés
+                <Package size={18} className="text-accent-mint" /> Des milliers de livres créés
               </span>
               <span className="flex items-center gap-2 bg-white/60 px-5 py-2.5 rounded-full text-sm font-bold text-cloud-dark/70 shadow-sm border border-accent-mint/20">
                 <BookOpen size={18} className="text-accent-mint" /> 4.9/5 Satisfaction

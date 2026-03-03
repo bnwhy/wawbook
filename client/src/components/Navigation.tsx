@@ -5,6 +5,7 @@ import { Link, useLocation } from 'wouter';
 import { useMenus } from '../context/MenuContext';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useHomepage } from '../context/HomepageContext';
 
 interface NavigationProps {
   onStart: () => void;
@@ -41,6 +42,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
   const { mainMenu } = useMenus();
   const { itemCount } = useCart();
   const { isAuthenticated, user, logout } = useAuth();
+  const { homepageConfig } = useHomepage();
+  const isHome = typeof window !== 'undefined' && window.location.pathname === '/';
+  const bannerVisible = !!(homepageConfig?.banner?.isVisible && homepageConfig?.banner?.text && isHome);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItem, setExpandedMobileItem] = useState<number | null>(null);
@@ -86,6 +90,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
           ? 'bg-transparent' 
           : 'bg-white lg:bg-white/90 lg:backdrop-blur-md'
       }`}
+      style={{ top: bannerVisible ? '40px' : '0px' }}
     >
       {/* Desktop Navigation */}
       <div className="hidden lg:flex max-w-7xl mx-auto px-6 justify-between items-center">

@@ -10,7 +10,7 @@ import LanguageSelector from './admin/LanguageSelector';
 import { SaveButton, CreateButton } from './admin/SaveButton';
 import { useConfirm } from '../hooks/useConfirm';
 import { toast } from 'sonner';
-import { Home, Tag, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2, GripVertical, LayoutTemplate } from 'lucide-react';
+import { Home, Tag, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ArrowLeft, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2, GripVertical, LayoutTemplate } from 'lucide-react';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -270,6 +270,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { confirm: confirmDialog, ConfirmDialog } = useConfirm();
   const { homepageConfig, updateHomepageConfig, isLoading: homepageLoading } = useHomepage();
   const [draftConfig, setDraftConfig] = useState<HomepageConfig | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (homepageConfig && !draftConfig) setDraftConfig(homepageConfig);
   }, [homepageConfig]);
@@ -2205,11 +2206,81 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       </div>
                    ) : (
                       <>
+                         {/* Banner Management */}
+                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                               <h3 className="font-bold text-lg text-slate-800">
+                                  Bannière d'annonce
+                               </h3>
+                               <div className="flex items-center gap-2">
+                                  <button
+                                     type="button"
+                                     onClick={() => setDraftConfig({ ...draftConfig, banner: { ...draftConfig.banner, isVisible: !draftConfig.banner?.isVisible } })}
+                                     className={`relative w-10 h-6 rounded-full transition-colors ${draftConfig.banner?.isVisible ? 'bg-green-500' : 'bg-gray-300'}`}
+                                  >
+                                     <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${draftConfig.banner?.isVisible ? 'left-5' : 'left-1'}`} />
+                                  </button>
+                                  <span className={`text-xs font-semibold ${draftConfig.banner?.isVisible ? 'text-green-600' : 'text-slate-400'}`}>
+                                     {draftConfig.banner?.isVisible ? 'Visible' : 'Masquée'}
+                                  </span>
+                               </div>
+                            </div>
+                            <div className="space-y-4">
+                               <div>
+                                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Message</label>
+                                  <input
+                                     type="text"
+                                     value={draftConfig.banner?.text || ''}
+                                     onChange={(e) => setDraftConfig({ ...draftConfig, banner: { ...draftConfig.banner, text: e.target.value } })}
+                                     placeholder="Ex: 🎉 Livraison offerte dès 2 livres · Code : NOEL20"
+                                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-amber-400 outline-none"
+                                  />
+                               </div>
+                               <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Couleur de fond</label>
+                                     <div className="flex items-center gap-2">
+                                        <input
+                                           type="color"
+                                           value={draftConfig.banner?.backgroundColor || '#0c2340'}
+                                           onChange={(e) => setDraftConfig({ ...draftConfig, banner: { ...draftConfig.banner, backgroundColor: e.target.value } })}
+                                           className="w-10 h-10 rounded cursor-pointer border border-gray-300 p-0.5"
+                                        />
+                                        <span className="text-sm font-mono text-slate-500">{draftConfig.banner?.backgroundColor || '#0c2340'}</span>
+                                     </div>
+                                  </div>
+                                  <div>
+                                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Couleur du texte</label>
+                                     <div className="flex items-center gap-2">
+                                        <input
+                                           type="color"
+                                           value={draftConfig.banner?.textColor || '#ffffff'}
+                                           onChange={(e) => setDraftConfig({ ...draftConfig, banner: { ...draftConfig.banner, textColor: e.target.value } })}
+                                           className="w-10 h-10 rounded cursor-pointer border border-gray-300 p-0.5"
+                                        />
+                                        <span className="text-sm font-mono text-slate-500">{draftConfig.banner?.textColor || '#ffffff'}</span>
+                                     </div>
+                                  </div>
+                               </div>
+                               {/* Preview */}
+                               {draftConfig.banner?.text && (
+                                  <div>
+                                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Aperçu</label>
+                                     <div
+                                        className="w-full py-2 px-4 rounded-lg text-sm font-medium text-center"
+                                        style={{ backgroundColor: draftConfig.banner.backgroundColor, color: draftConfig.banner.textColor }}
+                                     >
+                                        {draftConfig.banner.text}
+                                     </div>
+                                  </div>
+                               )}
+                            </div>
+                         </div>
+
                          {/* Sections Management */}
                          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                             <div className="flex items-center justify-between mb-4">
-                               <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                                  <Layers size={20} className="text-purple-600" />
+                               <h3 className="font-bold text-lg text-slate-800">
                                   Sections de livres
                                </h3>
                                <button
@@ -2235,60 +2306,80 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             </div>
 
                             <div className="space-y-4">
-                               {draftConfig.sections.map((section, sectionIdx) => (
-                                  <div key={section.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                     <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1 space-y-3">
-                                           <div className="flex items-center gap-3">
-                                              <input
-                                                 type="text"
-                                                 value={section.title}
-                                                 onChange={(e) => {
-                                                    const newSections = [...draftConfig.sections];
-                                                    newSections[sectionIdx] = { ...section, title: e.target.value };
-                                                    setDraftConfig({ ...draftConfig, sections: newSections });
-                                                 }}
-                                                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none"
-                                                 placeholder="Titre de la section"
-                                              />
-                                              <label className="flex items-center gap-2 cursor-pointer">
-                                                 <input
-                                                    type="checkbox"
-                                                    checked={section.isVisible}
-                                                    onChange={(e) => {
-                                                       const newSections = [...draftConfig.sections];
-                                                       newSections[sectionIdx] = { ...section, isVisible: e.target.checked };
-                                                       setDraftConfig({ ...draftConfig, sections: newSections });
-                                                    }}
-                                                    className="w-4 h-4 rounded border border-gray-300"
-                                                 />
-                                                 <span className="text-sm text-slate-600">Visible</span>
-                                              </label>
-                                              <button
-                                                 onClick={async () => {
-                                                    if (await confirmDialog('Supprimer cette section ?')) {
-                                                       const newSections = draftConfig.sections.filter((_, idx) => idx !== sectionIdx);
-                                                       setDraftConfig({ ...draftConfig, sections: newSections });
-                                                    }
-                                                 }}
-                                                 className="text-red-600 hover:text-red-700 p-2"
-                                              >
-                                                 <Trash2 size={18} />
-                                              </button>
-                                           </div>
-                                           <input
-                                              type="text"
-                                              value={section.subtitle || ''}
-                                              onChange={(e) => {
+                               {draftConfig.sections.map((section, sectionIdx) => {
+                                  const isExpanded = expandedSections.has(section.id);
+                                  const toggleExpand = () => setExpandedSections(prev => {
+                                     const s = new Set(prev);
+                                     if (s.has(section.id)) s.delete(section.id); else s.add(section.id);
+                                     return s;
+                                  });
+                                  return (
+                                  <div key={section.id} className="border border-gray-200 rounded-lg bg-gray-50 overflow-hidden">
+                                     {/* Section header — toujours visible */}
+                                     <div className="flex items-center gap-3 px-4 py-3">
+                                        <button type="button" onClick={toggleExpand} className="text-slate-400 hover:text-slate-600 transition-colors">
+                                           <ChevronDown size={18} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        <span className="flex-1 font-bold text-slate-800 text-sm truncate">{section.title || 'Section sans titre'}</span>
+                                        <div className="flex items-center gap-2">
+                                           <button
+                                              type="button"
+                                              onClick={() => {
                                                  const newSections = [...draftConfig.sections];
-                                                 newSections[sectionIdx] = { ...section, subtitle: e.target.value };
+                                                 newSections[sectionIdx] = { ...section, isVisible: !section.isVisible };
                                                  setDraftConfig({ ...draftConfig, sections: newSections });
                                               }}
-                                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-600 focus:ring-2 focus:ring-purple-500 outline-none"
-                                              placeholder="Sous-titre (optionnel)"
+                                              className={`relative w-10 h-6 rounded-full transition-colors ${section.isVisible ? 'bg-green-500' : 'bg-gray-300'}`}
+                                           >
+                                              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${section.isVisible ? 'left-5' : 'left-1'}`} />
+                                           </button>
+                                           <span className={`text-xs font-semibold w-14 ${section.isVisible ? 'text-green-600' : 'text-slate-400'}`}>
+                                              {section.isVisible ? 'Visible' : 'Masqué'}
+                                           </span>
+                                        </div>
+                                        <button
+                                           onClick={async () => {
+                                              if (await confirmDialog('Supprimer cette section ?')) {
+                                                 const newSections = draftConfig.sections.filter((_, idx) => idx !== sectionIdx);
+                                                 setDraftConfig({ ...draftConfig, sections: newSections });
+                                              }
+                                           }}
+                                           className="text-red-400 hover:text-red-600 p-1 transition-colors"
+                                        >
+                                           <Trash2 size={16} />
+                                        </button>
+                                     </div>
+
+                                     {/* Contenu expandable */}
+                                     {isExpanded && (
+                                     <div className="px-4 pb-4 border-t border-gray-200 pt-4 space-y-3">
+                                        <div className="flex items-center gap-3">
+                                           <input
+                                              type="text"
+                                              value={section.title}
+                                              onChange={(e) => {
+                                                 const newSections = [...draftConfig.sections];
+                                                 newSections[sectionIdx] = { ...section, title: e.target.value };
+                                                 setDraftConfig({ ...draftConfig, sections: newSections });
+                                              }}
+                                              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none"
+                                              placeholder="Titre de la section"
                                            />
                                         </div>
+                                        <input
+                                           type="text"
+                                           value={section.subtitle || ''}
+                                           onChange={(e) => {
+                                              const newSections = [...draftConfig.sections];
+                                              newSections[sectionIdx] = { ...section, subtitle: e.target.value };
+                                              setDraftConfig({ ...draftConfig, sections: newSections });
+                                           }}
+                                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-600 focus:ring-2 focus:ring-purple-500 outline-none"
+                                           placeholder="Sous-titre (optionnel)"
+                                        />
                                      </div>
+                                     )}
+                                     {isExpanded && (<div className="px-4 pb-4">
 
                                      {/* Books in this section */}
                                      <div className="mt-4 pt-4 border-t border-gray-300">
@@ -2379,8 +2470,11 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                            </div>
                                         </details>
                                      </div>
+                                     </div>
+                                     )}
                                   </div>
-                               ))}
+                                  );
+                               })}
                             </div>
                          </div>
                       </>
@@ -2721,7 +2815,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <div className="max-w-4xl mx-auto space-y-6">
                     <div className="flex items-center gap-4 mb-4">
                        <button onClick={() => setIsCreatingOrder(false)} className="text-slate-400 hover:text-slate-600">
-                          <ArrowUp className="-rotate-90" size={20} />
+                          <ArrowLeft size={20} />
                        </button>
                        <h2 className="text-2xl font-bold text-slate-800">Nouvelle Commande</h2>
                     </div>
@@ -3072,7 +3166,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  <div className="max-w-4xl mx-auto space-y-6">
                     <div className="flex items-center gap-4 mb-4">
                        <button onClick={() => setSelectedOrderId(null)} className="text-slate-400 hover:text-slate-600">
-                          <ArrowUp className="-rotate-90" size={20} />
+                          <ArrowLeft size={20} />
                        </button>
                        <div className="flex-1">
                           <h2 className="text-2xl font-bold text-slate-800">Commande {selectedOrderId}</h2>
@@ -3133,7 +3227,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
                                       {(() => {
                                           const subtotal = order.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
-                                          const shipping = 4.90;
+                                          const shippingMethod = (order as any).shippingMethod;
+                                          const shipping = shippingMethod?.price ?? (order.total - subtotal);
 
                                           return (
                                               <>
@@ -3142,12 +3237,14 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      <span className="font-medium text-slate-900">{subtotal.toFixed(2)} €</span>
                                                   </div>
                                                   <div className="flex justify-between text-sm">
-                                                     <span className="text-slate-500">Livraison</span>
-                                                     <span className="font-medium text-slate-900">{shipping.toFixed(2)} €</span>
+                                                     <span className="text-slate-500">
+                                                        Livraison{shippingMethod?.name ? <span className="ml-1 text-slate-400 font-normal">· {shippingMethod.name}</span> : ''}
+                                                     </span>
+                                                     <span className="font-medium text-slate-900">{shipping === 0 ? 'Offerte' : `${shipping.toFixed(2)} €`}</span>
                                                   </div>
                                                   <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                                                      <span className="font-bold text-slate-800">Total</span>
-                                                     <span className="text-2xl font-bold text-slate-900">{(subtotal + shipping).toFixed(2)} €</span>
+                                                     <span className="text-2xl font-bold text-slate-900">{order.total.toFixed(2)} €</span>
                                                   </div>
                                               </>
                                           );
@@ -3210,36 +3307,35 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          </button>
                                       </div>
                                    </div>
-                                      
-                                      <div className="grid grid-cols-2 gap-4">
-                                         <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                            <div className="text-xs text-slate-500 uppercase font-bold mb-1">Imprimeur</div>
-                                            {(() => {
-                                               const country = order.shippingAddress.country;
-                                               const printer = printers.find(p => p.countryCodes.includes(country)) || printers[0];
-                                               
-                                               return (
-                                                  <>
-                                                     <div className="font-medium text-slate-800">{printer ? printer.name : 'Non assigné'}</div>
-                                                     <div className="text-xs text-slate-400 mt-1">ID: {printer ? printer.id : '-'}</div>
-                                                     {printer && (
-                                                        <div className="text-[10px] text-indigo-600 mt-1 font-medium bg-indigo-50 px-1.5 py-0.5 rounded inline-block">
-                                                           Zone: {country}
-                                                        </div>
-                                                     )}
-                                                  </>
-                                               );
-                                            })()}
-                                         </div>
-                                         <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                            <div className="text-xs text-slate-500 uppercase font-bold mb-1">Statut Production</div>
-                                            <div className="font-medium text-green-600 flex items-center gap-1">
-                                               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                               Prêt à imprimer
-                                            </div>
+
+                                   <div className="grid grid-cols-2 gap-4 mt-4">
+                                      <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                         <div className="text-xs text-slate-500 uppercase font-bold mb-1">Imprimeur</div>
+                                         {(() => {
+                                            const country = order.shippingAddress.country;
+                                            const printer = printers.find(p => p.countryCodes.includes(country)) || printers[0];
+                                            
+                                            return (
+                                               <>
+                                                  <div className="font-medium text-slate-800">{printer ? printer.name : 'Non assigné'}</div>
+                                                  <div className="text-xs text-slate-400 mt-1">ID: {printer ? printer.id : '-'}</div>
+                                                  {printer && (
+                                                     <div className="text-[10px] text-indigo-600 mt-1 font-medium bg-indigo-50 px-1.5 py-0.5 rounded inline-block">
+                                                        Zone: {country}
+                                                     </div>
+                                                  )}
+                                               </>
+                                            );
+                                         })()}
+                                      </div>
+                                      <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                         <div className="text-xs text-slate-500 uppercase font-bold mb-1">Statut Production</div>
+                                         <div className="font-medium text-green-600 flex items-center gap-1">
+                                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                            Prêt à imprimer
                                          </div>
                                       </div>
-
+                                   </div>
                                 </div>
 
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -3455,7 +3551,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                              <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-4">
                                    <button onClick={() => setShowFulfillment(false)} className="text-slate-400 hover:text-slate-600 flex items-center gap-1 font-medium text-sm">
-                                      <ArrowUp className="-rotate-90" size={16} />
+                                      <ArrowLeft size={16} />
                                       Expédier
                                    </button>
                                 </div>
@@ -3494,7 +3590,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         </div>
                                                      </div>
                                                      <div className="flex items-center gap-2">
-                                                        <span className="text-sm text-slate-500 font-medium">0 kg</span>
                                                         <div className="flex items-center border border-gray-300 rounded overflow-hidden">
                                                            <input 
                                                               type="text" 
@@ -3543,10 +3638,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             </div>
                                          </div>
                                          
-                                         <button className="text-brand-coral font-bold text-sm flex items-center gap-1 hover:underline">
-                                            <Plus size={14} />
-                                            Ajouter un autre numéro de suivi
-                                         </button>
                                       </div>
 
                                       {/* Notify Customer */}
@@ -3578,7 +3669,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          <div>{order.shippingAddress.street}</div>
                                          <div>{order.shippingAddress.zipCode} {order.shippingAddress.city}</div>
                                          <div>{order.shippingAddress.country}</div>
-                                         <a href="#" className="text-brand-coral hover:underline text-xs font-bold mt-2 inline-block">Voir sur la carte</a>
                                       </div>
                                       <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-slate-500">
                                          Le client a sélectionné <strong>Standard</strong> lors du paiement.
@@ -3586,13 +3676,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    </div>
 
                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                                      <h3 className="font-bold text-slate-800 text-sm mb-4">Résumé</h3>
-                                      <div className="text-sm text-slate-600 mb-6">
-                                         Expédition depuis <strong>{order.shippingAddress.city}</strong>
-                                      </div>
-                                      <div className="flex justify-between text-sm font-medium text-slate-900 mb-6">
-                                         <span>{order.items.length} sur {order.items.length} articles</span>
-                                      </div>
                                       <SaveButton
                                          hasChanges={!!fulfillmentTracking && fulfillmentTracking !== (order.trackingNumber || '')}
                                          isSaving={isConfirmingShipment}
@@ -3628,7 +3711,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <div className="max-w-lg mx-auto space-y-6">
                     <div className="flex items-center gap-4 mb-4">
                        <button onClick={() => setIsCreatingCustomer(false)} className="text-slate-400 hover:text-slate-600">
-                          <ArrowUp className="-rotate-90" size={20} />
+                          <ArrowLeft size={20} />
                        </button>
                        <h2 className="text-2xl font-bold text-slate-800">Nouveau Client</h2>
                     </div>
@@ -3867,7 +3950,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    </td>
                                    <td className="px-4 py-3">
                                       <div className="font-bold text-slate-900">{customer.firstName} {customer.lastName}</div>
-                                      <div className="text-xs text-slate-400">Inscrit le {formatDate(customer.createdAt)}</div>
                                    </td>
                                    <td className="px-4 py-3">
                                       {(customer as any).hasAccount ? (
@@ -3907,7 +3989,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                  <div className="max-w-4xl mx-auto space-y-6">
                     <div className="flex items-center gap-4 mb-4">
                        <button onClick={() => setSelectedCustomerId(null)} className="text-slate-400 hover:text-slate-600">
-                          <ArrowUp className="-rotate-90" size={20} />
+                          <ArrowLeft size={20} />
                        </button>
                        <h2 className="text-2xl font-bold text-slate-800">Fiche Client</h2>
                     </div>
@@ -4552,22 +4634,21 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       </span>
                                       <span className="text-xs text-slate-400 font-mono shrink-0 hidden sm:inline">{menu.basePath}</span>
                                     </button>
-                                    <label
-                                      className="flex items-center gap-1.5 shrink-0 cursor-pointer"
+                                    <div
+                                      className="flex items-center gap-1.5 shrink-0"
                                       onClick={(e) => e.stopPropagation()}
-                                      title={menu.visible !== false ? 'Visible dans la navigation' : 'Masqué de la navigation'}
                                     >
-                                      <input
-                                        type="checkbox"
-                                        checked={menu.visible !== false}
-                                        onChange={(e) => {
-                                          const updated = { ...menu, visible: e.target.checked };
-                                          setLocalMenuItem(idx, updated);
-                                        }}
-                                        className="w-4 h-4 rounded border border-gray-300"
-                                      />
-                                      <span className="text-xs text-slate-500 hidden sm:inline">Visible</span>
-                                    </label>
+                                      <button
+                                        type="button"
+                                        onClick={() => setLocalMenuItem(idx, { ...menu, visible: !(menu.visible !== false) })}
+                                        className={`relative w-10 h-6 rounded-full transition-colors ${menu.visible !== false ? 'bg-green-500' : 'bg-gray-300'}`}
+                                      >
+                                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${menu.visible !== false ? 'left-5' : 'left-1'}`} />
+                                      </button>
+                                      <span className={`text-xs font-semibold hidden sm:inline ${menu.visible !== false ? 'text-green-600' : 'text-slate-400'}`}>
+                                        {menu.visible !== false ? 'Visible' : 'Masqué'}
+                                      </span>
+                                    </div>
                                     <button
                                       onClick={async () => { if(await confirmDialog('Êtes-vous sûr de vouloir supprimer ce menu ?')) deleteMenuItem(idx); }}
                                       className="text-slate-400 hover:text-red-500 p-1.5 transition-colors hover:bg-red-50 rounded-lg shrink-0"

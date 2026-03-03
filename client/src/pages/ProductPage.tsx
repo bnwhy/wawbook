@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, BookOpen, Cloud, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, BookOpen, Cloud, ChevronLeft, ChevronRight, PenTool } from 'lucide-react';
 import { useLocation } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
@@ -214,12 +214,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                 <span className="text-base text-gray-400 line-through">{formatPrice(book.oldPrice)}</span>
               )}
               {book.features?.coverTypes && book.features.coverTypes.length > 0 ? (
-                <span className="text-2xl font-black text-accent-melon">
-                  {book.features.coverTypes.length > 1 ? 'À partir de ' : ''}
+                <span className="text-2xl font-black text-cloud-blue">
+                  {book.features.coverTypes.length > 1 && <span className="text-cloud-dark">Dès </span>}
                   {formatPrice(Math.min(...book.features.coverTypes.map(c => c.price)))}
                 </span>
               ) : (
-                <span className="text-2xl font-black text-accent-melon">{formatPrice(book.price)}</span>
+                <span className="text-2xl font-black text-cloud-blue">{formatPrice(book.price)}</span>
               )}
             </div>
 
@@ -284,7 +284,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
               onClick={handleCreate}
               className="mt-3 bg-[#0c4a6e] text-white px-14 py-3.5 rounded-2xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-3 w-full"
             >
-              Personnaliser ce livre
+              <PenTool size={18} /> Personnaliser ce livre
             </button>
 
             {/* ── FAQ inline (sous le CTA) ── */}

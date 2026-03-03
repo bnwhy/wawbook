@@ -273,14 +273,14 @@ const CheckoutPage = () => {
                     className="flex flex-col items-center cursor-pointer group z-10 flex-1"
                     onClick={() => setLocation('/cart')}
                   >
-                    <div className="w-16 h-16 bg-accent-sun rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all">
+                    <div className="w-16 h-16 bg-cloud-deep rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all">
                       <ShoppingCart size={28} className="text-white" strokeWidth={2.5} />
                     </div>
-                    <span className="text-sm font-bold text-cloud-dark mt-3">Panier</span>
+                    <span className="text-base font-bold text-cloud-dark mt-3">Panier</span>
                   </div>
 
                   {/* Line 1: Panier → Livraison */}
-                  <div className="flex-1 h-1 bg-accent-melon -mx-8"></div>
+                  <div className="flex-1 h-1 bg-cloud-deep -mx-8"></div>
 
                   {/* Step 2: Livraison */}
                   <div 
@@ -289,12 +289,12 @@ const CheckoutPage = () => {
                   >
                     <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transform transition-all ${
                       step === 'details' 
-                        ? 'bg-accent-melon ring-4 ring-accent-melon/30 scale-110' 
-                        : 'bg-accent-melon group-hover:scale-105'
+                        ? 'bg-cloud-deep ring-4 ring-cloud-deep/30 scale-110' 
+                        : 'bg-cloud-deep group-hover:scale-105'
                     }`}>
                       <Truck size={28} className="text-white" strokeWidth={2.5} />
                     </div>
-                    <span className={`text-sm font-bold mt-3 ${step === 'details' ? 'text-accent-melon' : 'text-cloud-dark'}`}>Livraison</span>
+                    <span className={`text-base font-bold mt-3 ${step === 'details' ? 'text-cloud-deep' : 'text-cloud-dark'}`}>Livraison</span>
                   </div>
 
                   {/* Line 2: Livraison → Paiement */}
@@ -309,7 +309,7 @@ const CheckoutPage = () => {
                     }`}>
                       <CreditCard size={28} className={`${step === 'payment' ? 'text-white' : 'text-stone-500'}`} strokeWidth={2.5} />
                     </div>
-                    <span className={`text-sm font-bold mt-3 ${step === 'payment' ? 'text-cloud-deep' : 'text-stone-500'}`}>Paiement</span>
+                    <span className={`text-base font-bold mt-3 ${step === 'payment' ? 'text-cloud-deep' : 'text-stone-500'}`}>Paiement</span>
                   </div>
                 </div>
               </div>
@@ -423,7 +423,7 @@ const CheckoutPage = () => {
                                                     name="country"
                                                     value={formData.country}
                                                     onChange={handleInputChange}
-                                                    className="w-full p-3 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer text-cloud-dark"
+                                                    className="w-full p-3 pr-10 border border-stone-300 rounded-lg focus:border-cloud-blue focus:ring-1 focus:ring-cloud-blue outline-none appearance-none bg-white cursor-pointer text-cloud-dark [&::-ms-expand]:hidden"
                                                 >
                                                     {availableCountries.length > 0 ? (
                                                         availableCountries.map(country => (
@@ -433,7 +433,7 @@ const CheckoutPage = () => {
                                                         <option value="">Aucun pays de livraison configuré</option>
                                                     )}
                                                 </select>
-                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
+                                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
                                             </div>
                                         </div>
 
@@ -577,39 +577,39 @@ const CheckoutPage = () => {
                                         <h4 className="font-bold text-cloud-dark text-sm">{item.bookTitle}</h4>
                                         <p className="text-xs text-stone-500">{item.format}</p>
                                     </div>
-                                    <span className="font-bold text-cloud-dark text-sm shrink-0">
+                                    <span className="font-bold text-cloud-dark text-sm shrink-0 text-right">
                                         {formatPrice(item.price * item.quantity)}
                                     </span>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="border-t border-stone-200 pt-4 space-y-2">
+                        <div className="border-t border-stone-200 pt-4 space-y-2 pr-2">
                             <div className="flex justify-between text-sm">
                                 <span className="text-stone-600">Sous-total</span>
-                                <span className="font-bold text-cloud-dark">{formatPrice(total)}</span>
+                                <span className="font-bold text-cloud-dark text-right">{formatPrice(total)}</span>
                             </div>
                             {discount > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-green-600">Réduction ({appliedPromo?.code})</span>
-                                    <span className="font-bold text-green-600">-{formatPrice(discount)}</span>
+                                    <span className="font-bold text-green-600 text-right">-{formatPrice(discount)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-sm">
                                 <span className="text-stone-600">Livraison</span>
-                                <span className={shippingCost === 0 ? 'font-bold text-green-600' : 'font-bold text-cloud-dark'}>
+                                <span className={`text-right ${shippingCost === 0 ? 'font-bold text-green-600' : 'font-bold text-cloud-dark'}`}>
                                     {shippingCost === 0 ? 'Gratuite' : formatPrice(shippingCost)}
                                 </span>
                             </div>
                             <div className="border-t border-stone-200 pt-3 mt-2 flex justify-between items-center">
                                 <span className="font-bold text-stone-800">Total</span>
-                                <span className="font-black text-xl text-cloud-dark">{formatPrice(grandTotal)}</span>
+                                <span className="font-black text-xl text-cloud-dark text-right">{formatPrice(grandTotal)}</span>
                             </div>
                         </div>
                         
                         {step === 'details' ? (
-                            <button type="submit" form="details-form" className="mt-6 w-full bg-cloud-deep text-white font-bold text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all">
-                                Continuer vers le paiement
+                            <button type="submit" form="details-form" className="mt-6 w-full bg-cloud-deep text-white font-bold text-lg py-4 rounded-xl shadow-lg hover:bg-cloud-dark hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2">
+                                <Lock size={20} /> Continuer vers le paiement
                             </button>
                         ) : (
                             <>

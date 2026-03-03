@@ -280,18 +280,18 @@ const CartPage: React.FC = () => {
                 <h3 className="font-display font-black text-xl text-cloud-dark mb-6 leading-tight">Récapitulatif de la<br/>commande</h3>
                 
                 <div className="space-y-4 mb-6">
-                    <div className="flex justify-between text-stone-600 text-sm font-medium">
+                    <div className="flex justify-between text-stone-600 text-base font-medium">
                         <span>Sous-total :</span>
                         <span className="font-bold text-cloud-dark">{formatPrice(total)}</span>
                     </div>
-                    <div className="flex justify-between text-stone-600 text-sm font-medium">
+                    <div className="flex justify-between text-stone-600 text-base font-medium">
                         <span>Livraison :</span>
                         {items.length >= 2 ? (
                             <span className="font-bold text-green-600">OFFERTE</span>
                         ) : (
                             <span className="font-bold text-cloud-dark text-right leading-tight">
                                 {formatPrice(defaultShippingRate)}<br />
-                                <span className="text-xs font-normal text-stone-400">Gratuite à partir de 2 livres</span>
+                                <span className="text-sm font-normal text-stone-400">Gratuite à partir de 2 livres</span>
                             </span>
                         )}
                     </div>
@@ -302,10 +302,10 @@ const CartPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setPromoOpen(o => !o)}
-                          className="flex items-center gap-1.5 text-xs text-cloud-blue font-semibold hover:underline"
+                          className="flex items-center gap-1.5 text-sm text-cloud-blue font-semibold hover:underline"
                         >
-                          <Tag size={13} /> Ajouter un code promo
-                          <ChevronDown size={13} className={`transition-transform ${promoOpen ? 'rotate-180' : ''}`} />
+                          <Tag size={14} /> Ajouter un code promo
+                          <ChevronDown size={14} className={`transition-transform ${promoOpen ? 'rotate-180' : ''}`} />
                         </button>
                         {promoOpen && (
                           <div className="mt-2 flex gap-2">
@@ -328,19 +328,22 @@ const CartPage: React.FC = () => {
                         {promoError && <p className="text-xs text-red-500 mt-1">{promoError}</p>}
                       </div>
                     ) : (
-                      <div className="flex justify-between items-center text-sm">
-                        <div className="flex items-center gap-1.5">
-                          <Tag size={13} className="text-green-600" />
-                          <span className="font-mono font-bold text-green-700">{appliedPromo.code}</span>
-                          <button type="button" onClick={removePromo} className="text-stone-400 hover:text-red-500 ml-1"><X size={13} /></button>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-1.5">
+                            <Tag size={13} className="text-green-600" />
+                            <span className="font-mono font-bold text-green-700">{appliedPromo.code}</span>
+                            <button type="button" onClick={removePromo} className="text-stone-400 hover:text-red-500 ml-1"><X size={13} /></button>
+                          </div>
+                          <span className="font-bold text-base text-green-600">-{formatPrice(discount)}</span>
                         </div>
-                        <span className="font-bold text-green-600">-{formatPrice(discount)}</span>
+                        <p className="text-xs text-stone-400">Les codes promo ne sont pas cumulables.</p>
                       </div>
                     )}
 
-                    <div className="border-t border-gray-100 pt-4 mt-4 flex justify-between items-center">
+                    <div className="border-t border-stone-200 pt-4 mt-4 flex justify-between items-center">
                         <span className="font-bold text-lg text-cloud-dark">Total :</span>
-                        <span className="font-black text-2xl text-cloud-dark">{formatPrice(Math.max(0, total + (items.length >= 2 ? 0 : defaultShippingRate) - discount))}</span>
+                        <span className="font-black text-[1.375rem] text-cloud-dark">{formatPrice(Math.max(0, total + (items.length >= 2 ? 0 : defaultShippingRate) - discount))}</span>
                     </div>
                 </div>
                 

@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import { User, Package, LogOut, ChevronRight, Loader2, Gift, Cloud } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
+import { PromoCode } from '../types/admin';
 
 interface Order {
   id: string;
@@ -19,10 +20,23 @@ const AccountPage = () => {
   const [, setLocation] = useLocation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [memberBannerPromo, setMemberBannerPromo] = useState<PromoCode | null>(null);
 
   useEffect(() => {
     fetchOrders();
+    fetchMemberBannerPromo();
   }, []);
+
+  const fetchMemberBannerPromo = async () => {
+    try {
+      const res = await fetch('/api/settings/promoCodes');
+      if (!res.ok) return;
+      const data = await res.json();
+      const codes: PromoCode[] = data?.value ?? [];
+      const promo = codes.find(c => c.isActive && c.showInMemberBanner) ?? null;
+      setMemberBannerPromo(promo);
+    } catch {}
+  };
 
   const fetchOrders = async () => {
     try {
@@ -182,24 +196,35 @@ const AccountPage = () => {
         <div className="flex-1 flex flex-col gap-4 min-w-0">
 
           {/* Promo banner */}
-          <div className="bg-cloud-lightest rounded-3xl p-6 relative overflow-hidden">
-            {/* Décors */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-cloud-blue/10 rounded-full -mr-12 -mt-12 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-28 h-28 bg-accent-sun/10 rounded-full -ml-8 -mb-8 pointer-events-none" />
+          {memberBannerPromo && (
+            <div className="bg-cloud-lightest rounded-3xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-cloud-blue/10 rounded-full -mr-12 -mt-12 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-28 h-28 bg-accent-sun/10 rounded-full -ml-8 -mb-8 pointer-events-none" />
 
-            <div className="relative z-10 flex items-center gap-4">
-              <div className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center shrink-0">
-                <Gift size={20} className="text-cloud-blue" />
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="w-11 h-11 bg-white rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+                  <Gift size={20} className="text-cloud-blue" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-display font-black text-cloud-dark text-lg leading-tight">
+                    {memberBannerPromo.memberBannerTitle
+                      ? memberBannerPromo.memberBannerTitle
+                      : `${memberBannerPromo.type === 'percentage' ? `-${memberBannerPromo.value}%` : `-${memberBannerPromo.value.toFixed(2)}€`} sur votre prochain livre`
+                    }
+                  </div>
+                  <div className="text-cloud-dark/70 text-base mt-0.5">
+                    {memberBannerPromo.memberBannerText
+                      ? memberBannerPromo.memberBannerText
+                      : <>Code exclusif membre : <span className="font-black text-cloud-blue">{memberBannerPromo.code}</span></>
+                    }
+                  </div>
+                </div>
+                <Link href="/" className="shrink-0 bg-cloud-blue hover:bg-cloud-blue/80 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors">
+                  Utiliser
+                </Link>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-display font-black text-cloud-dark text-lg leading-tight">-15% sur votre prochain livre</div>
-                <div className="text-cloud-dark/70 text-base mt-0.5">Code exclusif membre : <span className="font-black text-cloud-blue">CLUB15</span> — valable jusqu'au 31 mars</div>
-              </div>
-              <Link href="/" className="shrink-0 bg-cloud-blue hover:bg-cloud-blue/80 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors">
-                Utiliser
-              </Link>
             </div>
-          </div>
+          )}
 
           {/* Commandes récentes */}
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">

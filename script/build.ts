@@ -1,6 +1,6 @@
 import { build as esbuild, Plugin } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+import { rm, readFile, cp } from "fs/promises";
 
 // Plugin to completely ignore dev-only modules in production
 const ignoreDevModules: Plugin = {
@@ -86,7 +86,9 @@ async function buildAll() {
   });
 }
 
-buildAll().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+buildAll()
+  .then(() => cp("migrations", "dist/migrations", { recursive: true }))
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });

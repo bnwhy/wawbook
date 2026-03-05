@@ -32,6 +32,7 @@ ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/migrations ./migrations
 RUN npm ci --omit=dev
 
 EXPOSE 5000

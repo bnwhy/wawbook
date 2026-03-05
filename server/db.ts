@@ -33,10 +33,10 @@ export async function runMigrations() {
       `SELECT id FROM drizzle.__drizzle_migrations ORDER BY created_at DESC LIMIT 1`
     );
     if (rows.length === 0) {
-      // No migrations recorded yet — insert 0000 as already applied
-      const hash = (await import("node:crypto"))
-        .createHash("sha256")
-        .update((await import("node:fs")).readFileSync(path.join(migrationsFolder, "0000_broad_agent_zero.sql"), "utf8"))
+      const { createHash } = await import("node:crypto");
+      const { readFileSync } = await import("node:fs");
+      const hash = createHash("sha256")
+        .update(readFileSync(path.join(migrationsFolder, "0000_broad_agent_zero.sql"), "utf8"))
         .digest("hex");
       await client.query(
         `INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,

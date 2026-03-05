@@ -87,7 +87,11 @@ async function buildAll() {
 }
 
 buildAll()
-  .then(() => cp("migrations", "dist/migrations", { recursive: true }))
+  .then(() => Promise.all([
+    cp("migrations", "dist/migrations", { recursive: true }),
+    // connect-pg-simple uses __dirname to find table.sql; copy it next to the bundle
+    cp("node_modules/connect-pg-simple/table.sql", "dist/table.sql"),
+  ]))
   .catch((err) => {
     console.error(err);
     process.exit(1);

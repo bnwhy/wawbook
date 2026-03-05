@@ -118,7 +118,7 @@
 
 /* Boutons texte : jamais complètement ronds (ne touche pas les div décoratifs) */
 @layer utilities {
-  button.rounded-full:not(.aspect-square):not([style*="width"]),
+  button.rounded-full:not(.aspect-square):not([style*="width"]):not(.w-6):not(.w-8):not(.w-9):not(.w-10):not(.w-12),
   a.rounded-full {
     border-radius: 0.5rem !important;
   }

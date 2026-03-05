@@ -43,7 +43,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-cream">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       
       <main className="flex-1 flex relative min-h-[calc(100vh-80px)]">

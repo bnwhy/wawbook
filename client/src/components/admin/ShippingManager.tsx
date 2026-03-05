@@ -77,18 +77,6 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
   return (
   <>
   <div className="max-w-4xl mx-auto space-y-8">
-    <div className="flex justify-between items-center">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Expédition et Livraison</h2>
-        <p className="text-slate-500 mt-1">Configurez les zones, tarifs et délais de livraison.</p>
-      </div>
-      <div className="flex gap-2">
-        <button onClick={() => { const newZone: ShippingZone = { id: `zone-${Date.now()}`, name: 'Nouvelle Zone', countries: [], methods: [] }; addShippingZone(newZone); setEditingZoneId(newZone.id); }} className="bg-white border border-gray-300 text-slate-700 px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-50 transition-colors">
-          <Plus size={18} /> Ajouter une zone
-        </button>
-      </div>
-    </div>
-
     <div className="flex items-center gap-2">
       <label className="text-xs font-bold text-slate-500 uppercase">Tarif par défaut:</label>
       <div className="flex items-center gap-1 border border-gray-300 rounded-lg px-2 py-1 focus-within:ring-2 focus-within:ring-indigo-500 bg-white">
@@ -114,6 +102,9 @@ const ShippingManager: React.FC<ShippingManagerProps> = ({
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-6 border-b border-gray-100 bg-slate-50/50 flex justify-between items-center">
         <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2"><Globe size={20} className="text-indigo-600" />Zones d'expédition</h3>
+        <button onClick={() => { const newZone: ShippingZone = { id: `zone-${Date.now()}`, name: 'Nouvelle Zone', countries: [], methods: [] }; addShippingZone(newZone); setEditingZoneId(newZone.id); }} className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm text-sm">
+          <Plus size={16} /> Ajouter une zone
+        </button>
       </div>
       <div className="divide-y divide-gray-100">
         {localZones.map(zone => {

@@ -18,6 +18,18 @@ router.get("/", async (_req, res, next) => {
   }
 });
 
+// GET /api/customers/me - must be before /:id
+router.get("/me", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new Error('User not found in request');
+    }
+    return res.json(req.user);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 // GET /api/customers/:id
 router.get("/:id", async (req, res, next) => {
   try {
@@ -60,6 +72,34 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+// PATCH /api/customers/me - Update current customer profile (protected)
+router.patch("/me", requireAuth, async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new Error('User not found in request');
+    }
+
+    const { firstName, lastName, phone, address, notes } = req.body;
+    const updateData: any = {};
+
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
+    if (notes !== undefined) updateData.notes = notes;
+
+    const customer = await storage.updateCustomer(req.user.id, updateData);
+    if (!customer) {
+      throw new NotFoundError('Customer', req.user.id);
+    }
+
+    logger.info({ customerId: customer.id }, 'Customer profile updated');
+    return res.json(customer);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 // PATCH /api/customers/:id
 router.patch("/:id", async (req, res, next) => {
   try {
@@ -84,47 +124,6 @@ router.delete("/:id", async (req, res, next) => {
     await storage.deleteCustomer(req.params.id);
     logger.info({ customerId: req.params.id }, 'Customer deleted');
     return res.status(204).send();
-  } catch (error) {
-    return next(error);
-  }
-});
-
-// GET /api/customers/me - Get current customer profile (protected)
-router.get("/me", requireAuth, async (req, res, next) => {
-  try {
-    if (!req.user) {
-      throw new Error('User not found in request');
-    }
-    return res.json(req.user);
-  } catch (error) {
-    return next(error);
-  }
-});
-
-// PATCH /api/customers/me - Update current customer profile (protected)
-router.patch("/me", requireAuth, async (req, res, next) => {
-  try {
-    if (!req.user) {
-      throw new Error('User not found in request');
-    }
-
-    // Only allow updating certain fields
-    const { firstName, lastName, phone, address, notes } = req.body;
-    const updateData: any = {};
-
-    if (firstName !== undefined) updateData.firstName = firstName;
-    if (lastName !== undefined) updateData.lastName = lastName;
-    if (phone !== undefined) updateData.phone = phone;
-    if (address !== undefined) updateData.address = address;
-    if (notes !== undefined) updateData.notes = notes;
-
-    const customer = await storage.updateCustomer(req.user.id, updateData);
-    if (!customer) {
-      throw new NotFoundError('Customer', req.user.id);
-    }
-
-    logger.info({ customerId: customer.id }, 'Customer profile updated');
-    return res.json(customer);
   } catch (error) {
     return next(error);
   }

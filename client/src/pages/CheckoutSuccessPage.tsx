@@ -121,7 +121,7 @@ const CheckoutSuccessPage = () => {
 
   if (isProcessing) {
     return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col">
         <Navigation onStart={() => setLocation('/')} />
         <main className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-20 max-w-lg mx-auto w-full">
           <Skeleton className="w-24 h-24 rounded-full mx-auto mb-6" />
@@ -136,7 +136,7 @@ const CheckoutSuccessPage = () => {
 
   if (!orderData) {
     return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col">
         <Navigation onStart={() => setLocation('/')} />
         <main className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-20">
           <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
@@ -160,7 +160,7 @@ const CheckoutSuccessPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
 

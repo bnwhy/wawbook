@@ -76,8 +76,11 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
   }, []);
 
   const getLink = (base: string, item: string) => {
+    if (item.includes('|')) return item.split('|')[0];
     return `${base}/${encodeURIComponent(item)}`;
   };
+
+  const getLabel = (item: string) => item.includes('|') ? item.split('|')[1] : item;
 
   const isHomePage = location === '/';
   const isTransparent = isHomePage && !scrolled;
@@ -130,9 +133,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
                   {menu.type === 'simple' && menu.items && (
                     <div className="flex flex-col gap-1 p-2">
                       {menu.items.map((item, i) => (
-                        <Link key={i} href={getLink(menu.basePath || '', item as string)} className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2 whitespace-nowrap">
+                        <Link key={i} href={getLink(menu.basePath || '', item as string)} className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-base hover:text-cloud-blue transition-colors flex items-center gap-2 whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
-                            {item as string}
+                            {getLabel(item as string)}
                         </Link>
                       ))}
                     </div>
@@ -146,7 +149,7 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
                           <h4 className="font-display font-black mb-3 px-2 text-lg text-[#0c4a6e]">{col.title}</h4>
                           <div className="flex flex-col gap-1">
                             {col.items.map((item, j) => (
-                              <Link key={j} href={getLink(menu.basePath || '', item)} className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
+                              <Link key={j} href={getLink(menu.basePath || '', item)} className="px-2 py-1.5 rounded-lg hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-base hover:text-cloud-blue transition-colors flex items-center gap-2">
                                   <span className="w-1.5 h-1.5 rounded-full bg-accent-sun flex-shrink-0"></span>
                                   {item}
                               </Link>
@@ -161,9 +164,9 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
                   {menu.type === 'grid' && menu.items && (
                     <div className="grid grid-cols-2 gap-2 p-4 w-[400px]">
                       {menu.items.map((item, i) => (
-                        <Link key={i} href={getLink(menu.basePath || '', item as string)} className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-sm hover:text-cloud-blue transition-colors flex items-center gap-2">
+                        <Link key={i} href={getLink(menu.basePath || '', item as string)} className="px-3 py-2 rounded-xl hover:bg-cloud-lightest text-cloud-dark/80 font-bold text-base hover:text-cloud-blue transition-colors flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent-sun"></span>
-                            {item as string}
+                            {getLabel(item as string)}
                         </Link>
                       ))}
                     </div>
@@ -355,13 +358,13 @@ const Navigation: React.FC<NavigationProps> = ({ onStart, onLogoClick }) => {
                        <div className="bg-cloud-lightest/50 rounded-xl p-3 flex flex-col gap-2 mb-2">
                         {menu.type === 'simple' && menu.items && menu.items.map((item, i) => (
                           <Link key={i} href={getLink(menu.basePath || '', item as string)} onClick={() => setMobileMenuOpen(false)} className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">
-                            {item as string}
+                            {getLabel(item as string)}
                           </Link>
                         ))}
 
                         {menu.type === 'grid' && menu.items && menu.items.map((item, i) => (
                           <Link key={i} href={getLink(menu.basePath || '', item as string)} onClick={() => setMobileMenuOpen(false)} className="text-cloud-dark/70 font-medium px-2 py-1 hover:text-cloud-blue block">
-                            {item as string}
+                            {getLabel(item as string)}
                           </Link>
                         ))}
 

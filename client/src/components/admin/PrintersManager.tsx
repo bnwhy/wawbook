@@ -80,11 +80,7 @@ const PrintersManager: React.FC<PrintersManagerProps> = ({
   return (
   <>
   <div className="max-w-4xl mx-auto space-y-6">
-    <div className="flex justify-between items-center">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Imprimeurs</h2>
-        <p className="text-slate-500 mt-1">Gérez vos partenaires d'impression par région.</p>
-      </div>
+    <div className="flex justify-end">
       <button
         onClick={() => {
           const maxNum = printers.reduce((max, p) => {

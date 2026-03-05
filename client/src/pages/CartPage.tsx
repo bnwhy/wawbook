@@ -89,7 +89,7 @@ const CartPage: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col">
         <Navigation onStart={() => setLocation('/')} />
         <div className="flex-1 flex flex-col items-center justify-center p-6 mt-20">
           <div className="w-24 h-24 bg-stone-200 rounded-full flex items-center justify-center mb-6 text-stone-400">
@@ -110,7 +110,7 @@ const CartPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50 font-sans">
+    <div className="min-h-screen flex flex-col font-sans">
       {ConfirmDialog}
       <Navigation onStart={() => setLocation('/')} />
       
@@ -234,7 +234,7 @@ const CartPage: React.FC = () => {
             <div className="text-center py-4">
                  <button 
                     onClick={() => setLocation('/')}
-                    className="inline-flex items-center gap-2 px-6 py-3 border-2 border-cloud-dark/20 rounded-lg text-cloud-dark font-bold hover:bg-white hover:border-cloud-dark/50 transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 border-2 border-cloud-dark/20 rounded-lg text-cloud-dark font-bold bg-white hover:border-cloud-dark/50 transition-colors"
                 >
                     <Plus size={18} strokeWidth={3} /> Ajouter un autre livre
                 </button>

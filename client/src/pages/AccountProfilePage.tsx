@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation, Link } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { User, Mail, Phone, ArrowLeft, Loader2, Save } from 'lucide-react';
+import { User, Mail, Phone, ArrowLeft, Loader2, Save, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AccountProfilePage = () => {
@@ -15,6 +15,17 @@ const AccountProfilePage = () => {
     phone: user?.phone || '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savedSnapshot, setSavedSnapshot] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    phone: user?.phone || '',
+  });
+
+  const hasChanges =
+    formData.firstName !== savedSnapshot.firstName ||
+    formData.lastName !== savedSnapshot.lastName ||
+    formData.phone !== savedSnapshot.phone;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -39,8 +50,11 @@ const AccountProfilePage = () => {
         throw new Error('Échec de la mise à jour');
       }
 
-      await refreshUser();
+      setSavedSnapshot({ firstName: formData.firstName, lastName: formData.lastName, phone: formData.phone });
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2500);
       toast.success('Profil mis à jour');
+      refreshUser(); // fire-and-forget, ne pas await pour ne pas bloquer l'UI
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
     } finally {
@@ -49,7 +63,7 @@ const AccountProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       <main className="flex-1 max-w-3xl mx-auto w-full p-6 pt-32 pb-20">
         <Link href="/account" className="inline-flex items-center gap-2 text-cloud-blue hover:underline font-bold mb-6">
@@ -106,7 +120,7 @@ const AccountProfilePage = () => {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                <Mail className="absolute left-3 top-0 bottom-0 my-auto text-stone-400 h-fit" size={20} />
                 <input
                   id="email"
                   type="email"
@@ -122,7 +136,7 @@ const AccountProfilePage = () => {
                 Téléphone
               </label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                <Phone className="absolute left-3 top-0 bottom-0 my-auto text-stone-400 h-fit" size={20} />
                 <input
                   id="phone"
                   name="phone"
@@ -138,13 +152,25 @@ const AccountProfilePage = () => {
             <div className="pt-6 border-t border-stone-200">
               <button
                 type="submit"
-                disabled={isLoading}
-                className="bg-cloud-blue text-white font-bold py-3 px-6 rounded-lg hover:bg-cloud-deep transition-colors disabled:opacity-50 flex items-center gap-2"
+                disabled={isLoading || (!hasChanges && !isSaved)}
+                onClick={isSaved ? (e) => e.preventDefault() : undefined}
+                className={`font-bold py-3 px-6 rounded-lg transition-all flex items-center gap-2
+                  ${isSaved
+                    ? 'bg-green-500 text-white cursor-default'
+                    : !hasChanges || isLoading
+                      ? 'bg-cloud-blue text-white opacity-50 cursor-not-allowed'
+                      : 'bg-cloud-blue text-white hover:bg-cloud-deep cursor-pointer'
+                  }`}
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Enregistrement...
+                  </>
+                ) : isSaved ? (
+                  <>
+                    <Check size={20} />
+                    Modifications enregistrées
                   </>
                 ) : (
                   <>

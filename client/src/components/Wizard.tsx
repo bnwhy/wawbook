@@ -482,12 +482,12 @@ const Wizard: React.FC<WizardProps> = (props) => {
                     return withDivider(
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                          <label className="font-bold text-gray-600 text-xl w-24 shrink-0">{variant.label}</label>
-                         <div className="flex gap-2 flex-wrap flex-1">
+                         <div className="flex gap-[18px] flex-wrap flex-1">
                             {variant.options?.map((opt) => (
                               <button
                                 key={opt.id}
                                 onClick={() => handleSelectionChange(activeTabId, variant.id, opt.id)}
-                                className={`w-8 h-8 rounded-full transition-all border border-gray-200 ${currentValue === opt.id ? 'border-cloud-blue ring-2 ring-cloud-blue/20 scale-110 ring-offset-2' : 'hover:scale-105'}`}
+                                className={`w-9 h-9 rounded-full transition-all border border-gray-200 ${currentValue === opt.id ? 'border-cloud-blue ring-2 ring-cloud-blue/20 scale-110 ring-offset-2' : 'hover:scale-105'}`}
                                 style={{ backgroundColor: opt.resource }}
                                 title={opt.label}
                               />

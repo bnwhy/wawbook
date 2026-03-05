@@ -15,7 +15,7 @@ export interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, 'id'>) => void;
+  addToCart: (item: Omit<CartItem, 'id'>) => string;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   updateItem: (id: string, updates: Partial<CartItem>) => void;
@@ -47,9 +47,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [items]);
 
-  const addToCart = (newItem: Omit<CartItem, 'id'>) => {
+  const addToCart = (newItem: Omit<CartItem, 'id'>): string => {
     const id = Math.random().toString(36).substr(2, 9);
     setItems(prev => [...prev, { ...newItem, id }]);
+    return id;
   };
 
   const removeFromCart = (id: string) => {

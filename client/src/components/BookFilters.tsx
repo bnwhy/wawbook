@@ -104,16 +104,16 @@ const BookFilters: React.FC<BookFiltersProps> = ({
   }> = ({ id, title, children }) => {
     const isExpanded = expandedSections.includes(id);
     
-    return (
-      <div className="border-b border-slate-200 pb-4 mb-4 last:border-b-0">
+  return (
+    <div className="border-b border-gray-200 pb-4 mb-4 last:border-b-0">
         <button
           onClick={() => toggleSection(id)}
           className="w-full flex items-center justify-between py-2 text-left"
         >
-          <h3 className="font-bold text-slate-800">{title}</h3>
+          <h3 className="font-bold text-cloud-dark">{title}</h3>
           <ChevronDown
             size={18}
-            className={`text-slate-400 transition-transform ${
+            className={`text-cloud-dark/40 transition-transform ${
               isExpanded ? 'rotate-180' : ''
             }`}
           />
@@ -124,12 +124,12 @@ const BookFilters: React.FC<BookFiltersProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+    <div className="rounded-xl">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display font-black text-lg text-slate-800">Filtres</h2>
+        <h2 className="font-display font-black text-lg text-cloud-dark">Filtres</h2>
         <button
           onClick={handleReset}
-          className="flex items-center gap-1 text-sm text-brand-coral hover:text-red-600 font-bold transition-colors"
+          className="flex items-center gap-1 text-sm text-cloud-blue hover:text-cloud-deep font-bold transition-colors"
         >
           <RotateCcw size={14} />
           Réinitialiser
@@ -138,17 +138,17 @@ const BookFilters: React.FC<BookFiltersProps> = ({
 
       {/* Search */}
       <div className="mb-6">
-        <div className="relative">
+        <div className="flex items-center border border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-cloud-blue">
           <Search
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="ml-3 shrink-0 text-cloud-dark/40"
           />
           <input
             type="text"
             placeholder="Rechercher un livre..."
             value={filters.search}
             onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-coral text-sm"
+            className="flex-1 pl-2 pr-4 py-2 bg-transparent outline-none text-sm text-cloud-dark"
           />
         </div>
       </div>
@@ -165,9 +165,9 @@ const BookFilters: React.FC<BookFiltersProps> = ({
                 type="checkbox"
                 checked={filters.categories.includes(category.id)}
                 onChange={() => toggleCategory(category.id)}
-                className="w-4 h-4 text-brand-coral border-slate-300 rounded focus:ring-brand-coral"
+                className="w-4 h-4 text-cloud-blue border-gray-200 rounded focus:ring-cloud-blue"
               />
-              <span className="text-sm text-slate-700 group-hover:text-brand-coral transition-colors">
+              <span className="text-sm text-cloud-dark/80 group-hover:text-cloud-blue transition-colors">
                 {category.label}
               </span>
             </label>
@@ -187,9 +187,9 @@ const BookFilters: React.FC<BookFiltersProps> = ({
                 type="checkbox"
                 checked={filters.themes.includes(theme.id as Theme)}
                 onChange={() => toggleTheme(theme.id as Theme)}
-                className="w-4 h-4 text-brand-coral border-slate-300 rounded focus:ring-brand-coral"
+                className="w-4 h-4 text-cloud-blue border-gray-200 rounded focus:ring-cloud-blue"
               />
-              <span className="text-sm text-slate-700 group-hover:text-brand-coral transition-colors">
+              <span className="text-sm text-cloud-dark/80 group-hover:text-cloud-blue transition-colors">
                 {theme.label}
               </span>
             </label>
@@ -210,9 +210,9 @@ const BookFilters: React.FC<BookFiltersProps> = ({
                   type="checkbox"
                   checked={filters.audiences.includes(audience.path)}
                   onChange={() => toggleAudience(audience.path)}
-                  className="w-4 h-4 text-brand-coral border-slate-300 rounded focus:ring-brand-coral"
+                  className="w-4 h-4 text-cloud-blue border-gray-200 rounded focus:ring-cloud-blue"
                 />
-                <span className="text-sm text-slate-700 group-hover:text-brand-coral transition-colors">
+                <span className="text-sm text-cloud-dark/80 group-hover:text-cloud-blue transition-colors">
                   {audience.label}
                 </span>
               </label>
@@ -234,9 +234,9 @@ const BookFilters: React.FC<BookFiltersProps> = ({
                   type="checkbox"
                   checked={filters.occasions.includes(occasion.path)}
                   onChange={() => toggleOccasion(occasion.path)}
-                  className="w-4 h-4 text-brand-coral border-slate-300 rounded focus:ring-brand-coral"
+                  className="w-4 h-4 text-cloud-blue border-gray-200 rounded focus:ring-cloud-blue"
                 />
-                <span className="text-sm text-slate-700 group-hover:text-brand-coral transition-colors">
+                <span className="text-sm text-cloud-dark/80 group-hover:text-cloud-blue transition-colors">
                   {occasion.label}
                 </span>
               </label>

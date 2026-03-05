@@ -59,7 +59,7 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       <main className="flex-1 flex items-center justify-center p-6 pt-32">
         <div className="w-full max-w-md">

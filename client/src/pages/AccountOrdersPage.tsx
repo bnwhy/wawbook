@@ -71,7 +71,7 @@ const AccountOrdersPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       <main className="flex-1 max-w-5xl mx-auto w-full p-6 pt-32 pb-20">
         <Link href="/account" className="inline-flex items-center gap-2 text-cloud-blue hover:underline font-bold mb-6">

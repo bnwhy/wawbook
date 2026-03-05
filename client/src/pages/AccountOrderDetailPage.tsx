@@ -88,7 +88,7 @@ const AccountOrderDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col">
         <Navigation onStart={() => setLocation('/')} />
         <main className="flex-1 max-w-4xl mx-auto w-full p-6 pt-32 pb-20">
           <Skeleton className="h-5 w-40 mb-6" />
@@ -147,7 +147,7 @@ const AccountOrderDetailPage = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col">
         <Navigation onStart={() => setLocation('/')} />
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="text-center">
@@ -164,7 +164,7 @@ const AccountOrderDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       <main className="flex-1 max-w-4xl mx-auto w-full p-6 pt-32 pb-20">
         <Link href="/account/orders" className="inline-flex items-center gap-2 text-cloud-blue hover:underline font-bold mb-6">

@@ -167,30 +167,6 @@ const AccountPage = () => {
             </div>
           </div>
 
-          {/* Avantages */}
-          <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-5">
-            <p className="text-sm font-bold uppercase tracking-widest text-stone-400 mb-4">Vos avantages nuageclub</p>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-sky-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Package size={17} className="text-cloud-blue" />
-                </div>
-                <div>
-                  <div className="font-bold text-base text-stone-900">Suivi en temps réel</div>
-                  <div className="text-base text-stone-400 leading-relaxed">Suivez chaque étape de vos créations</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-sky-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Gift size={17} className="text-cloud-blue" />
-                </div>
-                <div>
-                  <div className="font-bold text-base text-stone-900">Promotions exclusives</div>
-                  <div className="text-base text-stone-400 leading-relaxed">Offres réservées aux membres du club</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </aside>
 
         {/* ── MAIN CONTENT ── */}

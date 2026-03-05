@@ -144,6 +144,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+
   const currentCombinationKey = useMemo(() => {
     return book ? getCombinationKeyUtil(book, config) : 'default';
   }, [book, config.characters]);
@@ -437,7 +438,7 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
   };
 
   const handleAddToCart = () => {
-    const capturedCoverImage = generatedPages[1] || generatedPages[2] || book?.coverImage;
+    const capturedCoverImage = generatedPages[0] || generatedPages[1] || generatedPages[2] || book?.coverImage;
     
     // Add to cart functionality
     const itemData = {
@@ -951,10 +952,20 @@ const BookPreview: React.FC<BookPreviewProps> = ({ story, config, bookProduct, o
                        <button 
                            id="add-to-cart-btn"
                            onClick={handleAddToCart}
-                           className="w-full py-4 px-4 bg-cloud-blue text-white font-black text-lg rounded-xl hover:bg-cloud-deep transition-colors shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                           disabled={isGenerating}
+                           className="w-full py-4 px-4 bg-cloud-blue text-white font-black text-lg rounded-xl hover:bg-cloud-deep transition-colors shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-cloud-blue"
                        >
-                           <span>{editingCartItemId ? "Modifier le panier" : "Ajouter au panier"}</span>
-                           <ArrowRight size={20} />
+                           {isGenerating ? (
+                               <>
+                                   <Loader2 size={20} className="animate-spin" />
+                                   <span>Chargement du livre...</span>
+                               </>
+                           ) : (
+                               <>
+                                   <span>{editingCartItemId ? "Modifier le panier" : "Ajouter au panier"}</span>
+                                   <ArrowRight size={20} />
+                               </>
+                           )}
                        </button>
                    </div>
                </div>

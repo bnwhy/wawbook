@@ -72,7 +72,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
   const faqItems = [...(book.productPage?.faqItems ?? [])].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="min-h-screen flex flex-col font-sans relative" style={{ backgroundColor: '#E0F2FE', backgroundImage: 'linear-gradient(180deg, #E0F2FE 0%, #F0F9FF 100%)' }}>
+    <div className="min-h-screen flex flex-col font-sans relative">
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
@@ -81,16 +81,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
         .animate-float { animation: float 6s ease-in-out infinite; }
         .animate-float-delayed { animation: float 6s ease-in-out 3s infinite; }
         .book-main { overflow: visible; }
-        .book-main::before {
-          content: '';
-          position: absolute;
-          top: 10px; bottom: 10px;
-          left: -8px; right: -8px;
-          background: white;
-          border-radius: 24px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-          z-index: -1;
-        }
       `}</style>
 
       <Navigation onStart={() => setLocation('/')} onLogoClick={() => setLocation('/')} />
@@ -119,7 +109,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
         <Cloud size={120} fill="currentColor" />
       </div>
 
-      <main className="book-main relative z-10 flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 pt-12 pb-16 bg-white rounded-3xl mt-24 mb-16 shadow-md border-t-8 border-t-sky-100">
+      <main className="book-main relative z-10 flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 pt-12 pb-16 bg-white rounded-2xl mt-24 mb-16 shadow-cloud border border-cloud-light">
 
         {/* ── PRODUCT HERO ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-20">
@@ -169,7 +159,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                     onClick={() => setSelectedImage((selectedImage - 1 + images.length) % images.length)}
                     className="w-8 h-8 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
                   >
-                    <ChevronLeft size={16} className="text-gray-600" />
+                    <ChevronLeft size={16} className="text-cloud-dark/80" />
                   </button>
                   <div className="flex gap-1.5">
                     {images.map((_, i) => (
@@ -184,7 +174,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                     onClick={() => setSelectedImage((selectedImage + 1) % images.length)}
                     className="w-8 h-8 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
                   >
-                    <ChevronRight size={16} className="text-gray-600" />
+                    <ChevronRight size={16} className="text-cloud-dark/80" />
                   </button>
                 </div>
               )}
@@ -211,7 +201,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
             {/* Price */}
             <div className="flex items-baseline gap-3">
               {book.oldPrice && (
-                <span className="text-base text-gray-400 line-through">{formatPrice(book.oldPrice)}</span>
+                <span className="text-base text-cloud-dark/40 line-through">{formatPrice(book.oldPrice)}</span>
               )}
               {book.features?.coverTypes && book.features.coverTypes.length > 0 ? (
                 <span className="text-2xl font-black text-cloud-blue">
@@ -225,11 +215,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
 
             {book.productPage?.longDescription ? (
               <div
-                className="prose prose-sm max-w-none text-base text-gray-600 leading-relaxed pb-3 border-b border-dashed border-gray-200"
+                className="prose prose-sm max-w-none text-base text-cloud-dark/80 leading-relaxed pb-3 border-b border-dashed border-gray-200"
                 dangerouslySetInnerHTML={{ __html: book.productPage.longDescription }}
               />
             ) : (
-              <p className="text-base text-gray-600 leading-relaxed pb-3 border-b border-dashed border-gray-200">{book.description}</p>
+              <p className="text-base text-cloud-dark/80 leading-relaxed pb-3 border-b border-dashed border-gray-200">{book.description}</p>
             )}
 
             {/* Other features */}
@@ -269,7 +259,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                         })}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                        <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-cloud-dark/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
@@ -282,7 +272,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
             {/* CTA */}
             <button
               onClick={handleCreate}
-              className="mt-3 bg-[#0c4a6e] text-white px-14 py-3.5 rounded-2xl font-bold text-base hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-3 w-full"
+              className="mt-3 bg-[#0c4a6e] text-white px-14 py-3.5 rounded-2xl font-bold text-lg hover:bg-cloud-blue transition-all shadow-lg flex items-center justify-center gap-3 w-full"
             >
               <PenTool size={18} /> Personnaliser ce livre
             </button>
@@ -300,7 +290,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                         onClick={() => setOpenFaq(openFaq === i ? null : i)}
                         className="w-full flex items-center justify-between py-4 text-left"
                       >
-                        <span className="font-semibold text-slate-800 text-base">{item.question}</span>
+                        <span className="font-semibold text-cloud-dark text-base">{item.question}</span>
                         <svg
                           className={`w-4 h-4 flex-shrink-0 ml-4 transition-transform duration-200 text-teal-700 ${openFaq === i ? 'rotate-180' : ''}`}
                           fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -310,7 +300,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                       </button>
                       {openFaq === i && (
                         <div className="pb-4">
-                          <p className="text-base text-gray-500 leading-relaxed whitespace-pre-line">{item.answer}</p>
+                          <p className="text-base text-cloud-dark/60 leading-relaxed whitespace-pre-line">{item.answer}</p>
                         </div>
                       )}
                     </div>
@@ -339,8 +329,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                       <img src={badge.imageUrl} alt={badge.title} className="w-24 h-24 object-contain" />
                     )}
                     <div>
-                      <p className="font-bold text-slate-800 text-base">{badge.title}</p>
-                      <p className="text-base text-gray-500 mt-0.5">{badge.subtitle}</p>
+                      <p className="font-bold text-cloud-dark text-base">{badge.title}</p>
+                      <p className="text-base text-cloud-dark/60 mt-0.5">{badge.subtitle}</p>
                     </div>
                   </div>
                 ))}
@@ -389,7 +379,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                 </div>
                 <div className="md:w-1/2 space-y-4">
                   <h3 className="font-display font-black text-xl text-cloud-dark">{s.title}</h3>
-                  <div className="text-base text-gray-600 leading-relaxed prose prose-base max-w-none" dangerouslySetInnerHTML={{ __html: s.text }} />
+                  <div className="text-base text-cloud-dark/80 leading-relaxed prose prose-base max-w-none" dangerouslySetInnerHTML={{ __html: s.text }} />
                 </div>
               </div>
             ))}
@@ -406,7 +396,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ bookTitle }) => {
                   <div className="flex gap-0.5 mb-3">
                     {Array.from({ length: r.rating ?? 5 }).map((_, j) => <Star key={j} size={16} className="fill-yellow-400 text-yellow-400" />)}
                   </div>
-                  <p className="text-base text-gray-600 mb-4 italic leading-relaxed">"{r.comment}"</p>
+                  <p className="text-base text-cloud-dark/80 mb-4 italic leading-relaxed">"{r.comment}"</p>
                   <p className="text-base font-bold text-cloud-dark">{r.name}</p>
                 </div>
               ))}

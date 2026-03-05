@@ -222,7 +222,7 @@ const CheckoutPage = () => {
 
   if (step === 'confirmation') {
     return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col">
         <Navigation onStart={() => setLocation('/')} />
         <main className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-20">
           <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-bounce">
@@ -261,35 +261,33 @@ const CheckoutPage = () => {
   }
 
   return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col">
           <Navigation onStart={() => setLocation('/')} />
           <main className="flex-1 max-w-7xl mx-auto w-full p-6 pt-32 pb-20">
             {/* Checkout Wizard Stepper */}
             <div className="mb-12">
               <div className="flex items-center justify-center">
-                <div className="flex items-center w-full max-w-2xl">
-                  {/* Step 1: Panier - Completed */}
-                  <div 
-                    className="flex flex-col items-center cursor-pointer group z-10 flex-1"
-                    onClick={() => setLocation('/cart')}
-                  >
-                    <div className="w-16 h-16 bg-cloud-deep rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all">
+                <div className="flex items-center w-full max-w-lg md:max-w-xl px-4">
+
+                  {/* Step 1: Panier */}
+                  <div className="flex flex-col items-center cursor-pointer group z-10" onClick={() => setLocation('/cart')}>
+                    <div className="w-16 h-16 bg-cloud-deep rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-all ring-4 ring-cloud-deep/20">
                       <ShoppingCart size={28} className="text-white" strokeWidth={2.5} />
                     </div>
-                    <span className="text-base font-bold text-cloud-dark mt-3">Panier</span>
+                    <span className="text-base font-bold text-cloud-deep mt-3">Panier</span>
                   </div>
 
-                  {/* Line 1: Panier → Livraison */}
-                  <div className="flex-1 h-1 bg-cloud-deep -mx-8"></div>
+                  {/* Connector 1 */}
+                  <div className="flex-1 mx-2 h-2 rounded-full bg-cloud-deep shadow-sm"></div>
 
                   {/* Step 2: Livraison */}
-                  <div 
-                    className={`flex flex-col items-center z-10 flex-1 ${step === 'payment' ? 'cursor-pointer group' : ''}`}
+                  <div
+                    className={`flex flex-col items-center z-10 ${step === 'payment' ? 'cursor-pointer group' : ''}`}
                     onClick={() => step === 'payment' && setLocation('/checkout')}
                   >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transform transition-all ${
-                      step === 'details' 
-                        ? 'bg-cloud-deep ring-4 ring-cloud-deep/30 scale-110' 
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all ${
+                      step === 'details'
+                        ? 'bg-cloud-deep ring-4 ring-cloud-deep/20 scale-110'
                         : 'bg-cloud-deep group-hover:scale-105'
                     }`}>
                       <Truck size={28} className="text-white" strokeWidth={2.5} />
@@ -297,20 +295,21 @@ const CheckoutPage = () => {
                     <span className={`text-base font-bold mt-3 ${step === 'details' ? 'text-cloud-deep' : 'text-cloud-dark'}`}>Livraison</span>
                   </div>
 
-                  {/* Line 2: Livraison → Paiement */}
-                  <div className={`flex-1 h-1 -mx-8 transition-colors ${step === 'payment' ? 'bg-cloud-deep' : 'bg-stone-300'}`}></div>
+                  {/* Connector 2 */}
+                  <div className={`flex-1 mx-2 h-2 rounded-full shadow-sm transition-colors duration-300 ${step === 'payment' ? 'bg-cloud-deep' : 'bg-gray-200'}`}></div>
 
                   {/* Step 3: Paiement */}
-                  <div className="flex flex-col items-center z-10 flex-1">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transform transition-all ${
-                      step === 'payment' 
-                        ? 'bg-cloud-deep ring-4 ring-cloud-deep/30 scale-110' 
-                        : 'bg-stone-300'
+                  <div className="flex flex-col items-center z-10">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all ${
+                      step === 'payment'
+                        ? 'bg-cloud-deep ring-4 ring-cloud-deep/20 scale-110'
+                        : 'bg-gray-200'
                     }`}>
-                      <CreditCard size={28} className={`${step === 'payment' ? 'text-white' : 'text-stone-500'}`} strokeWidth={2.5} />
+                      <CreditCard size={28} className={step === 'payment' ? 'text-white' : 'text-gray-400'} strokeWidth={2.5} />
                     </div>
-                    <span className={`text-base font-bold mt-3 ${step === 'payment' ? 'text-cloud-deep' : 'text-stone-500'}`}>Paiement</span>
+                    <span className={`text-base font-bold mt-3 transition-colors ${step === 'payment' ? 'text-cloud-deep' : 'text-gray-400'}`}>Paiement</span>
                   </div>
+
                 </div>
               </div>
             </div>

@@ -1719,113 +1719,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
   };
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const wizardFileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleExportContent = () => {
-    if (!selectedBook) return;
-
-    // Filter out orphaned elements (elements pointing to non-existent pages)
-    // We strictly use pageIndex as the reference since that's what we use in rendering
-    const validPageNumbers = new Set(selectedBook.contentConfig.pages.map(p => p.pageIndex));
-    
-    // Create a clean copy of content config removing orphaned items and stripping 'zoneId' from position
-    const cleanContentConfig = {
-      ...selectedBook.contentConfig,
-      texts: selectedBook.contentConfig.texts
-          .filter(t => validPageNumbers.has(t.position.pageIndex))
-          .map(({ position, ...rest }) => {
-            // Remove 'zoneId' from position object
-            const { zoneId, ...cleanPosition } = position;
-            return {
-              ...rest, // This includes 'type', 'style' (font, size, etc.), 'content', etc.
-              position: cleanPosition
-            };
-          }),
-      images: selectedBook.contentConfig.images.filter(i => validPageNumbers.has(i.pageIndex)),
-      imageElements: (selectedBook.contentConfig.imageElements || []).filter(i => validPageNumbers.has(i.position.pageIndex))
-    };
-
-    // Export ONLY content config + features (dimensions)
-    // EXCLUDING wizardConfig to respect scope
-    // We strictly filter features to only export layout-related data (dimensions, printConfig)
-    const exportData = {
-      type: 'content_config',
-      timestamp: new Date().toISOString(),
-      contentConfig: cleanContentConfig,
-      features: {
-          dimensions: selectedBook.features?.dimensions,
-          printConfig: selectedBook.features?.printConfig
-      }
-    };
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${slugify(selectedBook.name || 'book')}_content_config_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Configuration Contenu exportée (Pages, Textes, Images)');
-  };
-
-    const handleImportContent = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !selectedBook) return;
-
-    try {
-      const content = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.onerror = reject;
-        reader.readAsText(file);
-      });
-
-      let importedData: any;
-
-      if (content.trim().toLowerCase().startsWith('<!doctype html') || content.includes('<html')) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(content, 'text/html');
-        const scriptContent = doc.getElementById('book-config')?.textContent;
-        if (scriptContent) {
-          importedData = JSON.parse(scriptContent);
-          toast.success('Configuration extraite du Template HTML Maître');
-        } else {
-          throw new Error('Script JSON #book-config introuvable dans le fichier HTML');
-        }
-      } else {
-        importedData = JSON.parse(content);
-      }
-
-      if (!importedData.contentConfig) {
-        toast.error('Format invalide : Ce fichier ne contient pas une configuration de contenu valide');
-        return;
-      }
-
-      if (await confirmDialog('Attention : Cette action va remplacer la configuration du CONTENU (Pages, Textes, Images). Le Wizard (Personnages) ne sera PAS modifié. Voulez-vous continuer ?')) {
-        handleSaveBook({
-          ...selectedBook,
-          contentConfig: importedData.contentConfig,
-          features: {
-            ...selectedBook.features,
-            ...(importedData.features ? {
-              dimensions: importedData.features.dimensions,
-              printConfig: importedData.features.printConfig
-            } : {})
-          },
-          wizardConfig: selectedBook.wizardConfig
-        });
-        toast.success('Configuration Contenu importée avec succès');
-      }
-    } catch (error) {
-      console.error('Import error:', error);
-      toast.error('Erreur lors de l\'import du fichier : ' + (error as Error).message);
-    } finally {
-      if (event.target) event.target.value = '';
-    }
-  };
 
   // --- WIZARD HANDLERS (Scoped to Wizard Tab) ---
   const handleExportWizard = () => {
@@ -2214,27 +2108,44 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {/* MAIN CONTENT */}
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
            {/* Header */}
-           <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm shrink-0 z-10">
-              <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                 {selectedBookId ? (
-                   <>
-                     <span className="text-slate-400 font-normal text-lg">Produits /</span>
-                     {selectedBook?.name}
-                   </>
-                 ) : (
-                   activeTab === 'home' ? 'Tableau de bord' :
-                   activeTab === 'books' ? 'Produits' :
-                   activeTab === 'orders' ? 'Commandes' :
-                   activeTab === 'customers' ? 'Clients' :
-                   activeTab === 'productpage' ? 'Page produit' :
-                   activeTab === 'menus' ? 'Menus' :
-                   activeTab === 'homepage' ? 'Page d\'accueil' :
-                   activeTab === 'shipping' ? 'Expédition' :
-                   activeTab === 'printers' ? 'Imprimeurs' :
-                   activeTab === 'settings' ? 'Paramètres' : 
-                   activeTab === 'analytics' ? 'Promotions' : 'Admin'
-                 )}
-              </h1>
+           <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm shrink-0 z-10">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  {selectedBookId ? (
+                    <>
+                      <span className="text-slate-400 font-normal text-lg">Produits /</span>
+                      {selectedBook?.name}
+                    </>
+                  ) : (
+                    activeTab === 'home' ? 'Tableau de bord' :
+                    activeTab === 'books' ? 'Produits' :
+                    activeTab === 'orders' ? 'Commandes' :
+                    activeTab === 'customers' ? 'Clients' :
+                    activeTab === 'productpage' ? 'Page produit' :
+                    activeTab === 'menus' ? 'Navigation' :
+                    activeTab === 'homepage' ? "Page d'accueil" :
+                    activeTab === 'shipping' ? 'Expédition' :
+                    activeTab === 'printers' ? 'Imprimeurs' :
+                    activeTab === 'settings' ? 'Paramètres' :
+                    activeTab === 'analytics' ? 'Promotions' : 'Admin'
+                  )}
+                </h1>
+                {!selectedBookId && (
+                  <p className="text-base text-slate-500 leading-none mt-1">
+                    {activeTab === 'home' ? 'Vue d\'ensemble de votre boutique' :
+                     activeTab === 'books' ? 'Gérez votre catalogue de livres' :
+                     activeTab === 'orders' ? 'Suivez et gérez les commandes clients' :
+                     activeTab === 'customers' ? 'Gérez votre base clients' :
+                     activeTab === 'productpage' ? 'Personnalisez la page de présentation' :
+                     activeTab === 'menus' ? 'Gérez le menu principal du site' :
+                     activeTab === 'homepage' ? 'Personnalisez le contenu de la page d\'accueil' :
+                     activeTab === 'shipping' ? 'Configurez les zones, tarifs et délais de livraison' :
+                     activeTab === 'printers' ? 'Gérez vos partenaires d\'impression par région' :
+                     activeTab === 'settings' ? 'Configurez les paramètres de la boutique' :
+                     activeTab === 'analytics' ? 'Créez et gérez vos codes promo' : ''}
+                  </p>
+                )}
+              </div>
               <div className="flex items-center gap-4">
                  <div className="text-right hidden sm:block">
                     <div className="text-sm font-bold text-slate-900">Admin User</div>
@@ -2267,11 +2178,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {/* --- VIEW: HOMEPAGE MANAGEMENT --- */}
               {activeTab === 'homepage' && (
                 <div className="space-y-6">
-                   <div className="mb-6 flex items-center justify-between">
-                      <div>
-                         <h2 className="text-2xl font-bold text-slate-800 mb-2">Gestion de la page d'accueil</h2>
-                         <p className="text-slate-500">Personnalisez le contenu et l'apparence de votre page d'accueil.</p>
-                      </div>
+                   <div className="mb-6 flex items-center justify-end">
                       <SaveButton
                          hasChanges={!!draftConfig && !!homepageConfig && JSON.stringify(draftConfig) !== JSON.stringify(homepageConfig)}
                          isSaving={homepageLoading}
@@ -2289,8 +2196,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                    ) : (
                       <>
                          {/* Banner Management */}
-                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <div className="flex items-center justify-between mb-4">
+                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-gray-100">
                                <h3 className="font-bold text-lg text-slate-800">
                                   Bannière d'annonce
                                </h3>
@@ -2307,7 +2214,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                   </span>
                                </div>
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-4 p-6">
                                <div>
                                   <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Message</label>
                                   <input
@@ -2360,8 +2267,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                          </div>
 
                          {/* Sections Management */}
-                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <div className="flex items-center justify-between mb-4">
+                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-gray-100">
                                <h3 className="font-bold text-lg text-slate-800">
                                   Sections de livres
                                </h3>
@@ -2387,7 +2294,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                </button>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-4 p-6">
                                {draftConfig.sections.map((section, sectionIdx) => {
                                   const isExpanded = expandedSections.has(section.id);
                                   const toggleExpand = () => setExpandedSections(prev => {
@@ -2400,7 +2307,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                      {/* Section header — toujours visible */}
                                      <div className="flex items-center gap-3 px-4 py-3">
                                         <button type="button" onClick={toggleExpand} className="text-slate-400 hover:text-slate-600 transition-colors">
-                                           <ChevronDown size={18} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                           {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                                         </button>
                                         <span className="flex-1 font-bold text-slate-800 text-sm truncate">{section.title || 'Section sans titre'}</span>
                                         <div className="flex items-center gap-2">
@@ -2434,7 +2341,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                      {/* Contenu expandable */}
                                      {isExpanded && (
-                                     <div className="px-4 pb-4 border-t border-gray-200 pt-4 space-y-3">
+                                     <div className="px-4 pb-4 pt-4 space-y-3 bg-white">
                                         <div className="flex items-center gap-3">
                                            <input
                                               type="text"
@@ -2461,10 +2368,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         />
                                      </div>
                                      )}
-                                     {isExpanded && (<div className="px-4 pb-4">
+                                     {isExpanded && (<div className="px-4 pb-4 bg-white">
 
                                      {/* Books in this section */}
-                                     <div className="mt-4 pt-4 border-t border-gray-300">
+                                     <div className="mt-4 pt-4 border-t border-gray-300 bg-white">
                                         <div className="text-sm font-medium text-slate-700 mb-2">
                                            Livres affichés ({section.bookIds.length})
                                            <span className="text-xs text-slate-500 ml-2 font-normal">Glissez pour réorganiser</span>
@@ -4671,28 +4578,24 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
               {/* --- VIEW: MENUS --- */}
               {activeTab === 'menus' && (
-                <div className="max-w-4xl mx-auto space-y-8">
-                  <div className="flex justify-between items-center">
-                      <div>
-                          <h2 className="text-2xl font-bold text-slate-800">Navigation</h2>
-                          <p className="text-slate-500 mt-1">Gérez le menu principal du site.</p>
-                      </div>
-                      <button 
-                          onClick={() => addMenuItem({
-                              id: Date.now().toString(),
-                              label: 'Nouveau Menu',
-                              type: 'simple',
-                              basePath: '/',
-                              position: localMainMenu.length,
-                              visible: false,
-                              items: []
-                          })}
-                          className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-md"
-                      >
-                          <Plus size={18} /> Ajouter un élément
-                      </button>
+                <div className="max-w-4xl mx-auto space-y-4">
+                  <div className="flex justify-end">
+                    <button 
+                        onClick={() => addMenuItem({
+                            id: Date.now().toString(),
+                            label: 'Nouveau Menu',
+                            type: 'simple',
+                            basePath: '/',
+                            position: localMainMenu.length,
+                            visible: false,
+                            items: []
+                        })}
+                        className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-md"
+                    >
+                        <Plus size={18} /> Ajouter un élément
+                    </button>
                   </div>
-
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleMenuCardDragEnd}>
                     <SortableContext items={localMainMenu.map(m => m.id)} strategy={verticalListSortingStrategy}>
                       <div className="space-y-4">
@@ -4964,6 +4867,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       </div>
                     </SortableContext>
                   </DndContext>
+                  </div>
                 </div>
               )}
 
@@ -5041,7 +4945,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             handleSaveBook({...selectedBook, galleryImages: newGallery, coverImage: typeof newGallery[0] === 'string' ? newGallery[0] : newGallery[0].url});
                                          }
                                       }}
-                                      className="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group cursor-move hover:border-cloud-blue transition-colors"
+                                      className="w-48 h-64 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative group cursor-move hover:border-cloud-blue transition-colors"
                                    >
                                       <img src={typeof img === 'string' ? img : img.url} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
                                       <button 
@@ -5967,16 +5871,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                    <User size={32} />
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-700 mb-2">Aucun personnage configuré</h3>
-                                <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">Commencez par ajouter un personnage (Héros, Parent, etc.) pour définir les options de personnalisation.</p>
-                                <button 
-                                  onClick={() => {
-                                     const newTab: WizardTab = { id: Date.now().toString(), label: 'Nouveau Perso', type: 'character', options: [], variants: [] };
-                                     handleSaveBook({...selectedBook, wizardConfig: {...selectedBook.wizardConfig, tabs: [...selectedBook.wizardConfig.tabs, newTab]}});
-                                  }}
-                                  className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition-colors inline-flex items-center gap-2 shadow-sm"
-                                >
-                                   <Plus size={16} /> Ajouter le premier personnage
-                                </button>
+                                <p className="text-slate-500 text-sm max-w-sm mx-auto">Commencez par ajouter un personnage (Héros, Parent, etc.) pour définir les options de personnalisation.</p>
                              </div>
                           )}
                        </div>
@@ -6060,7 +5955,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           <p className="text-xs text-purple-700">
                              <strong>💡 Info:</strong> Ces champs permettent de définir des variables système (dédicace, auteur) 
                              qui peuvent être utilisées dans les textes du livre. Activez-les pour les rendre disponibles 
-                             dans l'éditeur de texte.
+                             dans le preview.
                           </p>
                        </div>
                     </div>
@@ -6349,20 +6244,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                           <div className="flex items-center gap-2 border-l border-gray-200 pl-4 ml-4">
                               <button 
-                                  onClick={handleExportContent}
-                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
-                                  title="Exporter la configuration (JSON)"
-                              >
-                                  <Download size={18} />
-                              </button>
-                              <button 
-                                  onClick={() => fileInputRef.current?.click()}
-                                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded text-slate-600 shrink-0" 
-                                  title="Importer la configuration (JSON)"
-                              >
-                                  <Upload size={18} />
-                              </button>
-                              <button 
                                   onClick={() => {
                                     setShowIdmlImporter(true);
                                     setDetectedFonts([]);
@@ -6389,13 +6270,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                               >
                                   <RotateCcw size={18} />
                               </button>
-                              <input 
-                                 type="file" 
-                                 ref={fileInputRef}
-                                 className="hidden"
-                                 accept=".json"
-                                 onChange={handleImportContent}
-                              />
                           </div>
                        </div>
                     </div>
@@ -7450,16 +7324,6 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                           )}
                         </button>
                       </div>
-                    </div>
-                    <div className="p-4 border-t border-slate-100 bg-slate-50 text-xs space-y-1">
-                      <p className="text-slate-600 font-medium">Architecture :</p>
-                      <ul className="text-slate-500 space-y-0.5 ml-4 list-disc">
-                        <li><strong>EPUB</strong> : Images + Positions (x, y, w, h) des zones de texte</li>
-                        <li><strong>IDML</strong> : Textes + Polices (fontFamily) + Styles complets</li>
-                      </ul>
-                      <p className="text-purple-600 mt-2">
-                        💡 L'EPUB ne contient aucune information textuelle. Tout vient de l'IDML.
-                      </p>
                     </div>
                   </div>
                 </div>

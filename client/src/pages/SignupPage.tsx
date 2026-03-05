@@ -77,7 +77,7 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-cream">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       
       <main className="flex-1 flex relative min-h-[calc(100vh-80px)]">
@@ -269,7 +269,7 @@ const SignupPage = () => {
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                    <Mail className="absolute left-3 top-0 bottom-0 my-auto text-stone-400 h-fit" size={20} />
                     <input
                       id="email"
                       name="email"
@@ -288,7 +288,7 @@ const SignupPage = () => {
                     Téléphone <span className="text-stone-400 font-normal">(facultatif)</span>
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                    <Phone className="absolute left-3 top-0 bottom-0 my-auto text-stone-400 h-fit" size={20} />
                     <input
                       id="phone"
                       name="phone"

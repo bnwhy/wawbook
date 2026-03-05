@@ -30,7 +30,7 @@ const ForgotPasswordPage = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col">
         <Navigation onStart={() => setLocation('/')} />
         <main className="flex-1 flex items-center justify-center p-6 pt-32">
           <div className="w-full max-w-md">
@@ -60,7 +60,7 @@ const ForgotPasswordPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       <main className="flex-1 flex items-center justify-center p-6 pt-32">
         <div className="w-full max-w-md">
@@ -89,7 +89,7 @@ const ForgotPasswordPage = () => {
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+                  <Mail className="absolute left-3 top-0 bottom-0 my-auto text-stone-400 h-fit" size={20} />
                   <input
                     id="email"
                     type="email"

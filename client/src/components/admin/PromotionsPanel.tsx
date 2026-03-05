@@ -71,10 +71,6 @@ const PromotionsPanel: React.FC<PromotionsPanelProps> = ({ books }) => {
       {/* Codes list */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
-          <div>
-            <h3 className="font-bold text-slate-800 text-lg">Codes promo ({promoCodes.length})</h3>
-            <p className="text-sm text-slate-500">Créez et gérez vos codes promo par panier, catégorie ou produit.</p>
-          </div>
           <div className="flex gap-2">
             <button
               type="button"

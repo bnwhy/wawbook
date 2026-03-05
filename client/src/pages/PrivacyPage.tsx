@@ -8,7 +8,7 @@ const PrivacyPage = () => {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-cream">
+    <div className="min-h-screen flex flex-col">
       <Navigation onStart={() => setLocation('/')} />
       
       <main className="flex-1 max-w-4xl mx-auto w-full p-6 pt-32 pb-20">

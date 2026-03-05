@@ -12,7 +12,7 @@ const INITIAL_MENU: MenuItem[] = [
     position: 0,
     visible: true,
     items: [
-      "Voir tout le catalogue"
+      "/catalogue|Voir tout le catalogue"
     ]
   },
   {
@@ -104,6 +104,21 @@ export const MenuProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         ));
         return INITIAL_MENU;
       }
+
+      // Migrate legacy "Voir tout le catalogue" item to use url|label format
+      const productsMenu = data.find((m: MenuItem) => m.id === 'products');
+      if (productsMenu?.items?.includes('Voir tout le catalogue')) {
+        const updated = { ...productsMenu, items: productsMenu.items.map((item: string) =>
+          item === 'Voir tout le catalogue' ? '/catalogue|Voir tout le catalogue' : item
+        )};
+        await fetch(`/api/menus/${productsMenu.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated),
+        });
+        return data.map((m: MenuItem) => m.id === 'products' ? updated : m);
+      }
+
       return data;
     },
   });

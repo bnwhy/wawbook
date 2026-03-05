@@ -11,6 +11,7 @@ import { SaveButton, CreateButton } from './admin/SaveButton';
 import { useConfirm } from '../hooks/useConfirm';
 import { toast } from 'sonner';
 import { Home, Tag, Globe, Book, User, Users, FileText, Plus, Settings, ChevronRight, Save, Upload, Trash2, Edit2, Edit3, Layers, Type, Layout, Eye, Image as ImageIcon, Box, X, ArrowUp, ArrowDown, ArrowLeft, ChevronDown, Menu, ShoppingBag, Truck, Package, Printer, Download, Barcode, Search, RotateCcw, MessageSquare, Send, MapPin, Columns, FileCode, CreditCard, CloudDownload, Loader2, GripVertical, LayoutTemplate } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 import { Theme } from '../types';
 import { BookProduct, WizardTab, Printer as PrinterType } from '../types/admin';
 import { useBooks } from '../context/BooksContext';
@@ -1170,8 +1171,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   React.useEffect(() => {
+    mainContentRef.current?.scrollTo({ top: 0 });
     setDraftStatus(null);
-    setSelectedOrderIds(new Set()); // Clear selection when switching tabs or clicking an order
+    setSelectedOrderIds(new Set());
   }, [selectedOrderId, activeTab]);
 
   // Font Search State
@@ -1392,6 +1394,8 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   }, [selectedBook?.contentConfig?.texts]);
 
   const [_activeRightTab, _setActiveRightTab] = useState<'layers' | 'properties'>('layers');
+
+  const mainContentRef = React.useRef<HTMLElement>(null);
 
   // Drag & Drop State
   const canvasRef = React.useRef<HTMLDivElement>(null);
@@ -1938,6 +1942,82 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     );
   };
 
+  if (ordersLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+        {/* Sidebar skeleton */}
+        <div className="w-64 bg-slate-900 flex flex-col shadow-2xl z-20 shrink-0">
+          <div className="p-6 border-b border-slate-800 flex items-center gap-3">
+            <div className="w-8 h-8 rounded bg-gradient-to-br from-brand-coral to-red-500 shrink-0" />
+            <Skeleton className="h-5 w-32 bg-slate-700" />
+          </div>
+          <nav className="flex-1 p-4 space-y-2">
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full rounded-lg bg-slate-800" />
+            ))}
+          </nav>
+        </div>
+        {/* Main content skeleton */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="h-16 bg-white border-b border-gray-200 flex items-center px-8 gap-4 shrink-0">
+            <Skeleton className="h-6 w-40" />
+            <div className="ml-auto flex items-center gap-3">
+              <Skeleton className="h-8 w-32 rounded-lg" />
+              <Skeleton className="w-10 h-10 rounded-full" />
+            </div>
+          </div>
+          <div className="flex-1 p-8 space-y-6">
+            <div className="grid grid-cols-3 gap-6">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-9 w-24" />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="col-span-2 bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <Skeleton className="h-5 w-40" />
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="px-6 py-4 flex gap-6">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-4 w-16 ml-auto" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+                  <Skeleton className="h-5 w-20 mb-4" />
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+                  <Skeleton className="h-5 w-28 mb-4" />
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="w-8 h-8 rounded" />
+                      <div className="flex-1 space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
      <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
      {ConfirmDialog}
@@ -2167,7 +2247,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
            </header>
 
            {/* Scrollable Content */}
-           <main className="flex-1 overflow-y-auto p-8">
+           <main ref={mainContentRef} className="flex-1 overflow-y-auto p-8">
               
               {/* --- VIEW: HOME (DASHBOARD) --- */}
               {activeTab === 'home' && (
@@ -2201,8 +2281,10 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                    </div>
 
                    {homepageLoading || !draftConfig ? (
-                      <div className="flex items-center justify-center py-12">
-                         <Loader2 className="animate-spin text-indigo-600" size={32} />
+                      <div className="space-y-4 py-4">
+                        <Skeleton className="h-32 w-full rounded-xl" />
+                        <Skeleton className="h-48 w-full rounded-xl" />
+                        <Skeleton className="h-24 w-full rounded-xl" />
                       </div>
                    ) : (
                       <>
@@ -3228,7 +3310,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       {(() => {
                                           const subtotal = order.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
                                           const shippingMethod = (order as any).shippingMethod;
-                                          const shipping = shippingMethod?.price ?? (order.total - subtotal);
+                                          const shipping = shippingMethod?.price ?? (Number(order.totalAmount) - subtotal);
 
                                           return (
                                               <>
@@ -3244,7 +3326,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                   </div>
                                                   <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                                                      <span className="font-bold text-slate-800">Total</span>
-                                                     <span className="text-2xl font-bold text-slate-900">{order.total.toFixed(2)} €</span>
+                                                     <span className="text-2xl font-bold text-slate-900">{Number(order.totalAmount).toFixed(2)} €</span>
                                                   </div>
                                               </>
                                           );
@@ -4353,7 +4435,15 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 />
                               </label>
                             </div>
-                            {s.imageUrl && <img src={s.imageUrl} alt="" className="w-full max-h-64 object-contain rounded border border-gray-200 mt-1 bg-gray-50" onError={e => (e.currentTarget.style.display='none')} onLoad={e => (e.currentTarget.style.display='')} />}
+                            <p className="text-[10px] text-gray-400">Dimensions recommandées : <span className="font-semibold">1200×800 px</span> — JPG ou PNG (paysage)</p>
+                            <input
+                              type="text"
+                              placeholder="Texte alt de l'image (SEO)"
+                              value={(s as any).imageAlt ?? ''}
+                              onChange={e => { const next = [...featureSections]; next[i] = { ...s, imageAlt: e.target.value } as any; updatePP({ featureSections: next }); }}
+                              className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs text-slate-600 outline-none focus:ring-2 focus:ring-brand-coral placeholder-gray-400"
+                            />
+                            {s.imageUrl && <img src={s.imageUrl} alt={(s as any).imageAlt || s.title || ''} className="w-full max-h-64 object-contain rounded border border-gray-200 mt-1 bg-gray-50" onError={e => (e.currentTarget.style.display='none')} onLoad={e => (e.currentTarget.style.display='')} />}
                             <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
                               <input type="checkbox" checked={s.reverse} onChange={e => { const next = [...featureSections]; next[i] = { ...s, reverse: e.target.checked }; updatePP({ featureSections: next }); }} className="w-4 h-4 border border-gray-300" />
                               Image à droite (texte à gauche)
@@ -4511,6 +4601,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                       />
                                     </label>
                                   </div>
+                                  <p className="text-[10px] text-gray-400">Dimensions recommandées : <span className="font-semibold">200×200 px</span> — PNG fond transparent</p>
                                   {(badge as any).imageUrl && <img src={(badge as any).imageUrl} alt="" className="w-16 h-16 object-contain rounded border border-gray-200 bg-gray-50" onError={e => (e.currentTarget.style.display='none')} />}
                                 </div>
                               ))}
@@ -4978,10 +5069,23 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             }
                                             handleSaveBook({...selectedBook, galleryImages: newGallery});
                                          }}
-                                         className={`absolute bottom-1 left-1 right-1 text-white text-[9px] font-bold text-center py-0.5 rounded ${(typeof img === 'object' && img.use3DEffect) ? 'bg-cloud-blue' : 'bg-gray-400'}`}
+                                         className={`absolute bottom-6 left-1 right-1 text-white text-[9px] font-bold text-center py-0.5 rounded ${(typeof img === 'object' && img.use3DEffect) ? 'bg-cloud-blue' : 'bg-gray-400'}`}
                                       >
                                          {(typeof img === 'object' && img.use3DEffect) ? '3D ON' : '3D OFF'}
                                       </button>
+                                      {/* Champ alt SEO */}
+                                      <input
+                                         type="text"
+                                         placeholder="Texte alt (SEO)"
+                                         value={(typeof img === 'object' ? (img as any).altText : '') ?? ''}
+                                         onClick={e => e.stopPropagation()}
+                                         onChange={e => {
+                                            const newGallery = [...(selectedBook.galleryImages || [])];
+                                            newGallery[idx] = { ...(typeof img === 'string' ? { url: img } : img as any), altText: e.target.value };
+                                            handleSaveBook({...selectedBook, galleryImages: newGallery});
+                                         }}
+                                         className="absolute bottom-1 left-0 right-0 text-[8px] bg-black/60 text-white placeholder-gray-300 px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity outline-none"
+                                      />
                                       {/* Numéro dynamique */}
                                       <div className="absolute top-0 left-0 right-0 bg-black/30 text-white text-[9px] font-bold text-center py-0.5">
                                          {idx + 1}
@@ -5025,6 +5129,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                              </div>
                              <p className="text-xs text-gray-500">Cliquez "3D ON/OFF" pour activer/désactiver l'effet 3D sur chaque image. La 1ère image est affichée en couverture.</p>
+                             <p className="text-[10px] text-gray-400">Dimensions recommandées : <span className="font-semibold">800×1100 px</span> — JPG ou PNG. Survolez une image pour éditer son texte alt (SEO).</p>
                           </div>
                        </div>
 
@@ -5727,6 +5832,7 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                        )}
                                                                     </div>
                                                                     <div className={`text-[9px] font-bold ${option.resource ? 'text-blue-600' : 'text-gray-400 group-hover/upload:text-blue-500'}`}>Ressource</div>
+                                                                    <div className="text-[8px] text-gray-300 leading-tight">800×800px</div>
 
                                                                     {/* Hidden File Input for Upload */}
                                                                     <input 
@@ -6103,8 +6209,9 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                 )}
                                 {/* Results Info */}
-                                <div className="mb-4 text-xs text-slate-400 font-medium">
-                                    {combinations.length} combinaisons affichées
+                                <div className="mb-4 flex items-center justify-between">
+                                    <span className="text-xs text-slate-400 font-medium">{combinations.length} combinaisons affichées</span>
+                                    <span className="text-[10px] text-gray-400">Dimensions recommandées : <span className="font-semibold">800×800 px</span> — PNG fond transparent</span>
                                 </div>
                                 {combinations.length === 0 ? (
                                     <div className="text-center py-12 text-gray-400">
@@ -7107,9 +7214,19 @@ const AdminDashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </div>
                         
                         {isLoadingEpubs ? (
-                          <div className="flex items-center justify-center py-8 text-slate-400">
-                            <Loader2 size={20} className="animate-spin mr-2" />
-                            Chargement...
+                          <div className="space-y-2">
+                            {[...Array(3)].map((_, i) => (
+                              <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-slate-100">
+                                <div className="flex items-center gap-2 flex-1">
+                                  <Skeleton className="h-5 w-5 shrink-0" />
+                                  <div className="space-y-1 flex-1">
+                                    <Skeleton className="h-4 w-40" />
+                                    <Skeleton className="h-3 w-16" />
+                                  </div>
+                                </div>
+                                <Skeleton className="h-7 w-20 rounded-lg shrink-0" />
+                              </div>
+                            ))}
                           </div>
                         ) : bucketEpubs.length === 0 ? (
                           <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">

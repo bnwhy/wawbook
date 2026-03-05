@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation, Link } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { User, Package, LogOut, ChevronRight, Loader2, Gift, Cloud } from 'lucide-react';
+import { User, Package, LogOut, ChevronRight, Gift, Cloud } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
 import { formatPrice } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
 import { PromoCode } from '../types/admin';
@@ -236,8 +237,20 @@ const AccountPage = () => {
             </div>
 
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-cloud-blue animate-spin" />
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 border border-stone-200 rounded-xl">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <div className="text-right shrink-0 space-y-2">
+                      <Skeleton className="h-4 w-16 ml-auto" />
+                      <Skeleton className="h-5 w-20 rounded-full ml-auto" />
+                    </div>
+                    <Skeleton className="h-4 w-4 shrink-0" />
+                  </div>
+                ))}
               </div>
             ) : orders.length === 0 ? (
               <div className="text-center py-12">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Star, Sparkles, Cloud, CheckCircle, ChevronDown, ChevronUp, PenTool, BookOpen, Heart, ShieldCheck, Zap, Gift } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 import { Theme, Activity } from '../types';
 import Navigation from './Navigation';
 import Banner from './Banner';
@@ -154,11 +155,43 @@ const Hero: React.FC<HeroProps> = ({ onStart }) => {
     return () => clearInterval(interval);
   }, [visibleBooks]);
 
-  // Si la config n'est pas encore chargée, afficher un loader
   if (isLoading || !homepageConfig) {
-    return <div className="min-h-screen flex items-center justify-center">
-      <div className="text-cloud-blue">Chargement...</div>
-    </div>;
+    return (
+      <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
+        <Navigation onStart={() => onStart()} />
+        <Banner />
+        <div className="pb-[90px] px-6 max-w-7xl mx-auto w-full" style={{ paddingTop: '44px' }}>
+          <div className="text-center max-w-4xl mx-auto space-y-6">
+            <Skeleton className="h-9 w-48 rounded-full mx-auto" />
+            <Skeleton className="h-14 w-3/4 mx-auto" />
+            <Skeleton className="h-6 w-1/2 mx-auto" />
+            <div className="flex flex-wrap justify-center gap-8 mt-4">
+              <Skeleton className="h-9 w-40 rounded-full" />
+              <Skeleton className="h-9 w-40 rounded-full" />
+            </div>
+          </div>
+        </div>
+        <div className="py-24 px-6 bg-white">
+          <div className="text-center mb-16 space-y-3">
+            <Skeleton className="h-10 w-64 mx-auto" />
+            <Skeleton className="h-5 w-80 mx-auto" />
+          </div>
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex flex-col rounded-3xl overflow-hidden border border-gray-200">
+                <Skeleton className="aspect-square w-full" />
+                <div className="p-5 space-y-3">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-10 w-full rounded-xl mt-2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

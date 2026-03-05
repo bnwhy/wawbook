@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'wouter';
-import { Loader2 } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -21,10 +21,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-cloud-blue animate-spin mx-auto mb-4" />
-          <p className="text-stone-600">Vérification de l'authentification...</p>
+      <div className="min-h-screen flex flex-col bg-stone-50">
+        <Skeleton className="h-16 w-full rounded-none" />
+        <div className="flex-1 max-w-5xl mx-auto w-full px-6 py-12 space-y-6">
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <div className="flex gap-6">
+            <Skeleton className="h-64 w-72 rounded-2xl shrink-0" />
+            <Skeleton className="h-64 flex-1 rounded-2xl" />
+          </div>
         </div>
       </div>
     );

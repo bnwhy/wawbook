@@ -14,7 +14,7 @@ const AdminApp: React.FC = () => {
         <MenuProvider>
           <CartProvider>
             <EcommerceProvider>
-              <div className="font-sans text-slate-900 bg-stone-100 min-h-screen">
+              <div className="font-sans text-slate-900 bg-slate-50 min-h-screen">
                 <AdminDashboard onBack={() => {
                   window.location.href = '/';
                 }} />

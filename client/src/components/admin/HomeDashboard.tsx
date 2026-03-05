@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton';
 import { formatPrice } from '../../utils/formatPrice';
 import type { Order } from '../../types/ecommerce';
 import type { BookProduct } from '../../types/admin';
@@ -33,9 +34,9 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Ventes Totales</h3>
           </div>
           {ordersLoading ? (
-            <div className="animate-pulse space-y-2">
-              <div className="h-8 bg-slate-200 rounded w-32"></div>
-              <div className="h-3 bg-slate-100 rounded w-24"></div>
+            <div className="space-y-2">
+              <Skeleton className="h-9 w-32" />
+              <Skeleton className="h-3 w-24" />
             </div>
           ) : (
             <>
@@ -49,9 +50,9 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Commandes</h3>
           </div>
           {ordersLoading ? (
-            <div className="animate-pulse space-y-2">
-              <div className="h-8 bg-slate-200 rounded w-16"></div>
-              <div className="h-3 bg-slate-100 rounded w-24"></div>
+            <div className="space-y-2">
+              <Skeleton className="h-9 w-16" />
+              <Skeleton className="h-3 w-24" />
             </div>
           ) : (
             <>
@@ -65,9 +66,9 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Panier Moyen</h3>
           </div>
           {ordersLoading ? (
-            <div className="animate-pulse space-y-2">
-              <div className="h-8 bg-slate-200 rounded w-28"></div>
-              <div className="h-3 bg-slate-100 rounded w-24"></div>
+            <div className="space-y-2">
+              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-3 w-24" />
             </div>
           ) : (
             <>
@@ -97,10 +98,10 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
                 {ordersLoading ? (
                   [1, 2, 3].map(i => (
                     <tr key={i}>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded animate-pulse w-24"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-200 rounded animate-pulse w-28"></div></td>
-                      <td className="px-6 py-4"><div className="h-5 bg-slate-200 rounded-full animate-pulse w-16"></div></td>
-                      <td className="px-6 py-4 text-right"><div className="h-4 bg-slate-200 rounded animate-pulse w-16 ml-auto"></div></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-24" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-4 w-28" /></td>
+                      <td className="px-6 py-4"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                      <td className="px-6 py-4 text-right"><Skeleton className="h-4 w-16 ml-auto" /></td>
                     </tr>
                   ))
                 ) : [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5).map(order => (

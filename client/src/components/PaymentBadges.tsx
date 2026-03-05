@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Skeleton } from './ui/skeleton';
 
 interface PaymentBadgesProps {
   size?: 'small' | 'medium' | 'large';
@@ -75,15 +76,13 @@ const PaymentBadges: React.FC<PaymentBadgesProps> = ({ size = 'medium', classNam
   if (loading) {
     return (
       <div className={`flex items-center justify-center gap-3 ${className}`}>
-        <div className="animate-pulse flex gap-3">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div
-              key={i}
-              className="bg-gray-200 rounded"
-              style={{ height: config.height, width: '60px' }}
-            ></div>
-          ))}
-        </div>
+        {[1, 2, 3, 4, 5].map(i => (
+          <Skeleton
+            key={i}
+            className="rounded"
+            style={{ height: config.height, width: '60px' }}
+          />
+        ))}
       </div>
     );
   }

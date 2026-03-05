@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Wand2, Cloud, Pencil, ChevronLeft } from 'lucide-react';
+import { Wand2, Cloud, ChevronLeft } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 import { toast } from 'sonner';
 import { BookConfig, Theme, Activity } from '../types';
 import Navigation from './Navigation';
@@ -42,39 +43,9 @@ const AvatarImage: React.FC<{ src: string; alt: string }> = ({ src, alt }) => {
 
   return (
     <div className="relative w-full h-full">
-      {/* Loading animation - Pencil drawing */}
+      {/* Loading skeleton */}
       {isLoading && !error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 z-10">
-          <div className="relative">
-            {/* Animated pencil */}
-            <div className="animate-bounce">
-              <Pencil 
-                size={48} 
-                className="text-cloud-dark"
-                style={{
-                  filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.2))',
-                  animation: 'draw 2s ease-in-out infinite'
-                }}
-              />
-            </div>
-            {/* Drawing line animation */}
-            <svg className="absolute -bottom-8 left-1/2 -translate-x-1/2" width="100" height="20">
-              <path
-                d="M 10,10 Q 50,5 90,10"
-                stroke="#4A5568"
-                strokeWidth="3"
-                fill="none"
-                strokeLinecap="round"
-                className="animate-pulse"
-                style={{
-                  strokeDasharray: '100',
-                  strokeDashoffset: '100',
-                  animation: 'drawLine 2s ease-in-out infinite'
-                }}
-              />
-            </svg>
-          </div>
-        </div>
+        <Skeleton className="absolute inset-0 rounded-none z-10" />
       )}
 
       {/* Error state */}

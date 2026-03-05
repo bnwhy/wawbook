@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Package, ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
+import { Package, ArrowLeft, ChevronRight } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
 import { formatPrice } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
 
@@ -94,8 +95,25 @@ const AccountOrdersPage = () => {
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-cloud-blue animate-spin" />
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="border border-stone-200 rounded-lg p-6">
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-40" />
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                    <div className="text-right space-y-2">
+                      <Skeleton className="h-5 w-20 ml-auto" />
+                      <Skeleton className="h-5 w-24 rounded-full ml-auto" />
+                    </div>
+                    <Skeleton className="h-5 w-5 shrink-0" />
+                  </div>
+                  <div className="pt-4 border-t border-stone-100">
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-12">

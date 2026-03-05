@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useEcommerce } from '../context/EcommerceContext';
 import { useAuth } from '../context/AuthContext';
 import { CheckCircle, Loader2, Lock, Eye, EyeOff } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { formatPrice } from '../utils/formatPrice';
@@ -122,10 +123,11 @@ const CheckoutSuccessPage = () => {
     return (
       <div className="min-h-screen flex flex-col bg-stone-50">
         <Navigation onStart={() => setLocation('/')} />
-        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-20">
-          <Loader2 className="w-16 h-16 text-cloud-blue animate-spin mb-6" />
-          <h1 className="font-display font-black text-2xl text-stone-900 mb-4">Confirmation en cours...</h1>
-          <p className="text-stone-600">Veuillez patienter pendant que nous finalisons votre commande.</p>
+        <main className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-20 max-w-lg mx-auto w-full">
+          <Skeleton className="w-24 h-24 rounded-full mx-auto mb-6" />
+          <Skeleton className="h-8 w-64 mx-auto mb-4" />
+          <Skeleton className="h-5 w-80 mx-auto mb-2" />
+          <Skeleton className="h-5 w-56 mx-auto" />
         </main>
         <Footer />
       </div>

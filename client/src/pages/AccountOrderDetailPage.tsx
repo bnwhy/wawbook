@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, Link, useRoute } from 'wouter';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
-import { Package, ArrowLeft, Loader2, MapPin, Truck } from 'lucide-react';
+import { Package, ArrowLeft, MapPin, Truck } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
 import { formatPrice } from '../utils/formatPrice';
 import { formatDate } from '../utils/formatDate';
 
@@ -89,8 +90,55 @@ const AccountOrderDetailPage = () => {
     return (
       <div className="min-h-screen flex flex-col bg-stone-50">
         <Navigation onStart={() => setLocation('/')} />
-        <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-12 h-12 text-cloud-blue animate-spin" />
+        <main className="flex-1 max-w-4xl mx-auto w-full p-6 pt-32 pb-20">
+          <Skeleton className="h-5 w-40 mb-6" />
+
+          {/* Bloc 1 — en-tête commande */}
+          <div className="bg-white rounded-xl p-8 shadow-sm border border-stone-200 mb-6">
+            <div className="flex items-start justify-between mb-6">
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+              <Skeleton className="h-8 w-28 rounded-full" />
+            </div>
+            <Skeleton className="h-14 w-full rounded-lg mb-6" />
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-40 mb-3" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-24 mb-3" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="flex justify-between pt-2 border-t border-stone-200">
+                  <Skeleton className="h-5 w-12" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bloc 2 — articles */}
+          <div className="bg-white rounded-xl p-8 shadow-sm border border-stone-200">
+            <Skeleton className="h-5 w-40 mb-4" />
+            <div className="space-y-4">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between border-b border-stone-100 pb-4">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
         </main>
         <Footer />
       </div>

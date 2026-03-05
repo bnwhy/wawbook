@@ -8,6 +8,13 @@
       "when": 1769852598647,
       "tag": "0000_broad_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772724911728,
+      "tag": "0001_add_product_page_to_books",
+      "breakpoints": true
     }
   ]
 }

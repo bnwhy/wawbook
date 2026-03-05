@@ -10,6 +10,7 @@ import { env } from "./config/env";
 import compression from "compression";
 import { apiLimiter } from "./middleware/rate-limit";
 import { storage, pool } from "./storage";
+import { runMigrations } from "./db";
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import passport from 'passport';
@@ -82,8 +83,17 @@ async function initOrderSequence() {
   }
 }
 
-initDefaultSettings();
-initOrderSequence();
+runMigrations()
+  .then(() => {
+    logger.info('Database migrations applied');
+    initDefaultSettings();
+    initOrderSequence();
+  })
+  .catch((error) => {
+    logger.error({ err: error }, 'Failed to run database migrations');
+    initDefaultSettings();
+    initOrderSequence();
+  });
 
 app.post(
   '/api/stripe/webhook',

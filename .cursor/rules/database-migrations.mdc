@@ -1,0 +1,40 @@
+---
+description: Règles obligatoires pour les changements de schéma DB (Drizzle + Railway)
+alwaysApply: true
+---
+
+# Gestion des migrations de base de données
+
+## Workflow obligatoire pour tout changement de schéma
+
+### 1. Modifier `shared/schema.ts`
+Ajouter ou modifier la colonne/table dans le schéma Drizzle.
+
+### 2. Générer la migration SQL
+```bash
+npx drizzle-kit generate --name description_du_changement
+```
+Cela crée `migrations/000X_description.sql` et met à jour `meta/_journal.json`.
+
+### 3. Committer les deux fichiers ensemble
+```bash
+git add shared/schema.ts migrations/
+git commit -m "feat(db): ..."
+```
+
+Au démarrage du serveur, `runMigrations()` dans `server/db.ts` applique automatiquement les nouvelles migrations.
+
+---
+
+## Règles strictes
+
+- **Ne jamais utiliser `npm run db:push` en production** — cela bypasse le système de migrations et désaligne dev/prod.
+- `db:push` est réservé au développement local uniquement pour itérer rapidement.
+- Toujours générer un fichier de migration avant de pousser un changement de schéma en prod.
+- Les fichiers `migrations/` doivent être committés et inclus dans l'image Docker (déjà configuré dans `Dockerfile` et `script/build.ts`).
+
+---
+
+## Pourquoi cette règle existe
+
+En mars 2026, la colonne `product_page` (table `books`) et les colonnes `position`/`visible` (table `menus`) ont été ajoutées via `db:push` en dev sans générer de migration. La prod n'a pas reçu ces colonnes, causant des erreurs `column does not exist` à chaque création de livre.
